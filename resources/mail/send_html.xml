@@ -1,0 +1,10 @@
+<mail>
+<subject>テストサブジェクト</subject>
+<body>
+ボディーテスト{$abc}
+</body>
+<html src="send_html.html">
+	<media src="media/send_html.css" />
+</html>
+<attach src="media/send_html.css" name="newname.css" />
+</mail>

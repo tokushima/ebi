@@ -1,0 +1,40 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-xs-6">
+			<h2>Coverage ({$covered}%) <span style="font-size: small;">{$create_date}</span></h2>
+			<form rt:aref="true" class="col-sm-6" style="margin-bottom: 50px;">
+				<select name="target" class="form-control" onchange="this.form.submit()" style="width:500px;;">
+					<rt:loop param="target_list" var="file">
+						<option value="{$file.getPathname()}">{$file.getFilename()}</option>
+					</rt:loop>
+				</select>
+			</form>
+		</div>
+		<div class="col-xs-6">
+		</div>
+	</div>
+</div>
+
+	
+
+<table rt:param="{$covered_list}" rt:var="coverage" rt:key="filename">
+<thead>
+	<tr>
+		<th>filename</th>
+		<th>covered</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td><a href="{$t.package_method_url('covered')}?filename={$filename}&target={$target}" class="coverage-{$coverage['status']}">{$filename}</a></td>
+		<td style="text-align: right;"><span class="coverage-{$coverage['status']}">{$coverage['covered']}%</span></td>
+	</tr>
+</tbody>
+</table>
+
+</rt:block>
+

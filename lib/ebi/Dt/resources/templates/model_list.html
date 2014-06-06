@@ -1,0 +1,76 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+<script type="text/javascript">
+	function conf_sample(pkg){
+		alert("\\ebi\\Conf::set([" + "\n"
+			+ "\t" + "'ebi.Dao'=>[" + "\n"
+				+ "\t\t" + "connection'=>[" + "\n"
+					+ "\t\t\t" + "'" + pkg + "'=>[" + "\n"
+					+ "\t\t\t\t" + "'type'=>'ebi.DbConnector'," + "\n"
+					+ "\t\t\t\t" + "'host'=>'localhost'," + "\n"
+					+ "\t\t\t\t" + "'dbname'=>'mydatabase'," + "\n"
+					+ "\t\t\t\t" + "'user'=>'root'," + "\n"
+					+ "\t\t\t\t" + "'password'=>'root'," + "\n"
+				+ "\t\t\t" + "]," + "\n"
+			+ "\t\t" + "]," + "\n"
+		+ "]);" + "\n");
+	}
+</script>
+<style type="text/css">
+ .connection_setting input{ margin: 0; width: 90%; }
+</style>
+
+<h2 class="title">Models</h2>
+
+<table rt:param="{$dao_models}" rt:key="package" rt:var="summary" rt:counter="count">
+<thead>
+	<tr>
+		<th>&nbsp;</th>
+		<th>package</th>
+		<th>summary</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>
+			<rt:if param="{$dao_model_con[$package]}">
+				<rt:if param="{$dao_model_errors[$package]}">
+					<a class="glyphicon glyphicon-plus-sign" href="{$t.package_method_url('do_sql',$package)}?create_sql"></a>
+				<rt:else />
+					<a class="glyphicon glyphicon-list-alt" href="{$t.package_method_url('class_doc',$package)}"></a>
+				</rt:if>
+			<rt:else>
+				<a class="glyphicon glyphicon-warning-sign" onClick="conf_sample('{$package}')"></a>
+			</rt:if>
+		</td>
+		<td>
+			<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
+		</td>
+		<td style="width:90%;">
+			{$summary}
+			<rt:if param="{$dao_model_errors[$package]}">
+				<rt:if param="{$summary}"><br /></rt:if>
+				
+				<rt:if param="{$dao_model_error_query[$package]}">
+					<div id="modal_error_query_{$count}" class="modal hide fade" style="display: none;">
+						<form>
+						<div class="modal-header">
+							<h3>Error Query</h3>
+						</div>
+						<div class="modal-body">
+							<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$dao_model_error_query[$package]}</textarea>
+						</div>
+						</form>
+		          	</div>
+					<a class="glyphicon glyphicon-question-sign" data-toggle="modal" href="#modal_error_query_{$count}"></a>
+				</rt:if>
+
+				<span style="color:#ff0000; font-weight: bold;">{$dao_model_errors[$package]}</span>
+			</rt:if>
+		</td>
+	</tr>
+</tbody>
+</table>
+</rt:block>
+

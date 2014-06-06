@@ -1,0 +1,41 @@
+<rt:template name="index">
+	<html>
+	<head>
+	</head>
+	<body>
+		<rt:block name="content">
+			INDEX
+		</rt:block>
+
+		<rt:block name="footer">
+			IFOOTER
+		</rt:block>
+	</body>
+	</html>
+</rt:template>
+
+<rt:template name="abc">
+	<rt:extends href="#index" />
+	<rt:block name="content">
+	ABC
+	</rt:block>
+</rt:template>
+
+<rt:template name="def">
+	<rt:extends href="#abc" />
+	<rt:block name="content">
+	DEF
+	</rt:block>
+
+	<rt:block name="footer">
+	DFOOTER
+	</rt:block>
+</rt:template>
+
+<rt:template name="xyz">
+	<rt:extends href="#index" />
+	<rt:block name="content">
+	XYZ
+	</rt:block>
+</rt:template>
+

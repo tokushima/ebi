@@ -1,0 +1,18 @@
+<rt:extends href="base.html" />
+
+<rt:block name="search_form" />
+
+<rt:block name="content">
+<h2 class="title"><a href="{$t.package_method_url('class_doc',$package)}">{$f.package_name($package)}</a></h2>
+
+
+<table rt:param="{$class_src}" rt:var="line" rt:counter="cnt">
+<tr>
+	<td style="width:50px; text-align: right;"><a name="{$f.calc_add($cnt,3)}"></a><a href="#{$cnt}">{$cnt}</a></td>
+	<td class="code" style="height:16px;">{$t.html($line)}</td>
+</tr>
+</table>
+
+</rt:block>
+
+

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>{$appmode} DT</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<style>
+		.code{ 
+			font-family: Consolas, 'Liberation Mono', Courier, monospace; font-size: 12px; font-style: normal; font-variant: normal; font-weight: normal;
+			width:100%; height: 16px; line-height: 0px; margin: 0; white-space: pre; padding-left: 10px; padding-right: 10px;		
+		}
+		.coverage-perfect{ color:#99cc99; }
+		.coverage-more{ color:#b8860b; }
+		.coverage-bad{ color:#ff9999; font-weight: bold; }
+		.coverage-zero{ color:#000000; font-weight: bold; }
+
+		.test-success{ color:#99cc99; }
+		.test-failure{ color:#b8860b; }
+		.test-error{ color:#ff9999; }		
+		
+		.code-covered{ background-color: #99cc99; }
+		.code-uncovered{ background-color: #ff9999; }
+	</style>
+	
+	<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+<div id="wrap">
+	<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="glyphicon-bar"></span>
+					<span class="glyphicon-bar"></span>
+					<span class="glyphicon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">{$appmode} <span style="font-size: x-small;">Developer Tool</span></a>
+			</div>
+			<div class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="{$t.match_package_method_switch('index','active','inactive')}"><a href="{$t.package_method_url('index')}">Urls</a></li>
+					<li class="{$t.match_package_method_switch('class_list','active','inactive')}"><a href="{$t.package_method_url('class_list')}">Classes</a></li>
+					<li class="{$t.match_package_method_switch('model_list','active','inactive')}"><a href="{$t.package_method_url('model_list')}">Models</a></li>
+					
+					<rt:if param="{$has_coverage}">
+						<li class="{$t.match_package_method_switch('coverage','active','inactive')}"><a href="{$t.package_method_url('coverage')}">Coverage</a></li>
+					</rt:if>
+					
+					<li class="{$t.match_package_method_switch('phpinfo','active','inactive')}"><a href="{$t.package_method_url('phpinfo')}">phpinfo</a></li>
+					
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="container">
+		<div class="page-header">
+		</div>
+		
+		<rt:block name="content">
+		</rt:block>
+	</div>
+</div>
+<div id="footer">
+	<div class="container">
+	</div>
+</div>
+</body>
+</html>
