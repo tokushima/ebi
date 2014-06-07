@@ -19,10 +19,10 @@ Web Framework (PHP 5 >= 5.4.0)
 ### ebi install
 	$ php composer.phar install
 
-### brev install
-	$ curl -LO http://raw.github.com/tokushima/brev/master/brev.php
+### cmdman install
+	$ curl -LO http://raw.github.com/tokushima/cmdman/master/cmdman.php
 
 ### create start file
-	$ php brev.php ebi.Dt::setup --create
+	$ php cmdman.php ebi.Dt::setup --create
 
 
