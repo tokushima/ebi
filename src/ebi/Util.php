@@ -250,4 +250,18 @@ class Util{
 	public static function getenv($name){
 		return (isset($_ENV[$name]) && !empty($_ENV[$name])) ? $_ENV[$name] : (isset($_SERVER[$name]) ? $_SERVER[$name] : null);
 	}
+	/**
+	 * 日付に加減する
+	 * @param string $date
+	 * @param string $add +2 month, -7 day
+	 * @return number
+	 */
+	public static function add_date($date,$add){
+		if(ctype_digit((string)$date) || (substr($date,0,1) == '-' && ctype_digit(substr($date,1)))){
+			$time = (int)$date;
+		}else{
+			$time = strtotime($date);
+		}
+		return strtotime(date('Y/m/d H:i:s ',$time).$add);
+	}
 }
