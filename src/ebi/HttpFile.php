@@ -8,21 +8,28 @@ namespace ebi;
 class HttpFile{
 	/**
 	 * inlineで出力する
-	 * @param File $file 出力するファイル
+	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
 	 */
 	public static function inline($filename){
 		self::output_file_content($filename,'inline');
 	}
 	/**
 	 * attachmentで出力する
-	 * @param File $file 出力するファイル
+	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
 	 */
 	public static function attach($filename){
 		self::output_file_content($filename,'attachment');
 	}
 	private static function output_file_content($filename,$disposition){
-		if(is_file($filename)){
-			$update = @filemtime($filename);			
+		$isstr = false;
+		
+		if(is_array($filename)){
+			list($filename,$src) = $filename;
+			$isstr = true;
+		}
+		if(!$isstr && is_file($filename)){
+			$update = ($isstr) ? time() : @filemtime($filename);
+			
 			if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $update <= strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
 				\ebi\HttpHeader::send_status(304);
 				exit;
@@ -31,7 +38,7 @@ class HttpFile{
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
 
-			if(isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\d+)\-(\d+)$/",$_SERVER['HTTP_RANGE'],$range)){
+			if(!$isstr && isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\d+)\-(\d+)$/",$_SERVER['HTTP_RANGE'],$range)){
 				list(,$offset,$end) = $range;
 				$length = $end - $offset + 1;
 				
@@ -43,16 +50,20 @@ class HttpFile{
 				print(file_get_contents($filename,null,null,$offset,$length));
 				exit;
 			}else{
-				\ebi\HttpHeader::send('Content-length',sprintf('%u',filesize($filename)));
-				$fp = fopen($filename,'rb');
-				while(!feof($fp)){
-					echo(fread($fp,8192));
-					flush();
-				}
-				fclose($fp);
+				\ebi\HttpHeader::send('Content-length',strlen($src));
+				print($src);
 				exit;
 			}
-		}
+		}else if($isstr){
+			\ebi\HttpHeader::send('Content-length',sprintf('%u',filesize($filename)));
+			$fp = fopen($filename,'rb');
+			while(!feof($fp)){
+				echo(fread($fp,8192));
+				flush();
+			}
+			fclose($fp);
+			exit;
+		}		
 		\ebi\HttpHeader::send_status(404);
 		exit;
 	}
