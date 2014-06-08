@@ -436,7 +436,6 @@ class Dt{
 				) as $e){
 					if(strpos($e->getPathname(),'/.') === false
 							&& strpos($e->getPathname(),'/_') === false
-							&& strpos(strtolower($e->getPathname()),'/test') === false
 							&& ctype_upper(substr($e->getFilename(),0,1))
 							&& substr($e->getFilename(),-4) == '.php'
 					){
@@ -449,9 +448,24 @@ class Dt{
 			}
 		}
 		$set = function(&$result,$r,$include_path,$parent_class){
-			if(!$r->isInterface() && !$r->isAbstract() && (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))){
-				$n = str_replace('\\','/',$r->getName());
-				$result[str_replace('/','.',$n)] = array('filename'=>$r->getFileName(),'class'=>'\\'.$r->getName());
+			if(!$r->isInterface() 
+				&& !$r->isAbstract() 
+				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
+				&& $r->getFileName() !== false
+			){
+				$bool = empty($include_path);
+				if(!$bool){
+					foreach($include_path as $libdir){
+						if(strpos($r->getFileName(),$libdir) === 0){
+							$bool = true;
+							break;
+						}
+					}
+				}
+				if($bool){
+					$n = str_replace('\\','/',$r->getName());
+					$result[str_replace('/','.',$n)] = array('filename'=>$r->getFileName(),'class'=>'\\'.$r->getName());
+				}
 			}
 		};
 		foreach(get_declared_classes() as $class){
