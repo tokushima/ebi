@@ -10,7 +10,9 @@ class Util{
 	 * @return string
 	 */
 	public static function file_read($filename){
-		if(!is_readable($filename) || !is_file($filename)) throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		if(!is_readable($filename) || !is_file($filename)){
+			throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		}
 		return file_get_contents($filename);
 	}
 	/**
@@ -252,16 +254,20 @@ class Util{
 	}
 	/**
 	 * 日付に加減する
-	 * @param string $date
-	 * @param string $add +2 month, -7 day
+	 * @param mixed $date
+	 * @param string $time +2 month, -7 day
 	 * @return number
 	 */
-	public static function add_date($date,$add){
+	public static function add_date($date,$time){
 		if(ctype_digit((string)$date) || (substr($date,0,1) == '-' && ctype_digit(substr($date,1)))){
-			$time = (int)$date;
+			$t = (int)$date;
 		}else{
-			$time = strtotime($date);
+			$t = strtotime($date);
 		}
-		return strtotime(date('Y/m/d H:i:s ',$time).$add);
+		$rtn = strtotime($time,$t);
+		if($rtn === false){
+			throw new \InvalidArgumentException(sprintf('invalid date and time formats `%s`',$time));
+		}
+		return $rtn;
 	}
 }
