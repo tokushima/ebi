@@ -2,5 +2,5 @@
 /**
  * Prints the version
  */
-\brev\Std::println('ebi 0.4.5');
+\cmdman\Std::println('ebi 0.1.0');
 

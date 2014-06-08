@@ -6,5 +6,5 @@
 if(!isset($path)) $path = getcwd().'/contents/';
 
 foreach(\ebi\flow\Pages::publish($path) as $p){
-	\brev\Std::println('Written '.$p);
+	\cmdman\Std::println('Written '.$p);
 }
