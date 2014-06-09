@@ -254,12 +254,14 @@ class Util{
 	}
 	/**
 	 * 日付に加減する
-	 * @param mixed $date
 	 * @param string $time +2 month, -7 day
+	 * @param mixed $date
 	 * @return number
 	 */
-	public static function add_date($date,$time){
-		if(ctype_digit((string)$date) || (substr($date,0,1) == '-' && ctype_digit(substr($date,1)))){
+	public static function add_date($time,$date=null){
+		if(!isset($date)){
+			$t = time();
+		}else if(ctype_digit((string)$date) || (substr($date,0,1) == '-' && ctype_digit(substr($date,1)))){
 			$t = (int)$date;
 		}else{
 			$t = strtotime($date);
