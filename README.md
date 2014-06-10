@@ -1,5 +1,8 @@
-ebi 
+ebi
 ====
+
+ebi is :fried_shrimp:海老:fried_shrimp:
+
 __2012-12-25__
 
 Web Framework (PHP 5 >= 5.4.0)
