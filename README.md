@@ -4,25 +4,30 @@ __2012-12-25__
 
 Web Framework (PHP 5 >= 5.4.0)
 
-## Install
 
 ### composer install
-	$ curl -s http://getcomposer.org/installer | php
 
-### edit composer.json
-	{
-    	"require": {
-			"tokushima/ebi":"master-dev"
-    	}
-	}
+```
+$ curl -s http://getcomposer.org/installer | php
+```
 
 ### ebi install
-	$ php composer.phar install
+
+```
+$ php composer.phar require tokushima/ebi dev-master
+```
+
 
 ### cmdman install
-	$ curl -LO http://raw.github.com/tokushima/cmdman/master/cmdman.php
+
+```
+$ php composer.phar require tokushima/cmdman dev-master
+```
 
 ### create start file
-	$ php cmdman.php ebi.Dt::setup --create
+
+```
+$ ./vendor/bin/cmdman ebi.Dt::setup --create
+```
 
 
