@@ -4,6 +4,8 @@ __2012-12-25__
 
 Web Framework (PHP 5 >= 5.4.0)
 
+![](ebi.png)
+
 
 ### composer install
 
