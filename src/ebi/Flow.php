@@ -19,7 +19,7 @@ class Flow{
 	private $selected_pattern;
 	
 	private static $in_get_map = false;
-	private static $in_app_exec = false;	
+	private static $in_set_map = false;	
 	private static $get_map = array();
 	private static $set_map = array();
 	
@@ -40,6 +40,19 @@ class Flow{
 		}
 		return self::$get_map;
 	}
+	/**
+	 * アプリケーションの実行
+	 * @param array $map
+	 */
+	public static function app($map){
+		if(self::$in_set_map){
+			self::$set_map = $map;
+		}else{
+			$self = new self();
+			$self->execute($map);
+		}
+	}
+	
 	private function template(array $vars,$ins,$path,$media=null){
 		if(empty($media)) $media = $this->media_url;
 		$this->template->set_object_plugin(new \ebi\FlowInvalid());
@@ -96,19 +109,6 @@ class Flow{
 		if(empty($name)) \ebi\HttpHeader::redirect_referer();
 		$this->redirect($name,$args);
 	}
-
-	public static function set($map){
-		self::$set_map = $map;		
-	}
-	/**
-	 * アプリケーションのマッピング
-	 * @param array $map
-	 */
-	public static function app($map){
-		$self = new self();
-		$self->execute($map);
-	}
-	
 	private function execute($map){
 		$this->app_url = \ebi\Conf::get('app_url');
 		$this->media_url = \ebi\Conf::get('media_url');
@@ -527,12 +527,14 @@ class Flow{
 					unset($map['patterns'][$k]);
 
 					if(is_file($f=$this->apps_path.$branch_path.'.php')){
+						self::$in_set_map = true;
 						ob_start();
 							$rtn = include($f);
 						ob_end_clean();
 						if(!is_array($rtn)){
 							$rtn = self::$set_map;
 						}
+						self::$in_set_map = false;
 						self::$set_map = array();
 						$branch_map = $fixed_vars($root_keys,$this->read($rtn));
 						
