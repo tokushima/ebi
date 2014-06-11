@@ -1,7 +1,7 @@
 <?php
 include_once('bootstrap.php');
 
-(new \ebi\Flow())->execute([
+\ebi\Flow::app([
 	'find_template'=>false,
 	'patterns'=>[
 		'ABC'=>['action'=>'test.flow.AutoAction'],

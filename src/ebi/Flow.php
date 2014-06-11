@@ -19,42 +19,10 @@ class Flow{
 	private $selected_pattern;
 	
 	private static $in_get_map = false;
+	private static $in_app_exec = false;	
 	private static $get_map = array();
 	private static $set_map = array();
 	
-	public function __construct($app_url=null,$media_url=null){
-		$this->app_url = \ebi\Conf::get('app_url',$app_url);
-		$this->media_url = \ebi\Conf::get('media_url',$media_url);
-		
-		if(empty($this->app_url)){
-			$host = \ebi\Request::host();
-			if(!empty($host)){
-				list($script) = explode('.php',isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']);
-				$this->app_url = $host.$script.(\ebi\Conf::get('rewrite_entry',false) ? '' : '.php');
-			}
-			if(empty($this->app_url)){
-				list($debug) = debug_backtrace(false);
-				$this->app_url = 'http://localhost/'.preg_replace('/.+\/workspace\/(.+)$/','\\1',$debug['file']);
-			}
-			$this->app_url = str_replace('https://','http://',$this->app_url);
-			if(empty($this->media_url)){
-				$this->media_url = dirname($this->app_url).'/resources/media/';
-			}
-		}
-		if(empty($this->media_url)){
-			$this->media_url = $this->app_url.'/resources/media/';
-		}
-		$path = function($url){
-			$url = str_replace('\\','/',$url);
-			if(substr($url,-1) != '/') $url .= '/';
-			return $url;
-		};
-		$this->app_url = $path($this->app_url);
-		$this->media_url = $path($this->media_url);
-		$this->apps_path = $path(\ebi\Conf::get('apps_path',getcwd().'/apps/'));
-		$this->template_path = $path(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')));
-		$this->template = new \ebi\Template();
-	}
 	/**
 	 * mapsを取得する
 	 * @param string $file
@@ -71,13 +39,6 @@ class Flow{
 			\ebi\Log::error($e);
 		}
 		return self::$get_map;
-	}
-	/**
-	 * ブランチマップをセットする
-	 * @param array $map
-	 */
-	public static function set($map){
-		self::$set_map = $map;
 	}
 	private function template(array $vars,$ins,$path,$media=null){
 		if(empty($media)) $media = $this->media_url;
@@ -135,11 +96,56 @@ class Flow{
 		if(empty($name)) \ebi\HttpHeader::redirect_referer();
 		$this->redirect($name,$args);
 	}
+
+	public static function set($map){
+		self::$set_map = $map;		
+	}
 	/**
-	 * 実行する
+	 * アプリケーションのマッピング
 	 * @param array $map
 	 */
-	public function execute($map){
+	public static function app($map){
+		$self = new self();
+		$self->execute($map);
+	}
+	
+	private function execute($map){
+		$this->app_url = \ebi\Conf::get('app_url');
+		$this->media_url = \ebi\Conf::get('media_url');
+		
+		if(empty($this->app_url)){
+			$host = \ebi\Request::host();
+			if(!empty($host)){
+				list($script) = explode('.php',isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']);
+				$this->app_url = $host.$script.(\ebi\Conf::get('rewrite_entry',false) ? '' : '.php');
+			}
+			if(empty($this->app_url)){
+				foreach(debug_backtrace(false) as $d){
+					if(isset($d['file']) && $d['file'] !== __FILE__){
+						$this->app_url = 'http://localhost/'.preg_replace('/.+\/workspace\/(.+)$/','\\1',$d['file']);
+						break;
+					}
+				}
+			}
+			$this->app_url = str_replace('https://','http://',$this->app_url);
+			if(empty($this->media_url)){
+				$this->media_url = dirname($this->app_url).'/resources/media/';
+			}
+		}
+		if(empty($this->media_url)){
+			$this->media_url = $this->app_url.'/resources/media/';
+		}
+		$path = function($url){
+			$url = str_replace('\\','/',$url);
+			if(substr($url,-1) != '/') $url .= '/';
+			return $url;
+		};
+		$this->app_url = $path($this->app_url);
+		$this->media_url = $path($this->media_url);
+		$this->apps_path = $path(\ebi\Conf::get('apps_path',getcwd().'/apps/'));
+		$this->template_path = $path(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')));
+		$this->template = new \ebi\Template();		
+		
 		if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
 		}
