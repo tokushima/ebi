@@ -115,8 +115,22 @@ class Flow{
 		
 		if(empty($this->app_url)){
 			$host = \ebi\Request::host();
+			
 			if(!empty($host)){
 				list($script) = explode('.php',isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']);
+				if(!empty($script)){
+					$url = '';
+					foreach(explode('/',$script) as $u){
+						if(!empty($u)){
+							$url .= '/'.$u;
+
+							if(is_file(getcwd().$url.'.php')){
+								$script = $url;
+								break;
+							}
+						}
+					}
+				}
 				$this->app_url = $host.$script.(\ebi\Conf::get('rewrite_entry',false) ? '' : '.php');
 			}
 			if(empty($this->app_url)){
@@ -144,7 +158,7 @@ class Flow{
 		$this->media_url = $path($this->media_url);
 		$this->apps_path = $path(\ebi\Conf::get('apps_path',getcwd().'/apps/'));
 		$this->template_path = $path(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')));
-		$this->template = new \ebi\Template();		
+		$this->template = new \ebi\Template();
 		
 		if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
