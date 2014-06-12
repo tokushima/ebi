@@ -22,38 +22,46 @@ class Dt{
 	}
 	private function get_flow_output_maps(){
 		if(empty($this->flow_output_maps)){
+			$entry = null;
 			$trace = debug_backtrace(false);
-			$entry = array_pop($trace);
-			$self_class = str_replace('\\','.',__CLASS__);			
+			krsort($trace);
+			foreach($trace as $t){
+				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+					$entry = $t;
+					break;					
+				}
+			}
+			if(isset($entry['file'])){
+				$self_class = str_replace('\\','.',__CLASS__);
+				$src = file_get_contents($entry['file']);
 				
-			$src = file_get_contents($entry['file']);
-
-			if(strpos($src,'Flow') !== false){
-				foreach(\ebi\Flow::get_map($entry['file']) as $k => $m){
-					if(!isset($m['deprecated'])) $m['deprecated'] = false;
-					if(!isset($m['mode'])) $m['mode'] = null;
-					if(!isset($m['summary'])) $m['summary'] = null;
-					if(!isset($m['template'])) $m['template'] = null;
-					
-					if(isset($m['action']) && is_string($m['action'])){
-						list($m['class'],$m['method']) = explode('::',$m['action']);
-						if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
-						$m['class'] = str_replace('\\','.',$m['class']);
-					}
-					if(!isset($m['class']) || $m['class'] != $self_class){
-						try{
-							$m['error'] = null;
-							$m['url'] = $k;
-							
-							if(isset($m['method'])){
-								$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-								list($summary) = explode(PHP_EOL,$info['description']);
-								$m['summary'] = empty($summary) ? null : $summary;
-							}
-						}catch(\Exception $e){
-							$m['error'] = $e->getMessage();
+				if(strpos($src,'Flow') !== false){
+					foreach(\ebi\Flow::get_map($entry['file']) as $k => $m){
+						if(!isset($m['deprecated'])) $m['deprecated'] = false;
+						if(!isset($m['mode'])) $m['mode'] = null;
+						if(!isset($m['summary'])) $m['summary'] = null;
+						if(!isset($m['template'])) $m['template'] = null;
+						
+						if(isset($m['action']) && is_string($m['action'])){
+							list($m['class'],$m['method']) = explode('::',$m['action']);
+							if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
+							$m['class'] = str_replace('\\','.',$m['class']);
 						}
-						$this->flow_output_maps[$m['name']] = $m;
+						if(!isset($m['class']) || $m['class'] != $self_class){
+							try{
+								$m['error'] = null;
+								$m['url'] = $k;
+								
+								if(isset($m['method'])){
+									$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+									list($summary) = explode(PHP_EOL,$info['description']);
+									$m['summary'] = empty($summary) ? null : $summary;
+								}
+							}catch(\Exception $e){
+								$m['error'] = $e->getMessage();
+							}
+							$this->flow_output_maps[$m['name']] = $m;
+						}
 					}
 				}
 			}
@@ -67,9 +75,8 @@ class Dt{
 		ob_start();
 			phpinfo();
 		$info = ob_get_clean();
-		$info = \ebi\Xml::extract($info,'body')->value();
+		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
 		$info = preg_replace('/<table .+>/','<table class="table table-striped table-bordered table-condensed">',$info);
-
 		return ['phpinfo'=>$info];
 	}
 	/**
