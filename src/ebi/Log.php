@@ -117,8 +117,8 @@ class Log{
 					}
 					if(is_file($file) && is_writable($file)){
 						file_put_contents($file,
-										((\ebi\Conf::get('br2str') !== null) ? 
-											str_replace(["\r\n","\r","\n"],\ebi\Conf::get('br2str'),((string)$log)) :
+										((\ebi\Conf::get('nl2str') !== null) ? 
+											str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
 											(string)$log
 										).PHP_EOL,
 										FILE_APPEND
