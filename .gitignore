@@ -1,9 +1,7 @@
 /work
 /__settings__.php
-/.buildpath
-/.DS_Store
-/.project
-/local.db
-/.settings
+.*
+/*.db
 /testman.php
 /cmdman.php
+
