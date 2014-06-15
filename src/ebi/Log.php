@@ -115,8 +115,20 @@ class Log{
 						default:
 							static::call_class_plugin_funcs('trace',$log,self::$id);
 					}
-					if(is_file($file) && is_writable($file)) file_put_contents($file,((string)$log).PHP_EOL,FILE_APPEND);
-					if(self::$disp === true && $stdout) print(((string)$log).PHP_EOL);
+					if(is_file($file) && is_writable($file)){
+						file_put_contents($file,
+										(
+											(\ebi\Conf::get('br2str') != null) ? 
+												str_replace(["\r\n","\r","\n"],\ebi\Conf::get('br2str'),((string)$log)) :
+												(string)$log
+										)
+										.PHP_EOL,
+										FILE_APPEND
+						);
+					}
+					if(self::$disp === true && $stdout){
+						print(((string)$log).PHP_EOL);
+					}
 				}
 			}
 			static::call_class_plugin_funcs('flush',self::$logs,self::$id);
