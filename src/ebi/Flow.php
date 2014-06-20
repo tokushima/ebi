@@ -74,7 +74,7 @@ class Flow{
 			$format = $this->url_pattern[$url][sizeof($args)];
 			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));
 		}
-		throw new \InvalidArgumentException('map `'.$url.'` not found'.print_r($this->url_pattern,true));
+		throw new \InvalidArgumentException('map `'.$url.'` not found');
 	}
 	private function after_redirect($after,array $vars,$pattern){
 		if(is_array($after) && !isset($after[0])){
@@ -433,6 +433,14 @@ class Flow{
 			}
 		}
 		if(isset($map['nomatch_redirect'])){
+			if(strpos($map['nomatch_redirect'],'://') === false){
+				foreach($map['patterns'] as $m){
+					if($map['nomatch_redirect'] == $m['name']){
+						$this->url_pattern[$m['name']][$m['num']] = $m['format'];
+						break;
+					}
+				}
+			}
 			$this->redirect($map['nomatch_redirect']);
 		}
 		\ebi\HttpHeader::send_status(404);
