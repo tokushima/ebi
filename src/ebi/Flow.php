@@ -132,11 +132,11 @@ class Flow{
 					}
 				}
 				$this->app_url = $host.$script.(\ebi\Conf::get('rewrite_entry',false) ? '' : '.php');
-			}
-			if(empty($this->app_url)){
+			}else{
 				foreach(debug_backtrace(false) as $d){
 					if(isset($d['file']) && $d['file'] !== __FILE__){
-						$this->app_url = 'http://localhost/'.preg_replace('/.+\/workspace\/(.+)$/','\\1',$d['file']);
+						$host = 'localhost';
+						$this->app_url = 'http://'.$host.'/'.preg_replace('/.+\/workspace\/(.+)$/','\\1',$d['file']);
 						break;
 					}
 				}
