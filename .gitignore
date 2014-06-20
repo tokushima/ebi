@@ -2,6 +2,5 @@
 /__settings__.php
 .*
 /*.db
-/testman.php
-/cmdman.php
+*.phar
 
