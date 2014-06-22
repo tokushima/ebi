@@ -23,13 +23,13 @@ $ php composer.phar require tokushima/ebi dev-master
 ### cmdman install
 
 ```
-$ php composer.phar require tokushima/cmdman dev-master
+$ curl -Lo http://git.io/cmdman.phar
 ```
 
 ### create start file
 
 ```
-$ ./vendor/bin/cmdman ebi.Dt::setup --create
+$ cmdman.phar ebi.Dt::setup --create
 ```
 
 
