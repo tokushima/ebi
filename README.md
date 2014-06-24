@@ -23,7 +23,7 @@ $ php composer.phar require tokushima/ebi dev-master
 ### cmdman install
 
 ```
-$ curl -Lo http://git.io/cmdman.phar
+$ curl -LO http://git.io/cmdman.phar
 ```
 
 ### create start file
