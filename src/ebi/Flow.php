@@ -135,8 +135,8 @@ class Flow{
 			}else{
 				foreach(debug_backtrace(false) as $d){
 					if(isset($d['file']) && $d['file'] !== __FILE__){
-						$host = 'localhost';
-						$this->app_url = 'http://'.$host.'/'.preg_replace('/.+\/workspace\/(.+)$/','\\1',$d['file']);
+						$host = 'localhost:8000';
+						$this->app_url = 'http://'.$host.'/'.basename($d['file']);
 						break;
 					}
 				}

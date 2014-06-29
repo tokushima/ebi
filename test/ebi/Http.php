@@ -1,6 +1,6 @@
 <?php
 $b = new \ebi\Browser();
-$b->do_get('http://localhost/ebi/abc.php');
+$b->do_get(test_map_url('test_index::template_abc'));
 
 $explode_head = $b->explode_head();
 eq(true,!empty($explode_head));
