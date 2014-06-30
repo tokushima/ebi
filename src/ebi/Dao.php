@@ -967,7 +967,6 @@ abstract class Dao extends \ebi\Object{
 		if($count == 0){
 			$daq = new \ebi\Daq(static::call_class_plugin_funcs('create_table_sql',$dao));
 			$dao->func_query($daq);
-			$dao->commit();
 			return true;
 		}
 		return false;
@@ -983,7 +982,6 @@ abstract class Dao extends \ebi\Object{
 		if($count == 1){
 			$daq = new \ebi\Daq(static::call_class_plugin_funcs('drop_table_sql',$dao));
 			$dao->func_query($daq);
-			$dao->commit();
 			return true;
 		}
 		return false;
