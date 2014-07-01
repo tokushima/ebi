@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Tokyo');
 	'ebi.Dao'=>[
 		'connection'=>[
 			'ebi.SessionDao'=>[],
-			'*'=>[],
+			'*'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'all.db'],
 		]
 	],
 	'ebi.Log'=>[

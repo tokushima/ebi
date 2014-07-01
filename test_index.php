@@ -99,6 +99,8 @@ include_once('bootstrap.php');
 		'form1'=>['name'=>'form1','template'=>'form1.html','action'=>'ebi.flow.Request::noop'],
 		'form2'=>['name'=>'form2','template'=>'form2.html','action'=>'ebi.flow.Request::noop'],
 		
+		'abc'=>['name'=>'abc','action'=>'test.db.Abc::create'],
+		
 		'get_method'=>['name'=>'ge_method','action'=>'test.flow.Action::get_method'],
 		'dt'=>['action'=>'ebi.Dt']
 	],

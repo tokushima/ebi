@@ -25,10 +25,17 @@ class DbConnector{
 		unset($port,$user,$password,$sock);
 		$con = null;
 
-		if(empty($host)) $host = getcwd();
+		if(empty($host)){
+			$host = \ebi\Conf::get('host');
+			if(empty($host)){
+				$host = empty($dbname) ? ':memory:' : getcwd();
+			}
+		}
 		if($host != ':memory:'){
 			$host = str_replace('\\','/',$host);
 			if(substr($host,-1) != '/') $host = $host.'/';
+			$path = \ebi\Util::path_absolute($host,$dbname);
+			\ebi\Util::mkdir(dirname($path));
 		}
 		try{
 			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $host.$dbname));
