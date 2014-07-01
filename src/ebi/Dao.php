@@ -14,17 +14,17 @@ abstract class Dao extends \ebi\Object{
 	private $_class_id_;
 	private $_hierarchy_;
 
-	private static $_co_anon_ = array();
-	private static $_connections_ = array();
+	private static $_co_anon_ = [];
+	private static $_connections_ = [];
 	private static $recording_query = false;
-	private static $record_query = array();	
+	private static $record_query = [];
 
 	/**
 	 * コネクション一覧
 	 * @return Db[]
 	 */
 	public static function connections(){
-		$connections = array();
+		$connections = [];
 		foreach(self::$_connections_ as $n => $con){
 			$connections[$n] = $con;
 		}
