@@ -19,26 +19,35 @@ class DbConnector{
 	public static function type(){
 		return get_called_class();
 	}
-	public function connect($dbname,$host,$port,$user,$password,$sock){
+	/**
+	 * @param string $name
+	 * @param string $host
+	 * @param number $port
+	 * @param string $user
+	 * @param string $password
+	 * @param string $sock
+	 * @param boolean $autocommit
+	 */
+	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_sqlite')) throw new \RuntimeException('pdo_sqlite not supported');
-		if(empty($host) && empty($dbname)) throw new \InvalidArgumentException('undef connection name');
+		if(empty($host) && empty($name)) throw new \InvalidArgumentException('undef connection name');
 		unset($port,$user,$password,$sock);
 		$con = null;
 
 		if(empty($host)){
 			$host = \ebi\Conf::get('host');
 			if(empty($host)){
-				$host = empty($dbname) ? ':memory:' : getcwd();
+				$host = empty($name) ? ':memory:' : getcwd();
 			}
 		}
 		if($host != ':memory:'){
 			$host = str_replace('\\','/',$host);
 			if(substr($host,-1) != '/') $host = $host.'/';
-			$path = \ebi\Util::path_absolute($host,$dbname);
+			$path = \ebi\Util::path_absolute($host,$name);
 			\ebi\Util::mkdir(dirname($path));
 		}
 		try{
-			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $host.$dbname));
+			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $host.$name));
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException($e->getMessage());
 		}

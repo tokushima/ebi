@@ -5,8 +5,7 @@ namespace ebi;
  * @author tokushima
  */
 class Db implements \Iterator{
-	static private $autocommit = false;
-	static private $transaction = false;
+	static private $autocommit;
 	
 	private $type;
 	private $host;
@@ -25,15 +24,6 @@ class Db implements \Iterator{
 	private $connector;
 	
 	/**
-	 * オートコミットを有効にする
-	 * すでに接続済みの場合は無視される
-	 */
-	public static function autocommit(){
-		if(!self::$transaction){
-			self::$autocommit = true;
-		}
-	}
-	/**
 	 * コンストラクタ
 	 * @param string{} $def 接続情報の配列
 	 */
@@ -51,15 +41,18 @@ class Db implements \Iterator{
 		
 		if(empty($this->type) || !class_exists($this->type)) throw new \RuntimeException('could not find connector `'.((substr($s=str_replace("\\",'.',$this->type),0,1) == '.') ? substr($s,1) : $s).'`');
 		$r = new \ReflectionClass($this->type);
-		$this->connector = $r->newInstanceArgs(array($this->encode,$this->timezone));		
+		$this->connector = $r->newInstanceArgs(array($this->encode,$this->timezone));
+		
 		if($this->connector instanceof \ebi\DbConnector){
-			$this->connection = $this->connector->connect($this->dbname,$this->host,$this->port,$this->user,$this->password,$this->sock);
+			if(self::$autocommit === null){
+				self::$autocommit = \ebi\Conf::get('autocommit',false);
+			}
+			$this->connection = $this->connector->connect($this->dbname,$this->host,$this->port,$this->user,$this->password,$this->sock,self::$autocommit);
 		}
 		if(empty($this->connection)){
 			throw new \RuntimeException('connection fail '.$this->dbname);
 		}
-		if(!self::$autocommit){
-			self::$transaction = true;
+		if(self::$autocommit !== true){
 			$this->connection->beginTransaction();
 		}
 	}

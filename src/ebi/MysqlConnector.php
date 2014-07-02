@@ -14,8 +14,9 @@ class MysqlConnector extends \ebi\DbConnector{
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
+	 * @param boolean $autocommit
 	 */
-	public function connect($name,$host,$port,$user,$password,$sock){
+	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_mysql')) throw new \RuntimeException('pdo_mysql not supported');
 		$con = null;
 		if(empty($name)) throw new \ebi\exception\InvalidArgumentException('undef connection name');
@@ -29,8 +30,10 @@ class MysqlConnector extends \ebi\DbConnector{
 					sprintf('mysql:dbname=%s;unix_socket=%s',$name,$sock);
 		try{
 			$con = new \PDO($dsn,$user,$password);
-			$this->prepare_execute($con,'set autocommit=0');
-			$this->prepare_execute($con,'set session transaction isolation level read committed');
+			if(!$autocommit){
+				$this->prepare_execute($con,'set autocommit=0');
+				$this->prepare_execute($con,'set session transaction isolation level read committed');
+			}			
 			if(!empty($this->encode)) $this->prepare_execute($con,'set names \''.$this->encode.'\'');
 			if(!empty($this->timezone)) $this->prepare_execute($con,'set time_zone=\''.$this->timezone.'\'');
 		}catch(\PDOException $e){

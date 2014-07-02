@@ -15,8 +15,9 @@ class PgsqlConnector extends \ebi\DbConnector{
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
+	 * @param boolean $autocommit
 	 */
-	public function connect($name,$host,$port,$user,$password,$sock){
+	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_pgsql')) throw new \RuntimeException('pdo_pgsql not supported');
 		$con = null;
 		if(empty($name)) throw new \ebi\exception\InvalidArgumentException('undef connection name');
