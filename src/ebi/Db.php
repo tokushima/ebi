@@ -5,6 +5,9 @@ namespace ebi;
  * @author tokushima
  */
 class Db implements \Iterator{
+	static private $autocommit = false;
+	static private $transaction = false;
+	
 	private $type;
 	private $host;
 	private $dbname;
@@ -21,6 +24,15 @@ class Db implements \Iterator{
 	private $resultset_counter;
 	private $connector;
 	
+	/**
+	 * オートコミットを有効にする
+	 * すでに接続済みの場合は無視される
+	 */
+	public static function autocommit(){
+		if(!self::$transaction){
+			self::$autocommit = true;
+		}
+	}
 	/**
 	 * コンストラクタ
 	 * @param string{} $def 接続情報の配列
@@ -43,8 +55,13 @@ class Db implements \Iterator{
 		if($this->connector instanceof \ebi\DbConnector){
 			$this->connection = $this->connector->connect($this->dbname,$this->host,$this->port,$this->user,$this->password,$this->sock);
 		}
-		if(empty($this->connection)) throw new \RuntimeException('connection fail '.$this->dbname);
-		$this->connection->beginTransaction();
+		if(empty($this->connection)){
+			throw new \RuntimeException('connection fail '.$this->dbname);
+		}
+		if(!self::$autocommit){
+			self::$transaction = true;
+			$this->connection->beginTransaction();
+		}
 	}
 	/**
 	 * 接続DB名
@@ -69,15 +86,19 @@ class Db implements \Iterator{
 	 * コミットする
 	 */
 	public function commit(){
-		$this->connection->commit();
-		$this->connection->beginTransaction();
+		if(!self::$autocommit){
+			$this->connection->commit();
+			$this->connection->beginTransaction();
+		}
 	}
 	/**
 	 * ロールバックする
 	 */
 	public function rollback(){
-		$this->connection->rollBack();
-		$this->connection->beginTransaction();
+		if(!self::$autocommit){
+			$this->connection->rollBack();
+			$this->connection->beginTransaction();
+		}
 	}
 	/**
 	 * 文を実行する準備を行う
