@@ -78,6 +78,8 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 現在のURLを返す
+	 * @param integer $port_https
+	 * @param integer $port_http
 	 * @return string
 	 */
 	public static function current_url($port_https=443,$port_http=80){
@@ -86,7 +88,6 @@ class Request implements \IteratorAggregate{
 		$path = isset($_SERVER['REQUEST_URI']) ?
 					preg_replace("/^(.+)\?.*$/","\\1",$_SERVER['REQUEST_URI']) :
 					(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'].(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '') : '');
-
 		return $server.$path;
 	}
 	/**
