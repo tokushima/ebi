@@ -120,4 +120,16 @@ class PgsqlConnector extends \ebi\DbConnector{
 				,$vars
 		);
 	}
+	protected function column_value(\ebi\Dao $dao,$name,$value){
+		if($value === null) return null;
+		try{
+			switch($dao->prop_anon($name,'type')){
+				case 'timestamp': return date('Y/m/d H:i:s',$value);
+				case 'date': return date('Y/m/d',$value);
+				case 'boolean': return (int)$value;
+			}
+		}catch(\Exception $e){
+		}
+		return $value;
+	}
 }

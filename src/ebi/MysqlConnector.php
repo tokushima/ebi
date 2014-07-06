@@ -19,8 +19,12 @@ class MysqlConnector extends \ebi\DbConnector{
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_mysql')) throw new \RuntimeException('pdo_mysql not supported');
 		$con = null;
-		if(empty($name)) throw new \ebi\exception\InvalidArgumentException('undef connection name');
-		if(empty($host)) $host = 'localhost';
+		if(empty($name)){
+			throw new \ebi\exception\InvalidArgumentException('undef connection name');
+		}
+		if(empty($host)){
+			$host = 'localhost';
+		}
 		if(!isset($user) && !isset($password)){
 			$user = 'root';
 			$password = 'root';

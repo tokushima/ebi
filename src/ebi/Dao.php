@@ -99,7 +99,9 @@ abstract class Dao extends \ebi\Object{
 			$conf = explode("\\",$p);
 			$def = \ebi\Conf::get('connection');
 			while(!isset($def[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
-			if(empty($conf) && !isset($def['*'])) throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
+			if(empty($conf) && !isset($def['*'])){
+				throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
+			}
 			$anon[0] = empty($conf) ? '*' : implode('.',$conf);
 			
 			if(empty($anon[1])){
@@ -117,7 +119,9 @@ abstract class Dao extends \ebi\Object{
 				for($i=1;$i<strlen($table_class);$i++) $anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
 			}
 			$config = self::get_con($anon[0],$p);
-			if(!isset(self::$_connections_[$anon[0]])) throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
+			if(!isset(self::$_connections_[$anon[0]])){
+				throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
+			}
 			static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
 			$anon[5] = isset($config['prefix']) ? $config['prefix'] : '';
 			$anon[6] = (isset($config['upper']) && $config['upper'] === true);

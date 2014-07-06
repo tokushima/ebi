@@ -7,6 +7,7 @@ use \ebi\Q;
  * @var string $id @['primary'=>true]
  * @var text $data
  * @var number $expires
+ * @plugin ebi.Session
  */
 class SessionDao extends \ebi\Dao{
 	protected $id;

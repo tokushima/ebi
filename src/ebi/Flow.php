@@ -115,49 +115,31 @@ class Flow{
 		
 		if(empty($this->app_url)){
 			$host = \ebi\Request::host();
+			$entry_file = null;
 			
-			if(!empty($host)){
-				list($script) = explode('.php',isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : $_SERVER['PHP_SELF']);
-				if(!empty($script)){
-					$url = '';
-					foreach(explode('/',$script) as $u){
-						if(!empty($u)){
-							$url .= '/'.$u;
-
-							if(is_file(getcwd().$url.'.php')){
-								$script = $url;
-								break;
-							}
-						}
-					}
-				}
-				$this->app_url = $host.$script.(\ebi\Conf::get('rewrite_entry',false) ? '' : '.php');
-			}else{
-				foreach(debug_backtrace(false) as $d){
-					if(isset($d['file']) && $d['file'] !== __FILE__){
-						$host = 'localhost:8000';
-						$this->app_url = 'http://'.$host.'/'.basename($d['file']);
-						break;
-					}
+			foreach(debug_backtrace(false) as $d){
+				if($d['file'] !== __FILE__){
+					$entry_file = str_replace("\\",'/',$d['file']);
+					break;
 				}
 			}
-			$this->app_url = str_replace('https://','http://',$this->app_url);
-			if(empty($this->media_url)){
+			if(empty($host)){
+				$this->app_url = 'http://localhost:8000/'.basename($entry_file);
+			}else{
+				$hasport = (boolean)preg_match('/:\d+/',$host);
+				$entry = preg_replace("/.+\/workspace(\/.+)/","\\1",$entry_file);
+				$this->app_url = $host.'/'.($hasport ? basename($entry) : $entry);
 				$this->media_url = dirname($this->app_url).'/resources/media/';
 			}
 		}
+		$this->app_url = str_replace('https://','http://',$this->app_url);
 		if(empty($this->media_url)){
-			$this->media_url = $this->app_url.'/resources/media/';
+			$this->media_url = dirname($this->app_url).'/resources/media/';
 		}
-		$path = function($url){
-			$url = str_replace('\\','/',$url);
-			if(substr($url,-1) != '/') $url .= '/';
-			return $url;
-		};
-		$this->app_url = $path($this->app_url);
-		$this->media_url = $path($this->media_url);
-		$this->apps_path = $path(\ebi\Conf::get('apps_path',getcwd().'/apps/'));
-		$this->template_path = $path(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')));
+		$this->app_url = \ebi\Util::path_slash($this->app_url,null,true);
+		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
+		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
+		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		$this->template = new \ebi\Template();
 		
 		if(is_string($map)){

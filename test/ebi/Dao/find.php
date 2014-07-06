@@ -4,17 +4,9 @@ use \ebi\Q;
 $ref = function($o){
 	return $o;
 };
-
-\test\db\Find::create_table();
 \test\db\Find::find_delete();
-
-\test\db\SubFind::create_table();
 \test\db\SubFind::find_delete();
-
-\test\db\RefFind::create_table();
 \test\db\RefFind::find_delete();
-
-\test\db\RefRefFind::create_table();
 \test\db\RefRefFind::find_delete();
 
 

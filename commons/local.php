@@ -1,12 +1,8 @@
 <?php
-set_include_path(dirname(__DIR__).'/src'.PATH_SEPARATOR.get_include_path());
-
-date_default_timezone_set('Asia/Tokyo');
-
 \ebi\Conf::set([
 	'ebi.Dao'=>[
 		'connection'=>[
-			'ebi.SessionDao'=>[],
+			'ebi.SessionDao'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'session.db'],
 			'*'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'all.db'],
 		]
 	],
@@ -20,12 +16,20 @@ date_default_timezone_set('Asia/Tokyo');
 //		'rewrite_entry'=>true,
 //		'app_url'=>'http://localhost:8888/urls',
 //		'secure'=>false,
+	],
+	'ebi.Dt'=>[
+		'use_vendor'=>[
+			'ebi.SmtpBlackholeDao',
+			'ebi.SessionDao',
+			'ebi.queue.plugin.Dao.QueueDao'
+		],
 	]
 ]);
+	
 
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>['ebi.SmtpBlackholeDao'],
-//	'ebi.Session'=>['ebi.SessionDao'],
+	'ebi.Session'=>['ebi.SessionDao'],
 ]);
 
 
