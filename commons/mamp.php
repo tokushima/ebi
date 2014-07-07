@@ -6,11 +6,9 @@
 			'*'=>['type'=>'ebi.MysqlConnector','dbname'=>'ebi'],
 		]
 	],
-	'ebi.Flow'=>[
-		'app_url'=>'http://localhost/ebi/test_index.php',
-	]
 ]);
 
-//\ebi\Conf::set('ebi.Flow','app_url','http://localhost/ebi/');
+\ebi\Conf::set('ebi.Flow','app_url','http://localhost/ebi/test_index.php');
+//\ebi\Conf::set('ebi.Flow','app_url','http://localhost/ebi/test_index');
 
 include_once('local.php');

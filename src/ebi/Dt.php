@@ -674,7 +674,7 @@ class Dt{
 		foreach(new \DirectoryIterator(getcwd()) as $f){
 			if($f->isFile() && substr($f->getPathname(),-4) == '.php' && substr($f->getFilename(),0,1) != '_' && $f->getFilename() != 'index.php'){
 				$src = file_get_contents($f->getPathname());
-				if(strpos($src,'Flo'.'w') !== false && (strpos($src,'->execu'.'te(') !== false)){
+				if(strpos($src,'Flo'.'w::app(') !== false){
 					$app = substr($f->getFilename(),0,-4);
 					$rules .= "RewriteCond %{REQUEST_FILENAME} !-f\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule ^".$app."[/]{0,1}(.*)\$ ".$app.".php/\$1?%{QUERY_STRING} [L]\n\n";
 				}

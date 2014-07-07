@@ -132,11 +132,11 @@ class Flow{
 				$this->media_url = dirname($this->app_url).'/resources/media/';
 			}
 		}
-		$this->app_url = str_replace('https://','http://',$this->app_url);
+		$this->app_url = \ebi\Util::path_slash(str_replace('https://','http://',$this->app_url),null,true);
 		if(empty($this->media_url)){
-			$this->media_url = dirname($this->app_url).'/resources/media/';
+			$media_path = preg_replace('/\/.+\.php$/','',$this->app_url);
+			$this->media_url = $media_path.'resources/media/';
 		}
-		$this->app_url = \ebi\Util::path_slash($this->app_url,null,true);
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
 		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
