@@ -19,7 +19,6 @@ eq(true,isset($json['result']['csrftoken']));
 
 $b->vars('csrftoken',$json['result']['csrftoken']);
 $b->do_post(test_map_url('test_index::csrf'));
-meq('result',$b->body());
 eq(200,$b->status());
 
 $b->do_get(test_map_url('test_index::csrf_template'));
