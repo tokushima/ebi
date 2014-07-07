@@ -121,7 +121,7 @@ class Conf{
 				$obj = [$obj];
 			}
 			foreach($obj as $o){
-				self::$plugins[$c][] = $o;
+				self::$plugins[$class][] = $o;
 			}
 		}
 	}

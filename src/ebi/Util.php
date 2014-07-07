@@ -249,8 +249,8 @@ class Util{
 	 * ENVに値があれば返す
 	 * @param string $name
 	 */
-	public static function getenv($name){
-		return (isset($_ENV[$name]) && !empty($_ENV[$name])) ? $_ENV[$name] : (isset($_SERVER[$name]) ? $_SERVER[$name] : null);
+	public static function getenv($name,$default=null){
+		return (isset($_ENV[$name]) && !empty($_ENV[$name])) ? $_ENV[$name] : (isset($_SERVER[$name]) ? $_SERVER[$name] : $default);
 	}
 	/**
 	 * 日付に加減する
