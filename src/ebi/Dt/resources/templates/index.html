@@ -9,8 +9,12 @@
 			linkform.method = method;
 			
 			try{
-				data = $.parseJSON(datafrm.query.value);
+				data = [];
+				datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
 				
+				if(datafrm.query.value){
+					data = $.parseJSON(datafrm.query.value);
+				}				
 				for(key in data){
 					$('<input />')
 						.attr('type','hidden')
@@ -20,7 +24,7 @@
 				}
 				linkform.submit();
 			}catch(e){
-				alert('query invalid');
+				alert('query invalid: ' + e);
 			}
 		}
 	</script>
