@@ -134,7 +134,7 @@ class Flow{
 		}
 		$this->app_url = \ebi\Util::path_slash(str_replace('https://','http://',$this->app_url),null,true);
 		if(empty($this->media_url)){
-			$media_path = preg_replace('/\/.+\.php$/','',$this->app_url);
+			$media_path = preg_replace('/\/[^\/]+\.php[\/]$/','/',$this->app_url);
 			$this->media_url = $media_path.'resources/media/';
 		}
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
