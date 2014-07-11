@@ -250,7 +250,11 @@ class Util{
 	 * @param string $name
 	 */
 	public static function getenv($name,$default=null){
-		return (isset($_ENV[$name]) && !empty($_ENV[$name])) ? $_ENV[$name] : (isset($_SERVER[$name]) ? $_SERVER[$name] : $default);
+		return (isset($_ENV[$name]) && $_ENV[$name] != '') ? $_ENV[$name] : (
+					(isset($_SERVER[$name]) && $_SERVER[$name]  != '') ? $_SERVER[$name] : (
+						(getenv($name) !== false && getenv($name) != '') ? getenv($name) : (
+						 $default
+		)));
 	}
 	/**
 	 * 日付に加減する
