@@ -4,7 +4,7 @@ namespace test\db;
  * @var serial $id
  * @var number $order
  * @var timestamp $updated
- * @var string $value
+ * @var string $value1
  * @var string $value2
  */
 class Find extends \ebi\Dao{

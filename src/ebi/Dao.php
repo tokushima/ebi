@@ -80,9 +80,13 @@ abstract class Dao extends \ebi\Object{
 			}
 		}
 		$p = get_class($this);
-		if(!isset($this->_class_id_)) $this->_class_id_ = $p;		
+		if(!isset($this->_class_id_)){
+			$this->_class_id_ = $p;
+		}
 		if(isset(self::$_dao_[$this->_class_id_])){
-			foreach(self::$_dao_[$this->_class_id_]->_has_dao_ as $name => $dao) $this->{$name}($dao);
+			foreach(self::$_dao_[$this->_class_id_]->_has_dao_ as $name => $dao){
+				$this->{$name}($dao);
+			}
 			return;
 		}
 		if(!isset(self::$_co_anon_[$p])){
@@ -116,7 +120,9 @@ abstract class Dao extends \ebi\Object{
 				}
 				$table_class = preg_replace("/^.*\\\\(.+)$/","\\1",$table_class);
 				$anon[1] = strtolower($table_class[0]);
-				for($i=1;$i<strlen($table_class);$i++) $anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
+				for($i=1;$i<strlen($table_class);$i++){
+					$anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
+				}
 			}
 			$config = self::get_con($anon[0],$p);
 			if(!isset(self::$_connections_[$anon[0]])){
@@ -872,7 +878,9 @@ abstract class Dao extends \ebi\Object{
 			}
 		}
 		if($new){
-			if(!self::$_co_anon_[$self][2]) throw new \ebi\exception\BadMethodCallException('create save is not permitted');
+			if(!self::$_co_anon_[$self][2]){
+				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
+			}
 			$this->__before_save__();
 			$this->__before_create__();
 			$this->save_verify_primary_unique();
@@ -883,7 +891,9 @@ abstract class Dao extends \ebi\Object{
 			 * @return Daq
 			 */
 			$daq = $self::call_class_plugin_funcs('create_sql',$this);
-			if($this->update_query($daq) == 0) throw new \RuntimeException('create failed');
+			if($this->update_query($daq) == 0){
+				throw new \RuntimeException('create failed');
+			}
 			if($daq->is_id()){
 				/**
 				 * AUTOINCREMENTの値を取得するSQL文の生成
@@ -891,19 +901,26 @@ abstract class Dao extends \ebi\Object{
 				 * @return integer
 				 */
 				$result = $this->func_query(static::call_class_plugin_funcs('last_insert_id_sql',$this));
-				if(empty($result)) throw new \RuntimeException('create failed');
+				if(empty($result)){
+					throw new \RuntimeException('create failed');
+				}
 				$this->{$daq->id()}($result[0]);
 			}
 			$this->__after_create__();
 			$this->__after_save__();
 		}else{
-			if(!self::$_co_anon_[$self][3]) throw new \ebi\exception\BadMethodCallException('update save is not permitted');
+			if(!self::$_co_anon_[$self][3]){
+				throw new \ebi\exception\BadMethodCallException('update save is not permitted');
+			}
 			$this->__before_save__();
 			$this->__before_update__();
 			$this->validate();
 			$args = func_get_args();
 			$query = new \ebi\Q();
-			if(!empty($args)) call_user_func_array(array($query,'add'),$args);
+			
+			if(!empty($args)){
+				call_user_func_array(array($query,'add'),$args);
+			}
 			/**
 			 * updateを実行するSQL文の生成
 			 * @param self $this
@@ -911,7 +928,10 @@ abstract class Dao extends \ebi\Object{
 			 */
 			$daq = $self::call_class_plugin_funcs('update_sql',$this,$query);
 			$affected_rows = $this->update_query($daq);
-			if($affected_rows === 0 && !empty($args)) throw new \ebi\exception\NoRowsAffectedException();
+			
+			if($affected_rows === 0 && !empty($args)){
+				throw new \ebi\exception\NoRowsAffectedException();
+			}
 			$this->__after_update__();
 			$this->__after_save__();
 		}

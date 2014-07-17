@@ -157,7 +157,9 @@ class DbConnector{
 				}
 			}
 		}
-		if(empty($select)) throw new \ebi\exception\LogicException('select invalid');
+		if(empty($select)){
+			throw new \ebi\exception\LogicException('select invalid');
+		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->self_columns(true),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq(('select '.implode(',',$select).' from '.implode(',',$from)
 				.(empty($where_sql) ? '' : ' where '.$where_sql)
@@ -410,7 +412,9 @@ class DbConnector{
 		return $this->column_value($dao,$name,$dao->{$name}());
 	}
 	protected function get_column($column_str,array $self_columns){
-		if(isset($self_columns[$column_str])) return $self_columns[$column_str];
+		if(isset($self_columns[$column_str])){
+			return $self_columns[$column_str];
+		}
 		foreach($self_columns as $c){
 			if($c->name() == $column_str) return $c;
 		}

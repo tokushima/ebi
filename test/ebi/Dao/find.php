@@ -50,6 +50,11 @@ $ref3 = $ref(new \test\db\RefFind())->parent_id($ghi->id())->save();
 $ref4 = $ref(new \test\db\RefFind())->parent_id($jkl->id())->save();
 eq(4,sizeof(\test\db\RefFind::find_all()));
 eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value','def'))));
+eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value2','EDC'))));
+
+// TODO
+eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value','def'))));
+eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value2','EDC'))));
 
 eq(4,sizeof(\test\db\HasFind::find_all()));
 $has1 = \test\db\HasFind::find_get(Q::eq('parent_id',$ref3->parent_id()));
