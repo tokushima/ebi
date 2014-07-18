@@ -137,163 +137,138 @@ abstract class Dao extends \ebi\Object{
 		}		
 		$has_hierarchy = (isset($this->_hierarchy_)) ? $this->_hierarchy_ - 1 : $this->_has_hierarchy_;
 		$root_table_alias = 't'.self::$_cnt_++;
-		$_columns_ = $_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = array();
+		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = array();
 		
 		$prop = array();
 		$ref = new \ReflectionClass($this);
 		foreach($ref->getProperties(\ReflectionProperty::IS_PUBLIC|\ReflectionProperty::IS_PROTECTED) as $prop){
-			$props[] = $prop->getName();
+			if($prop->getName()[0] != '_' && $this->prop_anon($prop->getName(),'extra') !== true){
+				$props[] = $prop->getName();
+			}
 		}
 		while(!empty($props)){
 			$name = array_shift($props);
-			
-			if($name[0] != '_' && $this->prop_anon($name,'extra') !== true){
-				$anon_cond = $this->prop_anon($name,'cond');
-				
-				$column_type = $this->prop_anon($name,'type');
-				if(empty($column_type)){
-					if($name == 'id'){
-						$this->prop_anon($name,'type','serial',true);
-					}else if($name == 'created_at' || $name == 'create_date'){
-						$this->prop_anon($name,'type','timestamp',true);
-						$this->prop_anon($name,'auto_now_add',true,true);
-					}else if($name == 'updated_at' || $name == 'update_date'){
-						$this->prop_anon($name,'type','timestamp',true);
-						$this->prop_anon($name,'auto_now',true,true);
-					}else if($name == 'code'){
-						$this->prop_anon($name,'type','string',true);
-						$this->prop_anon($name,'auto_code_add',true,true);
-					}
-					$column_type = $this->prop_anon($name,'type','string');
+			$anon_cond = $this->prop_anon($name,'cond');
+			$column_type = $this->prop_anon($name,'type');
+			if(empty($column_type)){
+				if($name == 'id'){
+					$this->prop_anon($name,'type','serial',true);
+				}else if($name == 'created_at' || $name == 'create_date'){
+					$this->prop_anon($name,'type','timestamp',true);
+					$this->prop_anon($name,'auto_now_add',true,true);
+				}else if($name == 'updated_at' || $name == 'update_date'){
+					$this->prop_anon($name,'type','timestamp',true);
+					$this->prop_anon($name,'auto_now',true,true);
+				}else if($name == 'code'){
+					$this->prop_anon($name,'type','string',true);
+					$this->prop_anon($name,'auto_code_add',true,true);
 				}
-				if($this->prop_anon($name,'type') == 'serial'){
-					$this->prop_anon($name,'primary',true,true);
-				}				
-				$column = new \ebi\Column();
-				$column->name($name);
-				$column->column($this->prop_anon($name,'column',$name));
-				$column->column_alias('c'.self::$_cnt_++);
+				$column_type = $this->prop_anon($name,'type','string');
+			}
+			if($this->prop_anon($name,'type') == 'serial'){
+				$this->prop_anon($name,'primary',true,true);
+			}				
+			$column = new \ebi\Column();
+			$column->name($name);
+			$column->column($this->prop_anon($name,'column',$name));
+			$column->column_alias('c'.self::$_cnt_++);
 
-				if($anon_cond === null){
-					if(ctype_upper($column_type[0]) && class_exists($column_type) && is_subclass_of($column_type,__CLASS__)){
-						throw new \RuntimeException('undef '.$name.' annotation `cond`');
-					}
-					$column->table($this->table());
-					$column->table_alias($root_table_alias);
-					$column->primary($this->prop_anon($name,'primary',false) || $column_type === 'serial');
-					$column->auto($column_type === 'serial');
-					$_columns_[] = $column;
-					$_self_columns_[$name] = $column;
-					
-					
-					$_alias_[$column->column_alias()] = $name;
-				}else if(false !== strpos($anon_cond,'(')){
-					$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
-					$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
-					if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
-						list(,$self_var,$conds_string,$has_var) = $match;
-						$conds = array();
-						$ref_table = $ref_table_alias = null;
-						if(!empty($conds_string)){
-							foreach(explode(',',$conds_string) as $cond){
-								$tcc = explode('.',$cond,3);
-								switch(sizeof($tcc)){
-									case 1:
-										$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->table(),$root_table_alias);
-										break;
-									case 2:
-										list($t,$c1) = $tcc;
-										$ref_table = self::set_table_name($t,$p);
-										$ref_table_alias = 't'.self::$_cnt_++;
-										$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-										break;
-									case 3:
-										list($t,$c1,$c2) = $tcc;
-										$ref_table = self::set_table_name($t,$p);
-										$ref_table_alias = 't'.self::$_cnt_++;
-										$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-										$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-										break;
-									default:
-										throw new \LogicException('annotation error : `'.$name.'`');
-								}
+			if($anon_cond === null){
+				if(ctype_upper($column_type[0]) && class_exists($column_type) && is_subclass_of($column_type,__CLASS__)){
+					throw new \RuntimeException('undef '.$name.' annotation `cond`');
+				}
+				$column->table($this->table());
+				$column->table_alias($root_table_alias);
+				$column->primary($this->prop_anon($name,'primary',false) || $column_type === 'serial');
+				$column->auto($column_type === 'serial');
+				$_alias_[$column->column_alias()] = $name;
+				
+				$_self_columns_[$name] = $column;				
+			}else if(false !== strpos($anon_cond,'(')){
+				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
+				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
+				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
+					list(,$self_var,$conds_string,$has_var) = $match;
+					$conds = array();
+					$ref_table = $ref_table_alias = null;
+					if(!empty($conds_string)){
+						foreach(explode(',',$conds_string) as $cond){
+							$tcc = explode('.',$cond,3);
+							switch(sizeof($tcc)){
+								case 1:
+									$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->table(),$root_table_alias);
+									break;
+								case 2:
+									list($t,$c1) = $tcc;
+									$ref_table = self::set_table_name($t,$p);
+									$ref_table_alias = 't'.self::$_cnt_++;
+									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
+									break;
+								case 3:
+									list($t,$c1,$c2) = $tcc;
+									$ref_table = self::set_table_name($t,$p);
+									$ref_table_alias = 't'.self::$_cnt_++;
+									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
+									$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
+									break;
+								default:
+									throw new \LogicException('annotation error : `'.$name.'`');
 							}
 						}
-						if($is_has_many){
-							if(empty($has_var)) throw new \LogicException('annotation error : `'.$name.'`');
-							$dao = new $column_type(array('_class_id_'=>$p.'___'.self::$_cnt_++));
+					}
+					if($is_has_many){
+						if(empty($has_var)) throw new \LogicException('annotation error : `'.$name.'`');
+						$dao = new $column_type(array('_class_id_'=>$p.'___'.self::$_cnt_++));
+						$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
+					}else{
+						if($is_has){
+							if(empty($has_var)){
+								throw new \LogicException('annotation error : `'.$name.'`');
+							}
+							$dao = new $column_type(array('_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy));
+							$this->{$name}($dao);
+
 							$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
 						}else{
-							$self_db = true;
-							if($is_has){
-								if(empty($has_var)){
-									throw new \LogicException('annotation error : `'.$name.'`');
-								}
-								$dao = new $column_type(array('_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy));
-								$this->{$name}($dao);
-								if($dao->table() == $this->table()){
-									$_has_dao_[$name] = $dao;
-									$_columns_ = array_merge($_columns_,$dao->columns());
-									$_conds_ = array_merge($_conds_,$dao->conds());
-									$this->prop_anon($name,'has',true,true);
-									foreach($dao->columns() as $column){
-										$_alias_[$column->column_alias()] = $name;
-									}
-									$has_column = $dao->base_column($dao->columns(),$has_var);
-									$conds[] = \ebi\Column::cond_instance($has_column->column(),'c'.self::$_cnt_++,$has_column->table(),$has_column->table_alias());
-								}else{
-									$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
-									$self_db = false;
+							$column->table($ref_table);
+							$column->table_alias($ref_table_alias);
+							$_alias_[$column->column_alias()] = $name;
+							
+							array_unshift($conds,\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias));
+							if(sizeof($conds) % 2 != 0){
+								throw new \RuntimeException($name.'['.$column_type.'] is illegal condition');
+							}
+							if($this->prop_anon($name,'join',false)){
+								$this->prop_anon($name,'get',false,true);
+								$this->prop_anon($name,'set',false,true);
+							
+								for($i=0;$i<sizeof($conds);$i+=2){
+									$_join_conds_[$name][] = array($conds[$i],$conds[$i+1]);
 								}
 							}else{
-								$column->table($ref_table);
-								$column->table_alias($ref_table_alias);
-								
-								if(!$this->prop_anon($name,'join',false)){
-									$_columns_[] = $column;
-								}
-								$_where_columns_[$name] = $column;
-								
-								
-								$_alias_[$column->column_alias()] = $name;
-							}
-							if($self_db){
-								array_unshift($conds,\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias));
-								if(sizeof($conds) % 2 != 0) throw new \RuntimeException($name.'['.$column_type.'] is illegal condition');
-								if($this->prop_anon($name,'join',false)){
-									$this->prop_anon($name,'get',false,true);
-									$this->prop_anon($name,'set',false,true);
-									
-									for($i=0;$i<sizeof($conds);$i+=2){
-										$_join_conds_[$name][] = array($conds[$i],$conds[$i+1]);
-									}
-								}else{
-									for($i=0;$i<sizeof($conds);$i+=2){
-										$_conds_[] = array($conds[$i],$conds[$i+1]);
-									}
+								for($i=0;$i<sizeof($conds);$i+=2){
+									$_conds_[] = array($conds[$i],$conds[$i+1]);
 								}
 							}
+							$_where_columns_[$name] = $column;
 						}
 					}
-				}else if($anon_cond[0] === '@'){
-					$cond_name = substr($anon_cond,1);
-					if(in_array($cond_name,$props)){
-						$props[] = $name;
-						continue;
-					}
-					$c = $this->base_column($_columns_,$cond_name);
-					$column->table($c->table());
-					$column->table_alias($c->table_alias());
-					
-					$_columns_[] = $column;
-					$_where_columns_[$name] = $column;
-					
-					$_alias_[$column->column_alias()] = $name;
 				}
+			}else if($anon_cond[0] === '@'){
+				$cond_name = substr($anon_cond,1);
+				if(in_array($cond_name,$props)){
+					$props[] = $name;
+					continue;
+				}
+				$c = $this->base_column(array_merge($_self_columns_,$_where_columns_),$cond_name);
+				$column->table($c->table());
+				$column->table_alias($c->table_alias());
+				$_alias_[$column->column_alias()] = $name;
+				
+				$_where_columns_[$name] = $column;
 			}
 		}
 		self::$_dao_[$this->_class_id_] = (object)array(
-														'_columns_'=>$_columns_,
 														'_self_columns_'=>$_self_columns_,
 														'_where_columns_'=>$_where_columns_,
 														'_conds_'=>$_conds_,
@@ -319,8 +294,11 @@ abstract class Dao extends \ebi\Object{
 	 * 全てのColumnの一覧を取得する
 	 * @return \ebi\Column[]
 	 */
-	public function columns(){
-		return self::$_dao_[$this->_class_id_]->_columns_;
+	public function columns($self_only=false){
+		if($self_only){
+			return self::$_dao_[$this->_class_id_]->_self_columns_;
+		}
+		return array_merge(self::$_dao_[$this->_class_id_]->_where_columns_,self::$_dao_[$this->_class_id_]->_self_columns_);
 	}
 	/**
 	 * 主のColumnの一覧を取得する
