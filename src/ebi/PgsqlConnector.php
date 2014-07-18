@@ -110,7 +110,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = array();
 		$autoid = null;
-		foreach($dao->self_columns() as $column){
+		foreach($dao->columns(true) as $column){
 			if(!$column->auto()){
 				$insert[] = $this->quotation($column->column());
 				$vars[] = $this->update_value($dao,$column->name());

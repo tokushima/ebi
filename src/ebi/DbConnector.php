@@ -64,7 +64,7 @@ class DbConnector{
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = array();
 		$autoid = null;
-		foreach($dao->self_columns() as $column){
+		foreach($dao->columns(true) as $column){
 			if($column->auto()) $autoid = $column->name();
 			$insert[] = $this->quotation($column->column());
 			$vars[] = $this->update_value($dao,$column->name());
@@ -87,14 +87,14 @@ class DbConnector{
 			$wherevars[] = $this->update_value($dao,$column->name());
 		}
 		if(empty($where)) throw new \ebi\exception\LogicException('primary not found');
-		foreach($dao->self_columns() as $column){
+		foreach($dao->columns(true) as $column){
 			if(!$column->primary()){
 				$update[] = $this->quotation($column->column()).' = ?';
 				$updatevars[] = $this->update_value($dao,$column->name());
 			}
 		}
 		$vars = array_merge($updatevars,$wherevars);
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->self_columns(),null,false);
+		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
 				'update '.$this->quotation($column->table()).' set '.implode(',',$update).' where '.implode(' and ',$where).(empty($where_sql) ? '' : ' and '.$where_sql)
 				,array_merge($vars,$where_vars)
@@ -125,7 +125,7 @@ class DbConnector{
 	 */
 	public function find_delete_sql(\ebi\Dao $dao,\ebi\Q $query){
 		$from = array();
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->self_columns(),null,false);
+		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
 				'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
 				,$where_vars
@@ -159,10 +159,10 @@ class DbConnector{
 		if(empty($select)){
 			throw new \ebi\exception\LogicException('select invalid');
 		}
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->self_columns(true),$this->where_cond_columns($dao->conds(),$from));
+		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq(('select '.implode(',',$select).' from '.implode(',',$from)
 				.(empty($where_sql) ? '' : ' where '.$where_sql)
-				.$this->select_option_sql($paginator,$this->select_order($query,$dao->self_columns(true)))
+				.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
 		)
 				,$where_vars
 		);
@@ -256,7 +256,7 @@ class DbConnector{
 		$select = $from = array();
 		$target_column = $group_column = null;
 		if(empty($target_name)){
-			$self_columns = $dao->self_columns();
+			$self_columns = $dao->columns(true);
 			$primary_columns = $dao->primary_columns();
 			if(!empty($primary_columns)) $target_column = current($primary_columns);
 			if(empty($target_column) && !empty($self_columns)) $target_column = current($self_columns);
@@ -271,7 +271,7 @@ class DbConnector{
 		foreach($dao->columns() as $column){
 			$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
 		}
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->self_columns(true),$this->where_cond_columns($dao->conds(),$from));
+		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq(('select '.$exe.'('.$target_column->table_alias().'.'.$this->quotation($target_column->column()).') target_column'
 					.(empty($select) ? '' : ','.implode(',',$select))
 					.' from '.implode(',',$from)

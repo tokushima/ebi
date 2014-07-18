@@ -183,7 +183,7 @@ abstract class Dao extends \ebi\Object{
 				$column->auto($column_type === 'serial');
 				$_alias_[$column->column_alias()] = $name;
 				
-				$_self_columns_[$name] = $column;				
+				$_self_columns_[$name] = $column;
 			}else if(false !== strpos($anon_cond,'(')){
 				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
 				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
@@ -260,11 +260,16 @@ abstract class Dao extends \ebi\Object{
 					$props[] = $name;
 					continue;
 				}
-				$c = $this->base_column(array_merge($_self_columns_,$_where_columns_),$cond_name);
-				$column->table($c->table());
-				$column->table_alias($c->table_alias());
+				if(isset($_self_columns_[$cond_name])){
+					$column->table($_self_columns_[$cond_name]->table());
+					$column->table_alias($_self_columns_[$cond_name]->table_alias());
+				}else if(isset($_where_columns_[$cond_name])){
+					$column->table($_where_columns_[$cond_name]->table());
+					$column->table_alias($_where_columns_[$cond_name]->table_alias());					
+				}else{
+					throw new \RuntimeException('undef var `'.$name.'`');
+				}
 				$_alias_[$column->column_alias()] = $name;
-				
 				$_where_columns_[$name] = $column;
 			}
 		}
@@ -284,14 +289,8 @@ abstract class Dao extends \ebi\Object{
 		if(self::$_co_anon_[$class][7]) $name = strtolower($name);
 		return $name;
 	}
-	private function base_column($_columns_,$name){
-		foreach($_columns_ as $c){
-			if($c->is_base() && $c->name() === $name) return $c;
-		}
-		throw new \RuntimeException('undef var `'.$name.'`');
-	}
 	/**
-	 * 全てのColumnの一覧を取得する
+	 * Columnの一覧を取得する
 	 * @return \ebi\Column[]
 	 */
 	public function columns($self_only=false){
@@ -299,16 +298,6 @@ abstract class Dao extends \ebi\Object{
 			return self::$_dao_[$this->_class_id_]->_self_columns_;
 		}
 		return array_merge(self::$_dao_[$this->_class_id_]->_where_columns_,self::$_dao_[$this->_class_id_]->_self_columns_);
-	}
-	/**
-	 * 主のColumnの一覧を取得する
-	 * @return \ebi\Column[]
-	 */
-	public function self_columns($all=false){
-		if($all){
-			return array_merge(self::$_dao_[$this->_class_id_]->_where_columns_,self::$_dao_[$this->_class_id_]->_self_columns_);
-		}
-		return self::$_dao_[$this->_class_id_]->_self_columns_;
 	}
 	/**
 	 * primaryのColumnの一覧を取得する
@@ -456,7 +445,7 @@ abstract class Dao extends \ebi\Object{
 	 * 値の妥当性チェックを行う
 	 */
 	public function validate(){
-		foreach($this->self_columns() as $name => $column){
+		foreach($this->columns(true) as $name => $column){
 			$value = $this->{$name}();
 			$e_require = false;
 
@@ -861,7 +850,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		$self = get_class($this);
 		if(!$new && $self::find_count($q) === 0) $new = true;
-		foreach($this->self_columns() as $column){
+		foreach($this->columns(true) as $column){
 			if($this->prop_anon($column->name(),'auto_now') === true){
 				switch($this->prop_anon($column->name(),'type')){
 					case 'timestamp':
