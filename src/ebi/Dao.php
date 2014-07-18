@@ -139,9 +139,15 @@ abstract class Dao extends \ebi\Object{
 		$root_table_alias = 't'.self::$_cnt_++;
 		$_columns_ = $_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = array();
 		
-		foreach(array_keys(get_object_vars($this)) as $name){
+		$prop = array();
+		$ref = new \ReflectionClass($this);
+		foreach($ref->getProperties() as $prop){
+			$props[] = $prop->getName();
+		}
+		foreach($props as $k => $name){
 			if($name[0] != '_' && $this->prop_anon($name,'extra') !== true){
 				$anon_cond = $this->prop_anon($name,'cond');
+				
 				$column_type = $this->prop_anon($name,'type');
 				if(empty($column_type)){
 					if($name == 'id'){
@@ -252,7 +258,17 @@ abstract class Dao extends \ebi\Object{
 						}
 					}
 				}else if($anon_cond[0] === '@'){
-					$c = $this->base_column($_columns_,substr($anon_cond,1));
+					$cond_name = substr($anon_cond,1);
+					try{
+						$c = $this->base_column($_columns_,$cond_name);
+					}catch(\RuntimeException $e){
+						if(!in_array($cond_name,$props)){
+							throw $e;
+						}
+						unset($props[$k]);
+						$props[] = $cond_name;
+						continue;
+					}
 					$column->table($c->table());
 					$column->table_alias($c->table_alias());
 					$_columns_[] = $column;

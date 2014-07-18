@@ -52,7 +52,6 @@ eq(4,sizeof(\test\db\RefFind::find_all()));
 eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value','def'))));
 eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value2','EDC'))));
 
-// TODO
 eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value','def'))));
 eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value2','EDC'))));
 
