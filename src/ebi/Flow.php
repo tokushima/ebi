@@ -114,7 +114,7 @@ class Flow{
 		$this->media_url = \ebi\Conf::get('media_url');
 		
 		if(empty($this->app_url)){
-			$host = \ebi\Request::host();
+			$host = \ebi\Conf::get('host',\ebi\Request::host());
 			$entry_file = null;
 			
 			foreach(debug_backtrace(false) as $d){

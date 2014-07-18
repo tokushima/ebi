@@ -1,33 +1,25 @@
 <?php
 use \ebi\Q;
 
-$ref = function($o){
-	return $o;
-};
-\test\db\Find::find_delete();
-\test\db\SubFind::find_delete();
-\test\db\RefFind::find_delete();
-\test\db\RefRefFind::find_delete();
-
-
-$abc = $ref(new \test\db\Find())->order(4)->value1('abc')->value2('ABC')->save();
-$def = $ref(new \test\db\Find())->order(3)->value1('def')->value2('DEF')->save();
-$ghi = $ref(new \test\db\Find())->order(1)->value1('ghi')->value2('GHI')->updated('2008/12/24 10:00:00')->save();
-$jkl = $ref(new \test\db\Find())->order(2)->value1('jkl')->value2('EDC')->save();
-$aaa = $ref(new \test\db\Find())->order(2)->value1('aaa')->value2('AAA')->updated('2008/12/24 10:00:00')->save();
-$bbb = $ref(new \test\db\Find())->order(2)->value1('bbb')->value2('Aaa')->save();
-$ccc = $ref(new \test\db\Find())->order(2)->value1('ccc')->value2('aaa')->save();
-$mno = $ref(new \test\db\Find())->order(2)->value1('mno')->value2(null)->save();
+$abc = (new \test\db\Find())->order(4)->value1('abc')->value2('ABC')->save();
+$def = (new \test\db\Find())->order(3)->value1('def')->value2('DEF')->save();
+$ghi = (new \test\db\Find())->order(1)->value1('ghi')->value2('GHI')->updated('2008/12/24 10:00:00')->save();
+$jkl = (new \test\db\Find())->order(2)->value1('jkl')->value2('EDC')->save();
+$aaa = (new \test\db\Find())->order(2)->value1('aaa')->value2('AAA')->updated('2008/12/24 10:00:00')->save();
+$bbb = (new \test\db\Find())->order(2)->value1('bbb')->value2('Aaa')->save();
+$ccc = (new \test\db\Find())->order(2)->value1('ccc')->value2('aaa')->save();
+$mno = (new \test\db\Find())->order(2)->value1('mno')->value2(null)->save();
 
 eq(8,sizeof(\test\db\Find::find_all()));
 eq(5,sizeof(\test\db\Find::find_all(Q::eq('order',2))));
+
 eq(3,sizeof(\test\db\Find::find_all(Q::eq('order',2),Q::eq('value2','aaa',Q::IGNORE))));
 
 
-$sub1 = $ref(new \test\db\SubFind())->value('abc')->order(4)->save();
-$sub2 = $ref(new \test\db\SubFind())->value('def')->order(3)->save();
-$sub3 = $ref(new \test\db\SubFind())->value('ghi')->order(1)->save();
-$sub4 = $ref(new \test\db\SubFind())->value('jkl')->order(2)->save();
+$sub1 = (new \test\db\SubFind())->value('abc')->order(4)->save();
+$sub2 = (new \test\db\SubFind())->value('def')->order(3)->save();
+$sub3 = (new \test\db\SubFind())->value('ghi')->order(1)->save();
+$sub4 = (new \test\db\SubFind())->value('jkl')->order(2)->save();
 
 
 eq(4,sizeof(
@@ -44,10 +36,10 @@ eq(3,sizeof(
 	)
 );
 
-$ref1 = $ref(new \test\db\RefFind())->parent_id($abc->id())->save();
-$ref2 = $ref(new \test\db\RefFind())->parent_id($def->id())->save();
-$ref3 = $ref(new \test\db\RefFind())->parent_id($ghi->id())->save();
-$ref4 = $ref(new \test\db\RefFind())->parent_id($jkl->id())->save();
+$ref1 = (new \test\db\RefFind())->parent_id($abc->id())->save();
+$ref2 = (new \test\db\RefFind())->parent_id($def->id())->save();
+$ref3 = (new \test\db\RefFind())->parent_id($ghi->id())->save();
+$ref4 = (new \test\db\RefFind())->parent_id($jkl->id())->save();
 eq(4,sizeof(\test\db\RefFind::find_all()));
 eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value','def'))));
 eq(1,sizeof(\test\db\RefFind::find_all(Q::eq('value2','EDC'))));
@@ -62,9 +54,9 @@ if(eq(true,($has1->parent() instanceof \test\db\Find))){
 	eq('ghi',$has1->parent()->value1());
 }
 
-$refref1 = $ref(new \test\db\RefRefFind())->parent_id($ref1->id())->save();
-$refref2 = $ref(new \test\db\RefRefFind())->parent_id($ref2->id())->save();
-$refref3 = $ref(new \test\db\RefRefFind())->parent_id($ref3->id())->save();
+$refref1 = (new \test\db\RefRefFind())->parent_id($ref1->id())->save();
+$refref2 = (new \test\db\RefRefFind())->parent_id($ref2->id())->save();
+$refref3 = (new \test\db\RefRefFind())->parent_id($ref3->id())->save();
 eq(3,sizeof(\test\db\RefRefFind::find_all()));
 eq(1,sizeof(\test\db\RefRefFind::find_all(Q::eq('value','def'))));
 
@@ -101,14 +93,14 @@ eq(4,\test\db\Find::find_count($q));
 
 $q = new Q();
 $q->add(Q::ob(
-		Q::b(
-			Q::eq('order',2)
-			,Q::ob(
-					Q::b(Q::eq('value1','ccc'))
-					,Q::b(Q::eq('value2','AAA'))
-			)
-		),
-		Q::b(Q::eq('order',4))
+	Q::b(
+		Q::eq('order',2),
+		Q::ob(
+			Q::b(Q::eq('value1','ccc')),
+			Q::b(Q::eq('value2','EDC'))
+		)
+	),
+	Q::b(Q::eq('order',4))
 ));
 eq(3,\test\db\Find::find_count($q));
 

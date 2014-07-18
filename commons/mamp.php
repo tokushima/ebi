@@ -8,7 +8,6 @@
 	],
 ]);
 
-\ebi\Conf::set('ebi.Flow','app_url','http://localhost/ebi/test_index.php');
-//\ebi\Conf::set('ebi.Flow','app_url','http://localhost/ebi/test_index');
+\ebi\Conf::set('ebi.Flow','host','http://localhost/');
 
 include_once('local.php');
