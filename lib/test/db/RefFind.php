@@ -11,5 +11,7 @@ class RefFind extends \ebi\Dao{
 	protected $id;
 	protected $parent_id;
 	protected $value;
-	protected $value2;	
+	protected $value2;
+	
+	private $private_value;
 }
