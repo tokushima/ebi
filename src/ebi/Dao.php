@@ -144,7 +144,9 @@ abstract class Dao extends \ebi\Object{
 		foreach($ref->getProperties(\ReflectionProperty::IS_PUBLIC|\ReflectionProperty::IS_PROTECTED) as $prop){
 			$props[] = $prop->getName();
 		}
-		foreach($props as $k => $name){
+		while(!empty($props)){
+			$name = array_shift($props);
+			
 			if($name[0] != '_' && $this->prop_anon($name,'extra') !== true){
 				$anon_cond = $this->prop_anon($name,'cond');
 				
@@ -182,6 +184,8 @@ abstract class Dao extends \ebi\Object{
 					$column->auto($column_type === 'serial');
 					$_columns_[] = $column;
 					$_self_columns_[$name] = $column;
+					
+					
 					$_alias_[$column->column_alias()] = $name;
 				}else if(false !== strpos($anon_cond,'(')){
 					$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
@@ -222,7 +226,9 @@ abstract class Dao extends \ebi\Object{
 						}else{
 							$self_db = true;
 							if($is_has){
-								if(empty($has_var)) throw new \LogicException('annotation error : `'.$name.'`');
+								if(empty($has_var)){
+									throw new \LogicException('annotation error : `'.$name.'`');
+								}
 								$dao = new $column_type(array('_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy));
 								$this->{$name}($dao);
 								if($dao->table() == $this->table()){
@@ -230,7 +236,9 @@ abstract class Dao extends \ebi\Object{
 									$_columns_ = array_merge($_columns_,$dao->columns());
 									$_conds_ = array_merge($_conds_,$dao->conds());
 									$this->prop_anon($name,'has',true,true);
-									foreach($dao->columns() as $column) $_alias_[$column->column_alias()] = $name;
+									foreach($dao->columns() as $column){
+										$_alias_[$column->column_alias()] = $name;
+									}
 									$has_column = $dao->base_column($dao->columns(),$has_var);
 									$conds[] = \ebi\Column::cond_instance($has_column->column(),'c'.self::$_cnt_++,$has_column->table(),$has_column->table_alias());
 								}else{
@@ -240,8 +248,13 @@ abstract class Dao extends \ebi\Object{
 							}else{
 								$column->table($ref_table);
 								$column->table_alias($ref_table_alias);
-								if(!$this->prop_anon($name,'join',false)) $_columns_[] = $column;
+								
+								if(!$this->prop_anon($name,'join',false)){
+									$_columns_[] = $column;
+								}
 								$_where_columns_[$name] = $column;
+								
+								
 								$_alias_[$column->column_alias()] = $name;
 							}
 							if($self_db){
@@ -250,29 +263,31 @@ abstract class Dao extends \ebi\Object{
 								if($this->prop_anon($name,'join',false)){
 									$this->prop_anon($name,'get',false,true);
 									$this->prop_anon($name,'set',false,true);
-									for($i=0;$i<sizeof($conds);$i+=2) $_join_conds_[$name][] = array($conds[$i],$conds[$i+1]);
+									
+									for($i=0;$i<sizeof($conds);$i+=2){
+										$_join_conds_[$name][] = array($conds[$i],$conds[$i+1]);
+									}
 								}else{
-									for($i=0;$i<sizeof($conds);$i+=2) $_conds_[] = array($conds[$i],$conds[$i+1]);
+									for($i=0;$i<sizeof($conds);$i+=2){
+										$_conds_[] = array($conds[$i],$conds[$i+1]);
+									}
 								}
 							}
 						}
 					}
 				}else if($anon_cond[0] === '@'){
 					$cond_name = substr($anon_cond,1);
-					try{
-						$c = $this->base_column($_columns_,$cond_name);
-					}catch(\RuntimeException $e){
-						if(!in_array($cond_name,$props)){
-							throw $e;
-						}
-						unset($props[$k]);
-						$props[] = $cond_name;
+					if(in_array($cond_name,$props)){
+						$props[] = $name;
 						continue;
 					}
+					$c = $this->base_column($_columns_,$cond_name);
 					$column->table($c->table());
 					$column->table_alias($c->table_alias());
+					
 					$_columns_[] = $column;
 					$_where_columns_[$name] = $column;
+					
 					$_alias_[$column->column_alias()] = $name;
 				}
 			}
@@ -312,7 +327,9 @@ abstract class Dao extends \ebi\Object{
 	 * @return \ebi\Column[]
 	 */
 	public function self_columns($all=false){
-		if($all) return array_merge(self::$_dao_[$this->_class_id_]->_where_columns_,self::$_dao_[$this->_class_id_]->_self_columns_);
+		if($all){
+			return array_merge(self::$_dao_[$this->_class_id_]->_where_columns_,self::$_dao_[$this->_class_id_]->_self_columns_);
+		}
 		return self::$_dao_[$this->_class_id_]->_self_columns_;
 	}
 	/**
@@ -322,7 +339,9 @@ abstract class Dao extends \ebi\Object{
 	public function primary_columns(){
 		$result = array();
 		foreach(self::$_dao_[$this->_class_id_]->_self_columns_ as $column){
-			if($column->primary()) $result[$column->name()] = $column;
+			if($column->primary()){
+				$result[$column->name()] = $column;
+			}
 		}
 		return $result;
 	}
