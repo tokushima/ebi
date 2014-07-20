@@ -95,7 +95,9 @@ class Flow{
 		$args = [];
 		
 		foreach($var_names as $n){
-			if(!isset($vars[$n])) throw new \InvalidArgumentException('variable '.$n.' not found');
+			if(!isset($vars[$n])){
+				throw new \InvalidArgumentException('variable '.$n.' not found');
+			}
 			$args[$n] = $vars[$n];
 		}
 		if(isset($pattern['branch']) && strpos($name,'#') === false){
@@ -106,7 +108,9 @@ class Flow{
 				$name = $this->selected_class_pattern[$name][sizeof($args)]['name'];
 			}
 		}
-		if(empty($name)) \ebi\HttpHeader::redirect_referer();
+		if(empty($name)){
+			\ebi\HttpHeader::redirect_referer();
+		}
 		$this->redirect($name,$args);
 	}
 	private function execute($map){
@@ -438,11 +442,11 @@ class Flow{
 			try{
 				$r = new \ReflectionClass(str_replace('.','\\',$class));
 				$d = is_dir(substr($r->getFilename(),0,-4)) ? substr($r->getFilename(),0,-4) : null;
-				foreach($r->getMethods() as $m){
-					if($m->isPublic() && !$m->isStatic() && substr($m->getName(),0,1) != '_'){
+				foreach($r->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
+					if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
 						if((boolean)preg_match('/@automap[\s]*/',$m->getDocComment())){
 							$suffix = '';
-							$auto_anon = preg_match('/@automap\s.*@(\[.*\])/',$m->getDocComment(),$a) ? @eval('return '.$a[1].';') : [];
+							$auto_anon = preg_match('/@automap\s.*@(\[.*\])/',$m->getDocComment(),$a) ? \ebi\Annotation::activation($a[1]) : [];
 							$base_name = $m->getName();
 							if(!is_array($auto_anon)){
 								throw new \InvalidArgumentException($r->getName().'::'.$m->getName().' automap annotation error');
