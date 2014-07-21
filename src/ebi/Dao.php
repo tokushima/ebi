@@ -89,52 +89,58 @@ abstract class Dao extends \ebi\Object{
 			}
 			return;
 		}
-		if(!isset(self::$_co_anon_[$p])){
-			$table_info = \ebi\Annotation::decode($p,'table');
-			$anon = array(null // con
-							,(isset($table_info['name']) ? $table_info['name'] : null)
-							,(isset($table_info['create']) ? $table_info['create'] : true)
-							,(isset($table_info['update']) ? $table_info['update'] : true)
-							,(isset($table_info['delete']) ? $table_info['delete'] : true)
-							,null // prefix
-							,false // upper
-							,false // lower
-						);
-			$conf = explode("\\",$p);
-			$def = \ebi\Conf::get('connection');
-			while(!isset($def[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
-			if(empty($conf) && !isset($def['*'])){
-				throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
-			}
-			$anon[0] = empty($conf) ? '*' : implode('.',$conf);
-			
-			if(empty($anon[1])){
-				$table_class = $p;
-				$parent_class = get_parent_class($p);
+		$annotation = \ebi\Annotation::decode($p,['readonly','table']);		
+		$anon = array(null // con
+						,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
+						,($annotation['readonly'] !== null)
+					);
+		$conf = explode("\\",$p);
+		$def = \ebi\Conf::get('connection');
+		while(!isset($def[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
+		if(empty($conf) && !isset($def['*'])){
+			throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
+		}
+		$anon[0] = empty($conf) ? '*' : implode('.',$conf);
+		
+		if(empty($anon[1])){
+			$table_class = $p;
+			$parent_class = get_parent_class($p);
+			$ref = new \ReflectionClass($parent_class);
+			while(true){
 				$ref = new \ReflectionClass($parent_class);
-				while(true){
-					$ref = new \ReflectionClass($parent_class);
-					if(__CLASS__ == $parent_class || $ref->isAbstract()) break;
-					$table_class = $parent_class;
-					$parent_class = get_parent_class($parent_class);
-				}
-				$table_class = preg_replace("/^.*\\\\(.+)$/","\\1",$table_class);
-				$anon[1] = strtolower($table_class[0]);
-				for($i=1;$i<strlen($table_class);$i++){
-					$anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
-				}
+				if(__CLASS__ == $parent_class || $ref->isAbstract()) break;
+				$table_class = $parent_class;
+				$parent_class = get_parent_class($parent_class);
 			}
-			$config = self::get_con($anon[0],$p);
-			if(!isset(self::$_connections_[$anon[0]])){
-				throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
+			$table_class = preg_replace("/^.*\\\\(.+)$/","\\1",$table_class);
+			$anon[1] = strtolower($table_class[0]);
+			for($i=1;$i<strlen($table_class);$i++){
+				$anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
 			}
-			static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
-			$anon[5] = isset($config['prefix']) ? $config['prefix'] : '';
-			$anon[6] = (isset($config['upper']) && $config['upper'] === true);
-			$anon[7] = (isset($config['lower']) && $config['lower'] === true);
-			self::$_co_anon_[$p] = $anon;
-			self::$_co_anon_[$p][1] = self::set_table_name(self::$_co_anon_[$p][1],$p);
-		}		
+		}
+		$config = self::get_con($anon[0],$p);
+		if(!isset(self::$_connections_[$anon[0]])){
+			throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
+		}
+		// TODO 
+		static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
+		
+		$prefix = isset($config['prefix']) ? $config['prefix'] : '';
+		$upper = (isset($config['upper']) && $config['upper'] === true);
+		$lower = (isset($config['lower']) && $config['lower'] === true);
+		
+		$set_table_name = function($name,$class) use($prefix,$upper,$lower){
+			$name = $prefix.$name;
+			if($upper){
+				$name = strtoupper($name);
+			}else if($lower){
+				$name = strtolower($name);
+			}
+			return $name;
+		};		
+		self::$_co_anon_[$p] = $anon;
+		self::$_co_anon_[$p][1] = $set_table_name(self::$_co_anon_[$p][1],$p);
+			
 		$has_hierarchy = (isset($this->_hierarchy_)) ? $this->_hierarchy_ - 1 : $this->_has_hierarchy_;
 		$root_table_alias = 't'.self::$_cnt_++;
 		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = array();
@@ -200,13 +206,15 @@ abstract class Dao extends \ebi\Object{
 									break;
 								case 2:
 									list($t,$c1) = $tcc;
-									$ref_table = self::set_table_name($t,$p);
+									// TODO
+									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									break;
 								case 3:
 									list($t,$c1,$c2) = $tcc;
-									$ref_table = self::set_table_name($t,$p);
+									// TODO
+									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
@@ -282,12 +290,6 @@ abstract class Dao extends \ebi\Object{
 														'_has_dao_'=>$_has_dao_,
 														'_has_many_conds_'=>$_has_many_conds_
 														);
-	}
-	private static function set_table_name($name,$class){
-		$name = self::$_co_anon_[$class][5].$name;
-		if(self::$_co_anon_[$class][6]) $name = strtoupper($name);
-		if(self::$_co_anon_[$class][7]) $name = strtolower($name);
-		return $name;
 	}
 	/**
 	 * Columnの一覧を取得する
@@ -780,7 +782,9 @@ abstract class Dao extends \ebi\Object{
 	public static function find_delete(){
 		$args = func_get_args();
 		$dao = new static();
-		if(!self::$_co_anon_[get_class($dao)][4]) throw new \ebi\exception\BadMethodCallException('delete is not permitted');
+		if(self::$_co_anon_[get_class($dao)][2]){
+			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
+		}
 		$query = new \ebi\Q();
 		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
 		/**
@@ -794,7 +798,9 @@ abstract class Dao extends \ebi\Object{
 	 * DBから削除する
 	 */
 	public function delete(){
-		if(!self::$_co_anon_[get_class($this)][4]) throw new \ebi\exception\BadMethodCallException('delete is not permitted');
+		if(self::$_co_anon_[get_class($this)][2]){
+			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
+		}
 		$this->__before_delete__();
 		/**
 		 * delete文の生成
@@ -880,7 +886,7 @@ abstract class Dao extends \ebi\Object{
 			}
 		}
 		if($new){
-			if(!self::$_co_anon_[$self][2]){
+			if(self::$_co_anon_[$self][2]){
 				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
 			}
 			$this->__before_save__();
@@ -911,7 +917,7 @@ abstract class Dao extends \ebi\Object{
 			$this->__after_create__();
 			$this->__after_save__();
 		}else{
-			if(!self::$_co_anon_[$self][3]){
+			if(self::$_co_anon_[$self][2]){
 				throw new \ebi\exception\BadMethodCallException('update save is not permitted');
 			}
 			$this->__before_save__();

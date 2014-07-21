@@ -26,32 +26,36 @@ class Annotation{
 		
 		foreach(is_array($names) ? $names : [$names] as $name){
 			$result = null;
-			if(preg_match_all("/@".$name."\s([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$d,$m)){
+			
+			if(preg_match_all("/@".$name."(.*)/",$d,$mtc)){
 				$result = [];
 				
-				foreach($m[2] as $k => $n){
-					$as = (false !== ($s=strpos($m[3][$k],'@['))) ? substr($m[3][$k],$s+1,strrpos($m[3][$k],']')-$s) : null;
-					$decode = self::activation($as);
-					$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;
-					list($result[$n]['type'],$result[$n]['attr']) = (false != ($h = strpos($m[1][$k],'{}')) || false !== strpos($m[1][$k],'[]')) ? [substr($m[1][$k],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : [$m[1][$k],null];
-	
-					if(!ctype_lower($t=$result[$n]['type'])){
-						if($t[0]!='\\') $t='\\'.$t;
-						if(!class_exists($t=str_replace('.','\\',$t))) throw new \InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
-						$result[$n]['type'] = (($t[0] !== '\\') ? '\\' : '').str_replace('.','\\',$t);
+				foreach($mtc[1] as $mc){
+					if(!empty($mc) && ($mc[0] == ' ' || $mc[0] == "\t")){
+						$as = (false !== ($s=strpos($mc,'@['))) ? substr($mc,$s+1,strrpos($mc,']')-$s) : null;
+						$decode = self::activation($as);						
+						
+						if(preg_match("/([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$mc,$m)){
+							$n = $m[2];
+							$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;
+							list($result[$n]['type'],$result[$n]['attr']) = (false != ($h = strpos($m[1],'{}')) || false !== strpos($m[1],'[]')) ? 
+																				[substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : 
+																				[$m[1],null];
+							
+							if(!ctype_lower($t=$result[$n]['type'])){
+								if($t[0]!='\\') $t='\\'.$t;
+								if(!class_exists($t=str_replace('.','\\',$t))) throw new \InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
+								$result[$n]['type'] = (($t[0] !== '\\') ? '\\' : '').str_replace('.','\\',$t);
+							}
+						}else{
+							$result = array_merge($result,$decode);
+						}
 					}
-				}
-			}else if(preg_match_all("/@".$name."[\s]*(\[.*\])/",$d,$m)){
-				$result = [];
-				
-				foreach($m[1] as $j){
-					$decode = self::activation($j);
-					$result = array_merge($result,$decode);
 				}
 			}
 			$return[$name] = $result;
 		}
-		return is_array($names) ? $names : $return[$names];
+		return is_array($names) ? $return : $return[$names];
 	}
 	public static function activation($s){
 		if(empty($s)){

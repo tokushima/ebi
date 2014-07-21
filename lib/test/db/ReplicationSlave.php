@@ -1,7 +1,8 @@
 <?php
 namespace test\db;
 /**
- * @table['name'=>'replication','update'=>false,'create'=>false,'delete'=>false]
+ * @readonly
+ * @table @['name'=>'replication']
  * @var serial $id
  * @var string $value
  */

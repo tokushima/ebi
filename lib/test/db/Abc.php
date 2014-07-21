@@ -5,7 +5,6 @@ use ebi\Q;
  * @var serial $id
  * @var string $value
  * @author tokushima
- *
  */
 class Abc extends \ebi\Dao{
 	protected $id;
