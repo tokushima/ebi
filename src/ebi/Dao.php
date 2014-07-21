@@ -122,7 +122,6 @@ abstract class Dao extends \ebi\Object{
 		if(!isset(self::$_connections_[$anon[0]])){
 			throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
 		}
-		// TODO 
 		static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
 		
 		$prefix = isset($config['prefix']) ? $config['prefix'] : '';
@@ -206,14 +205,12 @@ abstract class Dao extends \ebi\Object{
 									break;
 								case 2:
 									list($t,$c1) = $tcc;
-									// TODO
 									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									break;
 								case 3:
 									list($t,$c1,$c2) = $tcc;
-									// TODO
 									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
