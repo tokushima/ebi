@@ -898,7 +898,7 @@ abstract class Dao extends \ebi\Object{
 			 * @param self $this
 			 * @return Daq
 			 */
-			$daq = $self::call_class_plugin_funcs('create_sql',$this);
+			$daq = static::call_class_plugin_funcs('create_sql',$this);
 			if($this->update_query($daq) == 0){
 				throw new \RuntimeException('create failed');
 			}
@@ -934,7 +934,7 @@ abstract class Dao extends \ebi\Object{
 			 * @param self $this
 			 * @return Daq
 			 */
-			$daq = $self::call_class_plugin_funcs('update_sql',$this,$query);
+			$daq = static::call_class_plugin_funcs('update_sql',$this,$query);
 			$affected_rows = $this->update_query($daq);
 			
 			if($affected_rows === 0 && !empty($args)){
