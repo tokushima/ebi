@@ -7,16 +7,7 @@ namespace ebi;
 class Db implements \Iterator{
 	static private $autocommit;
 	
-	private $type;
-	private $host;
-	private $dbname;
-	private $user;
-	private $password;
-	private $port;
-	private $sock;
-	private $encode;
-	private $timezone;
-
+	private $dbname;	
 	private $connection;
 	private $statement;
 	private $resultset;
@@ -29,25 +20,30 @@ class Db implements \Iterator{
 	 */
 	public function __construct(array $def=array()){
 		foreach(array('type','host','dbname','user','password','port','sock','encode','timezone') as $k){
-			if(isset($def[$k])) $this->{$k} = $def[$k];
+			${$k} = isset($def[$k]) ? $def[$k] : null;
 		}
-		if(empty($this->type)){
-			$this->type = \ebi\DbConnector::type();
-			if(empty($this->host)) $this->host = ':memory:';
+		if(empty($type)){
+			$type = \ebi\DbConnector::type();
+			if(empty($host)) $host = ':memory:';
 		}
-		if(empty($this->encode)) $this->encode = 'utf8';
-		$this->type = str_replace('.','\\',$this->type);
-		if($this->type[0] !== '\\') $this->type = '\\'.$this->type;		
+		if(empty($encode)){
+			$encode = 'utf8';
+		}
+		$type = str_replace('.','\\',$type);
+		if($type[0] !== '\\') $type = '\\'.$type;		
 		
-		if(empty($this->type) || !class_exists($this->type)) throw new \RuntimeException('could not find connector `'.((substr($s=str_replace("\\",'.',$this->type),0,1) == '.') ? substr($s,1) : $s).'`');
-		$r = new \ReflectionClass($this->type);
-		$this->connector = $r->newInstanceArgs(array($this->encode,$this->timezone));
+		if(empty($type) || !class_exists($type)){
+			throw new \RuntimeException('could not find connector `'.((substr($s=str_replace("\\",'.',$type),0,1) == '.') ? substr($s,1) : $s).'`');
+		}
+		$r = new \ReflectionClass($type);
+		$this->dbname = $dbname;
+		$this->connector = $r->newInstanceArgs(array($encode,$timezone));
 		
 		if($this->connector instanceof \ebi\DbConnector){
 			if(self::$autocommit === null){
 				self::$autocommit = \ebi\Conf::get('autocommit',false);
 			}
-			$this->connection = $this->connector->connect($this->dbname,$this->host,$this->port,$this->user,$this->password,$this->sock,self::$autocommit);
+			$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);
 		}
 		if(empty($this->connection)){
 			throw new \RuntimeException('connection fail '.$this->dbname);
