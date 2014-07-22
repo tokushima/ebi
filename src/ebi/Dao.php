@@ -110,7 +110,9 @@ abstract class Dao extends \ebi\Object{
 			$ref = new \ReflectionClass($parent_class);
 			while(true){
 				$ref = new \ReflectionClass($parent_class);
-				if(__CLASS__ == $parent_class || $ref->isAbstract()) break;
+				if(__CLASS__ == $parent_class || $ref->isAbstract()){
+					break;
+				}
 				$table_class = $parent_class;
 				$parent_class = get_parent_class($parent_class);
 			}

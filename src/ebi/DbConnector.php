@@ -459,7 +459,9 @@ class DbConnector{
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$prop_name).' null ';
 				$columndef[] = $column_str;
-				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial') $primary[] = $quote($prop_name);
+				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
+					$primary[] = $quote($prop_name);
+				}
 			}
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
