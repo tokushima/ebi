@@ -90,13 +90,15 @@ abstract class Dao extends \ebi\Object{
 			return;
 		}
 		$annotation = \ebi\Annotation::decode($p,['readonly','table']);		
-		$anon = array(null // con
+		$anon = array(null // con name
 						,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
 						,($annotation['readonly'] !== null)
 					);
 		$conf = explode("\\",$p);
 		$def = \ebi\Conf::get('connection');
-		while(!isset($def[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
+		while(!isset($def[implode('.',$conf)]) && !empty($conf)){
+			array_pop($conf);
+		}
 		if(empty($conf) && !isset($def['*'])){
 			throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
 		}
@@ -987,31 +989,33 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * テーブルの作成
-	 * @throws RuntimeException
 	 */
 	public static function create_table(){
 		$dao = new static();
-		$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
-		$count = current($dao->func_query($daq));
-		if($count == 0){
-			$daq = new \ebi\Daq(static::call_class_plugin_funcs('create_table_sql',$dao));
-			$dao->func_query($daq);
-			return true;
+		if(!self::$_co_anon_[get_class($dao)][2]){
+			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
+			$count = current($dao->func_query($daq));
+			if($count == 0){
+				$daq = new \ebi\Daq(static::call_class_plugin_funcs('create_table_sql',$dao));
+				$dao->func_query($daq);
+				return true;
+			}
 		}
 		return false;
 	}
 	/**
 	 * テーブルの削除
-	 * @throws RuntimeException
 	 */
 	public static function drop_table(){
 		$dao = new static();
-		$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
-		$count = current($dao->func_query($daq));
-		if($count == 1){
-			$daq = new \ebi\Daq(static::call_class_plugin_funcs('drop_table_sql',$dao));
-			$dao->func_query($daq);
-			return true;
+		if(!self::$_co_anon_[get_class($dao)][2]){
+			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
+			$count = current($dao->func_query($daq));
+			if($count == 1){
+				$daq = new \ebi\Daq(static::call_class_plugin_funcs('drop_table_sql',$dao));
+				$dao->func_query($daq);
+				return true;
+			}
 		}
 		return false;
 	}
