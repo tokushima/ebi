@@ -18,6 +18,7 @@ class Dt{
 				'f'=>new \ebi\Dt\Helper(),
 				'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
 				'has_coverage'=>function_exists('xdebug_get_code_coverage'),
+				'media_url'=>\ebi\Util::path_slash(\ebi\Conf::get('media_url'),null,false),
 				];
 	}
 	private function get_flow_output_maps(){

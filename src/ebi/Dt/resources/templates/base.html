@@ -6,7 +6,16 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<rt:if param="{$media_url}">
+		<link rel="stylesheet" href="{$media_url}/bootstrap/css/bootstrap.min.css" />
+		<script src="{$media_url}/jquery-2.1.1.min.js"></script>
+		<script src="{$media_url}/bootstrap/js/bootstrap.min.js"></script>
+	<rt:else />
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+		<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	</rt:if>
+	
 	<style>
 		.code{ 
 			font-family: Consolas, 'Liberation Mono', Courier, monospace; font-size: 12px; font-style: normal; font-variant: normal; font-weight: normal;
@@ -24,9 +33,6 @@
 		.code-covered{ background-color: #99cc99; }
 		.code-uncovered{ background-color: #ff9999; }
 	</style>
-	
-	<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
-	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 </head>
 
 <body>
