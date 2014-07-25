@@ -1,45 +1,20 @@
 <?php
 /**
  * Application setup
- * @param boolean $create
  */
-if($create){
-	$path = getcwd();
-	
-	if(!is_dir($f=$path.'/lib')){
+$mkdir = function($path){
+	if(!is_dir($f=$path)){
 		mkdir($f,0777,true);
 		\cmdman\Std::println_success('Written dir '.$f);
 	}
-	if(!is_dir($f=$path.'/resources/media')){
-		mkdir($f,0777,true);
-		\cmdman\Std::println_success('Written dir '.$f);
-	}
-	if(!is_dir($f=$path.'/resources/templates')){
-		mkdir($f,0777,true);
-		\cmdman\Std::println_success('Written dir '.$f);
-	}
-	if(!is_file($f=$path.'/resources/templates/index.html')){
-		copy(__DIR__.'/create/index.html',$f);
+};
+$copy = function($file,$path){
+	if(!is_file($f=$path)){
+		copy($file,$f);
 		\cmdman\Std::println_success('Written file '.$f);
 	}
-	if(!is_file($f=$path.'/index.php')){
-		copy(__DIR__.'/create/index.php',$f);
-		\cmdman\Std::println_success('Written file '.$f);
-	}
-	if(!is_file($f=$path.'/bootstrap.php')){
-		$autoload_file = 'vendor/autoload.php';
-		if(class_exists('Composer\Autoload\ClassLoader')){
-			$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
-			$composer_dir = dirname($r->getFileName());
-		
-			if(is_file($bf=realpath(dirname($composer_dir).'/autoload.php'))){
-				$autoload_file = str_replace(str_replace("\\",'/',getcwd()).'/','',str_replace("\\",'/',$bf));
-			}
-		}
-		file_put_contents($f,'<?php'.PHP_EOL.'include_once(\''.$autoload_file.'\');');
-		\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
-	}
-}
+};
+
 $appmode = defined('APPMODE') ? constant('APPMODE') : null;
 $cmddir = defined('COMMONDIR') ? constant('COMMONDIR') : (getcwd().'/commons');
 
@@ -78,6 +53,36 @@ if(\cmdman\Std::read('create .htaccess?','n',['y','n']) == 'y'){
 $setup_cmd = substr(\ebi\Dt::setup_file(),0,-4).'.cmd.php';
 if(is_file($setup_cmd)){
 	include($setup_cmd);
+}else{
+	if(\cmdman\Std::read('getting started?','n',['y','n']) == 'y'){
+		$path = getcwd();
+		
+		$mkdir($path.'/lib');
+		$mkdir($path.'/resources/media');
+		$mkdir($path.'/resources/templates');
+		$copy(__DIR__.'/create/index.html',$path.'/resources/templates/index.html');
+		$copy(__DIR__.'/create/index.php',$path.'/index.php');
+		
+		if(!is_file($f=$path.'/bootstrap.php')){
+			$autoload_file = 'vendor/autoload.php';
+			if(class_exists('Composer\Autoload\ClassLoader')){
+				$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
+				$composer_dir = dirname($r->getFileName());
+		
+				if(is_file($bf=realpath(dirname($composer_dir).'/autoload.php'))){
+					$autoload_file = str_replace(str_replace("\\",'/',getcwd()).'/','',str_replace("\\",'/',$bf));
+				}
+			}
+			file_put_contents($f,'<?php'.PHP_EOL.'include_once(\''.$autoload_file.'\');');
+			\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
+		}
+	}
+	if(\cmdman\Std::read('getting testman?','n',['y','n']) == 'y'){
+		$mkdir($path.'/test');
+		$copy(__DIR__.'/create/sample.php',$path.'/test/sample.php');
+		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
+		\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
+	}
 }
 if(is_file($f=\ebi\Dt::setup_file())){
 	\cmdman\Std::println_success('Loading '.$f);
