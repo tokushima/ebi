@@ -161,12 +161,16 @@ class Template{
 		return $src;		
 	}
 	private function exec($_src_){
-		foreach($this->get_object_plugin_funcs('before_exec_template') as $o) $_src_ = static::call_func($o,$_src_);
+		foreach($this->get_object_plugin_funcs('before_exec_template') as $o){
+			$_src_ = static::call_func($o,$_src_);
+		}
 		foreach($this->default_vars() as $k => $v){
 			$this->vars($k,$v);
 		}
 		ob_start();
-			if(is_array($this->vars) && !empty($this->vars)) extract($this->vars);
+			if(is_array($this->vars) && !empty($this->vars)){
+				extract($this->vars);
+			}
 			eval('?><?php $_display_exception_='.((\ebi\Conf::get('display_exception') === true) ? 'true' : 'false').'; ?>'.$_src_);
 		$_eval_src_ = ob_get_clean();
 
@@ -225,14 +229,11 @@ class Template{
 		$src = file_get_contents($filename);
 		$src = (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename)) : $src;
 		
-		if(!empty($name)){
-			foreach(\ebi\Xml::anonymous($this->rtcomment($src))->find('rt:template') as $tag){
-				if($tag->in_attr('name') == $name){
-					return $tag->value();
-				}
+		foreach(\ebi\Xml::anonymous($this->rtcomment($src))->find('rt:template') as $tag){
+			if(empty($name) || $tag->in_attr('name') == $name){
+				return $tag->value();
 			}
-			throw new \LogicException('undef rt:template '.$name);
-		}		
+		}
 		return $src;
 	}
 	private function rtblock($src,$filename){
