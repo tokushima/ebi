@@ -333,7 +333,9 @@ class Browser{
 		if(empty($download_path)){
 			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,array($this,'callback_body'));
 		}else{
-			if(!is_dir(dirname($download_path))) mkdir(dirname($download_path),0777,true);
+			if(strpos($download_path,'://') === false && !is_dir(dirname($download_path))){
+				mkdir(dirname($download_path),0777,true);
+			}
 			$fp = fopen($download_path,'wb');
 			
 			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,function($resource,$data) use(&$fp){
