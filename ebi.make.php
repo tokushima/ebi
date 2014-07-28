@@ -3,8 +3,13 @@
  *  php -d phar.readonly=0 **.php
  */
 $filename = substr(basename(__FILE__),0,strpos(basename(__FILE__),'.'));
-$output = __DIR__.'/'.$filename.'.phar';
-$basedir = __DIR__.'/src/ebi/';
+
+if(isset($argv[1])){
+	$output = $argv[1];
+}else{
+	$output = __DIR__.'/'.$filename.'.phar';
+}
+$basedir = __DIR__.'/src/';
 $basedirlen = strlen($basedir);
 
 if(is_file($output)){
@@ -20,12 +25,25 @@ try{
 	) as $f){
 		$phar[substr($f,$basedirlen)] = file_get_contents($f);
 	}
+	$phar['autoload.php'] = file_get_contents(__DIR__.'/autoload.php');
+	
 	$stab = <<< 'STAB'
 <?php
-		Phar::mapPhar('%s.phar');
+	spl_autoload_register(function($c){
+		$c = str_replace('\\','/',$c);
+		if(substr($c,0,4) == 'ebi/' && is_file($f='phar://'.__FILE__.'/'.$c.'.php')){
+			require_once($f);
+		}
+		return false;
+	},true,false);
+
+	Phar::mapPhar('%s.phar');
+	require_once('phar://%s.phar/autoload.php');
+	
+	__HALT_COMPILER();
 ?>
 STAB;
-//	$phar->setStub(sprintf($stab,$filename));
+	$phar->setStub(sprintf($stab,$filename,$filename));
 	$phar->compressFiles(Phar::GZ);
 	
 	if(is_file($output)){
