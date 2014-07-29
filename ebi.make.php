@@ -16,6 +16,8 @@ if(is_file($output)){
 	unlink($output);
 }
 try{
+	$mkdir = array();
+	$files = array();
 	$phar = new Phar($output,0,$filename.'.phar');
 	
 	foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
@@ -23,9 +25,34 @@ try{
 			FilesystemIterator::SKIP_DOTS|FilesystemIterator::UNIX_PATHS
 			),RecursiveIteratorIterator::SELF_FIRST
 	) as $f){
-		$phar[substr($f,$basedirlen)] = file_get_contents($f);
+		if($f->isFile()){
+			$path = substr($f,$basedirlen);
+			$dir = dirname($path);
+	
+			if($dir != '.'){
+				$d = explode('/',$dir);
+				while(!empty($d)){
+					$dp = implode('/',$d);
+	
+					if(isset($mkdir[$dp])){
+						break;
+					}
+					$mkdir[$dp] = $dp;
+					array_shift($d);
+				}
+			}
+			$files[$path] = $f->getPathname();
+		}
 	}
-	$phar['autoload.php'] = file_get_contents(__DIR__.'/autoload.php');
+	ksort($mkdir);
+	
+	foreach($mkdir as $d){
+		$phar->addEmptyDir($d);
+	}
+	foreach($files as $k => $v){
+		$phar->addFile($v,$k);
+	}
+	$phar->addFile(__DIR__.'/autoload.php','autoload.php');
 	
 	$stab = <<< 'STAB'
 <?php
