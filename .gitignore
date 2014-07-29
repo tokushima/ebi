@@ -1,6 +1,6 @@
 /work
 /__settings__.php
 .*
-/*.db
-*.phar
 
+/cmdman.phar
+/testman.phar
