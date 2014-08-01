@@ -146,9 +146,9 @@ abstract class Dao extends \ebi\Object{
 			
 		$has_hierarchy = (isset($this->_hierarchy_)) ? $this->_hierarchy_ - 1 : $this->_has_hierarchy_;
 		$root_table_alias = 't'.self::$_cnt_++;
-		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = array();
+		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = [];
 		
-		$prop = array();
+		$prop = $last_cond_column = [];
 		$ref = new \ReflectionClass($this);
 		foreach($ref->getProperties(\ReflectionProperty::IS_PUBLIC|\ReflectionProperty::IS_PROTECTED) as $prop){
 			if($prop->getName()[0] != '_' && $this->prop_anon($prop->getName(),'extra') !== true){
@@ -239,11 +239,32 @@ abstract class Dao extends \ebi\Object{
 
 							$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
 						}else{
+							// TODO
+							if($self_var[0] == '@'){
+								$cond_var = null;
+								$cond_name = substr($self_var,1);
+								if(Strpos($cond_name,'.') !== false){
+									list($cond_name,$cond_var) = explode('.',$cond_name);
+								}
+								if(!isset($last_cond_column[$cond_name])){
+									$props[] = $name;
+									continue;
+								}
+								$cond_column = clone($last_cond_column[$cond_name]);
+								if(isset($cond_var)){
+									$cond_column->column($cond_var);
+									$cond_column->column_alias('c'.self::$_cnt_++);
+								}
+								array_unshift($conds,$cond_column);
+							}else{
+								array_unshift($conds,
+									\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias)
+								);
+							}							
 							$column->table($ref_table);
 							$column->table_alias($ref_table_alias);
 							$_alias_[$column->column_alias()] = $name;
 							
-							array_unshift($conds,\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias));
 							if(sizeof($conds) % 2 != 0){
 								throw new \RuntimeException($name.'['.$column_type.'] is illegal condition');
 							}
@@ -261,6 +282,10 @@ abstract class Dao extends \ebi\Object{
 							}
 							$_where_columns_[$name] = $column;
 						}
+					}
+					if(!empty($conds)){
+						$last_cond_column[$name] = $conds[sizeof($conds)-1];
+						// TODO
 					}
 				}
 			}else if($anon_cond[0] === '@'){
