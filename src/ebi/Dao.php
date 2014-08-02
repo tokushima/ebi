@@ -239,7 +239,6 @@ abstract class Dao extends \ebi\Object{
 
 							$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
 						}else{
-							// TODO
 							if($self_var[0] == '@'){
 								$cond_var = null;
 								$cond_name = substr($self_var,1);
@@ -260,7 +259,7 @@ abstract class Dao extends \ebi\Object{
 								array_unshift($conds,
 									\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias)
 								);
-							}							
+							}
 							$column->table($ref_table);
 							$column->table_alias($ref_table_alias);
 							$_alias_[$column->column_alias()] = $name;
@@ -273,11 +272,11 @@ abstract class Dao extends \ebi\Object{
 								$this->prop_anon($name,'set',false,true);
 							
 								for($i=0;$i<sizeof($conds);$i+=2){
-									$_join_conds_[$name][] = array($conds[$i],$conds[$i+1]);
+									$_join_conds_[$name][] = [$conds[$i],$conds[$i+1]];
 								}
 							}else{
 								for($i=0;$i<sizeof($conds);$i+=2){
-									$_conds_[] = array($conds[$i],$conds[$i+1]);
+									$_conds_[] = [$conds[$i],$conds[$i+1]];
 								}
 							}
 							$_where_columns_[$name] = $column;
@@ -285,7 +284,6 @@ abstract class Dao extends \ebi\Object{
 					}
 					if(!empty($conds)){
 						$last_cond_column[$name] = $conds[sizeof($conds)-1];
-						// TODO
 					}
 				}
 			}else if($anon_cond[0] === '@'){
