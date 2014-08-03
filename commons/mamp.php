@@ -5,6 +5,7 @@
 			'ebi.SessionDao'=>['type'=>'ebi.MysqlConnector','dbname'=>'ebi'],
 			'*'=>['type'=>'ebi.MysqlConnector','dbname'=>'ebi'],
 			'test.db.ReplicationSlave'=>['type'=>'ebi.MysqlUnbufferedConnector','dbname'=>'ebi'],
+			'test.db.Unbuffered'=>['type'=>'ebi.MysqlUnbufferedConnector','dbname'=>'ebi'],
 		]
 	],
 ]);
