@@ -283,7 +283,11 @@ abstract class Dao extends \ebi\Object{
 						}
 					}
 					if(!empty($conds)){
-						$last_cond_column[$name] = $conds[sizeof($conds)-1];
+						$cond_column = clone($conds[sizeof($conds)-1]);
+						$cond_column->column($column->column());
+						$cond_column->column_alias('c'.self::$_cnt_++);
+					
+						$last_cond_column[$name] = $cond_column;
 					}
 				}
 			}else if($anon_cond[0] === '@'){
