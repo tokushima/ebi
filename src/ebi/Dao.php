@@ -242,7 +242,7 @@ abstract class Dao extends \ebi\Object{
 							if($self_var[0] == '@'){
 								$cond_var = null;
 								$cond_name = substr($self_var,1);
-								if(Strpos($cond_name,'.') !== false){
+								if(strpos($cond_name,'.') !== false){
 									list($cond_name,$cond_var) = explode('.',$cond_name);
 								}
 								if(!isset($last_cond_column[$cond_name])){

@@ -42,7 +42,7 @@ $re = \test\db\JoinABC::find_all(Q::eq("name","bbb"));
 eq(2,sizeof($re));
 
 
-$re = \test\db\JoinABBC::find_all(Q::eq("name","bbb"));
+$re = \test\db\JoinABBCC::find_all(Q::eq("name","bbb"));
 eq(2,sizeof($re));
 
 

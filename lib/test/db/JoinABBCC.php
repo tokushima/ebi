@@ -10,7 +10,7 @@ namespace test\db;
  * @var string $name @['cond'=>'@b_id']
  * @var integer $b_id2 @['column'=>'id','cond'=>'@c_id.b_id(join_b.id)']
  */
-class JoinABBC extends \ebi\Dao{
+class JoinABBCC extends \ebi\Dao{
 	protected $id;
 	protected $b_id2;
 	protected $b_id;
