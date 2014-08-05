@@ -29,7 +29,7 @@ $ curl -LO http://git.io/cmdman.phar
 ### create start file
 
 ```
-$ php cmdman.phar ebi.Dt::setup --create
+$ php cmdman.phar ebi.Dt::setup
 ```
 
 
