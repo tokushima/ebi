@@ -7,6 +7,9 @@ Web Framework (PHP 5 >= 5.4.0)
 ![](ebi.png)
 
 
+
+##Composer
+
 ### composer install
 
 ```
@@ -31,5 +34,17 @@ $ curl -LO http://git.io/cmdman.phar
 ```
 $ php cmdman.phar ebi.Dt::setup
 ```
+
+
+
+
+##Phar
+
+### phar download
+
+```
+curl -LO http://git.io/ebi.phar
+```
+
 
 
