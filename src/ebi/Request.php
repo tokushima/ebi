@@ -17,7 +17,17 @@ class Request implements \IteratorAggregate{
 		if(isset($_SERVER['REQUEST_METHOD'])){
 			if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
 				if(isset($_POST) && is_array($_POST)){
-					foreach($_POST as $k => $v) $this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
+					if(isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json'){
+						$json = json_decode(file_get_content('php://input'),true);
+						if(is_array($json)){
+							foreach($json as $k => $v){
+								$this->vars[$k] = $v;
+							}
+						}
+					}
+					foreach($_POST as $k => $v){
+						$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
+					}
 				}
 				if(isset($_FILES) && is_array($_FILES)){
 					$marge_func = function($arr,$pk,$files,&$map) use(&$marge_func){
@@ -42,7 +52,9 @@ class Request implements \IteratorAggregate{
 					}
 				}
 			}else if(isset($_GET) && is_array($_GET)){
-				foreach($_GET as $k => $v) $this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
+				foreach($_GET as $k => $v){
+					$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
+				}
 			}
 			if(isset($_COOKIE) && is_array($_COOKIE)){
 				foreach($_COOKIE as $k => $v){

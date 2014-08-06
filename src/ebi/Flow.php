@@ -244,7 +244,9 @@ class Flow{
 					if(isset($funcs)){
 						try{
 							$result_vars = call_user_func_array($funcs,$param_arr);
-							if(!is_array($result_vars)) $result_vars = ['result'=>$result_vars];
+							if(!is_array($result_vars)){
+								$result_vars = ['result'=>$result_vars];
+							}
 						}catch(\Exception $exception){
 						}
 					}else if(isset($class)){
@@ -411,7 +413,7 @@ class Flow{
 										'type'=>basename(str_replace("\\",'/',get_class($e)))
 										];
 					}
-					\ebi\HttpHeader::send('Content-Type','text/javascript');
+					\ebi\HttpHeader::send('Content-Type','application/json');
 					\ebi\Log::disable_display();
 					print(json_encode(array('error'=>$message)));
 					return $this->terminate();
