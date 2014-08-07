@@ -5,15 +5,13 @@
 	function conf_sample(pkg){
 		alert("\\ebi\\Conf::set([" + "\n"
 			+ "\t" + "'ebi.Dao'=>[" + "\n"
-				+ "\t\t" + "connection'=>[" + "\n"
+				+ "\t\t" + "'connection'=>[" + "\n"
 					+ "\t\t\t" + "'" + pkg + "'=>[" + "\n"
-					+ "\t\t\t\t" + "'type'=>'ebi.DbConnector'," + "\n"
-					+ "\t\t\t\t" + "'host'=>'localhost'," + "\n"
-					+ "\t\t\t\t" + "'dbname'=>'mydatabase'," + "\n"
-					+ "\t\t\t\t" + "'user'=>'root'," + "\n"
-					+ "\t\t\t\t" + "'password'=>'root'," + "\n"
-				+ "\t\t\t" + "]," + "\n"
-			+ "\t\t" + "]," + "\n"
+						+ "\t\t\t\t" + "'type'=>'ebi.DbConnector'," + "\n"
+						+ "\t\t\t\t" + "'dbname'=>'data.db'," + "\n"
+					+ "\t\t\t" + "]," + "\n" 
+				+ "\t\t" + "]," + "\n"
+			+ "\t" + "]," + "\n"
 		+ "]);" + "\n");
 	}
 </script>
