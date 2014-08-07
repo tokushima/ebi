@@ -5,9 +5,10 @@ namespace ebi;
  * @author tokushima
  */
 class Request implements \IteratorAggregate{
-	private $vars = array();
-	private $files = array();
+	private $vars = [];
+	private $files = [];
 	private $args;
+	private $_method;
 
 	public function __construct(){
 		if('' != ($pathinfo = (isset($_SERVER['PATH_INFO'])) ? $_SERVER['PATH_INFO'] : '')){
@@ -16,15 +17,10 @@ class Request implements \IteratorAggregate{
 		}
 		if(isset($_SERVER['REQUEST_METHOD'])){
 			if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
+				if(isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])){
+					$this->_method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+				}
 				if(isset($_POST) && is_array($_POST)){
-					if(isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json'){
-						$json = json_decode(file_get_contents('php://input'),true);
-						if(is_array($json)){
-							foreach($json as $k => $v){
-								$this->vars[$k] = $v;
-							}
-						}
-					}
 					foreach($_POST as $k => $v){
 						$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
 					}
@@ -58,7 +54,29 @@ class Request implements \IteratorAggregate{
 			}
 			if(isset($_COOKIE) && is_array($_COOKIE)){
 				foreach($_COOKIE as $k => $v){
-					if(ctype_alpha($k[0]) && $k != session_name()) $this->vars[$k] = $v;
+					if(ctype_alpha($k[0]) && $k != session_name()){
+						$this->vars[$k] = $v;
+					}
+				}
+			}
+			if(isset($this->vars['_method'])){
+				if(empty($this->_method)){
+					$this->_method = strtoupper($this->vars['_method']);
+				}
+				unset($this->vars['_method']);
+			}
+			if(empty($this->_method)){
+				$this->_method = $_SERVER['REQUEST_METHOD'];
+			}
+			if(
+				isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' &&
+				($this->_method == 'PUT' || $this->_method == 'DELETE' || $this->_method == 'POST')
+			){
+				$json = json_decode(file_get_contents('php://input'),true);
+				if(is_array($json)){
+					foreach($json as $k => $v){
+						$this->vars[$k] = $v;
+					}
 				}
 			}
 		}else if(isset($_SERVER['argv'])){
@@ -139,11 +157,25 @@ class Request implements \IteratorAggregate{
 		return (($sep && !empty($query)) ? '?' : '').$query;
 	}
 	/**
-	 * POSTされたか
+	 * POST
 	 * @return boolean
 	 */
 	public function is_post(){
-		return (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST');
+		return ($this->_method == 'POST');
+	}
+	/**
+	 * PUT
+	 * @return boolean
+	 */
+	public function is_put(){
+		return ($this->_method == 'PUT');
+	}
+	/**
+	 * DLETE
+	 * @return boolean
+	 */
+	public function is_delete(){
+		return ($this->_method == 'DELETE');
 	}
 	/**
 	 * CLIで実行されたか
