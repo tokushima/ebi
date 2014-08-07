@@ -15,38 +15,40 @@ class Flow{
 	private $package_media_url = 'package/resources/media';	
 	
 	private $url_pattern = array();
-	private $selected_class_pattern = array();
+	private $selected_class_pattern = [];
 	private $selected_pattern;
 	
-	private static $in_get_map = false;
-	private static $in_set_map = false;	
-	private static $get_map = array();
-	private static $set_map = array();
+	private static $is_get_branch = false;
+	private static $branch_map = [];
+	
+	private static $is_get_map = false;
+	private static $map = [];
 	
 	/**
 	 * mapsを取得する
 	 * @param string $file
 	 * @return array
 	 */
-	public static function get_map($file){
-		self::$in_get_map = true;
-		self::$get_map = [];
-		try{
-			ob_start();
-				include($file);
-			ob_end_clean();
-		}catch(\Exception $e){
-			\ebi\Log::error($e);
+	public static function get_map($file=null){
+		if(!empty($file)){
+			self::$is_get_map = true;
+			try{
+				ob_start();
+					include($file);
+				ob_end_clean();
+			}catch(\Exception $e){
+				\ebi\Log::error($e);
+			}
 		}
-		return self::$get_map;
+		return self::$map;
 	}
 	/**
 	 * アプリケーションの実行
 	 * @param array $map
 	 */
 	public static function app($map){
-		if(self::$in_set_map){
-			self::$set_map = $map;
+		if(self::$is_get_branch){
+			self::$branch_map = $map;
 		}else{
 			$self = new self();
 			$self->execute($map);
@@ -154,14 +156,14 @@ class Flow{
 		}
 		$result_vars = array();
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
-		$map = $this->read($map,$pathinfo);
-		if(self::$in_get_map){
-			self::$get_map = $map['patterns'];
-			self::$in_get_map = false;
+		self::$map = $this->read($map,$pathinfo);
+		
+		if(self::$is_get_map){
+			self::$is_get_map = false;
 			return;
 		}
 		if(preg_match('/^\/'.preg_quote($this->package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){
-			foreach($map['patterns'] as $p){
+			foreach(self::$map['patterns'] as $p){
 				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@'])){
 					\ebi\HttpFile::attach($p['@'].'/resources/media/'.$m[2]);
 				}
@@ -169,7 +171,7 @@ class Flow{
 			\ebi\HttpHeader::send_status(404);
 			exit;
 		}
-		foreach($map['patterns'] as $k => $pattern){
+		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(array('\/','/','@#S'),array('@#S','\/','\/'),$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(isset($pattern['mode']) && !empty($pattern['mode'])){
 					$mode = \ebi\Conf::appmode();
@@ -218,7 +220,7 @@ class Flow{
 							throw new \InvalidArgumentException($pattern['name'].' action invalid');
 						}
 					}
-					foreach($map['patterns'] as $m){
+					foreach(self::$map['patterns'] as $m){
 						$this->url_pattern[$m['name']][$m['num']] = $m['format'];
 						
 						if(!empty($class) && isset($pattern['@']) && isset($m['@']) && strpos($m['action'],$class.'::') === 0){
@@ -226,14 +228,14 @@ class Flow{
 						}
 					}
 					if(isset($pattern['branch'])){
-						foreach($map['branch'][$pattern['branch']] as $k => $v){
-							if(!empty($v)) $map[$k] = $v;
+						foreach(self::$map['branch'][$pattern['branch']] as $k => $v){
+							if(!empty($v)) self::$map[$k] = $v;
 						}
 					}
 					if(isset($pattern['redirect'])){
 						$this->redirect($pattern['redirect']);
 					}
-					foreach(array_merge($map['plugins'],$pattern['plugins']) as $m){
+					foreach(array_merge(self::$map['plugins'],$pattern['plugins']) as $m){
 						$o = $this->to_instance($m);
 						$this->set_object_plugin($o);
 						$plugins[] = $o;
@@ -330,7 +332,7 @@ class Flow{
 					){
 						$this->template($result_vars,$ins,$t,$this->app_url.$this->package_media_url.'/'.$pattern['pattern_id']);
 					}else if(
-						$map['find_template'] !== false
+						self::$map['find_template'] !== false
 						&& is_file($t=\ebi\Util::path_absolute($this->template_path,$pattern['name'].'.html'))
 					){
 						$this->template($result_vars,$ins,$t);
@@ -384,8 +386,8 @@ class Flow{
 					}
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
-					}else if(isset($map['error_status'])){
-						\ebi\HttpHeader::send_status($map['error_status']);
+					}else if(isset(self::$map['error_status'])){
+						\ebi\HttpHeader::send_status(self::$map['error_status']);
 					}else{
 						\ebi\HttpHeader::send_status(500);
 					}
@@ -398,10 +400,10 @@ class Flow{
 						$this->redirect($pattern['error_redirect']);
 					}else if(isset($pattern['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,$pattern['error_template']));
-					}else if(isset($map['error_redirect'])){
-						$this->redirect($map['error_redirect']);
-					}else if(isset($map['error_template'])){
-						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,$map['error_template']));
+					}else if(isset(self::$map['error_redirect'])){
+						$this->redirect(self::$map['error_redirect']);
+					}else if(isset(self::$map['error_template'])){
+						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,self::$map['error_template']));
 					}else if($this->has_object_plugin('flow_output')){
 						$this->call_object_plugin_funcs('flow_output',array('error'=>array('message'=>$e->getMessage())));
 						return $this->terminate();
@@ -420,16 +422,16 @@ class Flow{
 				}
 			}
 		}
-		if(isset($map['nomatch_redirect'])){
-			if(strpos($map['nomatch_redirect'],'://') === false){
-				foreach($map['patterns'] as $m){
-					if($map['nomatch_redirect'] == $m['name']){
+		if(isset(self::$map['nomatch_redirect'])){
+			if(strpos(self::$map['nomatch_redirect'],'://') === false){
+				foreach(self::$map['patterns'] as $m){
+					if(self::$map['nomatch_redirect'] == $m['name']){
 						$this->url_pattern[$m['name']][$m['num']] = $m['format'];
 						break;
 					}
 				}
 			}
-			$this->redirect($map['nomatch_redirect']);
+			$this->redirect(self::$map['nomatch_redirect']);
 		}
 		\ebi\HttpHeader::send_status(404);
 		return $this->terminate();
@@ -537,25 +539,22 @@ class Flow{
 					unset($map['patterns'][$k]);
 
 					if(is_file($f=$this->apps_path.$branch_path.'.php')){
-						self::$in_set_map = true;
+						self::$is_get_branch = true;
+						self::$branch_map = [];
 						ob_start();
 							$rtn = include($f);
 						ob_end_clean();
-						if(!is_array($rtn)){
-							$rtn = self::$set_map;
-						}
-						self::$in_set_map = false;
-						self::$set_map = array();
-						$branch_map = $fixed_vars($root_keys,$this->read($rtn));
+						self::$is_get_branch = false;
 						
-						foreach(array_keys($branch_map['patterns']) as $bk){
-							 $bm = $fixed_vars($map_pattern_keys,$branch_map['patterns'][$bk],$branch_map);
+						self::$branch_map = $fixed_vars($root_keys,$this->read(self::$branch_map));						
+						foreach(array_keys(self::$branch_map['patterns']) as $bk){
+							 $bm = $fixed_vars($map_pattern_keys,self::$branch_map['patterns'][$bk],self::$branch_map);
 							 $bm['name'] = $name.'#'.$bm['name'];
 							 $bm['branch'] = $branch_path;
 							 $map['patterns'][$k.(empty($bk) ? '' :'/'.$bk)] = $bm;
 						}
-						unset($branch_map['patterns']);
-						$map['branch'][$branch_path] = $branch_map;
+						unset(self::$branch_map['patterns']);
+						$map['branch'][$branch_path] = self::$branch_map;
 					}
 				}else{
 					$map['patterns'][$k] = $fixed_vars($map_pattern_keys,$map['patterns'][$k]);

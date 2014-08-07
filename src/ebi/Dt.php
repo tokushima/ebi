@@ -23,6 +23,7 @@ class Dt{
 	}
 	private function get_flow_output_maps(){
 		if(empty($this->flow_output_maps)){
+			$self_class = str_replace('\\','.',__CLASS__);
 			$entry = null;
 			$trace = debug_backtrace(false);
 			krsort($trace);
@@ -32,38 +33,32 @@ class Dt{
 					break;					
 				}
 			}
-			if(isset($entry['file'])){
-				$self_class = str_replace('\\','.',__CLASS__);
-				$src = file_get_contents($entry['file']);
+			$map = \ebi\Flow::get_map();
+			foreach($map['patterns'] as $k => $m){
+				if(!isset($m['deprecated'])) $m['deprecated'] = false;
+				if(!isset($m['mode'])) $m['mode'] = null;
+				if(!isset($m['summary'])) $m['summary'] = null;
+				if(!isset($m['template'])) $m['template'] = null;
 				
-				if(strpos($src,'Flow') !== false){
-					foreach(\ebi\Flow::get_map($entry['file']) as $k => $m){
-						if(!isset($m['deprecated'])) $m['deprecated'] = false;
-						if(!isset($m['mode'])) $m['mode'] = null;
-						if(!isset($m['summary'])) $m['summary'] = null;
-						if(!isset($m['template'])) $m['template'] = null;
+				if(isset($m['action']) && is_string($m['action'])){
+					list($m['class'],$m['method']) = explode('::',$m['action']);
+					if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
+					$m['class'] = str_replace('\\','.',$m['class']);
+				}
+				if(!isset($m['class']) || $m['class'] != $self_class){
+					try{
+						$m['error'] = null;
+						$m['url'] = $k;
 						
-						if(isset($m['action']) && is_string($m['action'])){
-							list($m['class'],$m['method']) = explode('::',$m['action']);
-							if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
-							$m['class'] = str_replace('\\','.',$m['class']);
+						if(isset($m['method'])){
+							$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+							list($summary) = explode(PHP_EOL,$info['description']);
+							$m['summary'] = empty($summary) ? null : $summary;
 						}
-						if(!isset($m['class']) || $m['class'] != $self_class){
-							try{
-								$m['error'] = null;
-								$m['url'] = $k;
-								
-								if(isset($m['method'])){
-									$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-									list($summary) = explode(PHP_EOL,$info['description']);
-									$m['summary'] = empty($summary) ? null : $summary;
-								}
-							}catch(\Exception $e){
-								$m['error'] = $e->getMessage();
-							}
-							$this->flow_output_maps[$m['name']] = $m;
-						}
+					}catch(\Exception $e){
+						$m['error'] = $e->getMessage();
 					}
+					$this->flow_output_maps[$m['name']] = $m;
 				}
 			}
 		}
@@ -400,7 +395,8 @@ class Dt{
 	
 				if(strpos($src,'Flow') !== false){
 					$entry_name = substr($f->getFilename(),0,-4);
-					foreach(\ebi\Flow::get_map($f->getPathname()) as $m){
+					$map = \ebi\Flow::get_map($f->getPathname());
+					foreach($map['patterns'] as $m){
 						$urls[$entry_name.'::'.$m['name']] = $m['format'];
 					}
 				}
