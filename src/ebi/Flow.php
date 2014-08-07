@@ -351,7 +351,7 @@ class Flow{
 								case 'object':
 									$list = array();
 									foreach((($value instanceof \Traversable) ? $value : get_object_vars($value)) as $k => $v){
-										$list[] = $to_array($v);
+										$list[$k] = $to_array($v);
 									}
 									return $list;
 								default:
