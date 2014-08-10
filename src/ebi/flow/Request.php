@@ -26,11 +26,25 @@ class Request{
 		return $this->req->ar_vars();
 	}
 	/**
-	 * POSTされたか
+	 * POST
 	 * @return boolean
 	 */
 	public function is_post(){
 		return $this->req->is_post();
+	}
+	/**
+	 * PUT
+	 * @return boolean
+	 */
+	public function is_put(){
+		return $this->req->is_put();
+	}
+	/**
+	 * DELETE
+	 * @return boolean
+	 */
+	public function is_delete(){
+		return $this->req->is_delete();
 	}
 	/**
 	 * 添付ファイル情報の取得
