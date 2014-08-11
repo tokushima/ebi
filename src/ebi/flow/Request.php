@@ -26,6 +26,13 @@ class Request{
 		return $this->req->ar_vars();
 	}
 	/**
+	 * GET
+	 * @return boolean
+	 */
+	public function is_get(){
+		return $this->req->is_get();
+	}
+	/**
 	 * POST
 	 * @return boolean
 	 */
