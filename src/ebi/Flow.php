@@ -403,6 +403,7 @@ class Flow{
 					}else if(isset(self::$map['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,self::$map['error_template']));
 					}else if($this->has_object_plugin('flow_output')){
+						\ebi\HttpHeader::send_status(500);
 						$this->call_object_plugin_funcs('flow_output',array('error'=>array('message'=>$e->getMessage())));
 						return $this->terminate();
 					}
