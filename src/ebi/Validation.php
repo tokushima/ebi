@@ -73,7 +73,10 @@ class Validation{
 								|| strlen($v) > 255 || strpos($v,'..') !== false || strpos($v,'.@') !== false || $v[0] === '.') throw new \InvalidArgumentException();
 						return $v;
 					case 'alnum':
-						if(!ctype_alnum(str_replace('_','',$v))) throw new \InvalidArgumentException();
+						$a = $dp = isset($p['additional_chars']) ? $p['additional_chars'] : '';
+						if(!ctype_alnum((empty($a) ? $v : str_replace(str_split($a,1),'',$v)))){
+							throw new \InvalidArgumentException();
+						}
 						return $v;
 					case 'mixed': return $v;
 					default:

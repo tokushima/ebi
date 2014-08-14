@@ -14,7 +14,7 @@ namespace test\object;
  * @var string[] $jj
  * @var email $kk
  * @var date $ll
- * @var alnum $mm
+ * @var alnum $mm @['additional_chars'=>'_']
  * @var intdate $nn
  * @var integer $oo
  * @var text $pp

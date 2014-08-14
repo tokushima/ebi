@@ -388,8 +388,6 @@ class Flow{
 						\ebi\HttpHeader::send_status($pattern['error_status']);
 					}else if(isset(self::$map['error_status'])){
 						\ebi\HttpHeader::send_status(self::$map['error_status']);
-					}else{
-						\ebi\HttpHeader::send_status(500);
 					}
 					if(isset($pattern['vars']) && !empty($pattern['vars']) && is_array($pattern['vars'])){
 						$result_vars = array_merge($result_vars,$pattern['vars']);
@@ -416,6 +414,7 @@ class Flow{
 										];
 					}
 					\ebi\HttpHeader::send('Content-Type','application/json');
+					\ebi\HttpHeader::send_status(500);
 					\ebi\Log::disable_display();
 					print(json_encode(array('error'=>$message)));
 					return $this->terminate();
