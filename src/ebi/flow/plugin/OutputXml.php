@@ -9,7 +9,8 @@ class OutputXml{
 		$xml = new \ebi\Xml('result');
 		$xml->add($array);
 		
-		header(sprintf('Content-Type: application/xml'));
+		\ebi\HttpHeader::send('Content-Type','application/xml');
+		\ebi\HttpHeader::send_status(500);
 		print($xml->get('UTF-8'));
 	}
 }
