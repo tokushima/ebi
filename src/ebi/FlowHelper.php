@@ -345,4 +345,7 @@ class FlowHelper{
 		}
 		return [];
 	}
+	public function has_invalid($group=null){
+		return \ebi\FlowInvalid::has($group);
+	}
 }

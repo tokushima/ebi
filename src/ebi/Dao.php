@@ -476,75 +476,77 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public function validate(){
 		foreach($this->columns(true) as $name => $column){
-			$value = $this->{$name}();
-			$e_require = false;
-
-			if($this->prop_anon($name,'require') === true && ($value === '' || $value === null)){
-				\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.' required'),$name);
-				$e_require = true;
-			}
-			if(!$e_require && $value !== null){
-				switch($this->prop_anon($name,'type')){
-					case 'number':
-					case 'integer':
-						if($this->prop_anon($name,'min') !== null && (float)$this->prop_anon($name,'min') > $value){
-							\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
-						}
-						if($this->prop_anon($name,'max') !== null && (float)$this->prop_anon($name,'max') < $value){
-							\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
-						}
-						break;
-					case 'text':
-					case 'string':
-					case 'alnum':
-						if($this->prop_anon($name,'min') !== null && (int)$this->prop_anon($name,'min') > mb_strlen($value)){
-							\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
-						}
-						if($this->prop_anon($name,'max') !== null && (int)$this->prop_anon($name,'max') < mb_strlen($value)){
-							\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
-						}
-						break;
+			if(!\ebi\Exceptions::has($name)){
+				$value = $this->{$name}();
+				$e_require = false;
+	
+				if($this->prop_anon($name,'require') === true && ($value === '' || $value === null)){
+					\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.' required'),$name);
+					$e_require = true;
 				}
-			}
-			$unique_together = $this->prop_anon($name,'unique_together');
-			if($value !== '' && $value !== null && ($this->prop_anon($name,'unique') === true || !empty($unique_together))){
-				$uvalue = $value;
-				$q = array(Q::eq($name,$uvalue));
-				if(!empty($unique_together)){
-					foreach((is_array($unique_together) ? $unique_together : array($unique_together)) as $c){
-						$q[] = Q::eq($c,$this->{$c}());
+				if(!$e_require && $value !== null){
+					switch($this->prop_anon($name,'type')){
+						case 'number':
+						case 'integer':
+							if($this->prop_anon($name,'min') !== null && (float)$this->prop_anon($name,'min') > $value){
+								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
+							}
+							if($this->prop_anon($name,'max') !== null && (float)$this->prop_anon($name,'max') < $value){
+								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
+							}
+							break;
+						case 'text':
+						case 'string':
+						case 'alnum':
+							if($this->prop_anon($name,'min') !== null && (int)$this->prop_anon($name,'min') > mb_strlen($value)){
+								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
+							}
+							if($this->prop_anon($name,'max') !== null && (int)$this->prop_anon($name,'max') < mb_strlen($value)){
+								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
+							}
+							break;
 					}
 				}
-				foreach($this->primary_columns() as $primary){
-					if(null !== $this->{$primary->name()}) $q[] = Q::neq($primary->name(),$this->{$primary->name()});
+				$unique_together = $this->prop_anon($name,'unique_together');
+				if($value !== '' && $value !== null && ($this->prop_anon($name,'unique') === true || !empty($unique_together))){
+					$uvalue = $value;
+					$q = array(Q::eq($name,$uvalue));
+					if(!empty($unique_together)){
+						foreach((is_array($unique_together) ? $unique_together : array($unique_together)) as $c){
+							$q[] = Q::eq($c,$this->{$c}());
+						}
+					}
+					foreach($this->primary_columns() as $primary){
+						if(null !== $this->{$primary->name()}) $q[] = Q::neq($primary->name(),$this->{$primary->name()});
+					}
+					if(0 < call_user_func_array(array(get_class($this),'find_count'),$q)){
+						\ebi\Exceptions::add(new \ebi\exception\UniqueException($name.' unique'),$name);
+					}
 				}
-				if(0 < call_user_func_array(array(get_class($this),'find_count'),$q)){
-					\ebi\Exceptions::add(new \ebi\exception\UniqueException($name.' unique'),$name);
+				$master = $this->prop_anon($name,'master');
+				if(!empty($master)){
+					$master = str_replace('.',"\\",$master);
+					if($master[0] !== "\\") $master = "\\".$master;
+					try{
+						$r = new \ReflectionClass($master);
+					}catch(\ReflectionException $e){
+						$self = new \ReflectionClass(get_class($this));
+						$r = new \ReflectionClass("\\".$self->getNamespaceName().$master);
+					}
+					$mo = $r->newInstanceArgs();
+					$primarys = $mo->primary_columns();
+					if(empty($primarys) || 0 === call_user_func_array(array($mo,'find_count'),array(Q::eq(key($primarys),$this->{$name})))){
+						\ebi\Exceptions::add(new \ebi\exception\NotFoundException($name.' master not found'),$name);
+					}
 				}
-			}
-			$master = $this->prop_anon($name,'master');
-			if(!empty($master)){
-				$master = str_replace('.',"\\",$master);
-				if($master[0] !== "\\") $master = "\\".$master;
 				try{
-					$r = new \ReflectionClass($master);
-				}catch(\ReflectionException $e){
-					$self = new \ReflectionClass(get_class($this));
-					$r = new \ReflectionClass("\\".$self->getNamespaceName().$master);
+					if($this->{'verify_'.$column->name()}() === false){
+						\ebi\Exceptions::add(new \ebi\exception\VerifyException($column->name().' verification failed'),$column->name());
+					}
+				}catch(\ebi\Exceptions $e){
+				}catch(\Exception $e){
+					\ebi\Exceptions::add($e,$column->name());				
 				}
-				$mo = $r->newInstanceArgs();
-				$primarys = $mo->primary_columns();
-				if(empty($primarys) || 0 === call_user_func_array(array($mo,'find_count'),array(Q::eq(key($primarys),$this->{$name})))){
-					\ebi\Exceptions::add(new \ebi\exception\NotFoundException($name.' master not found'),$name);
-				}
-			}
-			try{
-				if($this->{'verify_'.$column->name()}() === false){
-					\ebi\Exceptions::add(new \ebi\exception\VerifyException($column->name().' verification failed'),$column->name());
-				}
-			}catch(\ebi\Exceptions $e){
-			}catch(\Exception $e){
-				\ebi\Exceptions::add($e,$column->name());				
 			}
 		}
 		\ebi\Exceptions::throw_over();
@@ -1002,11 +1004,10 @@ abstract class Dao extends \ebi\Object{
 					try{
 						$this->{$name}($value);
 					}catch(\Exception $e){
-						\ebi\Exceptions::add($e,$name);
+						\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($e->getMessage()),$name);
 					}
 				}
 			}
-			\ebi\Exceptions::throw_over();
 		}
 		return $this;
 	}

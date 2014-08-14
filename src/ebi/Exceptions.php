@@ -62,4 +62,23 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 			throw $exception;
 		}
 	}
+	/**
+	 * Exceptionが追加されているか
+	 * @param string $group
+	 * @return boolean
+	 */
+	public static function has($group=null){
+		if(!isset(self::$self)){
+			return false;
+		}
+		if(empty($group)){
+			return !empty(self::$self->messages);
+		}
+		foreach(self::$self->messages as $e){
+			if($e['group'] == $group){
+				return true;
+			}
+		}
+		return false;
+	}
 }
