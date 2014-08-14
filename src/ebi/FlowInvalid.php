@@ -6,6 +6,7 @@ class FlowInvalid implements \Iterator{
 	private $messages = [];
 	private $pos = 0;
 	private $group = null;
+	private $type = null;
 	
 	public function rewind(){
 		$this->pos = 0;
@@ -18,7 +19,9 @@ class FlowInvalid implements \Iterator{
 	}
 	public function valid(){
 		while($this->pos < sizeof($this->messages)){
-			if(empty($this->group) || $this->messages[$this->pos]['group'] === $this->group){
+			if((empty($this->group) || $this->messages[$this->pos]['group'] === $this->group) &&
+				(empty($this->type) || ($this->messages[$this->pos]['exception'] instanceof $this->type))
+			){
 				return true;
 			}
 			$this->pos++;
@@ -28,7 +31,15 @@ class FlowInvalid implements \Iterator{
 	public function next(){
 		$this->pos++;
 	}
-	
+	private static function type($type){
+		if(!empty($type)){
+			$type = str_replace('.','\\',$type);
+			if($type[0] != '\\'){
+				$type = '\\'.$type;
+			}
+		}
+		return $type;
+	}
 	public static function set(\Exception $exception){
 		self::$self = new self();
 		if($exception instanceof \ebi\Exceptions){
@@ -42,11 +53,13 @@ class FlowInvalid implements \Iterator{
 	/**
 	 * 追加されたExceptionからException配列を取得
 	 * @param string $group グループ名
+	 * @param string $type 例外クラス名
 	 * @return Exception[]
 	 */
-	public static function get($group=null){
-		if(!self::has($group)) return [];
+	public static function get($group=null,$type=null){
+		if(self::$self === null) return [];
 		self::$self->group = $group;
+		self::$self->type = self::type($type);
 		return self::$self;
 	}
 	/**
@@ -62,11 +75,12 @@ class FlowInvalid implements \Iterator{
 	 * @param string $group グループ名
 	 * @return boolean
 	 */
-	public static function has($group=null){
+	public static function has($group=null,$type=null){
 		if(self::$self === null) return false;
-		if(empty($group)) return !empty(self::$self->messages);
-		foreach(self::$self->messages as $e){
-			if($e['group'] === $group) return true;
+		self::$self->group = $group;
+		self::$self->type = self::type($type);
+		foreach(self::$self as $e){
+			return true;
 		}
 		return false;
 	}
@@ -75,8 +89,10 @@ class FlowInvalid implements \Iterator{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:invalid');
 				$param = $tag->in_attr('param');
+				$type = $tag->in_attr('type');
 				$var = $tag->in_attr('var','rtinvalid_var'.uniqid(''));
 				if(!isset($param[0]) || $param[0] !== '$') $param = '"'.$param.'"';
+				if(!isset($type[0]) || $type[0] !== '$') $type = '"'.$type.'"';
 				$value = $tag->value();
 				$tagtype = $tag->in_attr('tag');
 		
@@ -89,12 +105,12 @@ class FlowInvalid implements \Iterator{
 				}
 				$src = str_replace(
 						$tag->plain(),
-						sprintf("<?php if(\\ebi\\FlowInvalid::has(%s)){ ?>"
-								."<?php \$%s = \\ebi\\FlowInvalid::get(%s); ?>"
+						sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
+								."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
 								.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
 								."<?php } ?>"
-								,$param
-								,$var,$param
+								,$param,$type
+								,$var,$param,$type
 						),
 						$src);
 			}
