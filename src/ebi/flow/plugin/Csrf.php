@@ -11,20 +11,21 @@ class Csrf{
 	public function before_flow_action(){
 		$req = new \ebi\Request();
 		$secret_key = \ebi\Conf::get('secret_key',sha1(__FILE__));
+		$session = new \ebi\Session();
+		
+		$csrftoken = $req->in_vars('csrftoken');
+		$validtoken = $session->in_vars('validtoken');
 
+		$this->token = md5(rand(1000,10000).time());
+		$session->vars('validtoken',sha1($secret_key.$this->token));		
+		
 		if($req->is_post() && 
-			(!$req->is_cookie('validtoken') || $req->in_vars('validtoken') !== sha1($secret_key.$req->in_vars('csrftoken')))
+			($validtoken !== sha1($secret_key.$csrftoken))
 		){
 			\ebi\HttpHeader::send_status(403);
 			throw new \RuntimeException('CSRF verification failed');
 		}
-		$this->token = md5(rand(1000,10000).time());
-		$validtoken = sha1($secret_key.$this->token);
-		
-		$req->vars('validtoken',$validtoken);
-		$req->write_cookie('validtoken');
 	}
-	
 	public function before_flow_action_request(\ebi\flow\Request $req){
 		$req->vars('csrftoken',$this->token);
 	}
