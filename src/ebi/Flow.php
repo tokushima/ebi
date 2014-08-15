@@ -207,6 +207,7 @@ class Flow{
 				try{
 					$funcs = $class = $method = $template = $ins = null;
 					$exception = null;
+					$has_flow_plugin = false;
 					$result_vars = $plugins = [];
 					array_shift($param_arr);
 					$this->selected_pattern = $pattern;
@@ -240,21 +241,11 @@ class Flow{
 						$this->set_object_plugin($o);
 						$plugins[] = $o;
 					}
-					if($this->has_object_plugin('before_flow_action')){
-						$this->call_object_plugin_funcs('before_flow_action');
-					}
-					if(isset($funcs)){
-						try{
-							$result_vars = call_user_func_array($funcs,$param_arr);
-							if(!is_array($result_vars)){
-								$result_vars = ['result'=>$result_vars];
-							}
-						}catch(\Exception $exception){
-						}
-					}else if(isset($class)){
+					if(!isset($funcs) && isset($class)){
 						$ins = $this->to_instance($class);
 						$ins_r = new \ReflectionClass($ins);
 						$traits = [];
+						
 						while(true){
 							$traits = array_merge($traits,$ins_r->getTraitNames());
 							if(($ins_r = $ins_r->getParentClass()) === false) break;
@@ -265,43 +256,53 @@ class Flow{
 								$plugins[] = $o;
 								$this->set_object_plugin($o);
 							}
+							$ins->set_pattern($this->selected_pattern);
 						}
 						if(in_array('ebi\\Plugin',$traits)){
 							foreach($plugins as $o){
 								$ins->set_object_plugin($o);
 							}
 						}
-						if($has_flow_plugin){
-							$ins->set_pattern($this->selected_pattern);
-							$ins->before();
-							$before_redirect = $ins->get_before_redirect();
-							if(isset($before_redirect)){
-								$this->redirect($before_redirect);
-							}							
-						}
-						try{
-							$result_vars = call_user_func_array(array($ins,$method),$param_arr);
-							if(!is_array($result_vars)) $result_vars = [];
-						}catch(\Exception $exception){
-						}
-						if($has_flow_plugin){
-							$ins->after();
-							
-							$template_block = $ins->get_template_block();
-							if(!empty($template_block)){
-								$this->template->put_block(\ebi\Util::path_absolute($this->template_path,$ins->get_template_block()));
-							}
-							$template = $ins->get_template();
-							$result_vars = array_merge($result_vars,$ins->get_after_vars());							
-							$after_redirect = $ins->get_after_redirect();
-							if(isset($after_redirect) && !isset($pattern['after'])){
-								$pattern['after'] = $after_redirect;
-							}
-						}
+						$funcs = [$ins,$method];
 					}
 					foreach($plugins as $o){
 						$this->template->set_object_plugin($o);
 					}
+					if($this->has_object_plugin('before_flow_action')){
+						$this->call_object_plugin_funcs('before_flow_action');
+					}					
+					if($has_flow_plugin){
+						$ins->before();
+						$before_redirect = $ins->get_before_redirect();
+						if(isset($before_redirect)){
+							$this->redirect($before_redirect);
+						}
+					}
+					if(isset($funcs)){
+						try{
+							$result_vars = call_user_func_array($funcs,$param_arr);
+							
+							if(!is_array($result_vars)){
+								$result_vars = [];
+							}
+						}catch(\Exception $exception){
+						}
+					}
+					if($has_flow_plugin){
+						$ins->after();
+						
+						$template_block = $ins->get_template_block();
+						if(!empty($template_block)){
+							$this->template->put_block(\ebi\Util::path_absolute($this->template_path,$ins->get_template_block()));
+						}
+						$template = $ins->get_template();
+						$result_vars = array_merge($result_vars,$ins->get_after_vars());							
+						$after_redirect = $ins->get_after_redirect();
+						if(isset($after_redirect) && !isset($pattern['after'])){
+							$pattern['after'] = $after_redirect;
+						}
+					}
+					
 					if($this->has_object_plugin('after_flow_action')){
 						$result_vars = array_merge($result_vars,$this->call_object_plugin_funcs('after_flow_action'));
 					}
@@ -403,7 +404,6 @@ class Flow{
 					}else if(isset(self::$map['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,self::$map['error_template']));
 					}else if($this->has_object_plugin('flow_output')){
-						\ebi\HttpHeader::send_status(500);
 						$this->call_object_plugin_funcs('flow_output',array('error'=>array('message'=>$e->getMessage())));
 						return $this->terminate();
 					}
