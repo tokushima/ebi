@@ -31,17 +31,19 @@ $default = (empty($appmode) || array_search($appmode,$mode_list) !== false) ? $a
 $mode = \cmdman\Std::read('Application mode',$default,$mode_list);
 
 $settings_file = getcwd().'/__settings__.php';
-file_put_contents($settings_file,
+if($mode != $appmode || !is_file($settings_file)){
+	file_put_contents($settings_file,
 	'<?php'
-	.PHP_EOL.'define(\'APPMODE\',\''.$mode.'\');'
-	.PHP_EOL.'define(\'COMMONDIR\',\''.$cmddir.'\');'
-	.PHP_EOL
-);
-\cmdman\Std::println_success('Written: '.realpath($settings_file));
-
-if($mode != $appmode){
+			.PHP_EOL.'define(\'APPMODE\',\''.$mode.'\');'
+					.PHP_EOL.'define(\'COMMONDIR\',\''.$cmddir.'\');'
+							.PHP_EOL
+	);
+	\cmdman\Std::println_success('Written: '.realpath($settings_file));	
 	\cmdman\Std::println_info('Application mode changed.');
+	\cmdman\Std::println_danger('Not complete setup - please try again.');
 	exit;
+}else{
+	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
 if(\cmdman\Std::read('create .htaccess?','n',['y','n']) == 'y'){
 	$base = \cmdman\Std::read('base path?','/'.basename(getcwd()));
@@ -54,6 +56,8 @@ $setup_cmd = substr(\ebi\Dt::setup_file(),0,-4).'.cmd.php';
 if(is_file($setup_cmd)){
 	include($setup_cmd);
 }else{
+	\cmdman\Std::println_info('There are no setup file.');
+	
 	if(\cmdman\Std::read('getting started?','n',['y','n']) == 'y'){
 		$path = getcwd();
 		
@@ -85,7 +89,8 @@ if(is_file($setup_cmd)){
 	}
 }
 if(is_file($f=\ebi\Dt::setup_file())){
-	\cmdman\Std::println_success('Loading '.$f);
+	\cmdman\Std::println_info('Run setup.');
 	\ebi\Dt::setup();
 }
+\cmdman\Std::println_info('Done.');
 
