@@ -25,6 +25,10 @@ include_once('bootstrap.php');
 			'name'=>'bbb',
 			'action'=>'test.flow.LoginRequestAction::bbb',
 		],
+		'notype'=>[
+			'name'=>'notype',
+			'action'=>'test.flow.LoginRequestNoTypeAction::aaa',
+		]
 	]
 ]);
 

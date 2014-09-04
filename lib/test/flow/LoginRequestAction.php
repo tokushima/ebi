@@ -3,7 +3,7 @@ namespace test\flow;
 /**
  * 
  * @author tokushima
- * @login @['require'=>'test.model.Member']
+ * @login @['type'=>'test.model.Member']
  */
 class LoginRequestAction extends \ebi\flow\Request{
 	public function aaa(){

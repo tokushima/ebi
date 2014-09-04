@@ -209,7 +209,7 @@ class Request{
 		}
 		if(
 			!$this->is_login() && 
-			((isset($this->login_anon['require'])) || $this->has_object_plugin('login_condition'))
+			((isset($this->login_anon)) || $this->has_object_plugin('login_condition'))
 		){
 			$this->login_required();
 		}
@@ -252,8 +252,8 @@ class Request{
 	public function user(){
 		if(func_num_args() > 0){
 			$user = func_get_arg(0);
-			if(isset($this->login_anon['require']) && !empty($this->login_anon['require'])){
-				$class = str_replace('.',"\\",$this->login_anon['require']);
+			if(isset($this->login_anon) && isset($this->login_anon['type'])){
+				$class = str_replace('.',"\\",$this->login_anon['type']);
 				if($class[0] != "\\") $class= "\\".$class;
 				if(!($user instanceof $class)){
 					throw new \ebi\exception\UnauthorizedTypeException();
