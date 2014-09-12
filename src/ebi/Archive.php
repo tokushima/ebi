@@ -104,11 +104,13 @@ class Archive{
 	/**
 	 * zipを出力する
 	 * @param string $filename 出力するファイルパス
+	 * @param boolean $compress 圧縮する
 	 * @return $this
 	 */
-	public function zipwrite($filename){
+	public function zipwrite($filename,$compress=true){
 		$zip = new \ZipArchive();
-		if($zip->open($filename,\ZipArchive::CREATE) === true){
+		$mode = $compress ? \ZipArchive::CREATE : (\ZipArchive::CM_STORE|\ZipArchive::CREATE);
+		if($zip->open($filename,$mode) === true){
 			foreach(array(5,0) as $t){
 				ksort($this->tree[$t]);
 				foreach($this->tree[$t] as $a => $n){
