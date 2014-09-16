@@ -66,7 +66,9 @@ abstract class Dao extends \ebi\Object{
 		}
 		return $def[$database];
 	}
-	protected function __new__(){
+	public function __construct(){
+		call_user_func_array('parent::__construct',func_get_args());
+		
 		if(func_num_args() == 1){
 			foreach(func_get_arg(0) as $n => $v){
 				switch($n){

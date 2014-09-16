@@ -38,11 +38,10 @@ class Object implements \IteratorAggregate{
 		if(!isset(self::$_m[$c])){
 			self::$_m[$c] = \ebi\Annotation::decode($c,'var',__CLASS__);
 		}
-		if(method_exists($this,'__new__')){
+		if(method_exists($this,'__init__')){
 			$args = func_get_args();
-			call_user_func_array(array($this,'__new__'),$args);
+			call_user_func_array(array($this,'__init__'),$args);
 		}
-		if(method_exists($this,'__init__')) $this->__init__();
 	}
 	public function __call($n,$args){
 		if($n[0] != '_'){
