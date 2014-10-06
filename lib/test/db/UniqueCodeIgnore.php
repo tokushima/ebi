@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var string $code1 @['auto_code_add'=>true,'ctype'=>'digit','max'=>1]
+ * @var string $code1 @['auto_code_add'=>true,'base'=>'0123456789','max'=>1]
  */
 class UniqueCodeIgnore extends \test\db\UniqueCode{
 	protected $id;

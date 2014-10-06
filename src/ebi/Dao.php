@@ -849,25 +849,17 @@ abstract class Dao extends \ebi\Object{
 	 * @return string 生成されたユニークコード
 	 */
 	public function set_unique_code($prop_name,$size=null){
+		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
+		$base = $this->prop_anon($prop_name,'base','0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 		$code = '';
-		$max = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
-		$ctype = $this->prop_anon($prop_name,'ctype','alnum');
-		if($ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit') throw new \LogicException('unexpected ctype');
-		$char = '';
-		if($ctype != 'digit'){
-		 	if($this->prop_anon($prop_name,'upper',false) === true) $char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		 	if($this->prop_anon($prop_name,'lower',true) === true) $char .= 'abcdefghijklmnopqrstuvwxyz';
-		}
-		if($ctype == 'alnum' || $ctype == 'digit'){
-			$char .= '0123456789';
-		}
-		$charl = strlen($char) - 1;
-
-		while($code == '' || static::find_count(Q::eq($prop_name,$code)) > 0){
-			for($code='',$i=0;$i<$max;$i++) $code .= $char[mt_rand(0,$charl)];
-			$this->{$prop_name}($code);
-			if(!$this->{'verify_'.$prop_name}()){
-				$code = '';
+		
+		while($code == ''){
+			if(static::find_count(Q::eq($prop_name,($code = \ebi\Code::rand($base,$length)))) == 0){
+				$this->{$prop_name}($code);
+				
+				if($this->{'verify_'.$prop_name}() === false){
+					$code = '';
+				}
 			}
 		}
 		return $code;

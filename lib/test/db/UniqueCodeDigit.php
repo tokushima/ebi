@@ -2,9 +2,9 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var string $code1 @['auto_code_add'=>true,'ctype'=>'digit']
- * @var string $code2 @['auto_code_add'=>true,'max'=>10,'ctype'=>'digit']
- * @var string $code3 @['auto_code_add'=>true,'max'=>40,'ctype'=>'digit']
+ * @var string $code1 @['auto_code_add'=>true,'base'=>'0123456789']
+ * @var string $code2 @['auto_code_add'=>true,'base'=>'0123456789']
+ * @var string $code3 @['auto_code_add'=>true,'base'=>'0123456789']
  */
 class UniqueCodeDigit extends UniqueCode{
 	protected $id;

@@ -15,5 +15,6 @@ eq($min,\ebi\Code::decode($codebase, $mincode));
 
 
 eq(3,strlen(\ebi\Code::rand($codebase,3)));
+eq(40,strlen(\ebi\Code::rand($codebase,40)));
 
 
