@@ -178,7 +178,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			if($this->prop_anon($name,'type') == 'serial'){
 				$this->prop_anon($name,'primary',true,true);
-			}				
+			}
 			$column = new \ebi\Column();
 			$column->name($name);
 			$column->column($this->prop_anon($name,'column',$name));
