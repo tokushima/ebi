@@ -369,7 +369,7 @@ abstract class Dao extends \ebi\Object{
 				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1') $this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
 
 				if($this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has') === true){
-					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->parse_resultset(array($alias=>$value));
+					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->parse_resultset([$alias=>$value]);
 				}else{
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}($value);
 				}
@@ -763,11 +763,20 @@ abstract class Dao extends \ebi\Object{
 		if(isset($errors[1])){
 			throw new \RuntimeException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
 		}
-		return new \ebi\StatementIterator($dao,$statement);
+		while(true){
+			$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
+			if($resultset === false){
+				break;
+			}
+			$obj = clone($dao);
+			$obj->parse_resultset($resultset);
+			
+			yield $obj;
+		}		
 	}
 	/**
 	 * 検索を実行する
-	 * @return StatementIterator
+	 * @return self
 	 */
 	public static function find(){
 		$args = func_get_args();

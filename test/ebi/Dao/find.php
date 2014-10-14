@@ -135,11 +135,6 @@ foreach(\test\db\Find::find(Q::eq('value1','AbC',Q::IGNORE)) as $obj){
 foreach(\test\db\Find::find(Q::neq('value1','abc')) as $obj){
 	neq('abc',$obj->value1());
 }
-try{
-	\test\db\Find::find(Q::eq('value_error','abc'));
-	fail();
-}catch(\Exception $e){
-}
 
 $i = 0;
 $r = array('aaa','bbb','ccc');
