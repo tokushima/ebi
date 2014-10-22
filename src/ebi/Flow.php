@@ -490,6 +490,7 @@ class Flow{
 					'template','template_path','template_super',
 					'error_redirect','error_status','error_template',
 					'suffix','secure','mode','after','post_after',
+					'summary',
 				]
 				,1=>['plugins','args','vars']
 		];

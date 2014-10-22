@@ -318,6 +318,15 @@ class FlowHelper{
 		return ($a >= $b);
 	}
 	/**
+	 * 剰余
+	 * @param number $a
+	 * @param number $b
+	 * @return number
+	 */
+	public function remainder($a,$b){
+		return ($a % $b);
+	}
+	/**
 	 * ある範囲の整数を有する配列を作成します。
 	 * @param mixed  $start
 	 * @param mixed  $end
