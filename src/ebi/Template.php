@@ -201,14 +201,14 @@ class Template{
 	private function parse_url($src,$media){
 		if(!empty($media) && substr($media,-1) !== '/') $media = $media.'/';
 		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
-		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$match)){
+		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\\$\n]+?)\\3[^>]*?>/i",$src,$match)){
 			foreach($match[2] as $k => $p){
 				$t = null;
 				if(strtolower($p) === 'href') list($t) = (preg_split("/[\s]/",strtolower($match[1][$k])));
 				$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$match[0][$k],$match[4][$k]);
 			}
 		}
-		if(preg_match_all("/[^:]:[\040]*url\(([^\n]+?)\)/",$src,$match)){
+		if(preg_match_all("/[^:]:[\040]*url\(([^\\$\n]+?)\)/",$src,$match)){
 			if($this->secure) $media = $secure_base;
 			foreach(array_keys($match[1]) as $key){
 				$src = $this->replace_parse_url($src,$media,$match[0][$key],$match[1][$key]);
@@ -217,7 +217,7 @@ class Template{
 		return $src;
 	}
 	private function replace_parse_url($src,$base,$dep,$rep){
-		if(!preg_match("/(^\/\/)|(^[\w]+:\/\/)|(^__PHP_TAG_START)|(^\{\\$)|(^\w+:)|(^[#\?])/",$rep)){
+		if(!preg_match("/(^\/\/)|(^[\w]+:\/\/)|(^__PHP_TAG_START)|(^\w+:)|(^[#\?])/",$rep)){
 			$src = str_replace($dep,str_replace($rep,\ebi\Util::path_absolute($base,$rep),$dep),$src);
 		}
 		return $src;
