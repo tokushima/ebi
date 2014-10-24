@@ -9,18 +9,20 @@ class HttpFile{
 	/**
 	 * inlineで出力する
 	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
+	 * @param boolean $modified_status Last-Modifiedを見るか
 	 */
-	public static function inline($filename){
-		self::output_file_content($filename,'inline');
+	public static function inline($filename,$modified_status=true){
+		self::output_file_content($filename,'inline',$modified_status);
 	}
 	/**
 	 * attachmentで出力する
 	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
+	 * @param boolean $modified_status Last-Modifiedを見るか
 	 */
-	public static function attach($filename){
-		self::output_file_content($filename,'attachment');
+	public static function attach($filename,$modified_status=true){
+		self::output_file_content($filename,'attachment',$modified_status);
 	}
-	private static function output_file_content($filename,$disposition){
+	private static function output_file_content($filename,$disposition,$modified_status){
 		if(is_array($filename)){
 			list($filename,$src) = $filename;
 			
@@ -29,13 +31,14 @@ class HttpFile{
 			exit;
 		}
 		if(is_file($filename)){
-			$update = @filemtime($filename);
-			
-			if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $update <= strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
-				\ebi\HttpHeader::send_status(304);
-				exit;
-			}
-			\ebi\HttpHeader::send('Last-Modified',gmdate('D, d M Y H:i:s',$update).' GMT');
+			if($modified_status){
+				$update = @filemtime($filename);
+				if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $update <= strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
+					\ebi\HttpHeader::send_status(304);
+					exit;
+				}
+				\ebi\HttpHeader::send('Last-Modified',gmdate('D, d M Y H:i:s',$update).' GMT');
+			}			
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
 

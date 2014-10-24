@@ -33,16 +33,18 @@ class Request implements \IteratorAggregate{
 							}
 						}else{
 							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));
-							foreach(['name','type','tmp_name','tmp_name','size'] as $k){
-								eval('$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.';');
-							}
+							$eval = 'if(isset($files[\'tmp_name\']'.$ks.') && !empty($files[\'tmp_name\']'.$ks.')){ ';
+								foreach(['name','type','tmp_name','tmp_name','size'] as $k){
+									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.';';
+								}
+							eval($eval.'}');
 						}
 					};
 					foreach($_FILES as $k => $v){
 						if(is_array($v['name'])){
 							$this->files[$k] = [];
 							$marge_func($v['name'],[],$v,$this->files[$k]);
-						}else{
+						}else if(isset($v['tmp_name']) && !empty($v['tmp_name'])){
 							$this->files[$k] = $v;
 						}
 					}
