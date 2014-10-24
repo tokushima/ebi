@@ -23,7 +23,7 @@ class Object implements \IteratorAggregate{
 	}	
 	public function getIterator(){
 		$r = array();
-		foreach(array_keys($this->props(false)) as $n){
+		foreach(array_keys($this->props()) as $n){
 			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){
 				switch($this->prop_anon($n,'type')){
 					case 'boolean': $r[$n] = $this->{$n}(); break;
@@ -61,14 +61,14 @@ class Object implements \IteratorAggregate{
 	}
 	/**
 	 * アクセス可能なプロパティを取得する
-	 * @param boolean $in_value
+	 * @param boolean $format
 	 * @return mixed{}
 	 */
-	public function props($in_value=true){
+	public function props($format=false){
 		$r = array();
 		foreach(array_keys(get_object_vars($this)) as $n){
 			if($n[0] != '_'){
-				$r[$n] = ($in_value) ? $this->{$n}() : null;
+				$r[$n] = ($format) ? $this->{'fm_'.$n}() : $this->{$n}();
 			}
 		}
 		return $r;

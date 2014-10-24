@@ -281,9 +281,8 @@ class Dt{
 		}else{
 			$obj = $this->get_model($package);
 		}
-		foreach(array_keys($obj->props(false)) as $k){
-			$fm = 'fm_'.$k;
-			$result[$k] = $obj->{$fm}();
+		foreach($obj->props() as $k => $v){
+			$result[$k] = $v;
 		}
 		$result['model'] = $obj;
 		$result['package'] = $package;

@@ -94,7 +94,7 @@ class Rest extends \ebi\flow\Request{
 		$class = get_class($this->model);
 		$model = $class::find_get(\ebi\Q::eq($this->primary(),$id));		
 		
-		foreach($model->props(false) as $k => $v){
+		foreach($model->props() as $k => $v){
 			if($this->is_vars($k)){
 				$model->{$k}($this->in_vars($k));
 			}
