@@ -71,7 +71,16 @@ class Flow{
 	}
 	private function redirect($url,$args=array()){
 		$this->terminate();
-		if(strpos($url,'://') !== false) \ebi\HttpHeader::redirect($url);
+		if(is_array($url)){
+			$tmp = array_shift($url);
+			if(empty($args)){
+				$args = $url;
+			}
+			$url = $tmp;
+		}
+		if(strpos($url,'://') !== false){
+			\ebi\HttpHeader::redirect($url);
+		}
 		if(isset($this->url_pattern[$url][sizeof($args)])){
 			$format = $this->url_pattern[$url][sizeof($args)];
 			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));

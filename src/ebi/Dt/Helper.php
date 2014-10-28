@@ -44,6 +44,20 @@ class Helper{
 		$props = array_keys($obj->props());
 		return ($all) ? $props : array_slice($props,0,5);
 	}
+	/**
+	 * 更新可能なプロパティ一覧
+	 * @param \ebi\Dao $obj
+	 * @return Ambigous <multitype:, unknown>
+	 */
+	public function update_props(\ebi\Dao $obj){
+		$rtn = [];
+		foreach($obj->props() as $k => $v){
+			if($obj->prop_anon($k,'cond') === null){
+				$rtn[] = $k;
+			}
+		}
+		return $rtn;
+	}
 	public function primary_query(\ebi\Dao $obj){
 		$result = array();
 		foreach($this->props($obj) as $prop){

@@ -4,7 +4,7 @@
 
 <form method="post" id="update_form" rt:aref="true">
 <table>
-<rt:loop param="{$f.props($model,true)}" var="name">
+<rt:loop param="{$f.update_props($model)}" var="name">
 <tr>
 	<th style="text-align: right; width:20%;" nowrap>{$t.trim_width($name,50,'..')}</th>
 	<td>{$t.noop($f.form($model,$name))}</td>
