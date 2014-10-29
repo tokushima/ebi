@@ -1,7 +1,7 @@
 <?php
 namespace test\db;
 /**
- * @var serial $id
+ * @var serial $id @['hash'=>false]
  * @var number $order
  * @var timestamp $updated
  * @var string $value1
