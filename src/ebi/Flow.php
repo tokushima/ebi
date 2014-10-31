@@ -147,7 +147,16 @@ class Flow{
 				$this->media_url = dirname($this->app_url).'/resources/media/';
 			}
 		}
+		if(!empty($this->app_url) && substr($this->app_url,-1) == '*'){
+			$script = basename(isset($_SERVER['SCRIPT_NAME']) ? 
+				basename($_SERVER['SCRIPT_NAME']) : 
+				(isset($_SERVER['SCRIPT_FILENAME']) ? basename($_SERVER['SCRIPT_FILENAME']) : null)
+			);
+			$this->app_url = substr($this->app_url,0,-1).$script;
+		}		
 		$this->app_url = \ebi\Util::path_slash(str_replace('https://','http://',$this->app_url),null,true);
+
+
 		if(empty($this->media_url)){
 			$media_path = preg_replace('/\/[^\/]+\.php[\/]$/','/',$this->app_url);
 			$this->media_url = $media_path.'resources/media/';

@@ -14,8 +14,8 @@
 	'ebi.Flow'=>[
 		'exception_log_level'=>'warn',
 //		'rewrite_entry'=>true,
-//		'app_url'=>'http://localhost:8888/urls',
-//		'secure'=>false,
+		'app_url'=>'http://127.0.0.1:8888/*',
+		'secure'=>false,
 	],
 	'ebi.Dt'=>[
 		'use_vendor'=>[
