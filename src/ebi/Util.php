@@ -213,7 +213,7 @@ class Util{
 	 * @param boolean $postfix 末尾にスラッシュを存在させるか
 	 * @return string
 	 */
-	public static function path_slash($path,$prefix,$postfix){
+	public static function path_slash($path,$prefix,$postfix=false){
 		if($path == '/') return ($postfix === true) ? '/' : '';
 		if(!empty($path)){
 			if($prefix === true){
