@@ -56,6 +56,10 @@ try{
 	
 	$stab = <<< 'STAB'
 <?php
+	$dir = getcwd().'/lib';
+	if(is_dir($dir) && strpos(get_include_path(),$dir) === false){
+		set_include_path($dir.PATH_SEPARATOR.get_include_path());
+	}
 	spl_autoload_register(function($c){
 		$c = str_replace('\\','/',$c);
 		if(substr($c,0,4) == 'ebi/' && is_file($f='phar://'.__FILE__.'/'.$c.'.php')){

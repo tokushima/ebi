@@ -8,7 +8,13 @@
 			'test.db.Unbuffered'=>['type'=>'ebi.MysqlUnbufferedConnector','dbname'=>'ebi'],
 		]
 	],
+
+	'ebi.Flow'=>[
+		'app_url'=>null,
+		'secure'=>true,
+	],
 ]);
+
 
 \ebi\Conf::set('ebi.Flow','host','http://localhost/');
 
