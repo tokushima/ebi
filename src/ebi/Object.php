@@ -20,7 +20,11 @@ class Object implements \IteratorAggregate{
 		if($f) self::$_m[get_class($this)][$p][$n] = $d;
 		$v = (isset(self::$_m[get_class($this)][$p][$n])) ? self::$_m[get_class($this)][$p][$n] : $d;
 		return $v;
-	}	
+	}
+	/**
+	 * プロパティの一覧を取得する、アノテーション hash=false のものは含まない
+	 * @see IteratorAggregate::getIterator()
+	 */
 	public function getIterator(){
 		$r = array();
 		foreach(array_keys($this->props()) as $n){

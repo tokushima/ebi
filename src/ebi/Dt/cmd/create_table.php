@@ -11,3 +11,4 @@ foreach(\ebi\Dt::create_table($model,$drop) as $result){
 		print('created '.$result[1].PHP_EOL);
 	}
 }
+
