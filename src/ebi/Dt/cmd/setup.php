@@ -45,7 +45,7 @@ if($mode != $appmode || !is_file($settings_file)){
 }else{
 	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
-if(\cmdman\Std::read('create .htaccess?','n',['y','n']) == 'y'){
+if(\cmdman\Std::read('setup .htaccess?','n',['y','n']) == 'y'){
 	$base = \cmdman\Std::read('base path?','/'.basename(getcwd()));
 	
 	list($path,$rules) = \ebi\Dt::htaccess($base);
@@ -64,8 +64,8 @@ if(is_file($setup_cmd)){
 		$mkdir($path.'/lib');
 		$mkdir($path.'/resources/media');
 		$mkdir($path.'/resources/templates');
-		$copy(__DIR__.'/create/index.html',$path.'/resources/templates/index.html');
-		$copy(__DIR__.'/create/index.php',$path.'/index.php');
+		$copy(__DIR__.'/setup/index.html',$path.'/resources/templates/index.html');
+		$copy(__DIR__.'/setup/index.php',$path.'/index.php');
 		
 		if(!is_file($f=$path.'/bootstrap.php')){
 			$autoload_file = 'vendor/autoload.php';
@@ -83,7 +83,7 @@ if(is_file($setup_cmd)){
 	}
 	if(\cmdman\Std::read('getting testman?','n',['y','n']) == 'y'){
 		$mkdir($path.'/test');
-		$copy(__DIR__.'/create/sample.php',$path.'/test/sample.php');
+		$copy(__DIR__.'/setup/sample.php',$path.'/test/sample.php');
 		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
 		\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
 	}
