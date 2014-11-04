@@ -943,7 +943,7 @@ abstract class Dao extends \ebi\Object{
 				 */
 				$result = $this->func_query(static::call_class_plugin_funcs('last_insert_id_sql',$this));
 				if(empty($result)){
-					throw new \RuntimeException('create failed');
+					throw new \ebi\exception\NoRowsAffectedException('create failed');
 				}
 				$this->{$daq->id()}($result[0]);
 			}
@@ -971,7 +971,7 @@ abstract class Dao extends \ebi\Object{
 			$affected_rows = $this->update_query($daq);
 			
 			if($affected_rows === 0 && !empty($args)){
-				throw new \ebi\exception\NoRowsAffectedException();
+				throw new \ebi\exception\NoRowsAffectedException('update failed');
 			}
 			$this->__after_update__();
 			$this->__after_save__();
