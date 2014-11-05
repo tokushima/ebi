@@ -3,6 +3,8 @@
  * dao data import
  * @param string $file
  */
+\ebi\Dt::create_table();
+
 if(empty($file)){
 	$file = getcwd().'/dump.ddj';
 }
