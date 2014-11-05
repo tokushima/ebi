@@ -41,6 +41,9 @@ class DbConnector{
 			}
 		}
 		if($host != ':memory:'){
+			if(strpos($name,'.') === false){
+				$name = $name.'.sqlite';
+			}
 			$host = str_replace('\\','/',$host);
 			if(substr($host,-1) != '/') $host = $host.'/';
 			$path = \ebi\Util::path_absolute($host,$name);

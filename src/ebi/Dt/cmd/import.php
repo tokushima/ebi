@@ -4,7 +4,7 @@
  * @param string $file
  */
 if(empty($file)){
-	$file = getcwd().'/export.dat';
+	$file = getcwd().'/dump.ddj';
 }
 $dao_list = [];
 foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
