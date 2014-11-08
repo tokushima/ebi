@@ -29,8 +29,12 @@ class DbConnector{
 	 * @param boolean $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
-		if(!extension_loaded('pdo_sqlite')) throw new \RuntimeException('pdo_sqlite not supported');
-		if(empty($host) && empty($name)) throw new \InvalidArgumentException('undef connection name');
+		if(!extension_loaded('pdo_sqlite')){
+			throw new \ebi\exception\ConnectionException('pdo_sqlite not supported');
+		}
+		if(empty($host) && empty($name)){
+			throw new \ebi\exception\ConnectionException('undef connection name');
+		}
 		unset($port,$user,$password,$sock);
 		$con = null;
 
@@ -89,12 +93,17 @@ class DbConnector{
 			$where[] = $this->quotation($column->column()).' = ?';
 			$wherevars[] = $this->update_value($dao,$column->name());
 		}
-		if(empty($where)) throw new \ebi\exception\LogicException('primary not found');
+		if(empty($where)){
+			throw new \ebi\exception\LogicException('primary not found');
+		}
 		foreach($dao->columns(true) as $column){
 			if(!$column->primary()){
 				$update[] = $this->quotation($column->column()).' = ?';
 				$updatevars[] = $this->update_value($dao,$column->name());
 			}
+		}
+		if(empty($update)){
+			throw new \ebi\exception\BadMethodCallException('no update column');
 		}
 		$vars = array_merge($updatevars,$wherevars);
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
@@ -114,7 +123,7 @@ class DbConnector{
 			$where[] = $this->quotation($column->column()).' = ?';
 			$vars[] = $dao->{$column->name()}();
 		}
-		if(empty($where)) throw new \ebi\exception\LogicException('not primary');
+		if(empty($where)) throw new \ebi\exception\BadMethodCallException('not primary');
 		return new \ebi\Daq(
 				'delete from '.$this->quotation($column->table()).' where '.implode(' and ',$where)
 				,$vars
@@ -160,7 +169,7 @@ class DbConnector{
 			}
 		}
 		if(empty($select)){
-			throw new \ebi\exception\LogicException('select invalid');
+			throw new \ebi\exception\BadMethodCallException('select invalid');
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq(('select '.implode(',',$select).' from '.implode(',',$from)
@@ -266,7 +275,9 @@ class DbConnector{
 		}else{
 			$target_column = $this->get_column($target_name,$dao->columns());
 		}
-		if(empty($target_column)) throw new \ebi\exception\LogicException('undef primary');
+		if(empty($target_column)){
+			throw new \ebi\exception\BadMethodCallException('undef primary');
+		}
 		if(!empty($gorup_name)){
 			$group_column = $this->get_column($gorup_name,$dao->columns());
 			$select[] = $group_column->table_alias().'.'.$this->quotation($group_column->column()).' key_column';
@@ -420,7 +431,7 @@ class DbConnector{
 		foreach($self_columns as $c){
 			if($c->name() == $column_str) return $c;
 		}
-		throw new \InvalidArgumentException('undef '.$column_str);
+		throw new \ebi\exception\InvalidArgumentException('undef '.$column_str);
 	}
 	protected function column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
 		$column_str = ($alias) ? $column->table_alias().'.'.$this->quotation($column->column()) : $this->quotation($column->column());
@@ -453,7 +464,7 @@ class DbConnector{
 				case 'intdate':
 				case 'integer': return $quote($name).' INTEGER';
 				case 'email':
-				default: throw new \InvalidArgumentException('undefined type `'.$type.'`');
+				default: throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
 		$columndef = $primary = array();

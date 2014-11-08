@@ -3,7 +3,7 @@
  * dao data import
  * @param string $file
  */
-\ebi\Dt::create_table();
+//\ebi\Dt::create_table();
 
 if(empty($file)){
 	$file = getcwd().'/dump.ddj';
@@ -20,8 +20,11 @@ foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
 $current = null;
 
 $fp = fopen($file,'rb');
+\cmdman\Std::println_info('Load '.$file);
+
 while(!feof($fp)){
 	$line = fgets($fp);
+	
 	if(!empty($line)){
 		if($line[0] == '['){
 			$current = null;
@@ -29,17 +32,24 @@ while(!feof($fp)){
 			
 			if(in_array($class, $dao_list)){
 				$current = (new \ReflectionClass($class))->newInstance();
+				\cmdman\Std::println_success('Update '.get_class($current));
 			}
 		}else if($line[0] == '{' && !empty($current)){
 			$obj = clone($current);
 			$arr = json_decode($line,true);
-			
-			foreach($obj->props() as $k => $v){
-				if(array_key_exists($k,$arr)){
-					call_user_func_array([$obj,$k],[$arr[$k]]);
+
+			try{
+				foreach($obj->props() as $k => $v){
+					if(array_key_exists($k,$arr)){
+						if($obj->prop_anon($k,'cond') == null && $obj->prop_anon($k,'extra',false) === false){
+							call_user_func_array([$obj,$k],[$arr[$k]]);
+						}
+					}
 				}
-			}
-			$obj->save();
+				$obj->save();
+			}catch(\ebi\exception\BadMethodCallException $e){
+				$current = null;
+			}				
 		}
 	}
 }

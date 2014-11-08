@@ -17,10 +17,12 @@ class MysqlConnector extends \ebi\DbConnector{
 	 * @param boolean $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
-		if(!extension_loaded('pdo_mysql')) throw new \RuntimeException('pdo_mysql not supported');
+		if(!extension_loaded('pdo_mysql')){
+			throw new \ebi\exception\ConnectionException('pdo_mysql not supported');
+		}
 		$con = null;
 		if(empty($name)){
-			throw new \ebi\exception\InvalidArgumentException('undef connection name');
+			throw new \ebi\exception\ConnectionException('undef connection name');
 		}
 		if(empty($host)){
 			$host = 'localhost';
@@ -51,7 +53,7 @@ class MysqlConnector extends \ebi\DbConnector{
 		
 		$errors = $st->errorInfo();
 		if(isset($errors[1])){
-			throw new \InvalidArgumentException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$sql.' )');
+			throw new \ebi\exception\InvalidArgumentException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$sql.' )');
 		}
 	}
 	public function last_insert_id_sql(){
@@ -83,7 +85,7 @@ class MysqlConnector extends \ebi\DbConnector{
 				case 'intdate': 
 				case 'integer': return $quote($name).' int';
 				case 'email': return $quote($name).' varchar(255)';
-				default: throw new exception\InvalidArgumentException('undefined type `'.$type.'`');
+				default: throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
 		$columndef = $primary = array();
