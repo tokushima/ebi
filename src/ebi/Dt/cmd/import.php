@@ -42,6 +42,7 @@ while(!feof($fp)){
 				foreach($obj->props() as $k => $v){
 					if(array_key_exists($k,$arr)){
 						if($obj->prop_anon($k,'cond') == null && $obj->prop_anon($k,'extra',false) === false){
+							$obj->prop_anon($k,'auto_now',false,true);
 							call_user_func_array([$obj,$k],[$arr[$k]]);
 						}
 					}
