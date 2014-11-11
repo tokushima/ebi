@@ -157,6 +157,16 @@ class FlowHelper{
 		return ($cond !== false && !empty($cond)) ? $true : $false;
 	}
 	/**
+	 * $a == $bが真なら$true偽なら$falseを返す
+	 * @param boolean $cond 真偽値
+	 * @param string $true 真の場合に返す文字列
+	 * @param string $false 偽の場合に返す文字列
+	 * @return string
+	 */
+	public function cond_eq_switch($a,$b,$true='on',$false=''){
+		return ($a == $b) ? $true : $false;
+	}
+	/**
 	 * アプリケーションのメディアのURLを返す
 	 * @param string $url ベースのURLに続く相対パス
 	 * @return string
@@ -218,17 +228,7 @@ class FlowHelper{
 	 * @return string
 	 */
 	public function trim_width($str,$width,$postfix=''){
-		$rtn = "";
-		$cnt = 0;
-		$len = mb_strlen($str);
-		for($i=0;$i<$len;$i++){
-			$c = mb_substr($str,$i,1);
-			$cnt += (mb_strwidth($c) > 1) ? 2 : 1;
-			if($width < $cnt) break;
-			$rtn .= $c;
-		}
-		if($len > mb_strlen($rtn)) $rtn .= $postfix;
-		return $rtn;
+		return \ebi\Util::trim_width($str,$width,$postfix);
 	}
 	/**
 	 * 何もしない

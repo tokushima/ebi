@@ -277,4 +277,24 @@ class Util{
 		}
 		return $rtn;
 	}
+	/**
+	 * 文字列を丸める
+	 * @param string $str 対象の文字列
+	 * @param integer $width 指定の幅
+	 * @param string $postfix 文字列がまるめられた場合に末尾に接続される文字列
+	 * @return string
+	 */
+	public static function trim_width($str,$width,$postfix=''){
+		$rtn = "";
+		$cnt = 0;
+		$len = mb_strlen($str);
+		for($i=0;$i<$len;$i++){
+			$c = mb_substr($str,$i,1);
+			$cnt += (mb_strwidth($c) > 1) ? 2 : 1;
+			if($width < $cnt) break;
+			$rtn .= $c;
+		}
+		if($len > mb_strlen($rtn)) $rtn .= $postfix;
+		return $rtn;
+	}
 }
