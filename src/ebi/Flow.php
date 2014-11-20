@@ -131,7 +131,6 @@ class Flow{
 		if(empty($this->app_url)){
 			$host = \ebi\Conf::get('host',\ebi\Request::host());
 			$entry_file = null;
-			
 			foreach(debug_backtrace(false) as $d){
 				if($d['file'] !== __FILE__){
 					$entry_file = str_replace("\\",'/',$d['file']);
@@ -146,16 +145,17 @@ class Flow{
 				$this->app_url = $host.'/'.($hasport ? basename($entry) : $entry);
 				$this->media_url = dirname($this->app_url).'/resources/media/';
 			}
-		}
-		if(!empty($this->app_url) && substr($this->app_url,-1) == '*'){
-			$script = basename(isset($_SERVER['SCRIPT_NAME']) ? 
-				basename($_SERVER['SCRIPT_NAME']) : 
-				(isset($_SERVER['SCRIPT_FILENAME']) ? basename($_SERVER['SCRIPT_FILENAME']) : null)
-			);
-			$this->app_url = substr($this->app_url,0,-1).$script;
-		}		
+		}else if(substr($this->app_url,-1) == '*'){
+			$entry_file = null;
+			foreach(debug_backtrace(false) as $d){
+				if($d['file'] !== __FILE__){
+					$entry_file = str_replace("\\",'/',$d['file']);
+					break;
+				}
+			}
+			$this->app_url = substr($this->app_url,0,-1).basename($entry_file);
+		}	
 		$this->app_url = \ebi\Util::path_slash(str_replace('https://','http://',$this->app_url),null,true);
-
 
 		if(empty($this->media_url)){
 			$media_path = preg_replace('/\/[^\/]+\.php[\/]$/','/',$this->app_url);

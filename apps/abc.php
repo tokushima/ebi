@@ -4,6 +4,7 @@
 	'patterns'=>[
 		''=>['template'=>'index.html'],
 		'hoge'=>['template'=>'index.html'],
+		'xyz'=>['name'=>'XYZ','template'=>'xyz.html'],
 		'secure'=>['name'=>'secure','template'=>'secure.html','secure'=>true],
 		'nosecure'=>['name'=>'nosecure','template'=>'secure.html'],
 	]
