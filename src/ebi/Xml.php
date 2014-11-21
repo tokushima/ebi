@@ -165,8 +165,9 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * XML文字列を返す
+	 * @param string $encoding
 	 */
-	public function get($encoding=null){
+	public function get($encoding=null,$format=true,$indent_str="\t"){
 		if($this->name === null) throw new \LogicException('undef name');
 		$attr = '';
 		$value = ($this->value === null || $this->value === '') ? null : (string)$this->value;
@@ -320,5 +321,41 @@ class Xml implements \IteratorAggregate{
 			}
 		}
 		return true;
+	}
+	/**
+	 * 整形する
+	 * @param string $src XML文字列
+	 * @param string $indent_str インデント文字
+	 * @return string
+	 */
+	public static function format($src,$indent_str="\t"){
+		$rtn = '';
+		$i = 0;
+		
+		foreach(explode(PHP_EOL,preg_replace('/>\s*</','>'.PHP_EOL.'<',$src)) as $k => $line){
+			$indent = 0;
+			$lc = substr_count($line,'<');
+		
+			if($lc == 1){
+				if(strpos($line,'<?') === false && strpos($line,'/>') === false){
+					if(($p = strpos(trim($line),'</')) !== false){
+						if($p !== 0){
+							$indent = 2;
+						}
+						$i--;
+					}else if(strpos($line,'<!') === false){
+						$indent = 1;
+					}
+				}
+			}else if($lc == 0){
+				$indent = 2;
+			}
+			$rtn .= (($indent != 2) ? str_repeat($indent_str,$i) : '').$line.PHP_EOL;
+		
+			if($indent == 1){
+				$i++;
+			}
+		}
+		return $rtn;
 	}
 }
