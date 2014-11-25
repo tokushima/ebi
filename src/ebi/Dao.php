@@ -228,7 +228,9 @@ abstract class Dao extends \ebi\Object{
 						}
 					}
 					if($is_has_many){
-						if(empty($has_var)) throw new \LogicException('annotation error : `'.$name.'`');
+						if(empty($has_var)){
+							throw new \LogicException('annotation error : `'.$name.'`');
+						}
 						$dao = new $column_type(array('_class_id_'=>$p.'___'.self::$_cnt_++));
 						$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
 					}else{
@@ -988,7 +990,9 @@ abstract class Dao extends \ebi\Object{
 		foreach($this->primary_columns() as $column) $query->add(Q::eq($column->name(),$this->{$column->name()}()));
 		foreach(self::get_statement_iterator($this,$query) as $dao){
 			foreach(get_object_vars($dao) as $k => $v){
-				if($k[0] != '_') $this->{$k}($v);
+				if($k[0] != '_'){
+					$this->{$k}($v);
+				}
 			}
 			return $this;
 		}

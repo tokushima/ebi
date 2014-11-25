@@ -68,13 +68,13 @@ class Helper{
 		return implode("&",$result);
 	}
 	public function primary_hidden(\ebi\Dao $obj){
-		$result = array();		
+		$result = [];		
 		foreach(array_keys($obj->props()) as $prop){
 			if($obj->prop_anon($prop,'primary') === true && $obj->prop_anon($prop,'extra') !== true && $obj->prop_anon($prop,'cond') === null){
 				$result[] = '<input type="hidden" name="primary['.$prop.']" value="'.$obj->{$prop}().'" />';
 			}
 		}
-		return implode("&",$result);
+		return implode(PHP_EOL,$result);
 	}
 	public function has_primary($obj){
 		foreach(array_keys($obj->props()) as $prop){

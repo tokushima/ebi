@@ -80,7 +80,9 @@ class Validation{
 						return $v;
 					case 'mixed': return $v;
 					default:
-						if(!($v instanceof $t)) throw new \InvalidArgumentException();
+						if(!($v instanceof $t)){
+							throw new \InvalidArgumentException();
+						}
 						return $v;
 				}
 		}

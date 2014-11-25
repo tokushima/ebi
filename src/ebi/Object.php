@@ -87,26 +87,36 @@ class Object implements \IteratorAggregate{
 	protected function set_prop($name,$type,$value){
 		try{
 			$c = get_class($this);
-			return \ebi\Validation::set($type,$value,isset(self::$_m[$c][$name]) ? self::$_m[$c][$name] : array());
+			return \ebi\Validation::set($type,$value,isset(self::$_m[$c][$name]) ? self::$_m[$c][$name] : []);
 		}catch(\InvalidArgumentException $e){
 			throw new \InvalidArgumentException($this->_.' must be an '.$type);
 		}
 	}
 	private function ___get___(){
-		if($this->prop_anon($this->_,'get') === false) throw new \InvalidArgumentException('not permitted');
-		if($this->prop_anon($this->_,'attr') !== null) return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? array() : array($this->{$this->_}));
+		if($this->prop_anon($this->_,'get') === false){
+			throw new \InvalidArgumentException('not permitted');
+		}
+		if($this->prop_anon($this->_,'attr') !== null){
+			return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? array() : array($this->{$this->_}));
+		}
 		return $this->{$this->_};
 	}
 	private function ___set___($v){
-		if($this->prop_anon($this->_,'set') === false) throw new \InvalidArgumentException('not permitted');
+		if($this->prop_anon($this->_,'set') === false){
+			throw new \InvalidArgumentException('not permitted');
+		}
 		$t = $this->prop_anon($this->_,'type');
 		switch($this->prop_anon($this->_,'attr')){
 			case 'a':
-				foreach(func_get_args() as $a) $this->{$this->_}[] = $this->set_prop($this->_,$t,$a);
+				foreach(func_get_args() as $a){
+					$this->{$this->_}[] = $this->set_prop($this->_,$t,$a);
+				}
 				break;
 			case 'h':
-				$v = (func_num_args() === 2) ? array(func_get_arg(0)=>func_get_arg(1)) : (is_array($v) ? $v : array((string)$v=>$v));
-				foreach($v as $k => $a) $this->{$this->_}[$k] = $this->set_prop($this->_,$t,$a);
+				$v = (func_num_args() === 2) ? [func_get_arg(0)=>func_get_arg(1)] : (is_array($v) ? $v : [(string)$v=>$v]);
+				foreach($v as $k => $a){
+					$this->{$this->_}[$k] = $this->set_prop($this->_,$t,$a);
+				}
 				break;
 			default:
 				$this->{$this->_} = $this->set_prop($this->_,$t,$v);
