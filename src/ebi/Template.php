@@ -135,6 +135,10 @@ class Template{
 	private function execute($src){
 		$src = $this->exec($src);
 		$src = str_replace(array('#PS#','#PE#'),array('<?','?>'),$this->html_reform($src));
+		
+		foreach($this->get_object_plugin_funcs('after_exec_template') as $o){
+			$src = static::call_func($o,$src);
+		}
 		return $src;
 	}
 	private function replace($src,$template_name){
@@ -142,20 +146,30 @@ class Template{
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
 		$src = str_replace(array("\\\\","\\\"","\\'"),array('__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'),$src);
 		$src = $this->replace_xtag($src);
-		foreach($this->get_object_plugin_funcs('init_template') as $o) $src = static::call_func($o,$src);
+		foreach($this->get_object_plugin_funcs('init_template') as $o){
+			$src = static::call_func($o,$src);
+		}
 		$src = $this->rtcomment($this->rtblock($src,$this->file));
 		$this->selected_src = $src;
-		foreach($this->get_object_plugin_funcs('before_template') as $o) $src = static::call_func($o,$src);
+		foreach($this->get_object_plugin_funcs('before_template') as $o){
+			$src = static::call_func($o,$src);
+		}
 		$src = $this->rtif($this->rtloop($this->html_form($this->html_list($src))));
-		foreach($this->get_object_plugin_funcs('after_template') as $o) $src = static::call_func($o,$src);
+		foreach($this->get_object_plugin_funcs('after_template') as $o){
+			$src = static::call_func($o,$src);
+		}
 		$src = str_replace('__PHP_ARROW__','->',$src);
 		$src = $this->parse_print_variable($src);
 		$php = array(' ?>','<?php ','->');
 		$str = array('__PHP_TAG_END__','__PHP_TAG_START__','__PHP_ARROW__');
 		$src = str_replace($php,$str,$src);
-		if($bool = $this->html_script_search($src,$keys,$tags)) $src = str_replace($tags,$keys,$src);
+		if($bool = $this->html_script_search($src,$keys,$tags)){
+			$src = str_replace($tags,$keys,$src);
+		}
 		$src = $this->parse_url($src,$this->media_url);
-		if($bool) $src = str_replace($keys,$tags,$src);
+		if($bool){
+			$src = str_replace($keys,$tags,$src);
+		}
 		$src = str_replace($str,$php,$src);
 		$src = str_replace(array('__ESC_DQ__','__ESC_SQ__','__ESC_DESC__'),array("\\\"","\\'","\\\\"),$src);
 		return $src;		
@@ -183,11 +197,12 @@ class Template{
 
 				$lines = explode("\n",$this->selected_src);
 				\ebi\Log::error($msg.' on line '.($line-$plrp).' [plain]: '.trim($lines[$line-1-$plrp]));
-				if(\ebi\Conf::get('display_exception') === true) $_eval_src_ = $msg.' on line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]);
+				if(\ebi\Conf::get('display_exception') === true){
+					$_eval_src_ = $msg.' on line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]);
+				}
 			}
 		}
 		$_src_ = $this->selected_src = null;
-		foreach($this->get_object_plugin_funcs('after_exec_template') as $o) $_eval_src_ = static::call_func($o,$_eval_src_);
 		return $_eval_src_;
 	}
 	private function replace_xtag($src){

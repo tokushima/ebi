@@ -121,9 +121,7 @@ class Helper{
 	}
 	
 	public function form(\ebi\Dao $obj,$name){
-		if(method_exists($obj,'form_'.$name)){
-			return $obj->{'form_'.$name}();
-		}else if($obj->prop_anon($name,'master') !== null){
+		if($obj->prop_anon($name,'master') !== null){
 			$options = array();
 			if(!$obj->prop_anon($name,'require')) $options[] = '<option value=""></option>';
 			$master = $obj->prop_anon($name,'master');
@@ -150,16 +148,19 @@ class Helper{
 		}else if($obj->prop_anon($name,'save',true)){
 			switch($obj->prop_anon($name,'type')){
 				case 'serial': return sprintf('<input name="%s" type="text" disabled="disabled" class="form-control" /><input name="%s" type="hidden" />',$name,$name);
-				case 'text': return sprintf('<textarea name="%s" class="form-control" style="height:10em;"></textarea>',$name);
+				case 'text': return sprintf('<textarea name="%s" style="height:10em;" class="form-control"></textarea>',$name);
 				case 'boolean':
-					$options = array();
-					if(!$obj->prop_anon($name,'require')) $options[] = '<option value=""></option>';
+					$options = [];
+					
+					if(!$obj->prop_anon($name,'require')){
+						$options[] = '<option value=""></option>';
+					}
 					foreach(array('true','false') as $choice){
 						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
 					}
 					return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 				default:
-					return sprintf('<input name="%s" type="text" format="%s" class="form-control" />',$name,$obj->prop_anon($name,'type'));
+					return sprintf('<input name="%s" type="text" class="form-control" rtdt:type="%s" />',$name,$obj->prop_anon($name,'type'));
 			}
 		}
 	}

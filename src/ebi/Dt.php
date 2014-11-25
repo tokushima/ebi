@@ -11,7 +11,7 @@ class Dt{
 	private $flow_output_maps = [];
 	
 	public function get_flow_plugins(){
-		return ['ebi.flow.plugin.TwitterBootstrap3Helper'];
+		return ['ebi.flow.plugin.TwitterBootstrap3Helper','ebi.Dt.FormFormat'];
 	}
 	public function get_after_vars(){
 		return [
