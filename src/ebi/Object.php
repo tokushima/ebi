@@ -108,7 +108,8 @@ class Object implements \IteratorAggregate{
 		$t = $this->prop_anon($this->_,'type');
 		switch($this->prop_anon($this->_,'attr')){
 			case 'a':
-				foreach(func_get_args() as $a){
+				$v = (func_num_args() > 1) ? func_get_args() : (is_array($v) ? $v : [$v]);
+				foreach($v as $a){
 					$this->{$this->_}[] = $this->set_prop($this->_,$t,$a);
 				}
 				break;
