@@ -52,7 +52,7 @@ class Helper{
 	public function update_props(\ebi\Dao $obj){
 		$rtn = [];
 		foreach($obj->props() as $k => $v){
-			if($obj->prop_anon($k,'cond') === null){
+			if($obj->prop_anon($k,'cond') === null && $obj->prop_anon($k,'extra') !== true){
 				$rtn[] = $k;
 			}
 		}
