@@ -143,7 +143,9 @@ trait Plugin{
 		$r = null;
 		$a = func_get_args();
 		array_shift($a);
-		foreach($this->get_object_plugin_funcs($n) as $o) $r = call_user_func_array($o,$a);
+		foreach($this->get_object_plugin_funcs($n) as $o){
+			$r = call_user_func_array($o,$a);
+		}
 		return $r;
 	}
 	/**

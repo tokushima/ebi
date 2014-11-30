@@ -79,9 +79,11 @@
 </rt:if>
 
 
-<rt:if param="{$modules}">
-	<h3>Modules</h3>
-	<table rt:param="{$modules}" rt:var="v" rt:key="module_name">
+
+
+<rt:if param="{$plugins}">
+	<h3>Plugins</h3>
+	<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name">
 	<thead>
 		<tr>
 			<th class="span3">name</th>
@@ -90,16 +92,17 @@
 	</thead>
 	<tbody>
 		<tr>
-			<td class="span3"><a href="{$t.package_method_url('class_module_info',$package,$module_name)}">{$module_name}</a></td>
+			<td class="span3"><a href="{$t.package_method_url('plugin_doc',$package,$plugin_name)}">{$plugin_name}</a></td>
 			<td>{$t.html($v[0],0,1)}</td>
 		</tr>
 	</tbody>
 	</table>
 </rt:if>
 
-<rt:if param="{$module_method}">
-	<h3>Module method</h3>
-	<table rt:param="{$module_method}" rt:var="method_name_list" rt:key="class_name">
+
+<rt:if param="{$plugin_method}">
+	<h3>Plugin methods</h3>
+	<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name">
 	<thead>
 		<tr>
 			<th class="span3">class</th>

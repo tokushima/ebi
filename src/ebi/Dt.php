@@ -126,6 +126,27 @@ class Dt{
 		return $info;
 	}
 	/**
+	 * pluginのキュメント
+	 * @param string $class
+	 * @param string $method
+	 * @automap
+	 */
+	public function plugin_doc($class,$plugin_name){
+		$ref = \ebi\Dt\Man::class_info($class);
+		if(!isset($ref['plugins'][$plugin_name])){
+			throw new \LogicException($plugin_name.' not found');
+		}
+		return [
+				'package'=>$class,
+				'plugin_name'=>$plugin_name,
+				'description'=>$ref['plugins'][$plugin_name][0],
+				'params'=>$ref['plugins'][$plugin_name][1],
+				'return'=>$ref['plugins'][$plugin_name][2],
+		];
+	}
+	
+	
+	/**
 	 * Daoモデルの一覧
 	 * @automap
 	 */

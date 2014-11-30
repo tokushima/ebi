@@ -22,7 +22,7 @@ class Man{
 			}
 		}
 		$methods = $static_methods = $protected_methods = $protected_static_methods = array(array(),array());
-		$module_method = array();
+		$plugin_method = array();
 		foreach($r->getMethods() as $method){
 			if(substr($method->getName(),0,1) != '_' && ($method->isPublic() || $method->isProtected())){
 				$method_document = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$method->getDocComment()));
@@ -43,8 +43,8 @@ class Man{
 						}
 					}
 				}
-				if(preg_match_all("/@module\s+([\w\.\\\\]+)/",$method_document,$match)){
-					foreach($match[1] as $v) $module_method[trim($v)][] = $method->getName();
+				if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$method_document,$match)){
+					foreach($match[1] as $v) $plugin_method[trim($v)][] = $method->getName();
 				}
 
 				$dec = ($method->getDeclaringClass()->getFileName() == $r->getFileName()) ? 0 : 1;
@@ -69,15 +69,25 @@ class Man{
 		if(preg_match_all("/T"."ODO[\040\t](.+)/",$src,$match)){
 			foreach($match[1] as $t) $tasks[] = trim($t);
 		}
-		$modules = array();
-		if(preg_match_all("/->object_module\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
-			foreach($match[2] as $k => $v) self::get_desc($modules,$match,$k,$v[0],$src,$class);
+		
+		$plugins = array();
+		if(preg_match_all("/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($plugins,$match,$k,$v[0],$src,$class);
+			}
 		}
-		if(preg_match_all("/::module\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
-			foreach($match[2] as $k => $v) self::get_desc($modules,$match,$k,$v[0],$src,$class);
-		}		
+		if(preg_match_all("/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($plugins,$match,$k,$v[0],$src,$class);
+			}
+		}
+		if(preg_match_all("/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($plugins,$match,$k,$v[0],$src,$class);
+			}
+		}
 		$properties = array();
-		$anon = \ebi\Annotation::decode(str_replace(array('.','/'),array('\\','\\'),$class),'var',$r->getNamespaceName());
+		$anon = \ebi\Annotation::decode(str_replace(array('.','/'),array('\\','\\'),$class),'param',$r->getNamespaceName());
 		foreach($r->getProperties() as $prop){
 			if(!$prop->isPrivate()){
 				$name = $prop->getName();
@@ -100,14 +110,14 @@ class Man{
 		ksort($protected_methods[1]);
 		ksort($protected_static_methods[1]);
 		ksort($properties);
-		ksort($modules);
+		ksort($plugins);
 		return array(
 				'filename'=>$r->getFileName(),'extends'=>$extends,'abstract'=>$r->isAbstract(),'version'=>date('Ymd',$updated)
 				,'static_methods'=>$static_methods[0],'methods'=>$methods[0],'protected_static_methods'=>$protected_static_methods[0],'protected_methods'=>$protected_methods[0]
 				,'inherited_static_methods'=>$static_methods[1],'inherited_methods'=>$methods[1],'inherited_protected_static_methods'=>$protected_static_methods[1],'inherited_protected_methods'=>$protected_methods[1]
-				,'module_method'=>$module_method
+				,' plugin_method'=>$plugin_method
 				,'properties'=>$properties,'tasks'=>$tasks,'package'=>$class,'description'=>$description
-				,'modules'=>$modules
+				,'plugins'=>$plugins
 				);
 	}
 	/**
@@ -118,7 +128,7 @@ class Man{
 	 */
 	public static function method_info($class,$method,$deep=false){
 		$ref = new \ReflectionMethod(str_replace(array('.','/'),array('\\','\\'),$class),$method);
-		$params = $return = $modules = $see_class = $see_method = $see_url = $request = $context = $args = $throws =array();
+		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws =array();
 		$document = $src = null;
 		$deprecated = false;
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
@@ -229,12 +239,12 @@ class Man{
 				}
 			}
 			ksort($throws);
-	
-			if(preg_match_all("/@module\s+([\w\.\\\\]+)/",$document,$match)){
-				foreach($match[1] as $v) $modules[trim($v)] = true;
+			
+			if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$document,$match)){
+				foreach($match[1] as $v) $plugins[trim($v)] = true;
 			}
-			$modules = array_keys($modules);
-			sort($modules);
+			$plugins = array_keys($plugins);
+			sort($plugins);
 			
 			if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$match)){
 				foreach($match[1] as $v){
@@ -261,7 +271,7 @@ class Man{
 				'package'=>$class,'method_name'=>$method,'params'=>$params,'request'=>$request,'context'=>$context
 				,'args'=>$args,'return'=>$return,'description'=>$description,'throws'=>$throws
 				,'is_post'=>((strpos($src,'$this->is_post()') !== false) && (strpos($src,'!$this->is_post()') === false))
-				,'deprecated'=>$deprecated,'modules'=>$modules,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
+				,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
 				);
 	}
 	/**
@@ -333,8 +343,8 @@ class Man{
 		if(substr($type,0,1) == '.') $type = substr($type,1);
 		return $type;
 	}
-	private static function	get_desc(&$modules,$match,$k,$name,$src,$class){
-		if(!isset($modules[$name])) $modules[$name] = array(null,array(),array());
+	private static function	get_desc(&$plugins,$match,$k,$name,$src,$class){
+		if(!isset($plugins[$name])) $plugins[$name] = array(null,array(),array());
 		$doc = substr($src,0,$match[0][$k][1]);
 		$doc = trim(substr($doc,0,strrpos($doc,"\n")));
 		if(substr($doc,-2) == '*'.'/'){
@@ -342,15 +352,15 @@ class Man{
 			$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$doc)));
 			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$doc,$m)){
 				foreach(array_keys($m[2]) as $n){
-					$modules[$name][1][$m[2][$n]] = array($m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n]));
+					$plugins[$name][1][$m[2][$n]] = array($m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n]));
 				}
 			}
 			if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
-				$modules[$name][2] = array(self::type(trim($m[1]),$class),trim($m[2]));
+				$plugins[$name][2] = array(self::type(trim($m[1]),$class),trim($m[2]));
 			}
-			$modules[$name][0] = trim(preg_replace('/@.+/','',$doc));
+			$plugins[$name][0] = trim(preg_replace('/@.+/','',$doc));
 		}
-		return $modules;
+		return $plugins;
 	}
 	private static function method_src(\ReflectionMethod $ref){
 		if(is_file($ref->getDeclaringClass()->getFileName())){
