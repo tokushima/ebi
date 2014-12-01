@@ -50,6 +50,9 @@ class Conf{
 	public static function get($key,$default=null,$return_vars=null){
 		if(strpos($key,'@') === false){
 			list(,$d) = debug_backtrace(false);
+			if(!isset($d['class'])){
+				throw new \ebi\exception\BadMethodCallException('bad key');
+			}
 			$class = str_replace('\\','.',$d['class']);
 			if($class[0] === '.') $class = substr($class,1);
 			if(preg_match('/^(.+?\.[A-Z]\w*)/',$class,$m)) $class = $m[1];

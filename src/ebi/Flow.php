@@ -125,7 +125,13 @@ class Flow{
 		$this->redirect($name,$args);
 	}
 	private function execute($map){
+		/**
+		 * アプリケーションのベースURL
+		 */
 		$this->app_url = \ebi\Conf::get('app_url');
+		/**
+		 * メディアファイルのベースURL
+		 */
 		$this->media_url = \ebi\Conf::get('media_url');
 		
 		if(empty($this->app_url)){
@@ -162,6 +168,9 @@ class Flow{
 			$this->media_url = $media_path.'resources/media/';
 		}
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
+		/**
+		 * apps(action appのファイル群)のディレクトリパス
+		 */
 		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		$this->template = new \ebi\Template();

@@ -20,7 +20,7 @@
 	<table rt:param="{$static_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -38,7 +38,7 @@
 	<table rt:param="{$methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -57,7 +57,7 @@
 	<table rt:param="{$properties}" rt:var="prop" rt:key="prop_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th class="span2">type</th>
 			<th>summary</th>
 		</tr>
@@ -86,7 +86,7 @@
 	<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -105,7 +105,7 @@
 	<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name">
 	<thead>
 		<tr>
-			<th class="span3">class</th>
+			<th style="width:30%;">class</th>
 			<th>method</th>
 		</tr>
 	</thead>
@@ -132,7 +132,7 @@
 	<table rt:param="{$protected_static_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -150,7 +150,7 @@
 	<table rt:param="{$protected_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -171,7 +171,7 @@
 	<table rt:param="{$inherited_static_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -189,7 +189,7 @@
 	<table rt:param="{$inherited_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -208,7 +208,7 @@
 	<table rt:param="{$inherited_protected_static_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -226,7 +226,7 @@
 	<table rt:param="{$inherited_protected_methods}" rt:var="summary" rt:key="method_name">
 	<thead>
 		<tr>
-			<th class="span3">name</th>
+			<th style="width:30%;">name</th>
 			<th>summary</th>
 		</tr>
 	</thead>
@@ -239,5 +239,24 @@
 	</table>
 </rt:if>
 
+
+
+<rt:if param="{$plugins}">
+	<h3>Conf</h3>
+	<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="span3">{$conf_name}</td>
+			<td>{$t.html($v[0],0,1)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
 
 </rt:block>
