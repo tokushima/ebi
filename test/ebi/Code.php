@@ -18,3 +18,8 @@ eq(3,strlen(\ebi\Code::rand($codebase,3)));
 eq(40,strlen(\ebi\Code::rand($codebase,40)));
 
 
+
+eq('100110',\ebi\Code::encode('0123456789',100110));
+eq(100110,\ebi\Code::decode('0123456789','100110'));
+
+
