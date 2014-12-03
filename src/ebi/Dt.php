@@ -87,14 +87,13 @@ class Dt{
 	 */
 	public function class_list(){
 		$libs = array();
-		foreach(self::classes() as $package => $info){
+		foreach(self::classes() as $info){
 			$r = new \ReflectionClass($info['class']);
 			$class_doc = $r->getDocComment();
 			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$class_doc))));
 			list($summary) = explode("\n",$document);
-			$libs[$package] = $summary;
+			$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
 		}
-		ksort($libs);
 		return ['class_list'=>$libs];
 	}
 	/**
@@ -144,7 +143,21 @@ class Dt{
 				'return'=>$ref['plugins'][$plugin_name][2],
 		];
 	}
-	
+
+	/**
+	 * @automap
+	 * @return multitype:multitype:multitype:unknown string
+	 */
+	public function config(){
+		$conf_list = [];
+		foreach(self::classes() as $info){
+			$ref = new \ReflectionClass($info['class']);
+			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
+				$conf_list[] = ['package'=>str_replace(['\\','/'],['/','.'],$ref->getName()),'key'=>$k,'description'=>$c[0]];
+			}
+		}
+		return ['conf_list'=>$conf_list];
+	}
 	
 	/**
 	 * Daoモデルの一覧
@@ -430,8 +443,9 @@ class Dt{
 	 * @return array
 	 */
 	public static function classes($parent_class=null){
-		$result = array();
-		$include_path = array();
+		$result = [];
+		
+		$include_path = [];
 		if(is_dir(getcwd().'/lib')){
 			$include_path[] = realpath(getcwd().'/lib');
 		}
@@ -445,7 +459,9 @@ class Dt{
 				if(isset($json['autoload']['psr-0'])){
 					foreach($json['autoload']['psr-0'] as $path){
 						$p = realpath(dirname($json_file).'/'.$path);
-						if($p !== false) $include_path[] = $p;
+						if($p !== false){
+							$include_path[] = $p;
+						}
 					}
 				}
 			}
@@ -471,42 +487,43 @@ class Dt{
 				}
 			}
 		}
-		$set = function(&$result,$r,$include_path,$parent_class){
+		$valid = function($r,$include_path,$parent_class){
 			if(!$r->isInterface() 
 				&& !$r->isAbstract() 
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
 				&& $r->getFileName() !== false
 			){
-				$bool = empty($include_path);
-				if(!$bool){
+				if(!empty($include_path)){
 					foreach($include_path as $libdir){
 						if(strpos($r->getFileName(),$libdir) === 0){
-							$bool = true;
-							break;
+							return true;
 						}
 					}
-				}
-				if($bool){
-					$n = str_replace('\\','/',$r->getName());
-					$result[str_replace('/','.',$n)] = array('filename'=>$r->getFileName(),'class'=>'\\'.$r->getName());
+				}else{
+					return true;
 				}
 			}
+			return false;
 		};
+		
 		foreach(get_declared_classes() as $class){
-			$set($result,new \ReflectionClass($class),$include_path,$parent_class);
+			if($valid($r=(new \ReflectionClass($class)),$include_path,$parent_class)){
+				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
+			}
 		}
-		$add = \ebi\Conf::get('use_vendor',array());
+		$add = \ebi\Conf::get('use_vendor',[]);
 		if(is_string($add)){
-			$add = array($add);
+			$add = [$add];
 		}
 		foreach($add as $class){
 			$class = str_replace('.','\\',$class);
-			if(substr($class,0,1) != '\\') $class = '\\'.$class;
-			$ref = new \ReflectionClass($class);
-			$set($result,new \ReflectionClass($class),array(),$parent_class);
+			if(substr($class,0,1) != '\\'){
+				$class = '\\'.$class;
+			}
+			if($valid($r=(new \ReflectionClass($class)),[],$parent_class)){
+				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
+			}				
 		}
-		ksort($result);
-		return $result;
 	}
 	/**
 	 * モデルからtableを作成する

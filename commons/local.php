@@ -2,7 +2,7 @@
 \ebi\Conf::set([
 	'ebi.Dao'=>[
 		'connection'=>[
-			'ebi.SessionDao'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'session.db'],
+//			'ebi.SessionDao'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'session.db'],
 			'*'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'all.db'],
 		]
 	],

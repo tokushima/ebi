@@ -3,6 +3,11 @@ namespace test\flow;
 
 class Action{
 	public function abc(){
+		/**
+		 * Confのダミー
+		 * @param string $aa ダミー
+		 */
+		$value = \ebi\Conf::get('value');
 		$var = isset($_GET['abc']) ? $_GET['abc'] : null;
 		return ['abc'=>$var];
 	}

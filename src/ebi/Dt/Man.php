@@ -5,6 +5,21 @@ namespace ebi\Dt;
  * @author tokushima
  */
 class Man{
+	public static function get_reflection_source(\ReflectionClass $r){
+		return implode(array_slice(file($r->getFileName()),$r->getStartLine(),($r->getEndLine()-$r->getStartLine()-1)));
+	}
+	public static function get_conf_list(\ReflectionClass $r,$src=null){
+		if(empty($src)){
+			$src = self::get_reflection_source($r);
+		}
+		$conf_list = [];
+		if(preg_match_all("/Conf::get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+			}
+		}
+		return $conf_list;
+	}
 	/**
 	 * クラスのドキュメント
 	 * @param string $class
@@ -12,7 +27,8 @@ class Man{
 	public static function class_info($class){
 		$r = new \ReflectionClass(str_replace(array('.','/'),array('\\','\\'),$class));
 		if($r->getFilename() === false || !is_file($r->getFileName())) throw new \InvalidArgumentException('`'.$class.'` file not found.');
-		$src = implode(array_slice(file($r->getFileName()),$r->getStartLine(),($r->getEndLine()-$r->getStartLine()-1)));
+		$src = self::get_reflection_source($r);
+		
 		$document = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$r->getDocComment())));
 		$extends = ($r->getParentClass() === false) ? null : $r->getParentClass()->getName();
 		$updated = filemtime($r->getFilename());
@@ -83,12 +99,7 @@ class Man{
 			}
 		}
 
-		$conf = [];
-		if(preg_match_all("/Conf::get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
-			foreach($match[2] as $k => $v){
-				self::get_desc($conf,$match,$k,$v[0],$src,$class);
-			}
-		}
+		$conf = self::get_conf_list($r,$src);
 		
 		$properties = [];
 		$anon = \ebi\Annotation::decode(str_replace(array('.','/'),array('\\','\\'),$class),'param',$r->getNamespaceName());
@@ -279,69 +290,6 @@ class Man{
 				,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
 				);
 	}
-	/**
-	 * ライブラリ一覧
-	 * @return array
-	 */
-	public static function classes(){
-		$result = array();
-		$include_path = array();
-		if(is_dir(getcwd().'/lib')){
-			$include_path[] = realpath(getcwd().'/lib');
-		}
-		if(class_exists('Composer\Autoload\ClassLoader')){
-			$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
-			$composer_dir = dirname($r->getFileName());
-			$json_file = dirname(dirname($composer_dir)).'/composer.json';
-				
-			if(is_file($json_file)){
-				$json = json_decode(file_get_contents($json_file),true);
-				if(isset($json['autoload']['psr-0'])){
-					foreach($json['autoload']['psr-0'] as $path){
-						$p = realpath(dirname($json_file).'/'.$path);
-						if($p !== false) $include_path[] = $p;
-					}
-				}
-			}
-		}
-		foreach($include_path as $libdir){
-			if($libdir !== '.'){
-				foreach(new \RecursiveIteratorIterator(
-						new \RecursiveDirectoryIterator(
-								$libdir,
-								\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
-						),\RecursiveIteratorIterator::SELF_FIRST
-				) as $e){
-					if(strpos($e->getPathname(),'/.') === false
-							&& strpos($e->getPathname(),'/_') === false
-							&& strpos(strtolower($e->getPathname()),'/test') === false
-							&& ctype_upper(substr($e->getFilename(),0,1))
-							&& substr($e->getFilename(),-4) == '.php'
-					){
-						try{
-							include_once($e->getPathname());
-						}catch(\Exeption $ex){
-						}
-					}
-				}
-			}
-		}
-		foreach(get_declared_classes() as $class){
-			$r = new \ReflectionClass($class);
-		
-			if(!$r->isInterface()){
-				foreach($include_path as $libdir){
-					if(strpos($r->getFileName(),$libdir) === 0){
-						$n = str_replace('\\','/',$r->getName());
-						$result[str_replace('/','.',$n)] = array('filename'=>$r->getFileName(),'class'=>'\\'.$class);
-						break;
-					}
-				}
-			}
-		}
-		ksort($result);
-		return $result;
-	}
 	private static function type($type,$class){
 		if($type == 'self' || $type == '$this') $type = $class;
 		$type = str_replace('\\','.',$type);
@@ -357,11 +305,11 @@ class Man{
 			$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$doc)));
 			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$doc,$m)){
 				foreach(array_keys($m[2]) as $n){
-					$arr[$name][1][$m[2][$n]] = array($m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n]));
+					$arr[$name][1][$m[2][$n]] = [$m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n])];
 				}
 			}
 			if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
-				$arr[$name][2] = array(self::type(trim($m[1]),$class),trim($m[2]));
+				$arr[$name][2] = [self::type(trim($m[1]),$class),trim($m[2])];
 			}
 			$arr[$name][0] = trim(preg_replace('/@.+/','',$doc));
 		}
