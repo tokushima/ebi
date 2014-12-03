@@ -37,25 +37,31 @@ class Browser{
 	 */
 	public function redirect_max($redirect_max){
 		$this->redirect_max = (integer)$redirect_max;
+		return $this;
 	}
 	/**
 	 * タイムアウト時間を設定
 	 * @param integer $timeout
+	 * @return $this
 	 */
 	public function timeout($timeout){
 		$this->timeout = (int)$timeout;
+		return $this;
 	}
 	/**
 	 * ユーザエージェントを設定
 	 * @param string $agent
+	 * @return $this
 	 */
 	public function agent($agent){
 		$this->agent = $agent;
+		return $this;
 	}
 	/**
 	 * Basic認証
 	 * @param string $user ユーザ名
 	 * @param string $password パスワード
+	 * @return $this
 	 */
 	public function basic($user,$password){
 		$this->user = $user;
@@ -69,32 +75,39 @@ class Browser{
 	 * ヘッダを設定
 	 * @param string $key
 	 * @param string $value
+	 * @return $this
 	 */
 	public function header($key,$value=null){
 		$this->request_header[$key] = $value;
+		return $this;
 	}
 	/**
 	 * クエリを設定
 	 * @param string $key
 	 * @param string $value
+	 * @return $this
 	 */
 	public function vars($key,$value=null){
 		if(is_bool($value)) $value = ($value) ? 'true' : 'false'; 
 		$this->request_vars[$key] = $value;
 		if(isset($this->request_file_vars[$key])) unset($this->request_file_vars[$key]);
+		return $this;
 	}
 	/**
 	 * クエリにファイルを設定
 	 * @param string $key
 	 * @param string $filename
+	 * @return $this
 	 */
 	public function file_vars($key,$filename){
 		$this->request_file_vars[$key] = $filename;
 		if(isset($this->request_vars[$key])) unset($this->request_vars[$key]);
+		return $this;
 	}
 	/**
 	 * クエリが設定されているか
 	 * @param string $key
+	 * @return $this
 	 */
 	public function has_vars($key){
 		return (array_key_exists($key,$this->request_vars) || array_key_exists($key,$this->request_file_vars));
@@ -103,10 +116,12 @@ class Browser{
 	 * cURL 転送用オプションを設定する
 	 * @param string $key
 	 * @param mixed $value
+	 * @return $this
 	 */
 	public function setopt($key,$value){
 		if(!isset($this->resource)) $this->resource = curl_init();
 		curl_setopt($this->resource,$key,$value);
+		return $this;
 	}
 	/**
 	 * 結果のヘッダを取得
