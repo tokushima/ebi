@@ -154,6 +154,7 @@ class Browser{
 	/**
 	 * HEADリクエスト
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_head($url){
 		return $this->request('HEAD',$url);
@@ -161,6 +162,7 @@ class Browser{
 	/**
 	 * PUTリクエスト
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_put($url){
 		return $this->request('PUT',$url);
@@ -168,6 +170,7 @@ class Browser{
 	/**
 	 * DELETEリクエスト
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_delete($url){
 		return $this->request('DELETE',$url);
@@ -175,6 +178,7 @@ class Browser{
 	/**
 	 * GETリクエスト
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_get($url){
 		return $this->request('GET',$url);
@@ -182,6 +186,7 @@ class Browser{
 	/**
 	 * POSTリクエスト
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_post($url){
 		return $this->request('POST',$url);
@@ -189,10 +194,20 @@ class Browser{
 	/**
 	 * POSTリクエスト(RAW)
 	 * @param string $url
+	 * @return $this
 	 */
 	public function do_raw($url,$value){
 		$this->raw = $value;
 		return $this->request('RAW',$url);
+	}
+	/**
+	 * POSTリクエスト(JSON)
+	 * @param string $url
+	 * @return $this
+	 */
+	public function do_json($url){
+		$this->header('Content-type','application/json');
+		return $this->do_raw($url,json_encode($this->request_vars));
 	}
 	/**
 	 * GETリクエストでダウンロードする
@@ -358,7 +373,7 @@ class Browser{
 				return strlen($data);
 			});
 		}
-		$this->request_header = $this->request_vars = array();
+		$this->request_header = $this->request_vars = [];
 		$this->head = $this->body = $this->raw = '';
 		curl_exec($this->resource);
 		if(!empty($download_path) && $fp){
