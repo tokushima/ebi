@@ -19,7 +19,7 @@ $ curl -s http://getcomposer.org/installer | php
 ### ebi install
 
 ```
-$ php composer.phar require tokushima/ebi dev-master
+$ php composer.phar require tokushima/ebi dev-master --prefer-dist
 ```
 
 
