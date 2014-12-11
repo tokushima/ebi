@@ -633,7 +633,10 @@ class Dt{
 		if(is_file($f=getcwd().'/'.$test)){
 			$src = file_get_contents($f);
 		}
-		return ['src_list'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],$src))];
+		return [
+			'src_list'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],$src)),
+			'name'=>$test,
+		];
 	}
 	
 	/**
