@@ -18,6 +18,7 @@ class Dt{
 				'f'=>new \ebi\Dt\Helper(),
 				'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
 				'has_coverage'=>function_exists('xdebug_get_code_coverage'),
+				'has_test'=>is_dir(getcwd().'/test'),
 				'media_url'=>\ebi\Util::path_slash(\ebi\Conf::get('media_url'),null,false),
 				];
 	}
@@ -112,7 +113,11 @@ class Dt{
 	 */
 	public function class_src($class){
 		$info = \ebi\Dt\Man::class_info($class);
-		return ['class_src'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],file_get_contents($info['filename'])))];
+		$src = file_get_contents($info['filename']);
+		return [
+			'name'=>$class,
+			'src_list'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],$src)),
+		];
 	}
 	/**
 	 * クラスドメソッドのキュメント
@@ -586,39 +591,67 @@ class Dt{
 		}
 		throw new \LogicException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
 	}
-	
-	private function file_list($dir,$reg){
-		$result = [];
-		if(is_dir($dir)){
-			$it = new \RecursiveDirectoryIterator($dir,
-					\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
-			);
-			$it = new \RecursiveIteratorIterator($it,\RecursiveIteratorIterator::SELF_FIRST);
-			$it = new \RegexIterator($it,$reg);
-	
-			foreach($it as $f){
-				$result[$f->getPathname()] = $f;
+	/**
+	 * @automap
+	 * @return multitype:multitype:NULL
+	 */
+	public function test_list(){
+		$test_list = [];
+		
+		if(is_dir($dir=getcwd().'/test')){
+			$dir = realpath($dir);
+			
+			foreach(\ebi\Util::ls($dir,true,'/\.php$/') as $f){
+				if(
+					strpos($f->getPathname(),'testman')  === false &&
+					strpos($f->getPathname(),'/_')  === false
+				){
+					$file = str_replace(dirname($dir).'/','',$f->getPathname());
+					$src = file_get_contents($f->getPathname());
+					$summary = '';
+					
+					if(preg_match('/\/\*.+?\*\//s',$src,$m)){
+						list($summary) = explode(PHP_EOL,trim(
+							preg_replace('/@.+/','',
+								preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$m[0]))
+							)
+						));
+					}
+					$test_list[$file] = $summary;
+				}
 			}
 		}
-		return $result;
+		return ['test_list'=>$test_list];
 	}
+	/**
+	 * テストのソース表示
+	 * @param string $class
+	 * @automap
+	 */
+	public function test_src($test){
+		$src = '';
+		if(is_file($f=getcwd().'/'.$test)){
+			$src = file_get_contents($f);
+		}
+		return ['src_list'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],$src))];
+	}
+	
 	/**
 	 * @automap
 	 */
 	public function coverage(){
 		$req = new \ebi\Request();
 		$dir = \ebi\Conf::get('test_result_dir',\ebi\Conf::work_path('test_output'));
-		$target_list = $this->file_list($dir,'/\.coverage\.xml$/');
-		
-		usort($target_list,function($a,$b){
-			return ($a->getMTime() > $b->getMTime()) ? -1 : 1;
-		});
+		$target_list = [];
 		$covered_list = [];
 		$covered_status_list = [];
 		$total_covered = 0;
 		$create_date = null;
-		$target = (!$req->is_vars('target') && !empty($target_list)) ? $target_list[0] : $req->in_vars('target');		
+		$target = (!$req->is_vars('target') && !empty($target_list)) ? $target_list[0] : $req->in_vars('target');
 
+		foreach(\ebi\Util::ls($dir,true,'/\.coverage\.xml$/') as $f){
+			$target_list[] = $f->getPathname();
+		}		
 		if(!empty($target) && is_file($target)){
 			try{
 				$xml = \ebi\Xml::extract(file_get_contents($target),'coverage');

@@ -1,4 +1,9 @@
 <?php
+/**
+ * @author tokushima
+ * 
+ * GETリクエスト
+ */
 $b = new \ebi\Browser();
 $b->do_get(test_map_url('test_index::template_abc'));
 

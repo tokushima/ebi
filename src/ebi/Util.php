@@ -146,9 +146,10 @@ class Util{
 	 * ディレクトリ内のイテレータ
 	 * @param string $directory  検索対象のファイルパス
 	 * @param boolean $recursive 階層を潜って取得するか
+	 * @param string $pattern 検索するパターンを表す文字列
 	 * @return RecursiveDirectoryIterator
 	 */
-	public static function ls($directory,$recursive=false){
+	public static function ls($directory,$recursive=false,$pattern=null){
 		$directory = self::parse_filename($directory);
 		if(is_file($directory)){
 			$directory = dirname($directory);
@@ -158,6 +159,9 @@ class Util{
 			if($recursive){
 				$it = new \RecursiveIteratorIterator($it);
 			}
+			if(!empty($pattern)){
+				$it = new \RegexIterator($it,$pattern);
+			}			
 			return $it;
 		}
 		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$directory));

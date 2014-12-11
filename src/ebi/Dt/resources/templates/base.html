@@ -56,6 +56,9 @@
 					<li class="{$t.match_package_method_switch('model_list','active','inactive')}"><a href="{$t.package_method_url('model_list')}">Models</a></li>
 					<li class="{$t.match_package_method_switch('config','active','inactive')}"><a href="{$t.package_method_url('config')}">Config</a></li>
 					
+					<rt:if param="{$has_test}">
+						<li class="{$t.match_package_method_switch('test_list','active','inactive')}"><a href="{$t.package_method_url('test_list')}">Test</a></li>
+					</rt:if>
 					<rt:if param="{$has_coverage}">
 						<li class="{$t.match_package_method_switch('coverage','active','inactive')}"><a href="{$t.package_method_url('coverage')}">Coverage</a></li>
 					</rt:if>

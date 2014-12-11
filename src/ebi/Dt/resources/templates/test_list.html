@@ -3,16 +3,16 @@
 <rt:block name="content">
 <h2>Classes</h2>
 
-<table rt:param="{$class_list}" rt:var="summary" rt:key="package">
+<table rt:param="{$test_list}" rt:var="summary" rt:key="test">
 <thead>
 	<tr>
-		<th class="span3">package</th>
+		<th class="span3">test</th>
 		<th>summary</th>
 	</tr>
 </thead>
 <tbody>
 	<tr>
-		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
+		<td style="width: 30%;"><a href="{$t.package_method_url('test_src',$test)}">{$test}</a></td>
 		<td style="width: 70%;">{$summary}</td>
 	</tr>
 </tbody>
