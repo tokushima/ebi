@@ -864,6 +864,7 @@ abstract class Dao extends \ebi\Object{
 		$base = $this->prop_anon($prop_name,'base','0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 		$code = '';
 		
+		$challenge = 0;
 		while($code == ''){
 			if(static::find_count(Q::eq($prop_name,($code = \ebi\Code::rand($base,$length)))) == 0){
 				$this->{$prop_name}($code);
@@ -871,7 +872,13 @@ abstract class Dao extends \ebi\Object{
 				if($this->{'verify_'.$prop_name}() === false){
 					$code = '';
 				}
+			}else{
+				$code = '';
 			}
+			if($challenge++ > 5){
+				throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
+			}
+			usleep(1000); // 1ms
 		}
 		return $code;
 	}
