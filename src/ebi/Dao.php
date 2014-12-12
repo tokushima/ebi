@@ -863,24 +863,31 @@ abstract class Dao extends \ebi\Object{
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$base = $this->prop_anon($prop_name,'base','0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 		$code = '';
-		
 		$challenge = 0;
+		$challenge_max = \ebi\Conf::get('generate_code_challenge',100);
+		$bool = true;
+		
 		while($code == ''){
-			if(static::find_count(Q::eq($prop_name,($code = \ebi\Code::rand($base,$length)))) == 0){
+			for($i=0;$i<=$challenge_max;$i++){
+				$code = \ebi\Code::rand($base,$length);
 				$this->{$prop_name}($code);
+				$bool = true;
 				
 				if($this->{'verify_'.$prop_name}() === false){
-					$code = '';
+					$bool = false;
+				}else{
+					break;
 				}
-			}else{
-				$code = '';
 			}
-			if($code == ''){
-				if($challenge++ > \ebi\Conf::get('generate_code_challenge',100)){
-					throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
-				}
-				usleep(\ebi\Conf::get('generate_code_retry_wait',100000)); // 100ms
+			if($bool && static::find_count(Q::eq($prop_name,$code)) == 0){
+				break;
 			}
+			if($challenge++ > $challenge_max){
+				throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
+			}
+			$code = '';
+			$this->{$prop_name}($code);
+			usleep(\ebi\Conf::get('generate_code_retry_wait',10000)); // 10ms
 		}
 		return $code;
 	}
