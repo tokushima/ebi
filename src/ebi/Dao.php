@@ -875,10 +875,12 @@ abstract class Dao extends \ebi\Object{
 			}else{
 				$code = '';
 			}
-			if($challenge++ > 5){
-				throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
+			if($code == ''){
+				if($challenge++ > \ebi\Conf::get('generate_code_challenge',100)){
+					throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
+				}
+				usleep(\ebi\Conf::get('generate_code_retry_wait',100000)); // 100ms
 			}
-			usleep(1000); // 1ms
 		}
 		return $code;
 	}
