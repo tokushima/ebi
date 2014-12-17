@@ -1,2 +1,2 @@
 <?php
-\ebi\Dt::create_table(null,true);
+\ebi\Dt::create_table(true);

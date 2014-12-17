@@ -530,38 +530,28 @@ class Dt{
 	}
 	/**
 	 * モデルからtableを作成する
-	 * @param string $model
 	 * @param boolean $drop
 	 * @reutrn array 処理されたモデル
 	 * @throws \Exception
 	 */
-	public static function create_table($model=null,$drop=false){
+	public static function create_table($drop=false){
 		$model_list = array();
 		$result = array();
 	
-		if(!empty($model)){
-			$model = str_replace('.','\\',$model);
-			if(substr($model,0,1) !== '\\') $model = '\\'.$model;
-			$model_list = array($model=>array('class'=>$model));
-		}else{
-			foreach(self::classes('\ebi\Dao') as $class_info){
-				$r = new \ReflectionClass($class_info['class']);
-				if($r->getParentClass()->getName() == 'ebi\Dao'){
-					$model_list[] = $class_info;
-				}
+		foreach(self::classes('\ebi\Dao') as $class_info){
+			$r = new \ReflectionClass($class_info['class']);
+			if($r->getParentClass()->getName() == 'ebi\Dao'){
+				$model_list[] = $class_info['class'];
 			}
 		}
-		foreach($model_list as $class_info){
-			$r = new \ReflectionClass($class_info['class']);
+		foreach($model_list as $class){
+			$r = new \ReflectionClass($class);
 			
-			if($r->getParentClass() === false || $r->getParentClass()->getName() != 'ebi\Dao'){
-				throw new \InvalidArgumentException('not inherit the \ebi\Dao');
-			}			
-			if($drop && call_user_func(array($r->getName(),'drop_table'))){
-				$result[] = array(-1,$r->getName());
+			if($drop && call_user_func([$class,'drop_table'])){
+				$result[] = array(-1,$class);
 			}
-			if(call_user_func(array($r->getName(),'create_table'))){
-				$result[] = array(1,$r->getName());
+			if(call_user_func([$class,'create_table'])){
+				$result[] = [1,$class];
 			}
 		}
 		return $result;

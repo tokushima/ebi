@@ -16,6 +16,7 @@ abstract class Dao extends \ebi\Object{
 
 	private static $_co_anon_ = [];
 	private static $_connections_ = [];
+	private static $_connection_settings_ = [];
 	private static $recording_query = false;
 	private static $record_query = [];
 
@@ -32,7 +33,7 @@ abstract class Dao extends \ebi\Object{
 	}
 	public static function connection($class){
 		if(!isset(self::$_connections_[self::$_co_anon_[$class][0]])){
-			throw new \RuntimeException('unable to connect to '.$class);
+			throw new \ebi\exception\ConnectionException('unable to connect to '.$class);
 		}
 		return self::$_connections_[self::$_co_anon_[$class][0]];
 	}
@@ -48,23 +49,19 @@ abstract class Dao extends \ebi\Object{
 	public static function commit_all(){
 		foreach(self::connections() as $con) $con->commit();
 	}
-	private static function get_con($database,$class){
-		$def = \ebi\Conf::get('connection');
+	private static function get_db_settings($database,$class){
 		if(!isset(self::$_connections_[$database])){
-			try{
-				if(is_array($def[$database])){
-					if(isset($def[$database]['con'])){
-						self::get_con($def[$database]['con'],$class);
-						self::$_connections_[$database] = self::$_connections_[$def[$database]['con']];
-						return $def[$database];
-					}
-					self::$_connections_[$database] = new \ebi\Db($def[$database]);
-				}
-			}catch(\Exception $e){
-				throw new \RuntimeException($class.'('.$database.'): '.$e->getMessage());
+			if(isset(self::$_connection_settings_[$database]['con'])){
+				self::get_db_settings(self::$_connection_settings_[$database]['con'],$class);
+				self::$_connections_[$database] = self::$_connections_[self::$_connection_settings_[$database]['con']];
+				return self::$_connection_settings_[$database];
 			}
+			self::$_connections_[$database] = new \ebi\Db(self::$_connection_settings_[$database]);
 		}
-		return $def[$database];
+		if(!isset(self::$_connections_[$database])){
+			throw new \ebi\exception\ConnectionException('connection fail '.$class);
+		}
+		return self::$_connection_settings_[$database];
 	}
 	public function __construct(){
 		call_user_func_array('parent::__construct',func_get_args());
@@ -92,24 +89,34 @@ abstract class Dao extends \ebi\Object{
 			return;
 		}
 		$annotation = \ebi\Annotation::decode($p,['readonly','table']);		
-		$anon = array(null // con name
-						,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
-						,($annotation['readonly'] !== null)
-					);
-		$conf = explode("\\",$p);
-		$def = \ebi\Conf::get('connection');
-		while(!isset($def[implode('.',$conf)]) && !empty($conf)){
-			array_pop($conf);
+		$anon = [
+			null // con name
+			,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
+			,($annotation['readonly'] !== null)
+		];
+		
+		if(empty(self::$_connection_settings_)){
+			self::$_connection_settings_ = \ebi\Conf::get('connection');
+			
+			if(empty(self::$_connection_settings_)){
+				self::$_connection_settings_ = ['*'=>['host'=>getcwd(),]];
+			}
 		}
-		if(empty($conf) && !isset($def['*'])){
+		// find connection settings
+		$findns = explode("\\",$p);
+		while(!isset(self::$_connection_settings_[implode('.',$findns)]) && !empty($findns)){
+			array_pop($findns);
+		}
+		if(empty($findns) && !isset(self::$_connection_settings_['*'])){
 			throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
 		}
-		$anon[0] = empty($conf) ? '*' : implode('.',$conf);
+		$anon[0] = empty($findns) ? '*' : implode('.',$findns);
 		
 		if(empty($anon[1])){
 			$table_class = $p;
 			$parent_class = get_parent_class($p);
 			$ref = new \ReflectionClass($parent_class);
+			
 			while(true){
 				$ref = new \ReflectionClass($parent_class);
 				if(__CLASS__ == $parent_class || $ref->isAbstract()){
@@ -124,15 +131,12 @@ abstract class Dao extends \ebi\Object{
 				$anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
 			}
 		}
-		$config = self::get_con($anon[0],$p);
-		if(!isset(self::$_connections_[$anon[0]])){
-			throw new \RuntimeException('connection fail '.str_replace("\\",'.',get_class($this)));
-		}
-		static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
+		$db_settings = self::get_db_settings($anon[0],$p);
+		$prefix = isset($db_settings['prefix']) ? $db_settings['prefix'] : '';
+		$upper = (isset($db_settings['upper']) && $db_settings['upper'] === true);
+		$lower = (isset($db_settings['lower']) && $db_settings['lower'] === true);
 		
-		$prefix = isset($config['prefix']) ? $config['prefix'] : '';
-		$upper = (isset($config['upper']) && $config['upper'] === true);
-		$lower = (isset($config['lower']) && $config['lower'] === true);
+		static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
 		
 		$set_table_name = function($name,$class) use($prefix,$upper,$lower){
 			$name = $prefix.$name;
@@ -186,7 +190,7 @@ abstract class Dao extends \ebi\Object{
 
 			if($anon_cond === null){
 				if(ctype_upper($column_type[0]) && class_exists($column_type) && is_subclass_of($column_type,__CLASS__)){
-					throw new \RuntimeException('undef '.$name.' annotation `cond`');
+					throw new \ebi\exception\InvalidQueryException('undef '.$name.' annotation `cond`');
 				}
 				$column->table($this->table());
 				$column->table_alias($root_table_alias);
@@ -269,7 +273,7 @@ abstract class Dao extends \ebi\Object{
 							$_alias_[$column->column_alias()] = $name;
 							
 							if(sizeof($conds) % 2 != 0){
-								throw new \RuntimeException($name.'['.$column_type.'] is illegal condition');
+								throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
 							}
 							if($this->prop_anon($name,'join',false)){
 								$this->prop_anon($name,'get',false,true);
@@ -307,7 +311,7 @@ abstract class Dao extends \ebi\Object{
 					$column->table($_where_columns_[$cond_name]->table());
 					$column->table_alias($_where_columns_[$cond_name]->table_alias());					
 				}else{
-					throw new \RuntimeException('undef var `'.$name.'`');
+					throw new \ebi\exception\InvalidQueryException('undef var `'.$name.'`');
 				}
 				$_alias_[$column->column_alias()] = $name;
 				$_where_columns_[$name] = $column;
@@ -437,7 +441,7 @@ abstract class Dao extends \ebi\Object{
 	public function query(\ebi\Daq $daq){
 		if(self::$recording_query) self::$record_query[] = array($daq->sql(),$daq->ar_vars());
 		$statement = self::connection(get_class($this))->prepare($daq->sql());
-		if($statement === false) throw new \RuntimeException('prepare fail: '.$daq->sql());
+		if($statement === false) throw new \ebi\exception\InvalidQueryException('prepare fail: '.$daq->sql());
 		$statement->execute($daq->ar_vars());
 		return $statement;
 	}
@@ -446,7 +450,7 @@ abstract class Dao extends \ebi\Object{
 		$errors = $statement->errorInfo();
 		if(isset($errors[1])){
 			static::rollback();
-			throw new \RuntimeException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
 		}
 		return $statement->rowCount();
 	}
@@ -454,7 +458,7 @@ abstract class Dao extends \ebi\Object{
 		$statement = $this->query($daq);
 		$errors = $statement->errorInfo();
 		if(isset($errors[1])){
-			throw new \RuntimeException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
 		}
 		if($statement->columnCount() == 0) return ($is_list) ? array() : null;
 		return ($is_list) ? $statement->fetchAll(\PDO::FETCH_ASSOC) : $statement->fetchAll(\PDO::FETCH_COLUMN,0);
@@ -581,8 +585,12 @@ abstract class Dao extends \ebi\Object{
 		return static::exec_aggregator_result_cast($dao,$target_name,current($result),$cast);
 	}
 	private static function exec_aggregator_by($exec,$target_name,$gorup_name,$args,$cast=null){
-		if(empty($target_name) || !is_string($target_name)) throw new \RuntimeException('undef target_name');
-		if(empty($gorup_name) || !is_string($gorup_name)) throw new \RuntimeException('undef group_name');
+		if(empty($target_name) || !is_string($target_name)){
+			throw new \ebi\exception\InvalidQueryException('undef target_name');
+		}
+		if(empty($gorup_name) || !is_string($gorup_name)){
+			throw new \ebi\exception\InvalidQueryException('undef group_name');
+		}
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
 		$results = array();
@@ -763,7 +771,7 @@ abstract class Dao extends \ebi\Object{
 		$statement = $dao->query($daq);
 		$errors = $statement->errorInfo();
 		if(isset($errors[1])){
-			throw new \RuntimeException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
 		}
 		while(true){
 			$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
@@ -969,7 +977,7 @@ abstract class Dao extends \ebi\Object{
 			 */
 			$daq = static::call_class_plugin_funcs('create_sql',$this);
 			if($this->update_query($daq) == 0){
-				throw new \RuntimeException('create failed');
+				throw new \ebi\exception\InvalidQueryException('create failed');
 			}
 			if($daq->is_id()){
 				/**
@@ -1065,7 +1073,8 @@ abstract class Dao extends \ebi\Object{
 		$dao = new static();
 		if(!self::$_co_anon_[get_class($dao)][2]){
 			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
-			$count = current($dao->func_query($daq));
+ 			$count = current($dao->func_query($daq));
+			
 			if($count == 0){
 				$daq = new \ebi\Daq(static::call_class_plugin_funcs('create_table_sql',$dao));
 				$dao->func_query($daq);
@@ -1082,6 +1091,7 @@ abstract class Dao extends \ebi\Object{
 		if(!self::$_co_anon_[get_class($dao)][2]){
 			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
 			$count = current($dao->func_query($daq));
+			
 			if($count == 1){
 				$daq = new \ebi\Daq(static::call_class_plugin_funcs('drop_table_sql',$dao));
 				$dao->func_query($daq);

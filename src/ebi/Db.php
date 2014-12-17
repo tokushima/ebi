@@ -33,7 +33,7 @@ class Db implements \Iterator{
 		if($type[0] !== '\\') $type = '\\'.$type;		
 		
 		if(empty($type) || !class_exists($type)){
-			throw new \RuntimeException('could not find connector `'.((substr($s=str_replace("\\",'.',$type),0,1) == '.') ? substr($s,1) : $s).'`');
+			throw new \ebi\exception\ConnectionException('could not find connector `'.((substr($s=str_replace("\\",'.',$type),0,1) == '.') ? substr($s,1) : $s).'`');
 		}
 		$r = new \ReflectionClass($type);
 		$this->dbname = $dbname;
@@ -46,7 +46,7 @@ class Db implements \Iterator{
 			$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);
 		}
 		if(empty($this->connection)){
-			throw new \RuntimeException('connection fail '.$this->dbname);
+			throw new \ebi\exception\ConnectionException('connection fail '.$this->dbname);
 		}
 		if(self::$autocommit !== true){
 			$this->connection->beginTransaction();
