@@ -37,7 +37,7 @@ class DbConnector{
 		}
 		unset($port,$user,$password,$sock);
 		$con = null;
-
+		
 		if(empty($host)){
 			$host = \ebi\Conf::get('host');
 			if(empty($host)){
@@ -45,8 +45,11 @@ class DbConnector{
 			}
 		}
 		if($host != ':memory:'){
+			if(empty($name)){
+				$name = 'default';
+			}
 			if(strpos($name,'.') === false){
-				$name = $name.'.sqlite';
+				$name = $name.'.sqlite3';
 			}
 			$host = str_replace('\\','/',$host);
 			if(substr($host,-1) != '/') $host = $host.'/';
@@ -54,7 +57,7 @@ class DbConnector{
 			\ebi\Util::mkdir(dirname($path));
 		}
 		try{
-			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $host.$name));
+			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $path));
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException($e->getMessage());
 		}
