@@ -61,7 +61,7 @@ class Log{
 		if(!is_string($this->value)){
 			ob_start();
 				var_dump($this->value);
-			return ob_get_clean();
+			return trim(ob_get_clean());
 		}
 		return $this->value;
 	}
