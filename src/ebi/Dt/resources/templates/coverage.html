@@ -2,23 +2,8 @@
 
 <rt:block name="content">
 
-<div class="container-fluid">
-	<div class="row">
-		<div class="col-xs-6">
-			<h2>Coverage ({$covered}%) <span style="font-size: small;">{$create_date}</span></h2>
-			<form rt:aref="true" class="col-sm-6" style="margin-bottom: 50px;">
-				<select name="target" class="form-control" onchange="this.form.submit()" style="width:500px;;">
-					<rt:loop param="target_list" var="file">
-						<option value="{$file.getPathname()}">{$file.getFilename()}</option>
-					</rt:loop>
-				</select>
-			</form>
-		</div>
-		<div class="col-xs-6">
-		</div>
-	</div>
-</div>
-
+<h2>Coverage ({$covered}%)</h2>
+<p>{$target} <span style="font-size: small;">({$create_date})</span></p>
 	
 
 <table rt:param="{$covered_list}" rt:var="coverage" rt:key="filename">

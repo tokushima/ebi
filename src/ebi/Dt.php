@@ -634,17 +634,19 @@ class Dt{
 	 */
 	public function coverage(){
 		$req = new \ebi\Request();
-		$dir = \ebi\Conf::get('test_result_dir',\ebi\Conf::work_path('test_output'));
+		$target = $req->in_vars('target');
+		
+		if(empty($target)){
+	 		foreach(\ebi\Util::ls(getcwd(),true,'/coverage\.xml$/') as $f){
+	 			$target = $f;
+	 		}
+ 		}		
 		$target_list = [];
 		$covered_list = [];
 		$covered_status_list = [];
 		$total_covered = 0;
 		$create_date = null;
-		$target = (!$req->is_vars('target') && !empty($target_list)) ? $target_list[0] : $req->in_vars('target');
 
-		foreach(\ebi\Util::ls($dir,true,'/\.coverage\.xml$/') as $f){
-			$target_list[] = $f->getPathname();
-		}		
 		if(!empty($target) && is_file($target)){
 			try{
 				$xml = \ebi\Xml::extract(file_get_contents($target),'coverage');
@@ -671,7 +673,6 @@ class Dt{
 		}
 		return [
 			'target'=>$target,
-			'target_list'=>$target_list,
 			'covered_list'=>$covered_list,
 			'covered_status_list'=>$covered_status_list,
 			'covered'=>$total_covered,
@@ -688,7 +689,6 @@ class Dt{
 		$source = explode(PHP_EOL,file_get_contents($filename));
 		$modify_date = date('Y/m/d H:i:s',filemtime($filename));
 		$status = array();
-		$coverage_modify_date = null;
 		$covered = 0;
 		
 		for($i=1;$i<count($source);$i++){
@@ -704,7 +704,6 @@ class Dt{
 						foreach(explode(',',$file->find_get('uncovered_lines')->value()) as $line){
 							if(isset($status[$line])) $status[$line] = 'uncovered';
 						}
-						$coverage_modify_date = $file->in_attr('modify_date');
 						$covered = $file->in_attr('covered');
 						break;
 					}
@@ -715,10 +714,9 @@ class Dt{
 		return [
 				'source'=>$source,
 				'filename'=>basename($filename),
-				'dir'=>dirname($filename),
+				'path'=>$filename,
 				'status'=>$status,
 				'modify_date'=>$modify_date,
-				'coverage_modify_date'=>$coverage_modify_date,
 				'covered'=>$covered,
 				];
 	}

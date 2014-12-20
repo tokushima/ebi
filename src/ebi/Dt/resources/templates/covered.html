@@ -4,12 +4,8 @@
 <h2>Covered ({$covered}%) - {$filename}</h2>
 
 <span style="font-size: small;">
-	{$dir}
-	<rt:if param="{$modify_date}" value="{$coverage_modify_date}">
-		( {$modify_date} )
-	<rt:else />
-		( {$modify_date} / <span style="color:#ff0000;">{$coverage_modify_date}</span> )
-	</rt:if>
+	{$path}
+	( {$modify_date} )
 </span>
 
 <table rt:param="{$source}" rt:var="line" rt:counter="counter">
