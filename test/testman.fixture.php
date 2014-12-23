@@ -1,0 +1,3 @@
+<?php
+\ebi\Dt::setup();
+
