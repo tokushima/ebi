@@ -42,6 +42,11 @@ class FlowHelper{
 		$args = func_get_args();
 		array_shift($args);
 	
+		if(!isset($this->url_pattern[$name])){
+			if(isset($this->url_pattern[$name.'/index'])){
+				$name = $name.'/index';
+			}
+		}
 		if(isset($this->url_pattern[$name][sizeof($args)])){
 			return vsprintf($this->url_pattern[$name][sizeof($args)],$args);
 		}

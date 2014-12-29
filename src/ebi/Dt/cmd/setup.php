@@ -49,7 +49,7 @@ if(\cmdman\Std::read('setup .htaccess?','n',['y','n']) == 'y'){
 	$base = \cmdman\Std::read('base path?','/'.basename(getcwd()));
 	
 	list($path,$rules) = \ebi\Dt::htaccess($base);
-	\cmdman\Std::println_success('Written '.realpath($path));
+	\cmdman\Std::println_warning('Written '.realpath($path));
 }
 
 $setup_cmd = substr(\ebi\Dt::setup_file(),0,-4).'.cmd.php';
@@ -61,14 +61,18 @@ if(is_file($setup_cmd)){
 	if(\cmdman\Std::read('getting started?','n',['y','n']) == 'y'){
 		$path = getcwd();
 		
-		$mkdir($path.'/lib');
+		$mkdir($path.'/lib/my');
 		$mkdir($path.'/resources/media');
 		$mkdir($path.'/resources/templates');
-		$copy(__DIR__.'/setup/index.html',$path.'/resources/templates/index.html');
+		$copy(__DIR__.'/setup/lib/my/Calc.php',$path.'/lib/my/Calc.php');		
+		$copy(__DIR__.'/setup/templates/start.html',$path.'/resources/templates/start.html');
+		$copy(__DIR__.'/setup/templates/days.html',$path.'/resources/templates/days.html');
+		$copy(__DIR__.'/setup/templates/calc.html',$path.'/resources/templates/calc.html');
 		$copy(__DIR__.'/setup/index.php',$path.'/index.php');
 		
 		if(!is_file($f=$path.'/bootstrap.php')){
-			$autoload_file = 'vendor/autoload.php';
+			$autoload_file = '';
+			
 			if(class_exists('Composer\Autoload\ClassLoader')){
 				$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
 				$composer_dir = dirname($r->getFileName());
@@ -76,14 +80,21 @@ if(is_file($setup_cmd)){
 				if(is_file($bf=realpath(dirname($composer_dir).'/autoload.php'))){
 					$autoload_file = str_replace(str_replace("\\",'/',getcwd()).'/','',str_replace("\\",'/',$bf));
 				}
+			}else{
+				foreach(\ebi\Util::ls($path,true,'/ebi\.phar$/') as $p){
+					$autoload_file = $p;
+					break;
+				}
 			}
-			file_put_contents($f,'<?php'.PHP_EOL.'include_once(\''.$autoload_file.'\');');
-			\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
+			if(!empty($autoload_file)){
+				file_put_contents($f,'<?php'.PHP_EOL.'include_once(\''.$autoload_file.'\');');
+				\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
+			}
 		}
 	}
 	if(\cmdman\Std::read('getting testman?','n',['y','n']) == 'y'){
 		$mkdir($path.'/test');
-		$copy(__DIR__.'/setup/sample.php',$path.'/test/sample.php');
+		$copy(__DIR__.'/setup/test/sample.php',$path.'/test/sample.php');
 		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
 		\cmdman\Std::println_success('Written file '.$f.PHP_EOL);
 	}

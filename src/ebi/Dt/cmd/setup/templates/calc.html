@@ -1,0 +1,13 @@
+<rt:extends href="start.html" />
+
+<rt:block name="contents">
+<form method="post" rt:ref="true">
+	<input type="text" name="a" /> + <input type="text" name="b" /> <input type="submit" value="calc" />
+</form>
+
+<p>result: {$sum}</p>
+</rt:block>
+
+<rt:block name="head">
+	<h1>Calc</h1>
+</rt:block>
