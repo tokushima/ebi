@@ -358,4 +358,43 @@ class Xml implements \IteratorAggregate{
 		}
 		return $rtn;
 	}
+	/**
+	 * $srcから対象のXMLを置換した文字列を返す
+	 * @param string $src
+	 * @param string $name
+	 * @param callable $func
+	 * @return string
+	 */
+	public static function find_replace($src,$name,$func){
+		try{
+			if(!is_callable($func)){
+				throw new \ebi\exception\InvalidArgumentException('invalid function');
+			}
+			$i = 0;
+			while(true){
+				$break = true;
+				foreach(self::anonymous($src)->find($name) as $xml){
+					$replace = call_user_func_array($func,[$xml]);
+
+					if($replace instanceof self){
+						if($replace->name() != $xml->name()){
+							$break = false;
+						}
+						$replace = $replace->get();
+					}
+					if(!is_null($replace)){
+						$src = str_replace($xml->plain(),$replace,$src);
+					}
+				}
+				if($break){
+					break;
+				}
+				if($i++ > 100){
+					throw new \ebi\exception\RetryLimitOverException('Maximum function nesting level of ’100');
+				}
+			}
+		}catch(\ebi\exception\NotFoundException $e){
+		}
+		return $src;
+	}
 }

@@ -346,58 +346,53 @@ class Paginator implements \IteratorAggregate{
 		return (!$this->dynamic && $this->last > 1);
 	}	
 	public function before_template($src){
-		try{
-			while(true){
-				$tag = \ebi\Xml::extract($src,'rt:paginator');
-				$param = '$'.$tag->in_attr('param','paginator');
-				$navi = array_change_key_case(array_flip(explode(',',$tag->in_attr('navi','prev,next,first,last,counter'))));
-				$counter = $tag->in_attr('counter',10);
-				$lt = strtolower($tag->in_attr('lt','true'));
-				$href = $tag->in_attr('href','?');
-				
-				$uniq = uniqid('');
-				$counter_var = '$__counter__'.$uniq;
-				$func = '';
-				
-				if($lt == 'false'){
-					$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
-				}
-				$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination">',$param);
-				if(isset($navi['prev'])){
-					$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="prev"><a href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="prev disabled"><a><?php } ?>&laquo;</a></li>',$param,$href,$param);
-				}
-				if(isset($navi['first'])){
-					$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li><a href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="disabled"><a>...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
-				}
-				if(isset($navi['counter'])){
-					$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
-								.sprintf('<?php if(%s->total() == 0){ ?>',$param)
-									.sprintf('<li class="active"><a>1</a></li>')
-								.'<?php }else{ ?>'
-							 		.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
-										.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
-											.sprintf('<li class="active"><a>{%s}</a></li>',$counter_var)
-										.'<?php }else{ ?>'
-											.sprintf('<li><a href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
-										.'<?php } ?>'
-									.'<?php } ?>'
-								.'<?php } ?>'
-							.'<?php } ?>';
-				}
-				if(isset($navi['last'])){
-					$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="disabled"><a>...</a></li><li><a href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
-				}
-				if(isset($navi['next'])){
-					$func .= sprintf('<?php if(%s->is_next()){ ?><li class="next"><a href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="next disabled"><a><?php } ?>&raquo;</a></li>',$param,$href,$param);
-				}
-				$func .= "<?php } ?><?php }catch(\\Exception \$e){} ?></ul>";
-				if($lt == 'false'){
-					$func .= sprintf('<?php } ?>',$param);
-				}				
-				$src = str_replace($tag->plain(),$func,$src);
+		return \ebi\Xml::find_replace($src, 'rt:paginator',function($xml){
+			$param = '$'.$xml->in_attr('param','paginator');
+			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('navi','prev,next,first,last,counter'))));
+			$counter = $xml->in_attr('counter',10);
+			$lt = strtolower($xml->in_attr('lt','true'));
+			$href = $xml->in_attr('href','?');
+			
+			$uniq = uniqid('');
+			$counter_var = '$__counter__'.$uniq;
+			$func = '';
+			
+			if($lt == 'false'){
+				$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
 			}
-		}catch(\ebi\exception\NotFoundException $e){
-		}
-		return $src;
+			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination">',$param);
+			if(isset($navi['prev'])){
+				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="prev"><a href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="prev disabled"><a><?php } ?>&laquo;</a></li>',$param,$href,$param);
+			}
+			if(isset($navi['first'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li><a href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="disabled"><a>...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+			}
+			if(isset($navi['counter'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
+				.sprintf('<?php if(%s->total() == 0){ ?>',$param)
+				.sprintf('<li class="active"><a>1</a></li>')
+				.'<?php }else{ ?>'
+						.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
+						.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
+						.sprintf('<li class="active"><a>{%s}</a></li>',$counter_var)
+						.'<?php }else{ ?>'
+								.sprintf('<li><a href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
+								.'<?php } ?>'
+										.'<?php } ?>'
+												.'<?php } ?>'
+														.'<?php } ?>';
+			}
+			if(isset($navi['last'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="disabled"><a>...</a></li><li><a href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+			}
+			if(isset($navi['next'])){
+				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="next"><a href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="next disabled"><a><?php } ?>&raquo;</a></li>',$param,$href,$param);
+			}
+			$func .= "<?php } ?><?php }catch(\\Exception \$e){} ?></ul>";
+			if($lt == 'false'){
+				$func .= sprintf('<?php } ?>',$param);
+			}
+			return $func;
+		});
 	}
 }

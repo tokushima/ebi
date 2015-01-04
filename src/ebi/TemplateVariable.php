@@ -35,7 +35,9 @@ trait TemplateVariable{
 			foreach($array as $v){
 				$tmp = $v;
 				if(preg_match_all("/([\"\'])([^\\1]+?)\\1/",$v,$match)){
-					foreach($match[2] as $value) $tmp = str_replace($value,str_replace('.','__PERIOD__',$value),$tmp);
+					foreach($match[2] as $value){
+						$tmp = str_replace($value,str_replace('.','__PERIOD__',$value),$tmp);
+					}
 				}
 				$src = str_replace($v,preg_replace('/([\w\)\]])\./','\\1->',substr($tmp,1,-1)),$src);
 			}

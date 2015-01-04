@@ -85,37 +85,33 @@ class FlowInvalid implements \Iterator{
 		return false;
 	}
 	public function before_template($src){
-		try{
-			while(true){
-				$tag = \ebi\Xml::extract($src,'rt:invalid');
-				$param = $tag->in_attr('param');
-				$type = $tag->in_attr('type');
-				$var = $tag->in_attr('var','rtinvalid_var'.uniqid(''));
-				if(!isset($param[0]) || $param[0] !== '$') $param = '"'.$param.'"';
-				if(!isset($type[0]) || $type[0] !== '$') $type = '"'.$type.'"';
-				$value = $tag->value();
-				$tagtype = $tag->in_attr('tag');
-		
-				if(empty($value)){
-					$varnm = 'rtinvalid_varnm'.uniqid('');
-					$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
-							.'<li>{$%s.getMessage()}</li>'
-							.'</rt:loop></ul></div>'
-							,$tag->in_attr('class','alert alert-danger'),$var,$varnm,$varnm,((empty($tagtype)) ? '' : '</'.$tagtype.'>'));
-				}
-				$src = str_replace(
-						$tag->plain(),
-						sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
-								."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
-								.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
-								."<?php } ?>"
-								,$param,$type
-								,$var,$param,$type
-						),
-						$src);
+		return \ebi\Xml::find_replace($src,'rt:invalid',function($xml){
+			$param = $xml->in_attr('param');
+			$type = $xml->in_attr('type');
+			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));
+			if(!isset($param[0]) || $param[0] !== '$'){
+				$param = '"'.$param.'"';
 			}
-		}catch(\ebi\exception\NotFoundException $e){
-		}
-		return $src;
+			if(!isset($type[0]) || $type[0] !== '$'){
+				$type = '"'.$type.'"';
+			}
+			$value = $xml->value();
+			$tagtype = $xml->in_attr('tag');
+				
+			if(empty($value)){
+				$varnm = 'rtinvalid_varnm'.uniqid('');
+				$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
+						.'<li>{$%s.getMessage()}</li>'
+						.'</rt:loop></ul></div>'
+						,$xml->in_attr('class','alert alert-danger'),$var,$varnm,$varnm,((empty($tagtype)) ? '' : '</'.$tagtype.'>'));
+			}
+			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
+					."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
+					.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
+					."<?php } ?>"
+					,$param,$type
+					,$var,$param,$type
+			);
+		});
 	}
 }

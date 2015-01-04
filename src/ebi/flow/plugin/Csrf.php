@@ -30,17 +30,16 @@ class Csrf{
 		$req->vars('csrftoken',$this->token);
 	}
 	public function after_template($src){
-		foreach(\ebi\Xml::anonymous($src)->find('form') as $form){
-			if($form->in_attr('action') == '' || strpos($form->in_attr('action'),'$t.map_url') !== false){
-				$form->escape(false);
-				$form->value(
-					sprintf('<input type="hidden" name="csrftoken" value="%s" %s/>',
-						$this->token,
-						(($form->in_attr('rt:ref') === 'true' || $form->in_attr('rt:aref') === 'true') ? 'rt:ref="false"' : '')
-				).$form->value());
-				$src = str_replace($form->plain(),$form->get(),$src);
+		return \ebi\Xml::find_replace($src, 'form', function($xml){
+			if($xml->in_attr('action') == '' || strpos($xml->in_attr('action'),'$t.map_url') !== false){
+				$xml->escape(false);
+				$xml->value(
+						sprintf('<input type="hidden" name="csrftoken" value="%s" %s/>',
+								$this->token,
+								(($xml->in_attr('rt:ref') === 'true' || $xml->in_attr('rt:aref') === 'true') ? 'rt:ref="false"' : '')
+						).$xml->value());
+				return $xml;
 			}
-		}
-		return $src;
+		});
 	}
 }

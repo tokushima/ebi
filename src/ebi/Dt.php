@@ -235,6 +235,9 @@ class Dt{
 		$class = '\\'.str_replace('.','\\',$package);
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
 	
+		if(!class_exists($class)){
+			throw new \InvalidArgumentException($class.' not found');
+		}
 		if(empty($order)){
 			$dao = new $class();
 			foreach($dao->props() as $n => $v){

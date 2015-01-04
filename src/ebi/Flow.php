@@ -275,7 +275,9 @@ class Flow{
 						
 						while(true){
 							$traits = array_merge($traits,$ins_r->getTraitNames());
-							if(($ins_r = $ins_r->getParentClass()) === false) break;
+							if(($ins_r = $ins_r->getParentClass()) === false){
+								break;
+							}
 						}
 						if($has_flow_plugin = in_array('ebi\\FlowPlugin',$traits)){
 							foreach($ins->get_flow_plugins() as $m){

@@ -6,31 +6,35 @@ namespace ebi\flow\plugin;
  */
 class TwitterBootstrap3Helper{
 	private function before_exhtml($src){
-		foreach(\ebi\Xml::anonymous($src)->find('pre|cli|tree') as $b){
-			$plain = $b->plain();
-			$tag = strtolower($b->name());
-			$b->escape(false);
-			$caption = $b->in_attr('caption');
-			$b->rm_attr('caption');
-			$style = $b->in_attr('style');
-	
+		return \ebi\Xml::find_replace($src,'pre|cli|tree',function($xml){
+			$plain = $xml->plain();
+			$tag = strtolower($xml->name());
+			$xml->escape(false);
+			$caption = $xml->in_attr('caption');
+			$xml->rm_attr('caption');
+			$style = $xml->in_attr('style');
+			
 			if($tag == 'cli'){
-				$b->name('pre');
-				$b->attr('style','background-color:#fff; color:#000; border-color:#000; padding:5px;'.$style);
+				$xml->name('pre');
+				$xml->attr('style','background-color:#fff; color:#000; border-color:#000; padding:5px;'.$style);
 			}else if($tag == 'tree'){
-				$b->name('pre');
-				$b->attr('style','padding: 5px; line-height: 20px;'.$style);
-				$b->attr('class','prettyprint lang-c');
+				$xml->name('pre');
+				$xml->attr('style','padding: 5px; line-height: 20px;'.$style);
+				$xml->attr('class','prettyprint lang-c');
 			}else{
-				$b->attr('class','prettyprint');
+				$xml->attr('class','prettyprint');
 			}
-			if(empty($caption)) $b->attr('style','margin-top: 20px; '.$b->in_attr('style'));
-			$value = $b->value();
+			if(empty($caption)){
+				$xml->attr('style','margin-top: 20px; '.$xml->in_attr('style'));
+			}
+			$value = $xml->value();
 			$value = preg_replace("/<(rt:.+?)>/ms","&lt;\\1&gt;",$value);
 			$value = str_replace(array('<php>','</php>'),array('<?php','?>'),$value);
 			$value = $this->pre($value);
-			if(empty($value)) $value = PHP_EOL;
-	
+			if(empty($value)){
+				$value = PHP_EOL;
+			}
+			
 			if($tag == 'tree'){
 				$tree = array();
 				$len = 0;
@@ -50,25 +54,25 @@ class TwitterBootstrap3Helper{
 					$v .= (($t[0] > 0 && isset($tree[$k+1]) && $tree[$k+1][0] < $t[0]) || $k == $last) ? '`' : '|';
 					$v .= '-- '.$t[1].str_repeat(' ',$len - $t[3] - ($t[0]*2) + 4).(empty($t[2]) ? '' : ' .. ').$t[2].PHP_EOL;
 				}
-				$b->value($v);
-				$plain = $b->get();
+				$xml->value($v);
+				$plain = $xml->get();
 			}else{
-				$format = $b->in_attr('format');
-				$b->rm_attr('format');
-	
+				$format = $xml->in_attr('format');
+				$xml->rm_attr('format');
+			
 				if($format == 'plain'){
-					$plain = $b->get();
+					$plain = $xml->get();
 				}else{
 					$value = str_replace("\t","&nbsp;&nbsp;",$value);
 					$value = str_replace(array("<",">","'","\""),array("&lt;","&gt;","&#039;","&quot;"),$value);
-					$b->value($value);
-					$plain = str_replace(array('$','='),array('__RTD__','__RTE__'),$b->get());
+					$xml->value($value);
+					$plain = str_replace(array('$','='),array('__RTD__','__RTE__'),$xml->get());
 				}
-				if(!empty($caption)) $plain = '<div style="margin-top:20px; color:#7a43b6; font-weight: bold;">'.$caption.'</div>'.$plain;
+				if(!empty($caption)){
+					$plain = '<div style="margin-top:20px; color:#7a43b6; font-weight: bold;">'.$caption.'</div>'.$plain;
+				}
 			}
-			$src = str_replace($b->plain(),$plain,$src);
-		}
-		return $src;		
+		});
 	}
 	private function after_exec_exhtml($src){
 		$src = preg_replace("/<alert>(.+?)<\/alert>/ms",'<p class="alert alert-error">\\1</p>',$src);
