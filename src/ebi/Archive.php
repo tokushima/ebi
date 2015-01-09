@@ -198,11 +198,11 @@ class Archive{
 	}
 	/**
 	 * tar.gz(tgz)を解凍してファイル書き出しを行う
-	 * @param string $inpath 解凍するファイルパス
+	 * @param string $tarfile 解凍するtarファイル
 	 * @param string $outpath 解凍先のファイルパス
 	 */
-	public static function untgz($inpath,$outpath){
-		$fr = gzopen($inpath,'rb');
+	public static function untgz($tarfile,$outpath){
+		$fr = gzopen($tarfile,'rb');
 		$ft = fopen($outpath.'.tar','wb');
 			while(!gzeof($fr)) fwrite($ft,gzread($fr,4096));
 		fclose($ft);
@@ -211,12 +211,42 @@ class Archive{
 		unlink($outpath.'.tar');
 		return true;
 	}
-	public static function unzip($inpath,$outpath){
-		if(substr($outpath,-1) != '/') $outpath = $outpath.'/';
-		if(!is_dir($outpath)) Util::mkdir($outpath,0777);
+	/**
+	 * zipを解凍してファイル書き出しを行う
+	 * @param string $zipfile 解凍するZIPファイル
+	 * @param string $outpath 解凍先のファイルパス
+	 * @throws \ebi\exception\InvalidArgumentException
+	 */
+	public static function unzip($zipfile,$outpath){
 		$zip = new \ZipArchive();
-		if($zip->open($inpath) !== true) throw new \ErrorException('failed to open stream');
+		if($zip->open($zipfile) !== true){
+			throw new \ebi\exception\InvalidArgumentException('failed to open stream');
+		}
+		if(substr($outpath,-1) != '/'){
+			$outpath = $outpath.'/';
+		}
+		if(!is_dir($outpath)){
+			Util::mkdir($outpath,0777);
+		}		
 		$zip->extractTo($outpath);
 		$zip->close();
+	}
+	/**
+	 * pharを解凍してファイル書き出しを行う
+	 * @param string $pharfile 解凍するZIPファイル
+	 * @param string $outpath 解凍先のファイルパス
+	 * @throws \ebi\exception\InvalidArgumentException
+	 */
+	public static function unphar($pharfile,$outpath){
+		if(is_file($pharfile)){
+			if(substr($outpath,-1) != '/'){
+				$outpath = $outpath.'/';
+			}
+			if(!is_dir($outpath)){
+				Util::mkdir($outpath,0777);
+			}			
+			(new Phar($pharfile))->extractTo($out.'/'.basename($pharfile,'.phar'));
+		}
+		throw new \ebi\exception\InvalidArgumentException($pharfile.' not found');
 	}
 }
