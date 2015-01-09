@@ -459,14 +459,14 @@ class Browser{
 		$array = json_decode($this->body(),true);
 			
 		if($array === false){
-			throw new \testman\NotFoundException('Invalid data');
+			throw new \ebi\exception\NotFoundException('Invalid data');
 		}
 		$names = explode($delimiter,$name);
 		foreach($names as $key){
 			if(array_key_exists($key,$array)){
 				$array = $array[$key];
 			}else{
-				throw new \testman\NotFoundException($name.' not found');
+				throw new \ebi\exception\NotFoundException($name.' not found');
 			}
 		}
 		return $array;
