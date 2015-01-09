@@ -443,10 +443,32 @@ class Browser{
 		if(isset($this->resource)) curl_close($this->resource);
 	}
 	/**
-	 * XMLオブジェクトを返す
+	 * bodyを解析しXMLオブジェクトとして返す
 	 * @return \ebi\Xml
 	 */
 	public function xml(){
 		return \ebi\Xml::extract($this->body());
+	}
+	/**
+	 * bodyを解析し配列として返す
+	 * @param string $name
+	 * @param string $delimiter
+	 * @return mixed{}
+	 */
+	public function json($name=null,$delimiter='/'){
+		$array = json_decode($this->body(),true);
+			
+		if($array === false){
+			throw new \testman\NotFoundException('Invalid data');
+		}
+		$names = explode($delimiter,$name);
+		foreach($names as $key){
+			if(array_key_exists($key,$array)){
+				$array = $array[$key];
+			}else{
+				throw new \testman\NotFoundException($name.' not found');
+			}
+		}
+		return $array;
 	}
 }
