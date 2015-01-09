@@ -7,6 +7,6 @@ if(!isset($base)) $base = '/'.basename(getcwd());
 list($path,$rules) = \ebi\Dt::htaccess($base);
 
 \cmdman\Std::println_success('Written: '.$path);
-\cmdman\Std::println_default(str_repeat('-',60));
+\cmdman\Std::println(str_repeat('-',60));
 \cmdman\Std::println_info(trim($rules));
-\cmdman\Std::println_default(str_repeat('-',60));
+\cmdman\Std::println(str_repeat('-',60));
