@@ -1,7 +1,7 @@
 <?php
-meq('http://',test_map_url('urls::newapp#nosecure'));
-meq('https://',test_map_url('urls::newapp#secure'));
-meq('https://',test_map_url('urls::secure#secure'));
+meq('http://',url('urls::newapp#nosecure'));
+meq('https://',url('urls::newapp#secure'));
+meq('https://',url('urls::secure#secure'));
 
 
 if(\ebi\Conf::appmode() == 'mamp'){
@@ -34,6 +34,6 @@ $result_https = <<< PRE
 PRE;
 }
 $b = new \testman\Browser();
-$b->do_get(test_map_url('urls::newapp#nosecure'));
+$b->do_get(url('urls::newapp#nosecure'));
 eq(200,$b->status());
 eq($result_https,$b->body());

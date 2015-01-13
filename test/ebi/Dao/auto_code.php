@@ -10,6 +10,6 @@ try{
 		$obj = new \test\db\AutoCode();
 		$obj->save();
 	}
-	failure($i);
+	fail($i);
 }catch(\ebi\exception\GenerateUniqueCodeRetryLimitOverException $e){
 }

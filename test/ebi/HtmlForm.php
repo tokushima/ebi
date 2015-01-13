@@ -1,6 +1,6 @@
 <?php
 $b = new \ebi\Browser();
-$b->do_get(test_map_url('test_index::form1'));
+$b->do_get(url('test_index::form1'));
 
 
 $b->vars('id1','abc');

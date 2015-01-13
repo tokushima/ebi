@@ -13,7 +13,7 @@ $obj->value1('1234');
 $obj->value2(4);
 try{
 	$obj->save();
-	failure();
+	fail();
 }catch(\ebi\Exception $e){
 }
 
@@ -23,7 +23,7 @@ $obj->value1('1');
 $obj->value2(1);
 try{
 	$obj->save();
-	failure();
+	fail();
 }catch(\ebi\Exception $e){
 }
 

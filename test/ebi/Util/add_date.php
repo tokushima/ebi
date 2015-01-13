@@ -8,7 +8,7 @@ eq('2014/10/04',date('Y/m/d',\ebi\Util::add_date('-1 month','2014/11/04')));
 
 try{
 	eq('2014/10/04',\ebi\Util::add_date('1','2014/11/04'));
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 
 }

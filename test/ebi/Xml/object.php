@@ -44,7 +44,7 @@ eq("<def var='123'><ghi selected>hoge</ghi></def>",$tag->find_get("abc/def")->pl
 
 try{
 	$tag->find_get("abc/def/xyz");
-	failure();
+	fail();
 }catch(\ebi\exception\NotFoundException $e){
 }
 

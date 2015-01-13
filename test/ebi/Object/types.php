@@ -126,78 +126,78 @@ try{
 	$obj->kk(" Abc@example.com ");
 	eq("Abc@example.com",$obj->kk());
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("aaa.bbb.ccc@example.com");
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("aaa.bbb.ccc@example.aa.bb.com");
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("aaa..bbb.ccc@example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 	eq("kk must be an email",$e->getMessage());
 }
 try{
 	$obj->kk("aaa.bbb.ccc.@example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("aaa.bbb.ccc@example.c");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("123@example.com");
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("user+mailbox/department=shipping@example.com");
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("!#$%&'*+-/=?^_`.{|}~@example.com");
 }catch(\InvalidArgumentException $e){
-	failure();
+	fail();
 }
 try{
 	$obj->kk("Abc.@example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc..123@example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk(".Abc@example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc@.example.com");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc@example.com.");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 eq(null,$obj->nn());
 try{
 	$obj->nn("1004");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 $obj->nn("123451004");
@@ -231,7 +231,7 @@ $obj->mm("abc123_");
 eq(true,$obj->is_mm());
 try{
 	$obj->mm("/abc");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 eq(false,$obj->is_oo());
@@ -246,12 +246,12 @@ eq(-123,$obj->oo());
 	
 try{
 	$obj->oo("123F");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.45);
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
@@ -262,22 +262,22 @@ try{
 	
 try{
 	$obj->oo("123.000000001");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.000000001);
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->oo("123.0000000001");
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.0000000001);
-	failure();
+	fail();
 }catch(\InvalidArgumentException $e){
 }
 $obj->oo(123.0);

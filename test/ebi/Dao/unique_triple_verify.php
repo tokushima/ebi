@@ -16,7 +16,7 @@ $obj->u2(3);
 $obj->u3(4);
 try{
 	$obj->save();
-	failure();
+	fail();
 }catch(\ebi\Exception $e){
 }
 

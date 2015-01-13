@@ -11,14 +11,14 @@ eq(111,$x->value());
 try{
 	$p = "aaaa";
 	\ebi\Xml::extract($p,'abc');
-	failure();
+	fail();
 }catch(\ebi\exception\NotFoundException $e){
 }
 
 try{
 	$p = "<abc>sss</abc>";
 	\ebi\Xml::extract($p,"def");
-	failure();
+	fail();
 }catch(\ebi\exception\NotFoundException $e){
 }
 

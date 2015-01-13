@@ -53,7 +53,7 @@ eq(1,$i);
 $x = \ebi\Xml::anonymous("<xml> <a><b><e>NO1</e></b></a> <a><b><c>A</c></b></a> <a><b><c>B</c></b></a>  <a><b><c>C</c></b></a> </xml>");
 try{
 	$x->find_get('a/b/c',1)->value();
-	failure();
+	fail();
 }catch(\ebi\exception\NotFoundException $e){
 }
 

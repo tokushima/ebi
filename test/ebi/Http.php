@@ -5,7 +5,7 @@
  * GETリクエスト
  */
 $b = new \ebi\Browser();
-$b->do_get(test_map_url('test_index::template_abc'));
+$b->do_get(url('test_index::template_abc'));
 
 $explode_head = $b->explode_head();
 eq(true,!empty($explode_head));
