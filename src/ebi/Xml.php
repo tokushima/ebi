@@ -267,8 +267,19 @@ class Xml implements \IteratorAggregate{
 	 * @return self
 	 */
 	public static function extract($plain,$name=null){
-		if(!(!empty($name) && strpos($plain,$name) === false) && self::find_extract($x,$plain,$name)){
-			return $x;
+		if(!empty($name)){
+			$names = explode('/',$name,2);
+			$name = $names[0];
+		}
+		if(self::find_extract($x,$plain,$name)){
+			if(!isset($name[1])){
+				return $x;
+			}else{
+				try{
+					return $x->find_get($name[1]);
+				}catch(\ebi\exception\NotFoundException $e){
+				}
+			}
 		}
 		throw new \ebi\exception\NotFoundException($name.' not found');
 	}
