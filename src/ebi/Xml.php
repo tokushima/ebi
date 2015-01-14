@@ -272,13 +272,13 @@ class Xml implements \IteratorAggregate{
 			$name = $names[0];
 		}
 		if(self::find_extract($x,$plain,$name)){
-			if(!isset($name[1])){
-				return $x;
-			}else{
+			if(isset($names[1])){
 				try{
-					return $x->find_get($name[1]);
+					return $x->find_get($names[1]);
 				}catch(\ebi\exception\NotFoundException $e){
 				}
+			}else{
+				return $x;
 			}
 		}
 		throw new \ebi\exception\NotFoundException($name.' not found');
