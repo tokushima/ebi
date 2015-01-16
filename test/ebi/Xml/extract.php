@@ -1,4 +1,5 @@
 <?php
+
 $p = "<abc><def>111</def></abc>";
 $x = \ebi\Xml::extract($p,'abc');
 eq("abc",$x->name());
@@ -31,4 +32,10 @@ $x = \ebi\Xml::extract($p,'abc');
 eq("abc",$x->name());
 eq("0",$x->value());
 
+
+$p = "<abc />";
+$x = \ebi\Xml::extract($p,"abc");
+
+$p = "<abc/>";
+$x = \ebi\Xml::extract($p,"abc");
 
