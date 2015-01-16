@@ -206,6 +206,21 @@ class Xml implements \IteratorAggregate{
 		return new \ebi\XmlIterator($path,$this->value(),$offset,$length);
 	}
 	/**
+	 * 対象の件数
+	 * @param string $name
+	 * @param integer $offset
+	 * @param integer $length
+	 * @return number
+	 */
+	public function find_count($name,$offset=0,$length=0){
+		$cnt = 0;
+			
+		foreach($this->find($name,$offset,$length) as $x){
+			$cnt++;
+		}
+		return $cnt;
+	}
+	/**
 	 * １件取得する
 	 * @param string $path
 	 * @param integer $offset
