@@ -290,8 +290,7 @@ class Xml implements \IteratorAggregate{
 			$name = str_replace(array("\r\n","\r","\n"),'',(empty($m[1]) ? $m[2] : $m[1]));
 		}
 		$qname = preg_quote($name,'/');
-
-		if(!preg_match("/<(".$qname.")([^>]*?)>|<(".$qname.")>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
+		if(!preg_match("/<(".$qname.")([\s][^>]*?)>|<(".$qname.")>|<(".$qname.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
 			return false;
 		}
 		$x = new self();
