@@ -2,7 +2,7 @@ ebi
 ====
 __2012-12-25__
 
-PHP Library (PHP 5 >= 5.4.0)
+PHP Library (PHP 5 >= 5.5.0)
 
 ![](ebi.png)
 
