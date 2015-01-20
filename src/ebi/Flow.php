@@ -32,13 +32,10 @@ class Flow{
 	public static function get_map($file=null){
 		if(!empty($file)){
 			self::$is_get_map = true;
-			try{
-				ob_start();
-					include($file);
-				ob_end_clean();
-			}catch(\Exception $e){
-				\ebi\Log::error($e);
-			}
+
+			ob_start();
+				include($file);
+			ob_end_clean();
 		}
 		return self::$map;
 	}
