@@ -94,10 +94,20 @@ class TwitterBootstrap3Helper{
 		}
 		return $text;
 	}
+	/**	
+	 * @plugin ebi.Template
+	 * @param string $src
+	 * @return string
+	 */
 	public function before_template($src){
 		$src = $this->before_exhtml($src);
 		return $src;
 	}
+	/**
+	 * @plugin ebi.Template
+	 * @param string $src
+	 * @return string
+	 */	
 	public function after_exec_template($src){
 		$src = $this->after_exec_exhtml($src);
 		return $src;

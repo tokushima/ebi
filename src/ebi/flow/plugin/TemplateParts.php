@@ -3,9 +3,14 @@ namespace ebi\flow\plugin;
 /**
  * テンプレートパーツを扱う
  * @author tokushima
- *
  */
 class TemplateParts{
+	/**
+	 * @plugin ebi.Temaplte
+	 * @param string $src
+	 * @throws \InvalidArgumentException
+	 * @return Ambigous <string, string, mixed>|string
+	 */
 	public function init_template($src){
 		$path = \ebi\Util::path_slash(\ebi\Conf::get('path',\ebi\Conf::resource_path('parts')),null,true);
 		

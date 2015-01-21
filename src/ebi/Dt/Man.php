@@ -60,29 +60,31 @@ class Man{
 					}
 				}
 				if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$method_document,$match)){
-					foreach($match[1] as $v) $plugin_method[trim($v)][] = $method->getName();
-				}
-
-				$dec = ($method->getDeclaringClass()->getFileName() == $r->getFileName()) ? 0 : 1;
-				if($method->isStatic()){
-					if($method->getDeclaringClass()->getName() == $r->getName()){
-						if($method->isPublic()){
-							$static_methods[$dec][$method->getName()] = $method_description;
-						}else{
-							$protected_static_methods[$dec][$method->getName()] = $method_description;								
-						}
+					foreach($match[1] as $v){
+						$plugin_method[trim($v)][] = $method->getName();
 					}
-				}else{
-					if($method->isPublic()){
-						$methods[$dec][$method->getName()] = $method_description;
+				}else{	
+					$dec = ($method->getDeclaringClass()->getFileName() == $r->getFileName()) ? 0 : 1;
+					if($method->isStatic()){
+						if($method->getDeclaringClass()->getName() == $r->getName()){
+							if($method->isPublic()){
+								$static_methods[$dec][$method->getName()] = $method_description;
+							}else{
+								$protected_static_methods[$dec][$method->getName()] = $method_description;								
+							}
+						}
 					}else{
-						$protected_methods[$dec][$method->getName()] = $method_description;
+						if($method->isPublic()){
+							$methods[$dec][$method->getName()] = $method_description;
+						}else{
+							$protected_methods[$dec][$method->getName()] = $method_description;
+						}
 					}
 				}
 			}
 		}
 		
-		$plugins = array();
+		$plugins = [];
 		if(preg_match_all("/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
 				self::get_desc($plugins,$match,$k,$v[0],$src,$class);
@@ -257,7 +259,9 @@ class Man{
 			ksort($throws);
 			
 			if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$document,$match)){
-				foreach($match[1] as $v) $plugins[trim($v)] = true;
+				foreach($match[1] as $v){
+					$plugins[trim($v)] = true;
+				}
 			}
 			$plugins = array_keys($plugins);
 			sort($plugins);

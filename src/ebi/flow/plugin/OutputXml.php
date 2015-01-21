@@ -5,6 +5,9 @@ namespace ebi\flow\plugin;
  * @author tokushima
  */
 class OutputXml{
+	/*
+	 * @plugin ebi.Flow
+	 */
 	public function flow_output($array){
 		$xml = new \ebi\Xml('result');
 		$xml->add($array);

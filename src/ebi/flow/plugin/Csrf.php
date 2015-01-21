@@ -3,11 +3,14 @@ namespace ebi\flow\plugin;
 /**
  * CSRFトークン
  * @author tokushima
- *
  */
 class Csrf{
 	private $token;
 	
+	/**
+	 * @plugin ebi.Flow
+	 * @throws \RuntimeException
+	 */
 	public function before_flow_action(){
 		$req = new \ebi\Request();
 		$secret_key = \ebi\Conf::get('secret_key',sha1(__FILE__));
@@ -26,9 +29,18 @@ class Csrf{
 			throw new \RuntimeException('CSRF verification failed');
 		}
 	}
+	/**
+	 * @plugin ebi.Flow
+	 * @param \ebi\flow\Request $req
+	 */
 	public function before_flow_action_request(\ebi\flow\Request $req){
 		$req->vars('csrftoken',$this->token);
 	}
+	/**
+	 * @plugin ebi.Template
+	 * @param unknown $src
+	 * @return Ambigous <string, string, mixed>|unknown
+	 */
 	public function after_template($src){
 		return \ebi\Xml::find_replace($src, 'form', function($xml){
 			if($xml->in_attr('action') == '' || strpos($xml->in_attr('action'),'$t.map_url') !== false){

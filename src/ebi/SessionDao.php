@@ -7,7 +7,6 @@ use \ebi\Q;
  * @var string $id @['primary'=>true]
  * @var text $data
  * @var number $expires
- * @plugin ebi.Session
  */
 class SessionDao extends \ebi\Dao{
 	protected $id;
@@ -24,6 +23,7 @@ class SessionDao extends \ebi\Dao{
 		$this->data = ($value === null) ? '' : $value;
 	}
 	/**
+	 * @plugin ebi.Session
 	 * @param string $id
 	 * @return string
 	 */
@@ -37,6 +37,7 @@ class SessionDao extends \ebi\Dao{
 		return '';
 	}
 	/**
+	 * @plugin ebi.Session
 	 * @param string $id
 	 * @param string $sess_data
 	 * @return boolean
@@ -54,6 +55,7 @@ class SessionDao extends \ebi\Dao{
 		return false;
 	}
 	/**
+	 * @plugin ebi.Session
 	 * @param string $id
 	 * @return boolean
 	 */
@@ -69,6 +71,7 @@ class SessionDao extends \ebi\Dao{
 		return false;
 	}
 	/**
+	 * @plugin ebi.Session
 	 * @param int $maxlifetime
 	 * @return boolean
 	 */
