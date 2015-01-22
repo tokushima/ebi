@@ -27,4 +27,11 @@ class Action{
 		
 		return ['method'=>($req->is_post() ? 'POST' : 'GET'),'data'=>$data];
 	}
+	public function log(){
+		\ebi\Log::error('ERROR');
+		\ebi\Log::warn('WARN');
+		\ebi\Log::info('INFO');
+		\ebi\Log::debug('DEBUG');
+		\ebi\Log::trace('TRACE');
+	}
 }

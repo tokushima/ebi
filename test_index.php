@@ -83,6 +83,11 @@ include_once('bootstrap.php');
 			'plugins'=>['ebi.flow.plugin.Csrf'],
 			'template'=>'csrf.html',
 		],
+		'log'=>[
+			'name'=>'log',
+			'action'=>'test.flow.Action::log',
+			'template'=>'log.html',	
+		],
 		
 		'status/400'=>['name'=>'status400','action'=>'ebi.flow.HttpStatus::bad_request'],
 		'status/403'=>['name'=>'status403','action'=>'ebi.flow.HttpStatus::forbidden'],

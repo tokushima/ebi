@@ -31,13 +31,16 @@ class Log{
 			self::$id = base_convert(date('md'),10,36).base_convert(date('G'),10,36).base_convert(mt_rand(1296,46655),10,36);
 			register_shutdown_function(array(__CLASS__,'flush'));
 		}
-		if(self::$current_level === null) self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
+		if(self::$current_level === null){
+			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
+		}
 		return self::$current_level;
 	}
 	public function __construct($level,$value,$file=null,$line=null,$time=null){
 		if($file === null){
 			$db = debug_backtrace(false);
 			array_shift($db);
+			
 			foreach($db as $d){
 				if(isset($d['file']) && strpos($d['file'],'eval()') === false){
 					$file = $d['file'];
@@ -92,29 +95,21 @@ class Log{
 	public static function flush(){
 		if(!empty(self::$logs)){
 			$stdout = \ebi\Conf::get('stdout',false);
+			$firebug = (\ebi\Conf::get('firebug',false) && php_sapi_name() != 'cli');
 			$file = \ebi\Conf::get('file');
+			
 			if(!empty($file)){
-				if(!is_dir($dir = dirname($file))) @mkdir($dir,0777,true);
+				if(!is_dir($dir = dirname($file))){
+					@mkdir($dir,0777,true);
+				}
 				@file_put_contents($file,'',FILE_APPEND);
 			}
 			foreach(self::$logs as $log){
 				if(self::cur_level() >= $log->level()){
-					switch($log->fm_level()){
-						case 'debug':
-							static::call_class_plugin_funcs('debug',$log,self::$id);
-							break;
-						case 'info':
-							static::call_class_plugin_funcs('info',$log,self::$id);
-							break;
-						case 'warn':
-							static::call_class_plugin_funcs('warn',$log,self::$id);
-							break;
-						case 'error':
-							static::call_class_plugin_funcs('error',$log,self::$id);
-							break;
-						default:
-							static::call_class_plugin_funcs('trace',$log,self::$id);
-					}
+					$level = $log->fm_level();
+					
+					static::call_class_plugin_funcs($level,$log,self::$id);
+					
 					if(is_file($file) && is_writable($file)){
 						file_put_contents($file,
 										((\ebi\Conf::get('nl2str') !== null) ? 
@@ -125,13 +120,25 @@ class Log{
 						);
 					}
 					if(self::$disp === true && $stdout){
-						print(((string)$log).PHP_EOL);
+						if($firebug){
+							$level = $log->fm_level();
+							$is_s = is_string($log->value());
+							print(sprintf('<script>console.%s("[%s] %s:%s %s");%s</script>',
+									(($level == 'debug') ? 'log': $level),
+									$level,
+									$log->file(),
+									$log->line(),
+									($is_s ? $log->value() : 'array'),
+									($is_s ? '' : sprintf(' console.dir(%s);',json_encode($log->value())))
+							));
+						}else{
+							print(((string)$log).PHP_EOL);
+						}
 					}
 				}
 			}
-			static::call_class_plugin_funcs('flush',self::$logs,self::$id);
 		}
-		self::$logs = array();
+		self::$logs = [];
 	}
 	/**
 	 * 一時的に無効にされた標準出力へのログ出力を有効にする
@@ -155,7 +162,9 @@ class Log{
 	 */
 	public static function error(){
 		if(self::cur_level() >= 1){
-			foreach(func_get_args() as $value) self::$logs[] = new self(1,$value);
+			foreach(func_get_args() as $value){
+				self::$logs[] = new self(1,$value);
+			}
 		}
 	}
 	/**
@@ -164,7 +173,9 @@ class Log{
 	 */
 	public static function warn($value){
 		if(self::cur_level() >= 2){
-			foreach(func_get_args() as $value) self::$logs[] = new self(2,$value);
+			foreach(func_get_args() as $value){
+				self::$logs[] = new self(2,$value);
+			}
 		}
 	}
 	/**
@@ -173,7 +184,9 @@ class Log{
 	 */
 	public static function info($value){
 		if(self::cur_level() >= 3){
-			foreach(func_get_args() as $value) self::$logs[] = new self(3,$value);
+			foreach(func_get_args() as $value){
+				self::$logs[] = new self(3,$value);
+			}
 		}
 	}
 	/**
@@ -182,7 +195,9 @@ class Log{
 	 */
 	public static function debug($value){
 		if(self::cur_level() >= 4){
-			foreach(func_get_args() as $value) self::$logs[] = new self(4,$value);
+			foreach(func_get_args() as $value){
+				self::$logs[] = new self(4,$value);
+			}
 		}
 	}
 	/**
@@ -191,7 +206,9 @@ class Log{
 	 */
 	public static function trace($value){
 		if(self::cur_level() >= -1){
-			foreach(func_get_args() as $value) self::$logs[] = new self(-1,$value);
+			foreach(func_get_args() as $value){
+				self::$logs[] = new self(-1,$value);
+			}
 		}
 	}
 }

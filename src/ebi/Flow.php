@@ -61,7 +61,6 @@ class Flow{
 		$this->template->vars('t',new \ebi\FlowHelper($this->app_url,$this->media_url,$this->url_pattern,$this->selected_pattern,$this->selected_class_pattern,$ins));
 		$src = $this->template->read($path);
 		
-		header('Content-Length: '.strlen($src));
 		print($src);
 		$this->terminate();
 		exit;
@@ -386,7 +385,9 @@ class Flow{
 							return $value;
 						};
 						\ebi\Log::disable_display();
-						print(json_encode(array('result'=>$to_array($result_vars))));
+							
+						\ebi\HttpHeader::send('Content-Type','application/json');
+						print(json_encode(['result'=>$to_array($result_vars)]));
 						return $this->terminate();
 					}
 				}catch(\Exception $e){
@@ -410,6 +411,7 @@ class Flow{
 					}
 					if($this->has_object_plugin('flow_exception')){
 						$this->call_object_plugin_funcs('flow_exception',$e);
+						\ebi\Dao::rollback_all();
 					}
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
@@ -440,10 +442,11 @@ class Flow{
 										'type'=>basename(str_replace("\\",'/',get_class($e)))
 										];
 					}
+					\ebi\Log::disable_display();
+					
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					\ebi\HttpHeader::send_status(500);
-					\ebi\Log::disable_display();
-					print(json_encode(array('error'=>$message)));
+					print(json_encode(['error'=>$message]));
 					return $this->terminate();
 				}
 			}

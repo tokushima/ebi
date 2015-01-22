@@ -10,6 +10,7 @@
 		'level'=>'warn',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 		'stdout'=>true,
+		'firebug'=>true,
 	],
 	'ebi.Flow'=>[
 		'exception_log_level'=>'warn',
