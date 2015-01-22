@@ -1,0 +1,13 @@
+<mail>
+	<from address="log@ebi.ebi" name="ebilog" />
+	<to address="sendlog@ebi.ebi" name="sned_ebilog" />	
+	<subject>エラーログ</subject>
+	<body>
+		HOST: {$env.get('SERVER_NAME')}
+	
+		FILE: {$log->file()}
+		LINE: {$log->line()}
+		
+		{$log->value()}
+	</body>
+</mail>

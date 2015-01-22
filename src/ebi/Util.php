@@ -251,17 +251,6 @@ class Util{
 		return $text;
 	}
 	/**
-	 * ENVに値があれば返す
-	 * @param string $name
-	 */
-	public static function getenv($name,$default=null){
-		return (isset($_ENV[$name]) && $_ENV[$name] != '') ? $_ENV[$name] : (
-					(isset($_SERVER[$name]) && $_SERVER[$name]  != '') ? $_SERVER[$name] : (
-						(getenv($name) !== false && getenv($name) != '') ? getenv($name) : (
-						 $default
-		)));
-	}
-	/**
 	 * 日付に加減する
 	 * @param string $time +2 month, -7 day
 	 * @param mixed $date

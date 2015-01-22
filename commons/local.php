@@ -11,6 +11,7 @@
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 		'stdout'=>true,
 		'firebug'=>true,
+		'mail_dir'=>dirname(__DIR__).'/resources/log/mail',
 	],
 	'ebi.Flow'=>[
 		'exception_log_level'=>'warn',

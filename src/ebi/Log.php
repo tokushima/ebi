@@ -97,6 +97,7 @@ class Log{
 			$stdout = \ebi\Conf::get('stdout',false);
 			$firebug = (\ebi\Conf::get('firebug',false) && php_sapi_name() != 'cli');
 			$file = \ebi\Conf::get('file');
+			$maildir = \ebi\Util::path_slash(\ebi\Conf::get('mail_dir'),null,true);
 			
 			if(!empty($file)){
 				if(!is_dir($dir = dirname($file))){
@@ -108,8 +109,6 @@ class Log{
 				if(self::cur_level() >= $log->level()){
 					$level = $log->fm_level();
 					
-					static::call_class_plugin_funcs($level,$log,self::$id);
-					
 					if(is_file($file) && is_writable($file)){
 						file_put_contents($file,
 										((\ebi\Conf::get('nl2str') !== null) ? 
@@ -118,6 +117,10 @@ class Log{
 										).PHP_EOL,
 										FILE_APPEND
 						);
+					}
+					if(!empty($maildir) && is_file($f=($maildir.$level.'.xml'))){
+						$mail = new \ebi\Mail();
+						$mail->send_template($f,['log'=>$log,'env'=>new \ebi\Env()]);
 					}
 					if(self::$disp === true && $stdout){
 						if($firebug){
@@ -128,13 +131,14 @@ class Log{
 									$level,
 									$log->file(),
 									$log->line(),
-									($is_s ? $log->value() : 'array'),
+									($is_s ? $log->value() : 'object'),
 									($is_s ? '' : sprintf(' console.dir(%s);',json_encode($log->value())))
 							));
 						}else{
 							print(((string)$log).PHP_EOL);
 						}
 					}
+					static::call_class_plugin_funcs($level,$log,self::$id);
 				}
 			}
 		}
