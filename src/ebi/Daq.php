@@ -8,13 +8,16 @@ namespace ebi;
 class Daq{
 	private static $count = 0;
 	private $sql;
-	private $vars = array();
+	private $vars = [];
 	private $id;
 
-	public function __construct($sql=null,array $vars=array(),$id_name=null){
+	public function __construct($sql=null,array $vars=[],$id_name=null){
 		$this->sql = $sql;
-		$this->vars = $vars;
 		$this->id = $id_name;
+		
+		foreach($vars as $k => $v){
+			$this->vars[$k] = is_bool($v) ? (($v === true) ? 1 : 0) : $v;
+		}		
 	}
 	public function id(){
 		return $this->id;
@@ -23,7 +26,7 @@ class Daq{
 		return $this->sql;
 	}
 	public function ar_vars(){
-		return (empty($this->vars) ? array() : $this->vars);
+		return (empty($this->vars) ? [] : $this->vars);
 	}
 	public function is_id(){
 		return !empty($this->id);

@@ -346,6 +346,7 @@ class DbConnector{
 					list($column,$value) = explode('=',$cond);
 					$not = (substr($value,0,1) == '!');
 					$value = ($not) ? ((strlen($value) > 1) ? substr($value,1) : '') : $value;
+					
 					if($value === ''){
 						$query->add(($not) ? Q::neq($column,'') : Q::eq($column,''));
 					}else{
@@ -412,8 +413,11 @@ class DbConnector{
 
 				if($is_add_value){
 					if(is_array($value)){
-						$values = array();
-						foreach($value as $v) $values[] = ($q->ignore_case()) ? strtoupper($this->column_value($dao,$column->name(),$v)) : $this->column_value($dao,$column->name(),$v);
+						$values = [];
+						
+						foreach($value as $v){
+							$values[] = ($q->ignore_case()) ? strtoupper($this->column_value($dao,$column->name(),$v)) : $this->column_value($dao,$column->name(),$v);
+						}
 						$vars = array_merge($vars,$values);
 					}else{
 						$vars[] = ($q->ignore_case()) ? strtoupper($this->column_value($dao,$column->name(),$value)) : $this->column_value($dao,$column->name(),$value);

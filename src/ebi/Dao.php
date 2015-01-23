@@ -22,7 +22,7 @@ abstract class Dao extends \ebi\Object{
 
 	/**
 	 * コネクション一覧
-	 * @return Db[]
+	 * @return \ebi\Db[]
 	 */
 	public static function connections(){
 		$connections = [];
@@ -31,6 +31,11 @@ abstract class Dao extends \ebi\Object{
 		}
 		return $connections;
 	}
+	/**
+	 * @param unknown $class
+	 * @throws \ebi\exception\ConnectionException
+	 * @return \ebi\Db
+	 */
 	public static function connection($class){
 		if(!isset(self::$_connections_[self::$_co_anon_[$class][0]])){
 			throw new \ebi\exception\ConnectionException('unable to connect to '.$class);
@@ -439,15 +444,20 @@ abstract class Dao extends \ebi\Object{
 	 * @return \PDOStatement
 	 */
 	public function query(\ebi\Daq $daq){
-		if(self::$recording_query) self::$record_query[] = array($daq->sql(),$daq->ar_vars());
+		if(self::$recording_query){
+			self::$record_query[] = array($daq->sql(),$daq->ar_vars());
+		}
 		$statement = self::connection(get_class($this))->prepare($daq->sql());
-		if($statement === false) throw new \ebi\exception\InvalidQueryException('prepare fail: '.$daq->sql());
+		if($statement === false){
+			throw new \ebi\exception\InvalidQueryException('prepare fail: '.$daq->sql());
+		}
 		$statement->execute($daq->ar_vars());
 		return $statement;
 	}
 	private function update_query(\ebi\Daq $daq){
 		$statement = $this->query($daq);
 		$errors = $statement->errorInfo();
+		
 		if(isset($errors[1])){
 			static::rollback();
 			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
@@ -721,8 +731,13 @@ abstract class Dao extends \ebi\Object{
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
 		$query->add(new \ebi\Paginator(1,1));
-		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
-		foreach(self::get_statement_iterator($dao,$query) as $d) return $d;
+		
+		if(!empty($args)){
+			call_user_func_array(array($query,'add'),$args);
+		}
+		foreach(self::get_statement_iterator($dao,$query) as $d){
+			return $d;
+		}
 		throw new \ebi\exception\NotFoundException('not found');
 	}
 	/**
@@ -737,13 +752,22 @@ abstract class Dao extends \ebi\Object{
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
 
-		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
-		if(!$query->is_order_by()) $query->order($name);
+		if(!empty($args)){
+			call_user_func_array(array($query,'add'),$args);
+		}
+		if(!$query->is_order_by()){
+			$query->order($name);
+		}
 		$paginator = $query->paginator();
+		
 		if($paginator instanceof \ebi\Paginator){
-			if($query->is_order_by()) $paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			if($query->is_order_by()){
+				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			}
 			$paginator->total(call_user_func_array(array(get_called_class(),'find_count'),$args));
-			if($paginator->total() == 0) return array();
+			if($paginator->total() == 0){
+				return array();
+			}
 		}
 		/**
 		 * SELECT文の生成
@@ -757,7 +781,9 @@ abstract class Dao extends \ebi\Object{
 	}
 	private static function get_statement_iterator($dao,$query){
 		if(!$query->is_order_by()){
-			foreach($dao->primary_columns() as $column) $query->order($column->name());
+			foreach($dao->primary_columns() as $column){
+				$query->order($column->name());
+			}
 		}
 		/**
 		 * SELECT文の生成
@@ -793,7 +819,9 @@ abstract class Dao extends \ebi\Object{
 		$dao = new static();
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
-		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
+		if(!empty($args)){
+			call_user_func_array(array($query,'add'),$args);
+		}
 		
 		$paginator = $query->paginator();
 		if($paginator instanceof \ebi\Paginator){
@@ -858,7 +886,9 @@ abstract class Dao extends \ebi\Object{
 		 * @param self $this
 		 */
 		$daq = static::call_class_plugin_funcs('delete_sql',$this);
-		if($this->update_query($daq) == 0) throw new \ebi\exception\NotFoundException('delete failed');
+		if($this->update_query($daq) == 0){
+			throw new \ebi\exception\NotFoundException('delete failed');
+		}
 		$this->__after_delete__();
 	}
 	/**
