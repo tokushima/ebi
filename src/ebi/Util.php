@@ -251,6 +251,27 @@ class Util{
 		return $text;
 	}
 	/**
+	 * フォーマット文字列 $str に基づき生成された文字列を返します。
+	 *
+	 * @param string $str 対象の文字列
+	 * @param mixed[] $params フォーマット中に現れた置換文字列{1},{2}...を置換する値
+	 * @return string
+	 */
+	public static function fstring($str,$params){
+		if(preg_match_all("/\{([\d]+)\}/",$str,$match)){
+			$params = func_get_args();
+			array_shift($params);
+			if(is_array($params[0])){
+				$params = $params[0];
+			}			
+			foreach($match[1] as $key => $value){
+				$i = ((int)$value) - 1;
+				$str = str_replace($match[0][$key],isset($params[$i]) ? $params[$i] : '',$str);
+			}
+		}
+		return $str;
+	}
+	/**
 	 * 日付に加減する
 	 * @param string $time +2 month, -7 day
 	 * @param mixed $date
