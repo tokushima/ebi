@@ -210,20 +210,21 @@ class Template{
 			if(is_array($this->vars) && !empty($this->vars)){
 				extract($this->vars);
 			}
-			eval('?><?php $_display_exception_='.((\ebi\Conf::get('display_exception') === true) ? 'true' : 'false').'; ?>'.$_src_);
+			$rtn = eval('?><?php $_display_exception_='.((\ebi\Conf::get('display_exception') === true) ? 'true' : 'false').'; ?>'.$_src_);
 		$_eval_src_ = ob_get_clean();
 
-		if(strpos($_eval_src_,'Parse error: ') !== false){
-			if(preg_match("/Parse error\:(.+?) in .+eval\(\)\'d code on line (\d+)/",$_eval_src_,$match)){
-				list($msg,$line) = array(trim($match[1]),((int)$match[2]));
+		if($rtn === false){
+			$error_last = error_get_last();
+
+			if(isset($error_last['message']) && $error_last['message'] == 'parse error'){
+				$line = $error_last['line'];
 				$lines = explode("\n",$_src_);
 				$plrp = substr_count(implode("\n",array_slice($lines,0,$line)),"<?php 'PLRP'; ?>\n");
-				\ebi\Log::error($msg.' on line '.($line-$plrp).' [compile]: '.trim($lines[$line-1]));
-
 				$lines = explode("\n",$this->selected_src);
-				\ebi\Log::error($msg.' on line '.($line-$plrp).' [plain]: '.trim($lines[$line-1-$plrp]));
+				\ebi\Log::error('Parse error line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]));
+
 				if(\ebi\Conf::get('display_exception') === true){
-					$_eval_src_ = $msg.' on line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]);
+					$_eval_src_ = 'Parse error: line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]);
 				}
 			}
 		}
