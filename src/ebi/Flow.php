@@ -179,7 +179,7 @@ class Flow{
 		}
 		$result_vars = array();
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
-		self::$map = $this->read($map,$pathinfo);
+		self::$map = $this->read($map);
 		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -471,7 +471,7 @@ class Flow{
 	}
 	private function read($map){
 		$automap = function($url,$class,$name){
-			$result = array();
+			$result = [];
 			try{
 				$r = new \ReflectionClass(str_replace('.','\\',$class));
 				$d = is_dir(substr($r->getFilename(),0,-4)) ? substr($r->getFilename(),0,-4) : null;
@@ -482,7 +482,7 @@ class Flow{
 							$auto_anon = preg_match('/@automap\s.*@(\[.*\])/',$m->getDocComment(),$a) ? \ebi\Annotation::activation($a[1]) : [];
 							$base_name = $m->getName();
 							if(!is_array($auto_anon)){
-								throw new \InvalidArgumentException($r->getName().'::'.$m->getName().' automap annotation error');
+								throw new \ebi\exception\InvalidArgumentException($r->getName().'::'.$m->getName().' automap annotation error');
 							}
 							if(isset($auto_anon['suffix'])){
 								$suffix = $auto_anon['suffix'];
@@ -554,7 +554,7 @@ class Flow{
 		$map = $fixed_vars($root_keys,$map);
 		foreach($map['patterns'] as $k => $v){
 			if(is_int($k) || isset($map['patterns'][$k]['patterns'])){
-				$kurl = is_int($k) ? null : $k.'/';
+				$kurl = is_int($k) ? null : ($k.(empty($k) ? '' : '/'));
 				$kpattern = $map['patterns'][$k]['patterns'];
 				unset($map['patterns'][$k]['patterns']);
 				
