@@ -56,6 +56,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 			$exception = new self();
 			foreach(self::$self->messages as $v){
 				$exception->messages[] = $v;
+				$exception->message .= $v['exception']->getMessage().PHP_EOL;
 			}
 			self::$self->messages = [];
 			self::$self->message = '';
