@@ -240,7 +240,7 @@ class Request{
 			}
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',array(time(),$req->ar_vars()));
-			$this->set_before_redirect('login');
+			$this->set_before_redirect('do_login');
 		}
 	}	
 
@@ -287,7 +287,9 @@ class Request{
 			$data = $this->sess->in_vars(__CLASS__.'_login_vars');
 			if(($data[0] + 5) > time()){
 				foreach($data[1] as $k => $v){
-					if(!$this->is_vars($k)) $this->vars($k,$v);
+					if(!$this->is_vars($k)){
+						$this->vars($k,$v);
+					}
 				}
 			}
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
@@ -321,7 +323,8 @@ class Request{
 		}else{
 			\ebi\HttpHeader::send_status(401);
 			$pattern = $this->get_selected_pattern();
-			if(!isset($pattern['template'])){
+			
+			if(!isset($pattern['template']) && !(isset($pattern['@']) && is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))){
 				throw new \ebi\exception\UnauthorizedException();
 			}
 		}

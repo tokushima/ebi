@@ -242,11 +242,16 @@ class Template{
 	private function parse_url($src,$media){
 		if(!empty($media) && substr($media,-1) !== '/') $media = $media.'/';
 		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
-		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\\$\n]+?)\\3[^>]*?>/i",$src,$match)){
+		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$match)){
 			foreach($match[2] as $k => $p){
-				$t = null;
-				if(strtolower($p) === 'href') list($t) = (preg_split("/[\s]/",strtolower($match[1][$k])));
-				$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$match[0][$k],$match[4][$k]);
+				list($url) = explode('?',$match[4][$k]);
+				if(strpos($url,'$') === false){
+					$t = null;
+					if(strtolower($p) === 'href'){
+						list($t) = (preg_split("/[\s]/",strtolower($match[1][$k])));
+					}
+					$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$match[0][$k],$match[4][$k]);
+				}
 			}
 		}
 		if(preg_match_all("/[^:]:[\040]*url\(([^\\$\n]+?)\)/",$src,$match)){

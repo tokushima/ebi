@@ -14,7 +14,7 @@ class Flow{
 	private $apps_path;
 	private $package_media_url = 'package/resources/media';	
 	
-	private $url_pattern = array();
+	private $url_pattern = [];
 	private $selected_class_pattern = [];
 	private $selected_pattern;
 	
@@ -83,12 +83,12 @@ class Flow{
 		}
 		throw new \InvalidArgumentException('map `'.$url.'` not found');
 	}
-	private function after_redirect($after,array $vars,$pattern){
-		if(is_array($after) && !isset($after[0])){
+	private function map_redirect($map,array $vars,$pattern){
+		if(is_array($map) && !isset($map[0])){
 			$bool = false;
-			foreach($after as $k => $a){
+			foreach($map as $k => $a){
 				if(array_key_exists($k,$vars)){
-					$after = $a;
+					$map = $a;
 					$bool = true;
 					break;
 				}
@@ -96,9 +96,9 @@ class Flow{
  			if(!$bool){
  				return;
  			}
-		}		
-		$name = is_string($after) ? $after : (is_array($after) ? array_shift($after) : null);
-		$var_names = (!empty($after) && is_array($after)) ? $after : [];
+		}
+		$name = is_string($map) ? $map : (is_array($map) ? array_shift($map) : null);
+		$var_names = (!empty($map) && is_array($map)) ? $map : [];
 		$args = [];
 		
 		foreach($var_names as $n){
@@ -300,7 +300,7 @@ class Flow{
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();
 						if(isset($before_redirect)){
-							$this->redirect($before_redirect);
+							$this->map_redirect($before_redirect,[],$pattern);
 						}
 					}
 					if(isset($funcs)){
@@ -340,10 +340,10 @@ class Flow{
 						$result_vars = array_merge($result_vars,$pattern['vars']);
 					}
 					if(isset($pattern['post_after']) && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
-						$this->after_redirect($pattern['post_after'],$result_vars,$pattern);
+						$this->map_redirect($pattern['post_after'],$result_vars,$pattern);
 					}
 					if(isset($pattern['after'])){
-						$this->after_redirect($pattern['after'],$result_vars,$pattern);
+						$this->map_redirect($pattern['after'],$result_vars,$pattern);
 					}
 					if(isset($pattern['template'])){
 						if(isset($pattern['template_super'])){
@@ -536,7 +536,7 @@ class Flow{
 			foreach($fixed_keys as $t => $keys){
 				foreach($keys as $k){
 					if($t == 0){
-						$result[$k] = isset($map[$k]) ? $map[$k] : (isset($exmap[$k]) ? $exmap[$k] : null);
+						$result[$k] = isset($exmap[$k]) ? $exmap[$k] : (isset($map[$k]) ? $map[$k] : null);
 					}else{
 						$result[$k] = [];
 						if(isset($map[$k])){
@@ -554,14 +554,16 @@ class Flow{
 		$map = $fixed_vars($root_keys,$map);
 		foreach($map['patterns'] as $k => $v){
 			if(is_int($k) || isset($map['patterns'][$k]['patterns'])){
-				$kurl = is_int($k) ? null : ($k.(empty($k) ? '' : '/'));
+				$kurl = is_int($k) ? '' : ($k.(empty($k) ? '' : '/'));
 				$kpattern = $map['patterns'][$k]['patterns'];
 				unset($map['patterns'][$k]['patterns']);
 				
 				foreach($kpattern as $pk => $pv){
 					$map['patterns'][$kurl.$pk] = $fixed_vars($map_pattern_keys,$map['patterns'][$k],$pv);
 				}
-				unset($map['patterns'][$k]);
+				if(!array_key_exists('',$kpattern)){
+					unset($map['patterns'][$k]);
+				}
 			}else{
 				if(isset($map['patterns'][$k]['app'])){
 					$branch_path = $map['patterns'][$k]['app'];
@@ -604,7 +606,8 @@ class Flow{
 		};
 		$patterns = $map['patterns'];
 		$map['patterns'] = [];
-		$pattern_id = 1;	
+		$pattern_id = 1;
+		
 		foreach($patterns as $k => $v){
 			$v['pattern_id'] = $pattern_id++;
 			if(!isset($v['name'])){
