@@ -187,8 +187,8 @@ class Flow{
 		}
 		if(preg_match('/^\/'.preg_quote($this->package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){
 			foreach(self::$map['patterns'] as $p){
-				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@'])){
-					\ebi\HttpFile::attach($p['@'].'/resources/media/'.$m[2]);
+				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_dir($dir=($p['@'].'/resources/media/'.$m[2]))){
+					\ebi\HttpFile::attach($dir);
 				}
 			}
 			\ebi\HttpHeader::send_status(404);
@@ -444,9 +444,10 @@ class Flow{
 					}
 					\ebi\Log::disable_display();
 					
-					\ebi\HttpHeader::send('Content-Type','application/json');
 					\ebi\HttpHeader::send_status(500);
+					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));
+					
 					return $this->terminate();
 				}
 			}
@@ -474,7 +475,8 @@ class Flow{
 			$result = [];
 			try{
 				$r = new \ReflectionClass(str_replace('.','\\',$class));
-				$d = is_dir(substr($r->getFilename(),0,-4)) ? substr($r->getFilename(),0,-4) : null;
+				$d = substr($r->getFilename(),0,-4);
+				
 				foreach($r->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 					if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
 						if((boolean)preg_match('/@automap[\s]*/',$m->getDocComment())){

@@ -5,18 +5,20 @@ namespace ebi;
  * @author tokushima
  */
 class HttpHeader{
-	private static $header = array();
+	private static $header = [];
 	private static $send_status;
 
 	/**
 	 * statusを出力する
 	 * @param integer $code
+	 * @return integer
 	 */
 	public static function send_status($code){
 		if(!isset(self::$send_status)){
 			self::$send_status = $code;
 			header('HTTP/1.1 '.self::status_string($code));
 		}
+		return self::$send_status;
 	}
 	/**
 	 * headerを送信する

@@ -28,7 +28,12 @@ include_once('bootstrap.php');
 		'notype'=>[
 			'name'=>'notype',
 			'action'=>'test.flow.LoginRequestNoTypeAction::aaa',
-		]
+		],
+		'automap'=>[
+			'name'=>'automap',
+			'action'=>'test.flow.LoginRequestAction'
+		],
+		'dt'=>['action'=>'ebi.Dt']
 	]
 ]);
 

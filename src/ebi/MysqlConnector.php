@@ -90,7 +90,8 @@ class MysqlConnector extends \ebi\DbConnector{
 		};
 		$columndef = $primary = array();
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
-		foreach(array_keys($dao->props()) as $prop_name){
+				
+		foreach(array_keys($dao->columns(true)) as $prop_name){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$prop_name).' null ';
 				$columndef[] = $column_str;

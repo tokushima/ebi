@@ -240,7 +240,12 @@ class Request{
 			}
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',array(time(),$req->ar_vars()));
-			$this->set_before_redirect('do_login');
+\ebi\Log::trace($selected_pattern);
+			if(isset($selected_pattern['@'])){
+				$this->set_before_redirect('do_login');
+			}else{
+				$this->set_before_redirect('login');
+			}
 		}
 	}	
 
@@ -295,7 +300,6 @@ class Request{
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
 		}
 		if($this->is_login()){
-			// direct access
 			if($this->map_arg('login_redirect') != null){
 				$this->sessions('logined_redirect_to',$this->map_arg('login_redirect'));
 			}

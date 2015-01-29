@@ -174,12 +174,10 @@ class Helper{
 				}
 			}
 		}
-		ob_start();
-			var_dump($result);
-		$value = ob_get_clean();
+		$value= print_r($result,true);
 		$value = str_replace('=>'.PHP_EOL,': ',trim($value));
 		$value = preg_replace('/\[\d+\]/','&nbsp;&nbsp;\\0',$value);
-		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),1,-1));
+		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
 	}
 
 }
