@@ -392,10 +392,8 @@ class Flow{
 					}
 				}catch(\Exception $e){
 					\ebi\FlowInvalid::set($e);
+					\ebi\Dao::rollback_all();
 					
-					if(!($e instanceof \ebi\Exceptions)){
-						\ebi\Exceptions::add($e);
-					}
 					if(($level = \ebi\Conf::get('exception_log_level')) !== null && in_array($level,array('error','warn','info','debug'))){
 						$es = ($e instanceof \ebi\Exceptions) ? $e : array($e);
 						$ignore = \ebi\Conf::get('exception_log_ignore');
@@ -406,18 +404,16 @@ class Flow{
 									if(($in = !(preg_match('/'.str_replace('/','\\/',$p).'/',(string)$ev))) === false) break;
 								}
 							}
-							if($in) \ebi\Log::$level($ev);
+							if($in){
+								\ebi\Log::$level($ev);
+							}
 						}
-					}
-					if($this->has_object_plugin('flow_exception')){
-						$this->call_object_plugin_funcs('flow_exception',$e);
-						\ebi\Dao::rollback_all();
 					}
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
 					}else if(isset(self::$map['error_status'])){
 						\ebi\HttpHeader::send_status(self::$map['error_status']);
-					}
+					}					
 					if(isset($pattern['vars']) && !empty($pattern['vars']) && is_array($pattern['vars'])){
 						$result_vars = array_merge($result_vars,$pattern['vars']);
 					}
@@ -431,8 +427,11 @@ class Flow{
 						$this->redirect(self::$map['error_redirect']);
 					}else if(isset(self::$map['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,self::$map['error_template']));
+					}else if($this->has_object_plugin('flow_exception')){
+						$this->call_object_plugin_funcs('flow_exception',$e);
+						return $this->terminate();
 					}else if($this->has_object_plugin('flow_output')){
-						$this->call_object_plugin_funcs('flow_output',array('error'=>array('message'=>$e->getMessage())));
+						$this->call_object_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
 						return $this->terminate();
 					}
 					$message = [];

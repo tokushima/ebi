@@ -37,7 +37,9 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	 * @param string $group グループ名
 	 */
 	public static function add(\Exception $exception,$group=''){
-		if(!isset(self::$self)) self::$self = new self();
+		if(!isset(self::$self)){
+			self::$self = new self();
+		}
 		if($exception instanceof self){
 			foreach($exception as $g => $e){
 				self::$self->messages[] = ['exception'=>$e,'group'=>$g];
@@ -52,14 +54,13 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	 * Exceptionが追加されていればthrowする
 	 */
 	public static function throw_over(){
-		if(!empty(self::$self->messages)){
+		if(isset(self::$self) && !empty(self::$self->messages)){
 			$exception = new self();
 			foreach(self::$self->messages as $v){
 				$exception->messages[] = $v;
 				$exception->message .= $v['exception']->getMessage().PHP_EOL;
 			}
-			self::$self->messages = [];
-			self::$self->message = '';
+			self::clear();
 			throw $exception;
 		}
 	}
@@ -81,5 +82,8 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 			}
 		}
 		return false;
+	}
+	public static function clear(){
+		self::$self = null;
 	}
 }

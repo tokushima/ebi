@@ -15,9 +15,13 @@ class Request{
 	
 	public function __construct(){
 		$this->req = new \ebi\Request();
+		$session_group = \ebi\Conf::get('session_group');
+		
 		$d = debug_backtrace(false);
 		$d = array_pop($d);
-		$sess_name = md5($d['file']);
+		$entry = basename($d['file'],'.php');
+		$sess_name = md5((isset($session_group[$entry])) ? $session_group[$entry] : $d['file']);
+		
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::decode($this,'login',__CLASS__);
@@ -240,7 +244,7 @@ class Request{
 			}
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',array(time(),$req->ar_vars()));
-\ebi\Log::trace($selected_pattern);
+			
 			if(isset($selected_pattern['@'])){
 				$this->set_before_redirect('do_login');
 			}else{
