@@ -24,13 +24,17 @@ class Conf{
 			}
 		}else if(!empty($key)){
 			$class = str_replace("\\",'.',$class);
-			if($class[0] === '.') $class = substr($class,1);
+			if($class[0] === '.'){
+				$class = substr($class,1);
+			}
 			if(func_num_args() > 3){
 				$value = func_get_args();
 				array_shift($value);
 				array_shift($value);
 			}
-			if(!isset(self::$value[$class]) || !array_key_exists($key,self::$value[$class])) self::$value[$class][$key] = $value;
+			if(!isset(self::$value[$class]) || !array_key_exists($key,self::$value[$class])){
+				self::$value[$class][$key] = $value;
+			}
 		}
 	}
 	/**

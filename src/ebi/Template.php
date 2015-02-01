@@ -220,12 +220,8 @@ class Template{
 				$line = $error_last['line'];
 				$lines = explode("\n",$_src_);
 				$plrp = substr_count(implode("\n",array_slice($lines,0,$line)),"<?php 'PLRP'; ?>\n");
-				$lines = explode("\n",$this->selected_src);
-				\ebi\Log::error('Parse error line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]));
-
-				if(\ebi\Conf::get('display_exception') === true){
-					$_eval_src_ = 'Parse error: line '.($line-$plrp).': '.trim($lines[$line-1-$plrp]);
-				}
+				$plain = explode("\n",$this->selected_src);
+				\ebi\Log::error('Parse error: line '.($line-$plrp).': '.PHP_EOL.'[complie] '.trim($lines[$line-1]).PHP_EOL.'[Source] '.trim($plain[$line-1-$plrp]));
 			}
 		}
 		$_src_ = $this->selected_src = null;
@@ -240,11 +236,13 @@ class Template{
 		return $src;
 	}
 	private function parse_url($src,$media){
-		if(!empty($media) && substr($media,-1) !== '/') $media = $media.'/';
+		if(!empty($media) && substr($media,-1) !== '/'){
+			$media = $media.'/';
+		}
 		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
 		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$match)){
 			foreach($match[2] as $k => $p){
-				list($url) = explode('?',$match[4][$k]);
+				list($url) = explode('?',$match[4][$k]);				
 				if(strpos($url,'$') === false){
 					$t = null;
 					if(strtolower($p) === 'href'){
