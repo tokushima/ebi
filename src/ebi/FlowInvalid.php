@@ -85,7 +85,7 @@ class FlowInvalid implements \Iterator{
 		return false;
 	}
 	public function before_template($src){
-		return \ebi\Xml::find_replace($src,'rt:invalid',function($xml){
+		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
 			$param = $xml->in_attr('param');
 			$type = $xml->in_attr('type');
 			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));

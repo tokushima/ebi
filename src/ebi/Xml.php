@@ -394,28 +394,37 @@ class Xml implements \IteratorAggregate{
 	 * @return string
 	 */
 	public static function find_replace($src,$name,$func){
+		if(!is_callable($func)){
+			throw new \ebi\exception\InvalidArgumentException('invalid function');
+		}
+		foreach(self::anonymous($src)->find($name) as $xml){
+			$replace = call_user_func_array($func,[$xml]);
+			if(!is_null($replace)){
+				$src = str_replace($xml->plain(),(($replace instanceof self) ? $replace->get() : $replace),$src);
+			}
+		}
+		return $src;
+	}
+	/**
+	 * $srcから対象のXMLをすべて置換した文字列を返す
+	 * @param string $src
+	 * @param string $name
+	 * @param callable $func
+	 * @return string
+	 */
+	public static function find_replace_all($src,$name,$func){
 		try{
 			if(!is_callable($func)){
 				throw new \ebi\exception\InvalidArgumentException('invalid function');
 			}
 			$i = 0;
+	
 			while(true){
-				$break = true;
-				foreach(self::anonymous($src)->find($name) as $xml){
-					$replace = call_user_func_array($func,[$xml]);
-
-					if($replace instanceof self){
-						if($replace->name() != $xml->name()){
-							$break = false;
-						}
-						$replace = $replace->get();
-					}
-					if(!is_null($replace)){
-						$src = str_replace($xml->plain(),$replace,$src);
-					}
-				}
-				if($break){
-					break;
+				$xml = \ebi\Xml::extract($src,$name);
+				$replace = call_user_func_array($func,[$xml]);
+				
+				if(!is_null($replace)){
+					$src = str_replace($xml->plain(),(($replace instanceof self) ? $replace->get() : $replace),$src);
 				}
 				if($i++ > 100){
 					throw new \ebi\exception\RetryLimitOverException('Maximum function nesting level of ’100');
