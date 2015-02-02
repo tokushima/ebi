@@ -33,7 +33,7 @@
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>['ebi.SmtpBlackholeDao'],
 	'ebi.Session'=>['ebi.SessionDao'],
-	'ebi.Queue'=>['ebi.queue.plugin.Dao'],
+//	'ebi.Queue'=>['ebi.queue.plugin.Dao'],
 ]);
 
 

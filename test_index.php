@@ -32,7 +32,7 @@ include_once('bootstrap.php');
 				'aaa'=>['name'=>'group_aaa_xml','action'=>'test.flow.Action::abc'],
 				'bbb'=>['name'=>'group_bbb_xml','action'=>'test.flow.Action::abc'],
 			],
-			'plugins'=>['ebi.flow.plugin.OutputXml'],
+			'plugins'=>['ebi.flow.plugin.Xml'],
 		],
 		
 		'after'=>['name'=>'after','action'=>'test.flow.Sample::after_redirect','after'=>'after_to'],

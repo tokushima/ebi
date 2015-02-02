@@ -13,7 +13,7 @@ class Xml{
 		$xml->add($array);
 		
 		\ebi\HttpHeader::send('Content-Type','application/xml');
-		print($xml->get(\ebi\Conf::get('encoding','UTF-8')));
+		print($xml->get(\ebi\Conf::get('encoding')));
 	}
 	/**
 	 * @plugin ebi.Flow
@@ -23,7 +23,7 @@ class Xml{
 		$xml = new \ebi\Xml('error');
 		
 		if(!($exception instanceof \ebi\Exceptions)){
-			$exception = ['exceptions'=>$exception];
+			$exception = [''=>$exception];
 		}
 		foreach($exception as $g => $e){
 			$class_name = get_class($e);
@@ -33,6 +33,6 @@ class Xml{
 			$xml->add($message);
 		}
 		\ebi\HttpHeader::send('Content-Type','application/xml');
-		print($xml->get(\ebi\Conf::get('encoding','UTF-8')));
+		print($xml->get(\ebi\Conf::get('encoding')));
 	}
 }

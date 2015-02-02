@@ -121,6 +121,8 @@ class Util{
 		if(!is_dir($source) && !is_file($source)){
 			throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
 		}
+		self::mkdir(dirname($dest));
+		
 		if(is_dir($source)){
 			$bool = true;
 			if($handle = opendir($source)){

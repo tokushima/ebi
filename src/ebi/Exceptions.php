@@ -49,6 +49,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 			self::$self->messages[] = ['exception'=>$exception,'group'=>$group];
 			self::$self->message .= $exception->getMessage().PHP_EOL;
 		}
+		return self::$self;
 	}
 	/**
 	 * Exceptionが追加されていればthrowする
