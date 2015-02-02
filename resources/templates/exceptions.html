@@ -1,5 +1,9 @@
 <html>
 <body>
-<rt:invalid />
+<rt:invalid var="exceptions">
+	<rt:loop param="exceptions" var="exception">
+		Error: {$exception.getMessage()}
+	</rt:loop>
+</rt:invalid>
 </body>
 </html>

@@ -1,6 +1,17 @@
 <?php
+/**
+ * TODO 親子なrt:invalid対応
+ */
 $b = new \testman\Browser();
 $b->do_get(url('test_index::raise_template'));
 eq(200,$b->status());
-meq('raise test',$b->body());
+meq('Error: raise test',$b->body());
+mneq('rt:invalid',$b->body());
+
+
+
+$b->do_get(url('test_index::raise_template_parent'));
+eq(200,$b->status());
+meq('Error: raise test',$b->body());
+mneq('rt:invalid',$b->body());
 

@@ -51,7 +51,8 @@ include_once('bootstrap.php');
 		
 		'helper/range'=>['name'=>'helper_range','template'=>'helper/range.html','vars'=>['max'=>5]],
 		'raise'=>['name'=>'raise','action'=>'test.flow.Action::raise'],
-		'raise/template'=>['name'=>'raise_template','action'=>'test.flow.Action::raise','error_template'=>'exceptions.html','plugins'=>'ebi.FlowInvalid'],
+		'raise/template'=>['name'=>'raise_template','action'=>'test.flow.Action::raise','error_template'=>'exceptions.html'],
+		'raise/template/parent'=>['name'=>'raise_template_parent','action'=>'test.flow.Action::raise','error_template'=>'exceptions_parent.html'],
 		'exceptions'=>['name'=>'exceptions','action'=>'test.flow.Action::exceptions'],
 
 		'html_filter'=>[
