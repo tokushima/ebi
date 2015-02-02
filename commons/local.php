@@ -22,7 +22,9 @@
 		'use_vendor'=>[
 			'ebi.SmtpBlackholeDao',
 			'ebi.SessionDao',
-			'ebi.queue.plugin.Dao.QueueDao'
+			'ebi.queue.plugin.Dao.QueueDao',
+			'ebi.Queue',
+			'ebi.Session',
 		],
 	]
 ]);
@@ -31,7 +33,7 @@
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>['ebi.SmtpBlackholeDao'],
 	'ebi.Session'=>['ebi.SessionDao'],
+	'ebi.Queue'=>['ebi.queue.plugin.Dao'],
 ]);
-
 
 

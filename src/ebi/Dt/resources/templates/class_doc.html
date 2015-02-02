@@ -51,6 +51,29 @@
 	</table>
 </rt:if>
 
+<rt:if param="{$plugin_method}">
+	<h3>Plugin methods</h3>
+	<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">class</th>
+			<th>method</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="span3">
+				<a href="{$t.package_method_url('class_doc',$f.package_name($class_name))}">{$f.package_name($class_name)}</a>
+			</td>
+			<td>
+				<rt:loop param="method_name_list" var="method_name">
+					<div><a href="{$t.package_method_url('method_doc',$package,$method_name)}">{$method_name}</a></div>
+				</rt:loop>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
 
 <rt:if param="{$properties}">
 	<h3>Properties</h3>
@@ -77,54 +100,6 @@
 	</tbody>
 	</table>
 </rt:if>
-
-
-
-
-<rt:if param="{$plugins}">
-	<h3>Plugins</h3>
-	<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name">
-	<thead>
-		<tr>
-			<th style="width:30%;">name</th>
-			<th>summary</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td class="span3"><a href="{$t.package_method_url('plugin_doc',$package,$plugin_name)}">{$plugin_name}</a></td>
-			<td>{$t.html($v[0],0,1)}</td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
-
-
-<rt:if param="{$plugin_method}">
-	<h3>Plugin methods</h3>
-	<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name">
-	<thead>
-		<tr>
-			<th style="width:30%;">class</th>
-			<th>method</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td class="span3">
-				<a href="{$t.package_method_url('class_doc',$f.package_name($class_name))}">{$f.package_name($class_name)}</a>
-			</td>
-			<td>
-				<rt:loop param="method_name_list" var="method_name">
-					<div><a href="{$t.package_method_url('method_doc',$package,$method_name)}">{$method_name}</a></div>
-				</rt:loop>
-			</td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
-
-
 
 
 <rt:if param="{$protected_static_methods}">
@@ -241,6 +216,42 @@
 
 
 
+<rt:if param="{$plugins}">
+	<h3>Call Plugins</h3>
+	<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="span3"><a href="{$t.package_method_url('plugin_doc',$package,$plugin_name)}">{$plugin_name}</a></td>
+			<td>{$t.html($v[0],0,1)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+<rt:if param="{$added_plugins}">
+	<h3>Added Plugins</h3>
+	<table rt:param="{$added_plugins}" rt:var="plugin_class">
+	<thead>
+		<tr>
+			<th style="width:30%;">class</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="span3"><a href="{$t.package_method_url('class_doc',$plugin_class)}">{$plugin_class}</a></td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+
+
 <rt:if param="{$conf_list}">
 	<h3>Conf</h3>
 	<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name">
@@ -258,5 +269,6 @@
 	</tbody>
 	</table>
 </rt:if>
+
 
 </rt:block>

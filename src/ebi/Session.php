@@ -4,7 +4,6 @@ namespace ebi;
  * セッションを操作する
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
  * @author tokushima
- * @conf string $session_name セッション名
  * @conf string $session_limiter キャッシュリミッタ nocache,private,private_no_expire,public
  * @conf integer $session_expire キャッシュの有効期限(sec)
  */
@@ -14,12 +13,17 @@ class Session{
 
 	/**
 	 * セッションを開始する
+	 * 
 	 * @param string $name
 	 * @return $this
+	 * 
 	 */
 	public function __construct($name='sess'){
 		$this->ses_n = $name;
 		if('' === session_id()){
+			/**
+			 * セッション名 初期値はSID
+			 */
 			$session_name = \ebi\Conf::get('session_name','SID');
 			if(!ctype_alpha($session_name)) throw new \InvalidArgumentException('session name is is not a alpha value');
 			session_cache_limiter(\ebi\Conf::get('session_limiter','nocache'));

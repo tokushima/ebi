@@ -25,13 +25,25 @@ class Man{
 	 * @param string $class
 	 */
 	public static function class_info($class){
-		$r = new \ReflectionClass(str_replace(array('.','/'),array('\\','\\'),$class));
-		if($r->getFilename() === false || !is_file($r->getFileName())) throw new \InvalidArgumentException('`'.$class.'` file not found.');
-		$src = self::get_reflection_source($r);
+		$r = new \ReflectionClass(str_replace(['.','/'],['\\','\\'],$class));
 		
+		if($r->getFilename() === false || !is_file($r->getFileName())){
+			throw new \InvalidArgumentException('`'.$class.'` file not found.');
+		}
+		$traits = [];
+		$parent = new \ReflectionClass($r->getName());
+		while(true){
+			$traits = array_merge($traits,$parent->getTraitNames());
+			if(($parent = $parent->getParentClass()) === false){
+				break;
+			}
+		}		
+		
+		$src = self::get_reflection_source($r);
 		$document = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$r->getDocComment())));
 		$extends = ($r->getParentClass() === false) ? null : $r->getParentClass()->getName();
 		$updated = filemtime($r->getFilename());
+		
 		if(basename($r->getFilename(),'.php') === basename(dirname($r->getFilename()))){
 			foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname($r->getFilename()),\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS)) as $f){
 				if(($u = filemtime($f->getPathname())) > $updated) $updated = $u;
@@ -100,6 +112,10 @@ class Man{
 				self::get_desc($plugins,$match,$k,$v[0],$src,$class);
 			}
 		}
+		$added_plugins = [];
+		if(in_array('ebi\\Plugin',$traits)){
+			$added_plugins = call_user_func([$r->getName(),'added_class_plugin_funcs']);
+		}
 
 		$conf = self::get_conf_list($r,$src);
 		
@@ -128,6 +144,7 @@ class Man{
 		ksort($protected_static_methods[1]);
 		ksort($properties);
 		ksort($plugins);
+		
 		return array(
 				'filename'=>$r->getFileName(),'extends'=>$extends,'abstract'=>$r->isAbstract(),'version'=>date('Ymd',$updated)
 				,'static_methods'=>$static_methods[0],'methods'=>$methods[0],'protected_static_methods'=>$protected_static_methods[0],'protected_methods'=>$protected_methods[0]
@@ -135,6 +152,7 @@ class Man{
 				,'plugin_method'=>$plugin_method
 				,'properties'=>$properties,'package'=>$class,'description'=>$description
 				,'plugins'=>$plugins
+				,'added_plugins'=>$added_plugins
 				,'conf_list'=>$conf
 				);
 	}

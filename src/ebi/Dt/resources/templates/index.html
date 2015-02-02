@@ -40,7 +40,7 @@
 	</tr>
 	</thead>
 	<tbody>
-	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')}{$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
+	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')}">
 		<td>
 			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -67,7 +67,7 @@
 				{$map['name']}
 			</rt:if>
 		</td>
-		<td>
+		<td style="{$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 			{$map['url']}
 		</td>
 		<td>
@@ -87,7 +87,7 @@
 							<h4 class="modal-title">{$map['name']}</h4>
 						</div>
 						<div class="modal-body">
-							<div style="color: #ff0606; font-weight: bold;">〜/{$map['url']}</div>
+							<div style="color: #ff0606; font-weight: bold;">縲�/{$map['url']}</div>
 							<form name="linkdata{$count}">
 								<input type="text" name="url" value="{$map['format']}" class="form-control" />
 								<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>

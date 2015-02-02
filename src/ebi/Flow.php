@@ -247,7 +247,7 @@ class Flow{
 					foreach(self::$map['patterns'] as $m){
 						$this->url_pattern[$m['name']][$m['num']] = $m['format'];
 						
-						if(!empty($class) && isset($pattern['@']) && isset($m['@']) && strpos($m['action'],$class.'::') === 0){
+						if(!empty($class) && isset($pattern['@']) && isset($m['@']) && $pattern['pattern_id'] == $m['pattern_id']){
 							$this->selected_class_pattern[substr($m['action'],strlen($class.'::'))][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}

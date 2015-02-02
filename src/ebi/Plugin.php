@@ -159,4 +159,25 @@ trait Plugin{
 		array_shift($a);
 		return call_user_func_array($o,$a);
 	}
+	/**
+	 * 追加されたプラグイン
+	 * @return  string[]
+	 */
+	public static function added_class_plugin_funcs(){
+		$rtn = [];
+		$g = get_called_class();
+		foreach(\ebi\Conf::get_class_plugin($g) as $o){
+			static::set_class_plugin($o);
+		}
+		if(isset(self::$_plug_funcs[$g])){
+			foreach(self::$_plug_funcs[$g] as $o){
+				if(is_array($o)){
+					$rtn[] = 'function';
+				}else{
+					$rtn[] = get_class($o);
+				}
+			}
+		}
+		return $rtn;
+	}
 }
