@@ -121,6 +121,12 @@ class Flow{
 		$this->redirect($name,$args);
 	}
 	private function execute($map){
+		if(is_string($map)){
+			$map = ['patterns'=>[''=>['action'=>$map]]];
+		}
+		if(!isset($map['patterns']) || !is_array($map['patterns'])){
+			throw new \InvalidArgumentException('pattern not found');
+		}
 		/**
 		 * アプリケーションのベースURL
 		 */
@@ -129,6 +135,10 @@ class Flow{
 		 * メディアファイルのベースURL
 		 */
 		$this->media_url = \ebi\Conf::get('media_url');
+		/**
+		 * apps(action appのファイル群)のディレクトリパス
+		 */
+		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		
 		if(empty($this->app_url)){
 			$host = \ebi\Conf::get('host',\ebi\Request::host());
@@ -164,27 +174,17 @@ class Flow{
 			$this->media_url = $media_path.'resources/media/';
 		}
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
-		/**
-		 * apps(action appのファイル群)のディレクトリパス
-		 */
-		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		$this->template = new \ebi\Template();
-		
-		if(is_string($map)){
-			$map = ['patterns'=>[''=>['action'=>$map]]];
-		}
-		if(!isset($map['patterns']) || !is_array($map['patterns'])){
-			throw new \InvalidArgumentException('pattern not found');
-		}
-		$result_vars = array();
-		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
+
 		self::$map = $this->read($map);
-		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
 			return;
 		}
+		$result_vars = [];
+		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
+				
 		if(preg_match('/^\/'.preg_quote($this->package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){
 			foreach(self::$map['patterns'] as $p){
 				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_dir($dir=($p['@'].'/resources/media/'.$m[2]))){
