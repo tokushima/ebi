@@ -251,11 +251,6 @@ class Flow{
 							$this->selected_class_pattern[substr($m['action'],strlen($class.'::'))][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}
-					if(isset($pattern['branch'])){
-						foreach(self::$map['branch'][$pattern['branch']] as $k => $v){
-							if(!empty($v)) self::$map[$k] = $v;
-						}
-					}
 					if(isset($pattern['redirect'])){
 						$this->redirect($pattern['redirect']);
 					}
@@ -565,33 +560,31 @@ class Flow{
 				if(!array_key_exists('',$kpattern)){
 					unset($map['patterns'][$k]);
 				}
-			}else{
-				if(isset($map['patterns'][$k]['app'])){
-					$branch_path = $map['patterns'][$k]['app'];
-					$name = isset($map['patterns'][$k]['name']) ? $map['patterns'][$k]['name'] : $k;
-					unset($map['patterns'][$k]);
+			}else if(isset($map['patterns'][$k]['app'])){
+				$branch_path = $map['patterns'][$k]['app'];
+				$name = isset($map['patterns'][$k]['name']) ? $map['patterns'][$k]['name'] : $k;
+				unset($map['patterns'][$k]);
 
-					if(is_file($f=$this->apps_path.$branch_path.'.php')){
-						self::$is_get_branch = true;
-						self::$branch_map = [];
-						ob_start();
-							$rtn = include($f);
-						ob_end_clean();
-						self::$is_get_branch = false;
-						
-						self::$branch_map = $fixed_vars($root_keys,$this->read(self::$branch_map));						
-						foreach(array_keys(self::$branch_map['patterns']) as $bk){
-							 $bm = $fixed_vars($map_pattern_keys,self::$branch_map['patterns'][$bk],self::$branch_map);
-							 $bm['name'] = $name.'#'.$bm['name'];
-							 $bm['branch'] = $branch_path;
-							 $map['patterns'][$k.(empty($bk) ? '' :'/'.$bk)] = $bm;
-						}
-						unset(self::$branch_map['patterns']);
-						$map['branch'][$branch_path] = self::$branch_map;
+				if(is_file($f=$this->apps_path.$branch_path.'.php')){
+					self::$is_get_branch = true;
+					self::$branch_map = [];
+					ob_start();
+						$rtn = include($f);
+					ob_end_clean();
+					self::$is_get_branch = false;
+					self::$branch_map = $fixed_vars($root_keys,$this->read(self::$branch_map));
+										
+					foreach(array_keys(self::$branch_map['patterns']) as $bk){
+						 $bm = $fixed_vars($map_pattern_keys,self::$branch_map['patterns'][$bk],self::$branch_map);
+						 $bm['name'] = $name.'#'.$bm['name'];
+						 $bm['branch'] = $branch_path;
+						 $map['patterns'][$k.(empty($bk) ? '' :'/'.$bk)] = $bm;
 					}
-				}else{
-					$map['patterns'][$k] = $fixed_vars($map_pattern_keys,$map['patterns'][$k]);
+					unset(self::$branch_map['patterns']);
+					$map['branch'][$branch_path] = self::$branch_map;
 				}
+			}else{
+				$map['patterns'][$k] = $fixed_vars($map_pattern_keys,$map['patterns'][$k]);
 			}
 		}
 		$http = $this->app_url;

@@ -2,6 +2,9 @@
 include_once('bootstrap.php');
 
 \ebi\Flow::app([
+	'plugins'=>[
+		'test.flow.plugin.None',	
+	],
 	'patterns'=>[
 		''=>[],
 		'abc'=>['template'=>'index.html'],
