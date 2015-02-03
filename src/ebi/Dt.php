@@ -33,7 +33,10 @@ class Dt{
 				}
 			}
 			$map = \ebi\Flow::get_map();
-			foreach($map['patterns'] as $k => $m){
+			$patterns = $map['patterns'];
+			unset($map['patterns']);
+			
+			foreach($patterns as $k => $m){
 				if(!isset($m['deprecated'])) $m['deprecated'] = false;
 				if(!isset($m['mode'])) $m['mode'] = null;
 				if(!isset($m['summary'])) $m['summary'] = null;
@@ -56,6 +59,15 @@ class Dt{
 						}
 					}catch(\Exception $e){
 						$m['error'] = $e->getMessage();
+					}
+					foreach($m as $k => $v){
+						if(is_array($v) && isset($map[$k]) && !empty($map[$k])){
+							$m[$k] = array_merge($map[$k],$v);
+						}else{
+							if(!isset($v) && isset($map[$k])){
+								$m[$k] = $map[$k];
+							}
+						}
 					}
 					$this->flow_output_maps[$m['name']] = $m;
 				}
