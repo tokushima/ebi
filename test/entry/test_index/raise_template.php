@@ -1,7 +1,4 @@
 <?php
-/**
- * TODO 親子なrt:invalid対応
- */
 $b = new \testman\Browser();
 $b->do_get(url('test_index::raise_template'));
 eq(200,$b->status());

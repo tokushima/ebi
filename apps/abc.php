@@ -1,5 +1,6 @@
 <?php
 \ebi\Flow::app([
+	'plugins'=>'ebi.flow.plugin.Xml',
 	'error_tempalte'=>'ERROR_TEMP.html',
 	'patterns'=>[
 		''=>['template'=>'index.html'],
@@ -7,5 +8,6 @@
 		'xyz'=>['name'=>'XYZ','template'=>'xyz.html'],
 		'secure'=>['name'=>'secure','template'=>'secure.html','secure'=>true],
 		'nosecure'=>['name'=>'nosecure','template'=>'secure.html'],
+		'noresult'=>['name'=>'noresult'],
 	]
 ]);
