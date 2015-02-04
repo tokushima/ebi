@@ -568,6 +568,9 @@ class Flow{
 						$bm['pattern_id'] = $name.'#'.$bv['pattern_id'];
 						$bm['branch'] = $branch;
 						
+						if(isset($bv['@'])){
+							$bm['@'] = $bv['@'];
+						}						
 						$patterns[$k.(empty($bk) ? '' : '/'.$bk)] = $bm;
 					}
 				}
