@@ -6,7 +6,7 @@ namespace ebi;
  */
 class HtmlForm{
 	private static function parse($html,$url){
-		$forms = array();
+		$forms = [];
 		try{
 			foreach(\ebi\Xml::extract($html,'body')->find('form') as $key => $formtag){
 				$form = new \stdClass();
@@ -14,7 +14,7 @@ class HtmlForm{
 				$form->action = \ebi\Util::path_absolute($url,$formtag->in_attr('action',$url));
 				$form->method = strtolower($formtag->in_attr('method','get'));
 				$form->multiple = false;
-				$form->element = array();
+				$form->element = [];
 				
 				foreach($formtag->find('input') as $count => $input){
 					$obj = new \stdClass();
@@ -38,7 +38,7 @@ class HtmlForm{
 					$obj = new \stdClass();
 					$obj->name = $input->in_attr('name',$input->in_attr('id','select_'.$count));
 					$obj->type = 'select';
-					$obj->value = array();
+					$obj->value = [];
 					$obj->selected = true;
 					$obj->multiple = ('multiple' == strtolower($input->param('multiple',$input->attr('multiple'))));
 		
@@ -106,7 +106,7 @@ class HtmlForm{
 					case 'select':
 						if(!$b->has_vars($element->name)){
 							if($element->multiple){
-								$list = array();
+								$list = [];
 								foreach($element->value as $option){
 									if($option->selected) $list[] = $option->value;
 								}

@@ -12,12 +12,12 @@ class Browser{
 	private $redirect_max = 20;
 	private $redirect_count = 1;
 
-	private $request_header = array();
-	private $request_vars = array();
-	private $request_file_vars = array();
+	private $request_header = [];
+	private $request_vars = [];
+	private $request_file_vars = [];
 	private $head;
 	private $body;
-	private $cookie = array();
+	private $cookie = [];
 	private $url;
 	private $status;
 	
@@ -230,7 +230,7 @@ class Browser{
 	 * @return string{}
 	 */
 	public function explode_head(){
-		$result = array();
+		$result = [];
 		foreach(explode("\n",$this->head) as $h){
 			if(preg_match("/^(.+?):(.+)$/",$h,$match)) $result[trim($match[1])] = trim($match[2]);
 		}
@@ -278,7 +278,7 @@ class Browser{
 		switch($method){
 			case 'POST':
 				if(!empty($this->request_file_vars)){
-					$vars = array();
+					$vars = [];
 					if(!empty($this->request_vars)){
 						foreach(explode('&',http_build_query($this->request_vars)) as $q){
 							$s = explode('=',$q,2);
@@ -417,7 +417,7 @@ class Browser{
 				if($cookie_expires !== null && $cookie_expires < time()){
 					if(isset($this->cookie[$cookie_domain][$cookie_name])) unset($this->cookie[$cookie_domain][$cookie_name]);
 				}else{
-					$this->cookie[$cookie_domain][$cookie_name] = array('value'=>$cookie_value,'expires'=>$cookie_expires,'secure'=>$secure);
+					$this->cookie[$cookie_domain][$cookie_name] = ['value'=>$cookie_value,'expires'=>$cookie_expires,'secure'=>$secure];
 				}
 			}
 		}

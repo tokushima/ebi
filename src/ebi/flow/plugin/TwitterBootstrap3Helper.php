@@ -36,12 +36,12 @@ class TwitterBootstrap3Helper{
 			}
 			
 			if($tag == 'tree'){
-				$tree = array();
+				$tree = [];
 				$len = 0;
 				$v = '';
 				foreach(explode("\n",$value) as $k => $line){
 					if(preg_match("/^(\s*)([\.\w\{\}\[\]\(\)]+)[:]{0,1}(.*)$/",$line,$m)){
-						$tree[$k] = array(strlen(str_replace("\t",' ',$m[1])),trim($m[2]),trim($m[3]));
+						$tree[$k] = [strlen(str_replace("\t",' ',$m[1])),trim($m[2]),trim($m[3])];
 						$tree[$k][3] = strlen($tree[$k][1]);
 						if($len < ($tree[$k][3] + $tree[$k][0])) $len = $tree[$k][3] + $tree[$k][0];
 					}

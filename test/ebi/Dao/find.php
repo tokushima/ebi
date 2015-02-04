@@ -219,7 +219,7 @@ eq('2008/12/24 10:00:00',$result[0]->fm_updated());
 
 $c = 0;
 for($i=0;$i<10;$i++){
-	$a = $b = array();
+	$a = $b = [];
 	foreach(\test\db\Find::find_all(Q::random_order()) as $o) $a[] = $o->id();
 	foreach(\test\db\Find::find_all(Q::random_order()) as $o) $b[] = $o->id();
 	if($a === $b) $c++;

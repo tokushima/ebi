@@ -88,7 +88,7 @@ class MysqlConnector extends \ebi\DbConnector{
 				default: throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
-		$columndef = $primary = array();
+		$columndef = $primary = [];
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
 				
 		foreach(array_keys($dao->columns(true)) as $prop_name){

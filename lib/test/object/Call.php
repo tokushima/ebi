@@ -6,8 +6,8 @@ namespace test\object;
  * @var number[] $bbb
  * @var string{} $ccc
  * @var timestamp $eee
- * @var string $fff @["column"=>"Acol","table"=>"BTbl"]
- * @var string $ggg @["set"=>false]
+ * @var string $fff @['column'=>'Acol','table'=>'BTbl']
+ * @var string $ggg @['set'=>false]
  * @var boolean $hhh
  * 
  * 
@@ -19,7 +19,7 @@ class Call extends \ebi\Object{
 	public $ddd;
 	public $eee;
 	public $fff;
-	protected $ggg = "hoge";
+	protected $ggg = 'hoge';
 	public $hhh;
 	private $iii;
 				
@@ -27,10 +27,10 @@ class Call extends \ebi\Object{
 		$this->ddd = $a.$b;
 	}
 	public function nextDay(){
-		return date("Y/m/d H:i:s",$this->eee + 86400);
+		return date('Y/m/d H:i:s',$this->eee + 86400);
 	}
 	protected function ___cn___(){
-		if($this->prop_anon($this->_,"column") === null || $this->prop_anon($this->_,"table") === null) throw new \Exception($this->_);
-		return array($this->prop_anon($this->_,"table"),$this->prop_anon($this->_,"column"));
+		if($this->prop_anon($this->_,'column') === null || $this->prop_anon($this->_,'table') === null) throw new \Exception($this->_);
+		return [$this->prop_anon($this->_,'table'),$this->prop_anon($this->_,'column')];
 	}
 }

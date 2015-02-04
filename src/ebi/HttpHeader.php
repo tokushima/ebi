@@ -83,7 +83,7 @@ class HttpHeader{
 	 * @param string $url リダイレクトするURL
 	 * @param mixed{} $vars query文字列として渡す変数
 	 */
-	public static function redirect($url,array $vars=array()){
+	public static function redirect($url,array $vars=[]){
 		if(!empty($vars)){
 			$requestString = \ebi\Query::get($vars);
 			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);

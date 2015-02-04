@@ -3,15 +3,17 @@ namespace ebi\Dt;
 
 class Helper{
 	public function package_name($p){
-		$p = str_replace(array('/','\\'),array('.','.'),$p);
-		if(substr($p,0,1) == '.') $p = substr($p,1);
+		$p = str_replace(['/','\\'],['.','.'],$p);
+		if(substr($p,0,1) == '.'){
+			$p = substr($p,1);
+		}
 		return $p;
 	}
 	public function type($class){
 		if(preg_match('/[A-Z]/',$class)){
 			switch(substr($class,-2)){
-				case "{}":
-				case "[]": $class = substr($class,0,-2);
+				case '{}':
+				case '[]': $class = substr($class,0,-2);
 			}
 			$class = str_replace('\\','.',$class);
 			if(substr($class,0,1) == '.') $class = substr($class,1);
@@ -22,10 +24,6 @@ class Helper{
 	public function calc_add($i,$add=1){
 		return $i + $add;
 	}
-
-	
-	
-	
 	/**
 	 * アクセサ
 	 * @param Dao $obj
@@ -59,7 +57,7 @@ class Helper{
 		return $rtn;
 	}
 	public function primary_query(\ebi\Dao $obj){
-		$result = array();
+		$result = [];
 		foreach($this->props($obj) as $prop){
 			if($obj->prop_anon($prop,'primary') === true && $obj->prop_anon($prop,'extra') !== true && $obj->prop_anon($prop,'cond') === null){
 				$result[] = "primary[".$prop."]=".$obj->{$prop}();
@@ -86,7 +84,7 @@ class Helper{
 	}
 	public function filter(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
-			$options = array();
+			$options = [];
 			$options[] = '<option value=""></option>';
 			$master = $obj->prop_anon($name,'master');
 			if(!empty($master)){
@@ -107,7 +105,7 @@ class Helper{
 			$type = $obj->prop_anon($name,'type');
 			switch($type){
 				case 'boolean':
-					$options = array();
+					$options = [];
 					$options[] = '<option value=""></option>';
 					foreach(array('true','false') as $choice) $options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
 					return sprintf('<select name="search_%s_%s">%s</select>',$type,$name,implode('',$options));
@@ -122,7 +120,7 @@ class Helper{
 	
 	public function form(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
-			$options = array();
+			$options = [];
 			if(!$obj->prop_anon($name,'require')) $options[] = '<option value=""></option>';
 			$master = $obj->prop_anon($name,'master');
 			if(!empty($master)){
@@ -140,7 +138,7 @@ class Helper{
 				if(sizeof($primarys) != 1) return sprintf('<input name="%s" type="text" class="form-control" />',$name);
 				foreach($primarys as $primary) break;
 				$pri = $primary->name();
-				foreach(call_user_func_array(array($mo,'find'),array()) as $dao){
+				foreach(call_user_func_array(array($mo,'find'),[]) as $dao){
 					$options[] = sprintf('<option value="%s">%s</option>',$dao->{$pri}(),(string)$dao);
 				}
 			}

@@ -14,8 +14,8 @@ namespace ebi;
 class Log{
 	use \ebi\Plugin;
 	
-	private static $level_strs = array('none','error','warn','info','debug');
-	private static $logs = array();
+	private static $level_strs = ['none','error','warn','info','debug'];
+	private static $logs = [];
 	private static $id;
 	private static $current_level;
 	private static $disp = true;

@@ -27,11 +27,11 @@ class Mail{
 	private $subject;
 	
 	private $eol = "\n";
-	private $boundary = array('mixed'=>'mixed','alternative'=>'alternative','related'=>'related');
+	private $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
 	private $resource_path;
 
 	public function __construct(){
-		$this->boundary = array('mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related'));
+		$this->boundary = ['mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related')];
 	}
 	public function resource_path($path){
 		$this->resource_path = $path;
@@ -101,7 +101,7 @@ class Mail{
 		return $send;
 	}
 	private function implode_address($list){
-		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : array($list)));
+		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
 	}
 	private function body(){
 		$send = '';
@@ -240,7 +240,7 @@ class Mail{
 		$pre = $this->eol;
 		$this->eol = ($eol) ? "\r\n" : "\n";
 		$bcc = $this->bcc;
-		$this->bcc = array();
+		$this->bcc = [];
 		$send = $this->header().$this->line().$this->body();
 		$this->bcc = $bcc;
 		$this->eol = $pre;
@@ -281,7 +281,7 @@ class Mail{
 	 * @param mixed{} $vars テンプレートへ渡す変数
 	 * @return $this
 	 */
-	public function send_template($template_path,$vars=array()){
+	public function send_template($template_path,$vars=[]){
 		return $this->set_template($template_path,$vars)->send();
 	}
 	/**
@@ -300,7 +300,7 @@ class Mail{
 	 * @param mixed{} $vars テンプレートへ渡す変数
 	 * @return $this
 	 */
-	public function set_template($template_path,$vars=array()){
+	public function set_template($template_path,$vars=[]){
 		$resource_path = empty($this->resource_path) ? \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail')) : $this->resource_path;
 		$template_path = \ebi\Util::path_absolute($resource_path,$template_path);
 		if(!is_file($template_path)){
@@ -371,9 +371,9 @@ class Mail{
 		}
 	}
 	public function attach($filename,$src,$type="application/octet-stream"){
-		$this->attach[] = array(basename($filename),$src,$type);
+		$this->attach[] = [basename($filename),$src,$type];
 	}
 	public function media($filename,$src,$type="application/octet-stream"){
-		$this->media[$filename] = array(basename($filename),$src,$type);
+		$this->media[$filename] = [basename($filename),$src,$type];
 	}
 }

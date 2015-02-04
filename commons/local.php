@@ -18,17 +18,18 @@
 		'app_url'=>'http://localhost:8000/*',
 //		'secure'=>false,
 	],
-	'ebi.Dt'=>[
-		'use_vendor'=>[
-			'ebi.SmtpBlackholeDao',
-			'ebi.SessionDao',
-			'ebi.queue.plugin.Dao.QueueDao',
-			'ebi.Queue',
-			'ebi.Session',
-		],
-	]
 ]);
-	
+
+$vendor = [];
+$dir = realpath(dirname(__DIR__).'/src').DIRECTORY_SEPARATOR;
+foreach(\ebi\Util::ls($dir,true,'/\.php$/') as $f){
+	if(strpos($f->getPathname(),'cmd') === false){
+		$vendor[] = str_replace('/','.',str_replace($dir,'',substr($f->getPathname(),0,-4)));
+	}
+}
+\ebi\Conf::set('ebi.Dt','use_vendor',$vendor);
+
+
 
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>['ebi.SmtpBlackholeDao'],

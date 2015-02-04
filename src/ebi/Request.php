@@ -272,7 +272,7 @@ class Request implements \IteratorAggregate{
 	 */
 	public function rm_vars(){
 		if(func_num_args() === 0){
-			$this->vars = array();
+			$this->vars = [];
 		}else{
 			foreach(func_get_args() as $n) unset($this->vars[$n]);
 		}

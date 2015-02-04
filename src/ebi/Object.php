@@ -5,7 +5,7 @@ namespace ebi;
  * @author tokushima
  */
 class Object implements \IteratorAggregate{
-	private static $_m = array();
+	private static $_m = [];
 	protected $_;
 
 	/**
@@ -26,7 +26,7 @@ class Object implements \IteratorAggregate{
 	 * @see IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
-		$r = array();
+		$r = [];
 		foreach(array_keys($this->props()) as $n){
 			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){
 				switch($this->prop_anon($n,'type')){
@@ -49,10 +49,16 @@ class Object implements \IteratorAggregate{
 	}
 	public function __call($n,$args){
 		if($n[0] != '_'){
-			list($c,$p) = (in_array($n,array_keys(get_object_vars($this)))) ? array((empty($args) ? 'get' : 'set'),$n) : (preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? array($m[1],$m[2]) : array(null,null));
+			list($c,$p) = (in_array($n,array_keys(get_object_vars($this)))) ? 
+							[(empty($args) ? 'get' : 'set'),$n] : 
+							(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
+								[$m[1],$m[2]] : 
+								[null,null]
+							);
+			
 			if(method_exists($this,$am=('___'.$c.'___'))){
 				$this->_ = $p;
-				return call_user_func_array(array($this,(method_exists($this,$m=('__'.$c.'_'.$p.'__')) ? $m : $am)),$args);
+				return call_user_func_array([$this,(method_exists($this,$m=('__'.$c.'_'.$p.'__')) ? $m : $am)],$args);
 			}
 		}
 		throw new \ErrorException(get_class($this).'::'.$n.' method not found');
@@ -69,7 +75,7 @@ class Object implements \IteratorAggregate{
 	 * @return mixed{}
 	 */
 	public function props($format=false){
-		$r = array();
+		$r = [];
 		foreach(array_keys(get_object_vars($this)) as $n){
 			if($n[0] != '_'){
 				$r[$n] = ($format) ? $this->{'fm_'.$n}() : $this->{$n}();
@@ -97,7 +103,7 @@ class Object implements \IteratorAggregate{
 			throw new \InvalidArgumentException('not permitted');
 		}
 		if($this->prop_anon($this->_,'attr') !== null){
-			return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? array() : array($this->{$this->_}));
+			return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? [] : [$this->{$this->_}]);
 		}
 		return $this->{$this->_};
 	}
@@ -130,7 +136,7 @@ class Object implements \IteratorAggregate{
 			$this->{$this->_} = null;
 		}else{
 			if(func_num_args() == 0){
-				$this->{$this->_} = array();
+				$this->{$this->_} = [];
 			}else{
 				foreach(func_get_args() as $k) unset($this->{$this->_}[$k]);
 			}
@@ -157,11 +163,12 @@ class Object implements \IteratorAggregate{
 	}
 	private function ___ar___($i=null,$j=null){
 		$v = $this->___get___();
-		$a = is_array($v) ? $v : (($v === null) ? array() : array($v));
+		$a = is_array($v) ? $v : (($v === null) ? [] : [$v]);
 		if(isset($i)){
 			$c = 0;
 			$l = ((isset($j) ? $j : sizeof($a)) + $i);
-			$r = array();
+			$r = [];
+			
 			foreach($a as $k => $p){
 				if($i <= $c && $l > $c) $r[$k] = $p;
 				$c++;

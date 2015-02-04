@@ -18,7 +18,7 @@ class Template{
 	private $selected_src;
 
 	private $secure = false;
-	private $vars = array();
+	private $vars = [];
 	private $put_block;
 	private $template_super;
 	private $media_url;
@@ -39,7 +39,7 @@ class Template{
 	}
 	public function rm_vars($k=null){
 		if($k === null){
-			$this->vars = array();
+			$this->vars = [];
 		}else if(isset($this->vars[$k])){
 			unset($this->vars[$k]);
 		}
@@ -180,8 +180,8 @@ class Template{
 		}
 		$src = str_replace('__PHP_ARROW__','->',$src);
 		$src = $this->parse_print_variable($src);
-		$php = array(' ?>','<?php ','->');
-		$str = array('__PHP_TAG_END__','__PHP_TAG_START__','__PHP_ARROW__');
+		$php = [' ?>','<?php ','->'];
+		$str = ['__PHP_TAG_END__','__PHP_TAG_START__','__PHP_ARROW__'];
 		$src = str_replace($php,$str,$src);
 		if($bool = $this->html_script_search($src,$keys,$tags)){
 			$src = str_replace($tags,$keys,$src);
@@ -191,7 +191,7 @@ class Template{
 			$src = str_replace($keys,$tags,$src);
 		}
 		$src = str_replace($str,$php,$src);
-		$src = str_replace(array('__ESC_DQ__','__ESC_SQ__','__ESC_DESC__'),array("\\\"","\\'","\\\\"),$src);
+		$src = str_replace(['__ESC_DQ__','__ESC_SQ__','__ESC_DESC__'],["\\\"","\\'","\\\\"],$src);
 		return $src;		
 	}
 	private function exec($_src_){
@@ -268,7 +268,7 @@ class Template{
 	}
 	private function read_src($filename,$name=null){
 		if(preg_match('/^(.*)#(.+)$/',$filename,$m)){
-			list($filename,$name) = array($m[1],$m[2]);
+			list($filename,$name) = [$m[1],$m[2]];
 		}
 		$src = file_get_contents($filename);
 		$src = (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename)) : $src;
@@ -283,7 +283,7 @@ class Template{
 	private function rtblock($src,$filename){
 		if(strpos($src,'rt:block') !== false || strpos($src,'rt:extends') !== false){
 			$base_filename = $filename;
-			$blocks = $paths = $blockvars = array();
+			$blocks = $paths = $blockvars = [];
 			try{
 				while(true){
 					$e = \ebi\Xml::extract($this->rtcomment($src),'rt:extends');
@@ -448,7 +448,7 @@ class Template{
 		return $src;
 	}
 	private function html_script_search($src,&$keys,&$tags){
-		$keys = $tags = array();
+		$keys = $tags = [];
 		$uniq = uniqid('uniq');		
 		$i = 0;
 		
@@ -654,7 +654,7 @@ class Template{
 					.'isset(%s) && (%s === %s '
 										.' || (!is_array(%s) && ctype_digit((string)%s) && (string)%s === (string)%s)'
 										.' || ((%s === "true" || %s === "false") ? (%s === (%s == "true")) : false)'
-										.' || in_array(%s,((is_array(%s)) ? %s : (is_null(%s) ? array() : array(%s))),true) '
+										.' || in_array(%s,((is_array(%s)) ? %s : (is_null(%s) ? [] : [%s])),true) '
 									.') '
 					.'){ print(" %s=\"%s\""); } ?>' // no escape
 					,$name,$name,$value
@@ -666,7 +666,7 @@ class Template{
 	}
 	private function html_list($src){
 		if(preg_match_all('/<(table|ul|ol)\s[^>]*rt\:/i',$src,$m,PREG_OFFSET_CAPTURE)){
-			$tags = array();
+			$tags = [];
 			foreach($m[1] as $v){
 				try{
 					$tags[] = \ebi\Xml::extract(substr($src,$v[1]-1),$v[0]);

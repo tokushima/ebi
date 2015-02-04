@@ -18,7 +18,7 @@ class Db implements \Iterator{
 	 * コンストラクタ
 	 * @param string{} $def 接続情報の配列
 	 */
-	public function __construct(array $def=array()){
+	public function __construct(array $def=[]){
 		foreach(array('type','host','dbname','user','password','port','sock','encode','timezone') as $k){
 			${$k} = isset($def[$k]) ? $def[$k] : null;
 		}

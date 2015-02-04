@@ -70,6 +70,6 @@ eq("true",$tag->find_get("abc/def/ghi",2)->in_attr('ab'));
 
 eq('selected',$tag->find_get("abc/def/ghi")->in_attr('selected'));
 eq(null,$tag->find_get("abc/def/ghi",1)->in_attr('selected'));
-eq(array(),$tag->find_get("abc/def")->find('xyz'));
+eq([],$tag->find_get("abc/def")->find('xyz'));
 
 

@@ -31,10 +31,10 @@ class Q{
 	private $arg2;
 	private $type;
 	private $param;
-	private $and_block = array();
-	private $or_block = array();
+	private $and_block = [];
+	private $or_block = [];
 	private $paginator;
-	private $order_by = array();
+	private $order_by = [];
 
 	public function __construct($type=self::AND_BLOCK,$arg1=null,$arg2=null,$param=null){
 		if($type === self::AND_BLOCK){
@@ -56,23 +56,23 @@ class Q{
 		}
 	}
 	private function ar_value($v){
-		return is_array($v) ? $v : (($v === null) ? array() : array($v));
+		return is_array($v) ? $v : (($v === null) ? [] : [$v]);
 	}
 	public function ar_arg1(){
-		if(empty($this->arg1)) return array();
+		if(empty($this->arg1)) return [];
 		if(is_string($this->arg1)){
-			$result = array();
+			$result = [];
 			foreach(explode(',',$this->arg1) as $arg){
 				if(!empty($arg)) $result[] = $arg;
 			}
 			return $result;
 		}else if($this->arg1 instanceof \ebi\Column){
-			return array($this->arg1);
+			return [$this->arg1];
 		}
 		throw new \InvalidArgumentException('invalid arg1');
 	}
 	public function ar_arg2(){
-		return isset($this->arg2) ? $this->ar_value($this->arg2) : array(null);
+		return isset($this->arg2) ? $this->ar_value($this->arg2) : [null];
 	}
 	public function type(){
 		return $this->type;
@@ -276,7 +276,7 @@ class Q{
 	 */
 	public static function in($column_str,$words,$param=null){
 		try{
-			return new self(self::IN,$column_str,($words instanceof \ebi\Daq) ? $words : array(self::words_array($words)),$param);
+			return new self(self::IN,$column_str,($words instanceof \ebi\Daq) ? $words : [self::words_array($words)],$param);
 		}catch(\InvalidArgumentException $e){
 			return new self();
 		}
@@ -284,7 +284,7 @@ class Q{
 	private static function words_array($words){
 		if($words === '' || $words === null) throw new \InvalidArgumentException();
 		if(is_array($words)){
-			$result = array();
+			$result = [];
 			foreach($words as $w){
 				$w = (string)$w;
 				if($w !== '') $result[] = $w;
@@ -292,7 +292,7 @@ class Q{
 			if(empty($result)) throw new \InvalidArgumentException();
 			return $result;
 		}
-		return array($words);
+		return [$words];
 	}
 	/**
 	 * ソート順を指定する

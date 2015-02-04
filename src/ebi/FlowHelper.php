@@ -9,8 +9,8 @@ class FlowHelper{
 	private $media_url;
 	private $name;
 	
-	private $url_pattern = array();
-	private $selected_class_pattern = array();
+	private $url_pattern = [];
+	private $selected_class_pattern = [];
 	
 	private $is_login = false;
 	private $user;
@@ -20,7 +20,7 @@ class FlowHelper{
 	 * @param string $app_url
 	 * @param string $media_url
 	 */
-	public function __construct($app_url=null,$media_url=null,$url_pattern=array(),$selected_pattern=array(),$selected_class_pattern=array(),$obj=null){
+	public function __construct($app_url=null,$media_url=null,$url_pattern=[],$selected_pattern=[],$selected_class_pattern=[],$obj=null){
 		$this->app_url = $app_url;
 		$this->media_url = $media_url;
 		$this->name = isset($selected_pattern['name']) ? $selected_pattern['name'] : null;

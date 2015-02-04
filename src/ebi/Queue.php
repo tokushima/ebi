@@ -40,7 +40,7 @@ class Queue{
 	 * @param integer $priority
 	 */
 	public static function gets($limit,$type,$priority=1){
-		$result = array();
+		$result = [];
 		while(true){
 			try{
 				if($limit <= 0) break;
@@ -91,12 +91,12 @@ class Queue{
 		$paginator = new \ebi\Paginator($paginate_by,$page);
 		if(empty($order)) $order = 'id';
 		$sorter = \ebi\Sorter::order($order,$pre_order);
-		$list = array();
+		$list = [];
 		if(static::has_class_plugin('view')){
 			$list = static::call_class_plugin_funcs('view',$type,$paginator,$sorter);
 		}
-		$paginator->cp(array('type'=>$type,'order'=>$sorter));
-		return array($list,$paginator,$sorter);
+		$paginator->cp(['type'=>$type,'order'=>$sorter]);
+		return [$list,$paginator,$sorter];
 	}
 	/**
 	 * 終了したものを削除する

@@ -84,7 +84,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 				default: throw new exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
-		$columndef = $primary = array();
+		$columndef = $primary = [];
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
 		foreach(array_keys($dao->props()) as $prop_name){
 			$type = $dao->prop_anon($prop_name,'type');
@@ -108,7 +108,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 				;
 	}
 	public function create_sql(\ebi\Dao $dao){
-		$insert = $vars = array();
+		$insert = $vars = [];
 		$autoid = null;
 		foreach($dao->columns(true) as $column){
 			if(!$column->auto()){

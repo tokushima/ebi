@@ -33,12 +33,12 @@ class Session{
 			if(static::has_class_plugin('session_read')){
 				ini_set('session.save_handler','user');
 				session_set_save_handler(
-					array($this,'open'),
-					array($this,'close'),
-					array($this,'read'),
-					array($this,'write'),
-					array($this,'destroy'),
-					array($this,'gc')
+					[$this,'open'],
+					[$this,'close'],
+					[$this,'read'],
+					[$this,'write'],
+					[$this,'destroy'],
+					[$this,'gc']
 				);
 				if(isset($this->vars[$session_name])){
 					session_regenerate_id(true);
@@ -46,7 +46,9 @@ class Session{
 			}
 			session_start();
 			register_shutdown_function(function(){
-				if('' != session_id()) session_write_close();
+				if('' != session_id()){
+					session_write_close();
+				}
 			});
 		}
 	}
@@ -121,7 +123,7 @@ class Session{
 	 * @return array
 	 */
 	public function ar_vars(){
-		return isset($_SESSION[$this->ses_n]) ? $_SESSION[$this->ses_n] : array();
+		return isset($_SESSION[$this->ses_n]) ? $_SESSION[$this->ses_n] : [];
 	}
 	/**
 	 * キーが存在するか

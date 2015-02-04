@@ -48,11 +48,15 @@ class Command{
 	public function open($command,$out_file=null,$error_file=null){
 		$this->close();
 
-		if(!empty($out_file)) file_put_contents($out_file);
-		if(!empty($error_file)) file_put_contents($error_file);
-		$out = (empty($out_file)) ? array('pipe','w') : array('file',$out_file,'w');
-		$err = (empty($error_file)) ? array('pipe','w') : array('file',$error_file,'w');
-		$this->proc = proc_open($command,array(array('pipe','r'),$out,$err),$this->resource);
+		if(!empty($out_file)){
+			file_put_contents($out_file);
+		}
+		if(!empty($error_file)){
+			file_put_contents($error_file);
+		}
+		$out = (empty($out_file)) ? ['pipe','w'] : ['file',$out_file,'w'];
+		$err = (empty($error_file)) ? ['pipe','w'] : ['file',$error_file,'w'];
+		$this->proc = proc_open($command,[['pipe','r'],$out,$err],$this->resource);
 		$this->close = false;
 	}
 	/**
@@ -139,7 +143,7 @@ class Command{
 	 * @param boolean $invisible 入力を非表示にする(Windowsでは非表示になりません)
 	 * @return string
 	 */
-	public static function stdin($msg,$default=null,$choice=array(),$multiline=false,$invisible=false){
+	public static function stdin($msg,$default=null,$choice=[],$multiline=false,$invisible=false){
 		$result = null;
 		print($msg.(empty($choice) ? '' : ' ('.implode(' / ',$choice).')').(empty($default) ? '' : ' ['.$default.']').': ');
 		if($invisible && substr(PHP_OS,0,3) != 'WIN') `tty -s && stty -echo`;
@@ -163,7 +167,7 @@ class Command{
 	 * @param boolean $multiline 複数行の入力をまつ、終了は行頭.(ドット)
 	 * @return string
 	 */
-	public static function stdin_invisible($msg,$default=null,$choice=array(),$multiline=false){
+	public static function stdin_invisible($msg,$default=null,$choice=[],$multiline=false){
 		return self::stdin($msg,$default,$choice,$multiline,true);
 	}
 }

@@ -32,6 +32,7 @@ class Man{
 		}
 		$traits = [];
 		$parent = new \ReflectionClass($r->getName());
+		
 		while(true){
 			$traits = array_merge($traits,$parent->getTraitNames());
 			if(($parent = $parent->getParentClass()) === false){
@@ -40,26 +41,34 @@ class Man{
 		}		
 		
 		$src = self::get_reflection_source($r);
-		$document = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$r->getDocComment())));
+		$document = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$r->getDocComment())));
 		$extends = ($r->getParentClass() === false) ? null : $r->getParentClass()->getName();
 		$updated = filemtime($r->getFilename());
 		
 		if(basename($r->getFilename(),'.php') === basename(dirname($r->getFilename()))){
-			foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname($r->getFilename()),\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS)) as $f){
-				if(($u = filemtime($f->getPathname())) > $updated) $updated = $u;
+			foreach(\ebi\Util::ls(dirname($r->getFilename())) as $f){
+				if(($u = filemtime($f->getPathname())) > $updated){
+					$updated = $u;
+				}
 			}
 		}
-		$methods = $static_methods = $protected_methods = $protected_static_methods = array(array(),array());
-		$plugin_method = array();
+		$methods = $static_methods = $protected_methods = $protected_static_methods = [[],[]];
+		$plugin_method = [];
+		
 		foreach($r->getMethods() as $method){
 			if(substr($method->getName(),0,1) != '_' && ($method->isPublic() || $method->isProtected())){
-				$method_document = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$method->getDocComment()));
+				$method_document = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$method->getDocComment()));
 				list($method_description) = explode("\n",trim(preg_replace('/@.+/','',$method_document)));
+				
 				if(strpos($method_description,'non-PHPdoc') !== false){
 					if(preg_match("/@see\s+(.*)/",$method_document,$match)){
 						$method_description = str_replace("\\",'.',trim($match[1]));
-						if(preg_match("/^.+\/([^\/]+)$/",$method_description,$m)) $method_description = trim($m[1]);
-						if(substr($method_description,0,1) == '.') $method_description = substr($method_description,1);
+						if(preg_match("/^.+\/([^\/]+)$/",$method_description,$m)){
+							$method_description = trim($m[1]);
+						}
+						if(substr($method_description,0,1) == '.'){
+							$method_description = substr($method_description,1);
+						}
 						if(strpos($method_description,'::') !== false){
 							list($c,$m) = explode('::',str_replace(array('(',')'),'',$method_description));
 							try{
@@ -116,20 +125,20 @@ class Man{
 		if(in_array('ebi\\Plugin',$traits)){
 			$added_plugins = call_user_func([$r->getName(),'added_class_plugin_funcs']);
 		}
-
-		$conf = self::get_conf_list($r,$src);
-		
+		$conf = self::get_conf_list($r,$src);		
 		$properties = [];
 		$anon = \ebi\Annotation::decode(str_replace(array('.','/'),array('\\','\\'),$class),'param',$r->getNamespaceName());
+		
 		foreach($r->getProperties() as $prop){
 			if(!$prop->isPrivate()){
 				$name = $prop->getName();
+				
 				if($name[0] != '_' && !$prop->isStatic()){
-					$properties[$name] = array(
-											(isset($anon[$name]['type']) ? self::type($anon[$name]['type'],$class) : 'mixed')
-											,(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null)
-											,!(isset($anon[$name]['hash']) && $anon[$name]['hash'] === false)
-										);
+					$properties[$name] = [
+						(isset($anon[$name]['type']) ? self::type($anon[$name]['type'],$class) : 'mixed')
+						,(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null)
+						,!(isset($anon[$name]['hash']) && $anon[$name]['hash'] === false)
+					];
 				}
 			}
 		}
@@ -145,16 +154,16 @@ class Man{
 		ksort($properties);
 		ksort($plugins);
 		
-		return array(
-				'filename'=>$r->getFileName(),'extends'=>$extends,'abstract'=>$r->isAbstract(),'version'=>date('Ymd',$updated)
-				,'static_methods'=>$static_methods[0],'methods'=>$methods[0],'protected_static_methods'=>$protected_static_methods[0],'protected_methods'=>$protected_methods[0]
-				,'inherited_static_methods'=>$static_methods[1],'inherited_methods'=>$methods[1],'inherited_protected_static_methods'=>$protected_static_methods[1],'inherited_protected_methods'=>$protected_methods[1]
-				,'plugin_method'=>$plugin_method
-				,'properties'=>$properties,'package'=>$class,'description'=>$description
-				,'plugins'=>$plugins
-				,'added_plugins'=>$added_plugins
-				,'conf_list'=>$conf
-				);
+		return [
+			'filename'=>$r->getFileName(),'extends'=>$extends,'abstract'=>$r->isAbstract(),'version'=>date('Ymd',$updated)
+			,'static_methods'=>$static_methods[0],'methods'=>$methods[0],'protected_static_methods'=>$protected_static_methods[0],'protected_methods'=>$protected_methods[0]
+			,'inherited_static_methods'=>$static_methods[1],'inherited_methods'=>$methods[1],'inherited_protected_static_methods'=>$protected_static_methods[1],'inherited_protected_methods'=>$protected_methods[1]
+			,'plugin_method'=>$plugin_method
+			,'properties'=>$properties,'package'=>$class,'description'=>$description
+			,'plugins'=>$plugins
+			,'added_plugins'=>$added_plugins
+			,'conf_list'=>$conf
+		];
 	}
 	/**
 	 * クラスドメソッドのキュメント
@@ -164,7 +173,7 @@ class Man{
 	 */
 	public static function method_info($class,$method,$deep=false){
 		$ref = new \ReflectionMethod(str_replace(array('.','/'),array('\\','\\'),$class),$method);
-		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws =array();
+		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws =[];
 		$document = $src = null;
 		$deprecated = false;
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
@@ -174,21 +183,21 @@ class Man{
 			$document = self::method_doc($ref);
 			$deprecated = (strpos($ref->getDocComment(),'@deprecated') !== false);
 			$use_method_list = ($deep) ? self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) :
-											array($ref->getDeclaringClass().'::'.$method);
+											[$ref->getDeclaringClass().'::'.$method];
 			
 			if(preg_match("/@return\s+([^\s]+)(.*)/",$document,$match)){
 				// type, summary
-				$return = array(self::type(trim($match[1]),$class),trim($match[2]));
+				$return = [self::type(trim($match[1]),$class),trim($match[2])];
 			}
 			foreach($ref->getParameters() as $p){
-				$params[$p->getName()] = array(
-								// type, is_ref, has_default, default, summary
-								'mixed'
-								,$p->isPassedByReference()
-								,$p->isDefaultValueAvailable()
-								,($p->isDefaultValueAvailable() ? $p->getDefaultValue() : null)
-								,null
-							);
+				$params[$p->getName()] = [
+					// type, is_ref, has_default, default, summary
+					'mixed'
+					,$p->isPassedByReference()
+					,$p->isDefaultValueAvailable()
+					,($p->isDefaultValueAvailable() ? $p->getDefaultValue() : null)
+					,null
+				];
 			}
 			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$document,$match)){
 				foreach($match[0] as $k => $v){
@@ -200,20 +209,27 @@ class Man{
 			}
 			if(preg_match_all('/->in_vars\((["\'])(.+?)\\1/',$src,$match)){
 				foreach($match[2] as $n){
-					$request[$n] = array("mixed",null);
-					if($is_request_flow) $context[$n] = $request[$n];
+					$request[$n] = ['mixed',null];
+					
+					if($is_request_flow){
+						$context[$n] = $request[$n];
+					}
 				}
 			}
 			if($is_request_flow && preg_match_all('/\$this->rm_vars\((["\'])(.+?)\\1/',$src,$match)){
 				foreach($match[2] as $n){
-					if(isset($context[$n])) unset($context[$n]);
+					if(isset($context[$n])){
+						unset($context[$n]);
+					}
 				}
 			}
 			if($is_request_flow && strpos($src,'$this->rm_vars()') !== false){
-				$context = array();
+				$context = [];
 			}
 			if(preg_match_all('/\$this->vars\((["\'])(.+?)\\1/',$src,$match)){				
-				foreach($match[2] as $n) $context[$n] = array("mixed",null);
+				foreach($match[2] as $n){
+					$context[$n] = ['mixed',null];
+				}
 			}
 			if(preg_match_all("/@request\s+([^\s]+)\s+\\$(\w+)(.*)/",$document,$match)){
 				foreach($match[0] as $k => $v){
@@ -234,7 +250,9 @@ class Man{
 				}
 			}
 			if(preg_match_all('/\$this->(map_arg)\((["\'])(.+?)\\2/',$src,$match)){
-				foreach($match[3] as $n) $args[$n] = '';
+				foreach($match[3] as $n){
+					$args[$n] = '';
+				}
 			}
 			if(preg_match_all("/@arg\s+([^\s]+)\s+\\$(\w+)(.*)/",$document,$match)){
 				foreach($match[0] as $k => $v){
@@ -255,7 +273,7 @@ class Man{
 							if(preg_match("/([\"\'])(.+)\\1/",$match[2][$k],$m)){
 								$match[2][$k] = $m[2];
 							}
-							$throws[$n] = array($n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k])));
+							$throws[$n] = [$n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k]))];
 						}
 					}
 					if(preg_match_all("/\\\\ebi\\\\Exceptions::add\(\s*new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
@@ -263,12 +281,12 @@ class Man{
 							if(preg_match("/([\"\'])(.+)\\1/",$match[2][$k],$m)){
 								$match[2][$k] = $m[2];
 							}
-							$throws[$n] = array($n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k])));
+							$throws[$n] = [$n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k]))];
 						}
 					}
 					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$match)){
 						foreach($match[1] as $k => $n){
-							$throws[$n] = array($n,trim($match[2][$k]));
+							$throws[$n] = [$n,trim($match[2][$k])];
 						}
 					}
 				}catch(\ReflectionException $e){
@@ -305,12 +323,12 @@ class Man{
 			}
 		}
 		$description = trim(preg_replace('/@.+/','',$document));
-		return array(
-				'package'=>$class,'method_name'=>$method,'params'=>$params,'request'=>$request,'context'=>$context
-				,'args'=>$args,'return'=>$return,'description'=>$description,'throws'=>$throws
-				,'is_post'=>((strpos($src,'$this->is_post()') !== false) && (strpos($src,'!$this->is_post()') === false))
-				,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
-				);
+		return [
+			'package'=>$class,'method_name'=>$method,'params'=>$params,'request'=>$request,'context'=>$context
+			,'args'=>$args,'return'=>$return,'description'=>$description,'throws'=>$throws
+			,'is_post'=>((strpos($src,'$this->is_post()') !== false) && (strpos($src,'!$this->is_post()') === false))
+			,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
+		];
 	}
 	private static function type($type,$class){
 		if($type == 'self' || $type == '$this') $type = $class;
@@ -319,7 +337,7 @@ class Man{
 		return $type;
 	}
 	private static function	get_desc(&$arr,$match,$k,$name,$src,$class){
-		if(!isset($arr[$name])) $arr[$name] = array(null,array(),array());
+		if(!isset($arr[$name])) $arr[$name] = [null,[],[]];
 		$doc = substr($src,0,$match[0][$k][1]);
 		$doc = trim(substr($doc,0,strrpos($doc,"\n")));
 		if(substr($doc,-2) == '*'.'/'){
@@ -346,19 +364,19 @@ class Man{
 	private static function method_doc(\ReflectionMethod $ref){
 		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$ref->getDocComment())));
 	}
-	private static function use_method_list($class,$method,&$loaded_method_src=array()){
-		$list = array();
+	private static function use_method_list($class,$method,&$loaded_method_src=[]){
+		$list = [];
 	
 		try{
 			$ref = new \ReflectionMethod($class,$method);
 			$kname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
-			if(isset($loaded_method_src[$kname])) return array();
+			if(isset($loaded_method_src[$kname])) return [];
 			$loaded_method_src[$kname] = true;
 			$list[$kname] = true;
 	
 			if(is_file($ref->getDeclaringClass()->getFileName())){
 				$src = self::method_src($ref);
-				$vars = array('$this'=>$class);
+				$vars = ['$this'=>$class];
 	
 				if(preg_match_all('/(\$\w+)\s*=\s*new\s+([\\\\\w]+)/',$src,$m)){
 					foreach($m[1] as $k => $v){

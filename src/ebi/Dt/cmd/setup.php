@@ -18,7 +18,7 @@ $copy = function($file,$path){
 $appmode = defined('APPMODE') ? constant('APPMODE') : null;
 $cmddir = defined('COMMONDIR') ? constant('COMMONDIR') : (getcwd().'/commons');
 
-$mode_list = array();
+$mode_list = [];
 if(is_dir($cmddir)){
 	foreach(new \RecursiveDirectoryIterator($cmddir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS) as $f){
 		if(substr($f->getFilename(),-4) == '.php'){

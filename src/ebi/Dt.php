@@ -90,14 +90,14 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
-		return array('map_list'=>$this->get_flow_output_maps());
+		return ['map_list'=>$this->get_flow_output_maps()];
 	}
 	/**
 	 * ライブラリの一覧
 	 * @automap
 	 */
 	public function class_list(){
-		$libs = array();
+		$libs = [];
 		foreach(self::classes() as $info){
 			$r = new \ReflectionClass($info['class']);
 			$class_doc = $r->getDocComment();
@@ -179,7 +179,7 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
-		$errors = $error_query = $model_list = $con = array();
+		$errors = $error_query = $model_list = $con = [];
 		
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$class = $class_info['class'];
@@ -257,7 +257,7 @@ class Dt{
 				}
 			}
 		}
-		$object_list = array();
+		$object_list = [];
 		$paginator = new \ebi\Paginator(20,$req->in_vars('page',1));
 		$paginator->cp(array('order'=>$order));
 		
@@ -376,7 +376,7 @@ class Dt{
 		while(!isset($connections[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
 		if(empty($conf)){
 			if(!isset($connections['*'])) throw new \RuntimeException(get_class($package).' connection not found');
-			$conf = array('*');
+			$conf = ['*'];
 		}
 		$conf = implode('.',$conf);
 		foreach($connections as $k => $con){
@@ -390,7 +390,7 @@ class Dt{
 	 */
 	public function do_sql($package){
 		$req = new \ebi\Request();
-		$result_list = $keys = array();
+		$result_list = $keys = [];
 		$sql = $req->in_vars('sql');
 		$count = 0;
 
@@ -404,7 +404,7 @@ class Dt{
 			$req->vars('sql',$sql);
 		}
 		if($req->is_post() && !empty($sql)){
-			$excute_sql = array();
+			$excute_sql = [];
 			$sql = str_replace(array('\\r\\n','\\r','\\n','\;'),array("\n","\n","\n",'{SEMICOLON}'),$sql);
 			foreach(explode(';',$sql) as $q){
 				$q = trim(str_replace('{SEMICOLON}',';',$q));
@@ -435,7 +435,7 @@ class Dt{
 	public static function get_urls($dir=null){
 		if(empty($dir)) $dir = getcwd();
 		
-		$urls = array();
+		$urls = [];
 		foreach(new \RecursiveDirectoryIterator(
 				$dir,
 				\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
@@ -548,8 +548,8 @@ class Dt{
 	 * @throws \Exception
 	 */
 	public static function create_table($drop=false){
-		$model_list = array();
-		$result = array();
+		$model_list = [];
+		$result = [];
 	
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$r = new \ReflectionClass($class_info['class']);
@@ -561,7 +561,7 @@ class Dt{
 			$r = new \ReflectionClass($class);
 			
 			if($drop && call_user_func([$class,'drop_table'])){
-				$result[] = array(-1,$class);
+				$result[] = [-1,$class];
 			}
 			if(call_user_func([$class,'create_table'])){
 				$result[] = [1,$class];

@@ -91,7 +91,7 @@ class Util{
 		if(is_writable($source)){
 			if(is_dir($source)){
 				if($handle = opendir($source)){
-					$list = array();
+					$list = [];
 					while($pointer = readdir($handle)){
 						if($pointer != '.' && $pointer != '..') $list[] = sprintf('%s/%s',$source,$pointer);
 					}
@@ -190,7 +190,14 @@ class Util{
 		}else if($b[0] == '/'){
 			return $b;
 		}
-		$p = array(array('://','/./','//'),array('#R#','/','/'),array("/^\/(.+)$/","/^(\w):\/(.+)$/"),array("#T#\\1","\\1#W#\\2",''),array('#R#','#T#','#W#'),array('://','/',':/'));
+		$p = [
+			['://','/./','//'],
+			['#R#','/','/'],
+			["/^\/(.+)$/","/^(\w):\/(.+)$/"],
+			["#T#\\1","\\1#W#\\2",''],
+			['#R#','#T#','#W#'],
+			['://','/',':/']
+		];
 		$a = preg_replace($p[2],$p[3],str_replace($p[0],$p[1],$a));
 		$b = preg_replace($p[2],$p[3],str_replace($p[0],$p[1],$b));
 		$d = $t = $r = '';

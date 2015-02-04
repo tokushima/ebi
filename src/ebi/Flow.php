@@ -12,7 +12,7 @@ class Flow{
 	private $media_url;
 	private $template_path;
 	private $apps_path;
-	private $package_media_url = 'package/resources/media';	
+	private $package_media_url = 'package/resources/media';
 	
 	private $url_pattern = [];
 	private $selected_class_pattern = [];
@@ -65,7 +65,7 @@ class Flow{
 		$this->terminate();
 		exit;
 	}
-	private function redirect($url,$args=array()){
+	private function redirect($url,$args=[]){
 		$this->terminate();
 		if(is_array($url)){
 			$tmp = array_shift($url);
@@ -194,7 +194,7 @@ class Flow{
 			exit;
 		}
 		foreach(self::$map['patterns'] as $k => $pattern){
-			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(array('\/','/','@#S'),array('@#S','\/','\/'),$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
+			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(isset($pattern['mode']) && !empty($pattern['mode'])){
 					$mode = \ebi\Conf::appmode();
 					$mode_alias = \ebi\Conf::get('mode');
@@ -203,7 +203,7 @@ class Flow{
 						foreach((
 								(substr(trim($m),0,1) == '@' && isset($mode_alias[substr(trim($m),1)])) ?
 								explode(',',$mode_alias[substr(trim($m),1)]) :
-								array($m)
+								[$m]
 						) as $me){
 							if($mode == trim($me)){
 								$bool = true;
@@ -363,13 +363,13 @@ class Flow{
 						$to_array = function($value) use(&$to_array){
 							switch(gettype($value)){
 								case 'array':
-									$list = array();
+									$list = [];
 									foreach($value as $k => $v){
 										$list[$k] = $to_array($v);
 									}
 									return $list;
 								case 'object':
-									$list = array();
+									$list = [];
 									foreach((($value instanceof \Traversable) ? $value : get_object_vars($value)) as $k => $v){
 										$list[$k] = $to_array($v);
 									}
@@ -388,14 +388,16 @@ class Flow{
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
 					
-					if(($level = \ebi\Conf::get('exception_log_level')) !== null && in_array($level,array('error','warn','info','debug'))){
-						$es = ($e instanceof \ebi\Exceptions) ? $e : array($e);
+					if(($level = \ebi\Conf::get('exception_log_level')) !== null && in_array($level,['error','warn','info','debug'])){
+						$es = ($e instanceof \ebi\Exceptions) ? $e : [$e];
 						$ignore = \ebi\Conf::get('exception_log_ignore');
 						foreach($es as $ev){
 							$in = true;
 							if(!empty($ignore)){
-								foreach((is_array($ignore) ? $ignore : array($ignore)) as $p){
-									if(($in = !(preg_match('/'.str_replace('/','\\/',$p).'/',(string)$ev))) === false) break;
+								foreach((is_array($ignore) ? $ignore : [$ignore]) as $p){
+									if(($in = !(preg_match('/'.str_replace('/','\\/',$p).'/',(string)$ev))) === false){
+										break;
+									}
 								}
 							}
 							if($in){
@@ -490,11 +492,11 @@ class Flow{
 							$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
 							
 							for($i=0;$i<=$m->getNumberOfParameters()-$m->getNumberOfRequiredParameters();$i++){
-								$result[$murl.$suffix] = array(
+								$result[$murl.$suffix] = [
 									'name'=>$name.'/'.$base_name
 									,'action'=>$class.'::'.$m->getName()
 									,'@'=>$d
-								);
+								];
 								if(!empty($auto_anon)){
 									$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
 								}
@@ -600,7 +602,7 @@ class Flow{
 					(($conf_secure && $map_secure === true) ? $https : $http),
 					(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
 			);
-			return [str_replace(array('\\\\','\\.','_ESC_'),array('_ESC_','.','\\'),$format),$num];
+			return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
 		};
 		$pattern_id = 1;
 		foreach($patterns as $k => $v){

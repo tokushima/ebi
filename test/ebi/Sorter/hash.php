@@ -1,6 +1,6 @@
 <?php
 
-$o = array();
+$o = [];
 $o[] = array("id"=>1,"abc"=>1);
 $o[] = array("id"=>2,"abc"=>3);
 $o[] = array("id"=>3,"abc"=>2);
@@ -10,7 +10,7 @@ eq(2,$o[0]["id"]);
 eq(3,$o[1]["id"]);
 eq(1,$o[2]["id"]);
 
-$objects = array();
+$objects = [];
 $obj["id"] = 1;
 $obj["abc"] = 1;
 $objects[] = $obj;

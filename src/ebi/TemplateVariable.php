@@ -17,7 +17,7 @@ trait TemplateVariable{
 		print($v);
 	}
 	protected function default_vars(){
-		return array('_t_'=>new self());
+		return ['_t_'=>new self()];
 	}
 	protected function parse_print_variable($src){
 		foreach($this->match_variable($src) as $variable){
@@ -53,7 +53,7 @@ trait TemplateVariable{
 		.'<?php }catch(\Exception $e){ if(!isset($_nes_) && $_display_exception_){ $_t_->print_variable($e->getMessage()); } } ?>';
 	}
 	protected function match_variable($src){
-		$hash = array();
+		$hash = [];
 		while(preg_match("/({(\\$[\$\w][^\t]*)})/s",$src,$vars,PREG_OFFSET_CAPTURE)){
 			list($value,$pos) = $vars[1];
 			if($value == '') break;

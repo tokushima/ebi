@@ -76,7 +76,7 @@ class Dao{
 	 * @param integer $priority
 	 */
 	public function reset($type,$lock_time){
-		$result = array();
+		$result = [];
 		foreach(\ebi\queue\plugin\Dao\QueueDao::find(
 				Q::eq('fin',null)
 				,Q::eq('type',$type)
@@ -104,7 +104,7 @@ class Dao{
 		$q = new Q();
 		$q->add(Q::eq('fin',null));
 		if(!empty($type)) $q->add(Q::eq('type',$type));
-		$result = array();
+		$result = [];
 		foreach(\ebi\queue\plugin\Dao\QueueDao::find($q,$paginator,Q::order($sorter)) as $m){
 			$result[] = $m->get();
 		}

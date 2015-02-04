@@ -6,7 +6,7 @@ namespace ebi;
  */
 class Paginator implements \IteratorAggregate{
 	private $query_name = 'page';
-	private $vars = array();
+	private $vars = [];
 	private $current;
 	private $offset;
 	private $limit;
@@ -14,18 +14,18 @@ class Paginator implements \IteratorAggregate{
 	private $total;
 	private $first;
 	private $last;
-	private $contents = array();
+	private $contents = [];
 	private $dynamic = false;
-	private $tmp = array(null,null,array(),null,false);
+	private $tmp = [null,null,[],null,false];
 
 	public function getIterator(){
-		return new \ArrayIterator(array(
-						'current'=>$this->current()
-						,'limit'=>$this->limit()
-						,'offset'=>$this->offset()
-						,'total'=>$this->total()
-						,'order'=>$this->order()
-				));
+		return new \ArrayIterator([
+			'current'=>$this->current()
+			,'limit'=>$this->limit()
+			,'offset'=>$this->offset()
+			,'total'=>$this->total()
+			,'order'=>$this->order()
+		]);
 	}
 	/**
 	 * pageを表すクエリの名前
@@ -33,7 +33,9 @@ class Paginator implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function query_name($name=null){
-		if(isset($name)) $this->query_name = $name;
+		if(isset($name)){
+			$this->query_name = $name;
+		}
 		return (empty($this->query_name)) ? 'page' : $this->query_name;
 	}
 	/**
@@ -334,9 +336,13 @@ class Paginator implements \IteratorAggregate{
 	 * @return integer[]
 	 */
 	public function range($counter=10){
-		if($this->dynamic) return array();
-		if($this->which_last($counter) > 0) return range((int)$this->which_first($counter),(int)$this->which_last($counter));
-		return array(1);
+		if($this->dynamic){
+			return [];
+		}
+		if($this->which_last($counter) > 0){
+			return range((int)$this->which_first($counter),(int)$this->which_last($counter));
+		}
+		return [1];
 	}
 	/**
 	 * rangeが存在するか

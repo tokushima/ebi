@@ -54,7 +54,7 @@ eq($result,$t->get($src));
 $src = '<rt:if param="abc">aa<rt:else />bb</rt:if>';
 $result = 'bb';
 $t = new \ebi\Template();
-$t->vars("abc",array());
+$t->vars("abc",[]);
 eq($result,$t->get($src));
 
 $src = '<rt:if param="abc">aa<rt:else />bb</rt:if>';

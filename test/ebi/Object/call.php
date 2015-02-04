@@ -11,7 +11,7 @@ $hoge->rm_aaa();
 eq(false,$hoge->is_aaa());
 eq(null,$hoge->aaa());
 
-eq(array(),$hoge->bbb());
+eq([],$hoge->bbb());
 $hoge->bbb("123");
 eq(array(123),$hoge->bbb());
 $hoge->bbb(456);
@@ -24,9 +24,9 @@ eq(array(123,456,789,10),$hoge->bbb());
 eq(array(1=>456,2=>789),$hoge->ar_bbb(1,2));
 eq(array(1=>456,2=>789,3=>10),$hoge->ar_bbb(1));
 $hoge->rm_bbb();
-eq(array(),$hoge->bbb());
+eq([],$hoge->bbb());
 
-eq(array(),$hoge->ccc());
+eq([],$hoge->ccc());
 eq(false,$hoge->is_ccc());
 $hoge->ccc("AaA");
 eq(array("AaA"=>"AaA"),$hoge->ccc());
@@ -45,7 +45,7 @@ eq(array("123"=>"123"),$hoge->ar_ccc(1,1));
 $hoge->rm_ccc("AaA","ddd");
 eq(array("123"=>"123"),$hoge->ccc());
 $hoge->rm_ccc();
-eq(array(),$hoge->ccc());
+eq([],$hoge->ccc());
 $hoge->ccc("abc","def");
 eq(array("abc"=>"def"),$hoge->ccc());
 

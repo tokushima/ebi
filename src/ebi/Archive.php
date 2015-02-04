@@ -6,7 +6,7 @@ namespace ebi;
  */
 class Archive{
 	private $base_dir;
-	private $tree = array(5=>array(),0=>array());
+	private $tree = [5=>[],0=>[]];
 
 	public function __construct($dir=null){
 		if(isset($dir) &&  is_dir($dir)){
@@ -135,7 +135,7 @@ class Archive{
 		return $source;		
 	}
 	private function dirs($dir){
-		$list = array(5=>array(),0=>array());
+		$list = [5=>[],0=>[]];
 		if($h = opendir($dir)){
 			while($p = readdir($h)){
 				if($p != '.' && $p != '..'){

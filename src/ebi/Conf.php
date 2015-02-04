@@ -65,9 +65,13 @@ class Conf{
 		}
 		$result = self::exists($class,$key) ? self::$value[$class][$key] : $default;
 		if(is_array($return_vars)){
-			if(empty($return_vars) && !is_array($result)) return array($result);
-			$result_vars = array();
-			foreach($return_vars as $var_name) $result_vars[] = isset($result[$var_name]) ? $result[$var_name] : null;
+			if(empty($return_vars) && !is_array($result)){
+				return [$result];
+			}
+			$result_vars = [];
+			foreach($return_vars as $var_name){
+				$result_vars[] = isset($result[$var_name]) ? $result[$var_name] : null;
+			}
 			return $result_vars;
 		}
 		return $result;

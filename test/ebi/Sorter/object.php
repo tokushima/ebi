@@ -1,6 +1,6 @@
 <?php
 
-$o = array();
+$o = [];
 $o[] = (object)array("id"=>1,"abc"=>1);
 $o[] = (object)array("id"=>2,"abc"=>3);
 $o[] = (object)array("id"=>3,"abc"=>2);
@@ -11,7 +11,7 @@ eq(3,$o[1]->id);
 eq(1,$o[2]->id);
 
 
-$objects = array();
+$objects = [];
 $obj = new \ebi\Object();
 $obj->id = 1;
 $obj->abc = 1;

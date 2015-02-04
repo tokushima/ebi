@@ -7,7 +7,7 @@ namespace ebi;
 abstract class Dao extends \ebi\Object{
 	use \ebi\Plugin;
 	
-	private static $_dao_ = array();
+	private static $_dao_ = [];
 	private static $_cnt_ = 0;	
 
 	private $_has_hierarchy_ = 1;
@@ -209,7 +209,7 @@ abstract class Dao extends \ebi\Object{
 				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
 				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
 					list(,$self_var,$conds_string,$has_var) = $match;
-					$conds = array();
+					$conds = [];
 					$ref_table = $ref_table_alias = null;
 					if(!empty($conds_string)){
 						foreach(explode(',',$conds_string) as $cond){
@@ -241,7 +241,7 @@ abstract class Dao extends \ebi\Object{
 							throw new \LogicException('annotation error : `'.$name.'`');
 						}
 						$dao = new $column_type(array('_class_id_'=>$p.'___'.self::$_cnt_++));
-						$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
+						$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
 					}else{
 						if($is_has){
 							if(empty($has_var)){
@@ -250,7 +250,7 @@ abstract class Dao extends \ebi\Object{
 							$dao = new $column_type(array('_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy));
 							$this->{$name}($dao);
 
-							$_has_many_conds_[$name] = array($dao,$has_var,$self_var);
+							$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
 						}else{
 							if($self_var[0] == '@'){
 								$cond_var = null;
@@ -347,7 +347,7 @@ abstract class Dao extends \ebi\Object{
 	 * @return \ebi\Column[]
 	 */
 	public function primary_columns(){
-		$result = array();
+		$result = [];
 		foreach(self::$_dao_[$this->_class_id_]->_self_columns_ as $column){
 			if($column->primary()){
 				$result[$column->name()] = $column;
@@ -357,17 +357,17 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * 必須の条件を取得する
-	 * @return array array(\ebi\Column,\ebi\Column)
+	 * @return array [\ebi\Column,\ebi\Column]
 	 */
 	public function conds(){
 		return self::$_dao_[$this->_class_id_]->_conds_;
 	}
 	/**
 	 * join時の条件を取得する
-	 * @return array array(\ebi\Column,\ebi\Column)
+	 * @return array [\ebi\Column,\ebi\Column]
 	 */
 	public function join_conds($name){
-		return (isset(self::$_dao_[$this->_class_id_]->_join_conds_[$name])) ? self::$_dao_[$this->_class_id_]->_join_conds_[$name] : array();
+		return (isset(self::$_dao_[$this->_class_id_]->_join_conds_[$name])) ? self::$_dao_[$this->_class_id_]->_join_conds_[$name] : [];
 	}
 	/**
 	 * 結果配列から値を自身にセットする
@@ -420,7 +420,7 @@ abstract class Dao extends \ebi\Object{
 	public static function start_record(){
 		$query = self::$record_query;
 		self::$recording_query = true;
-		self::$record_query = array();
+		self::$record_query = [];
 		return $query;
 	}
 	/**
@@ -445,7 +445,7 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public function query(\ebi\Daq $daq){
 		if(self::$recording_query){
-			self::$record_query[] = array($daq->sql(),$daq->ar_vars());
+			self::$record_query[] = [$daq->sql(),$daq->ar_vars()];
 		}
 		$statement = self::connection(get_class($this))->prepare($daq->sql());
 		if($statement === false){
@@ -470,7 +470,7 @@ abstract class Dao extends \ebi\Object{
 		if(isset($errors[1])){
 			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
 		}
-		if($statement->columnCount() == 0) return ($is_list) ? array() : null;
+		if($statement->columnCount() == 0) return ($is_list) ? [] : null;
 		return ($is_list) ? $statement->fetchAll(\PDO::FETCH_ASSOC) : $statement->fetchAll(\PDO::FETCH_COLUMN,0);
 	}
 	private function save_verify_primary_unique(){
@@ -528,9 +528,9 @@ abstract class Dao extends \ebi\Object{
 				$unique_together = $this->prop_anon($name,'unique_together');
 				if($value !== '' && $value !== null && ($this->prop_anon($name,'unique') === true || !empty($unique_together))){
 					$uvalue = $value;
-					$q = array(Q::eq($name,$uvalue));
+					$q = [\ebi\Q::eq($name,$uvalue)];
 					if(!empty($unique_together)){
-						foreach((is_array($unique_together) ? $unique_together : array($unique_together)) as $c){
+						foreach((is_array($unique_together) ? $unique_together : [$unique_together]) as $c){
 							$q[] = Q::eq($c,$this->{$c}());
 						}
 					}
@@ -570,7 +570,7 @@ abstract class Dao extends \ebi\Object{
 		\ebi\Exceptions::throw_over();
 	}
 	protected function which_aggregator($exe,array $args,$is_list=false){
-		$target_name = $gorup_name = array();
+		$target_name = $gorup_name = [];
 		if(isset($args[0]) && is_string($args[0])){
 			$target_name = array_shift($args);
 			if(isset($args[0]) && is_string($args[0])) $gorup_name = array_shift($args);
@@ -603,7 +603,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
-		$results = array();
+		$results = [];
 		foreach($dao->which_aggregator($exec,$args,true) as $value){
 			$dao->{$gorup_name}($value['key_column']);
 			$results[$dao->{$gorup_name}()] = static::exec_aggregator_result_cast($dao,$target_name,$value['target_column'],$cast);
@@ -766,7 +766,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			$paginator->total(call_user_func_array(array(get_called_class(),'find_count'),$args));
 			if($paginator->total() == 0){
-				return array();
+				return [];
 			}
 		}
 		/**
@@ -827,7 +827,7 @@ abstract class Dao extends \ebi\Object{
 		if($paginator instanceof \ebi\Paginator){
 			if($query->is_order_by()) $paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
 			$paginator->total(call_user_func_array(array(get_called_class(),'find_count'),$args));
-			if($paginator->total() == 0) return array();
+			if($paginator->total() == 0) return [];
 		}
 		return static::get_statement_iterator($dao,$query);
 	}
@@ -837,7 +837,7 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public static function find_all(){
 		$args = func_get_args();
-		$result = array();
+		$result = [];
 		foreach(call_user_func_array(array(get_called_class(),'find'),$args) as $p) $result[] = $p;
 		return $result;
 	}

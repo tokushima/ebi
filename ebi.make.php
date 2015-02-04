@@ -16,8 +16,8 @@ if(is_file($output)){
 	unlink($output);
 }
 try{
-	$mkdir = array();
-	$files = array();
+	$mkdir = [];
+	$files = [];
 	$phar = new Phar($output,0,$filename.'.phar');
 	
 	foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(

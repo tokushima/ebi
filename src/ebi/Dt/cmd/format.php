@@ -12,7 +12,7 @@ foreach(new \RecursiveIteratorIterator(
 ) as $f){
 	if($f->isFile() && substr($f->getFilename(),-4) == '.php'){
 		$src = file_get_contents($f->getPathname());
-		$nsrc = str_replace(array("\r\n","\r","\n"),"\n",$src);
+		$nsrc = str_replace(["\r\n","\r","\n"],"\n",$src);
 		$nsrc = preg_replace('/^(.+)[\040\t]+$/','\\1',$nsrc);
 		if($src != $nsrc){
 			file_put_contents($f->getPathname(),$nsrc);

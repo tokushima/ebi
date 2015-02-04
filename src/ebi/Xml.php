@@ -5,8 +5,8 @@ namespace ebi;
  * @author tokushima
  */
 class Xml implements \IteratorAggregate{
-	private $attr = array();
-	private $plain_attr = array();
+	private $attr = [];
+	private $plain_attr = [];
 	private $name;
 	private $value;
 	private $close_empty = true;
@@ -135,7 +135,7 @@ class Xml implements \IteratorAggregate{
 	 */
 	public function rm_attr(){
 		if(func_num_args() === 0){
-			$this->attr = array();
+			$this->attr = [];
 		}else{
 			foreach(func_get_args() as $n) unset($this->attr[$n]);
 		}

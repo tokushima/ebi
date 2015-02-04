@@ -72,7 +72,7 @@ class DbConnector{
 	 * @return Daq
 	 */
 	public function create_sql(\ebi\Dao $dao){
-		$insert = $vars = array();
+		$insert = $vars = [];
 		$autoid = null;
 		foreach($dao->columns(true) as $column){
 			if($column->auto()) $autoid = $column->name();
@@ -91,7 +91,7 @@ class DbConnector{
 	 * @return Daq
 	 */
 	public function update_sql(\ebi\Dao $dao,\ebi\Q $query){
-		$where = $update = $wherevars = $updatevars = $from = array();
+		$where = $update = $wherevars = $updatevars = $from = [];
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$wherevars[] = $this->update_value($dao,$column->name());
@@ -121,7 +121,7 @@ class DbConnector{
 	 * @return Daq
 	 */
 	public function delete_sql(\ebi\Dao $dao){
-		$where = $vars = array();
+		$where = $vars = [];
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$vars[] = $dao->{$column->name()}();
@@ -139,7 +139,7 @@ class DbConnector{
 	 * @return Daq
 	 */
 	public function find_delete_sql(\ebi\Dao $dao,\ebi\Q $query){
-		$from = array();
+		$from = [];
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
 				'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
@@ -155,7 +155,7 @@ class DbConnector{
 	 * @return Daq
 	 */
 	public function select_sql(\ebi\Dao $dao,\ebi\Q $query,$paginator,$name=null){
-		$select = $from = array();
+		$select = $from = [];
 
 		if(empty($name)){
 			foreach($dao->columns() as $column){
@@ -183,7 +183,7 @@ class DbConnector{
 		);
 	}
 	protected function select_order($query,array $self_columns){
-		$order = array();
+		$order = [];
 		if($query->is_order_by_rand()){
 			$order[] = $this->order_random_str;
 		}else{
@@ -268,7 +268,7 @@ class DbConnector{
 		return $this->which_aggregator_sql('distinct',$dao,$target_column,$gorup_column,$query);
 	}
 	protected function which_aggregator_sql($exe,\ebi\Dao $dao,$target_name,$gorup_name,\ebi\Q $query){
-		$select = $from = array();
+		$select = $from = [];
 		$target_column = $group_column = null;
 		if(empty($target_name)){
 			$self_columns = $dao->columns(true);
@@ -300,7 +300,7 @@ class DbConnector{
 				);
 	}
 	protected function where_cond_columns(array $cond_columns,array &$from){
-		$conds = array();
+		$conds = [];
 		foreach($cond_columns as $columns){
 			$conds[] = $columns[0]->table_alias().'.'.$this->quotation($columns[0]->column())
 			.' = '
@@ -312,7 +312,7 @@ class DbConnector{
 	}
 	protected function where_sql(\ebi\Dao $dao,&$from,\ebi\Q $q,array $self_columns,$require_where=null,$alias=true){
 		if($q->is_block()){
-			$vars = $and_block_sql = $or_block_sql = array();
+			$vars = $and_block_sql = $or_block_sql = [];
 			$where_sql = '';
 
 			foreach($q->ar_and_block() as $qa){
@@ -337,7 +337,7 @@ class DbConnector{
 			}else if(!empty($require_where)){
 				$where_sql = '('.$require_where.') and ('.$where_sql.')';
 			}
-			return array($where_sql,$vars);
+			return [$where_sql,$vars];
 		}
 		if($q->type() == Q::MATCH){
 			$query = new \ebi\Q();
@@ -353,16 +353,16 @@ class DbConnector{
 						$query->add(($not) ? Q::contains($column,$value,$q->param()|Q::NOT) : Q::contains($column,$value,$q->param()));
 					}
 				}else{
-					$columns = array();
+					$columns = [];
 					foreach($self_columns as $column) $columns[] = $column->name();
 					$query->add(Q::contains(implode(',',$columns),explode(' ',$cond),$q->param()));
 				}
 			}
 			return $this->where_sql($dao,$from,$query,$self_columns,null,$alias);
 		}
-		$and = $vars = array();
+		$and = $vars = [];
 		foreach($q->ar_arg2() as $base_value){
-			$or = array();
+			$or = [];
 			foreach($q->ar_arg1() as $column_str){
 				$value = $base_value;
 				$column = $this->get_column($column_str,$self_columns);
@@ -426,7 +426,7 @@ class DbConnector{
 			}
 			$and[] = ' ('.implode(' or ',$or).') ';
 		}
-		return array(implode(' and ',$and),$vars);
+		return [implode(' and ',$and),$vars];
 	}
 	protected function update_value(\ebi\Dao $dao,$name){
 		return $this->column_value($dao,$name,$dao->{$name}());
@@ -474,7 +474,7 @@ class DbConnector{
 				default: throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
-		$columndef = $primary = array();
+		$columndef = $primary = [];
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
 		
 		foreach(array_keys($dao->columns(true)) as $prop_name){
