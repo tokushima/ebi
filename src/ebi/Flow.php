@@ -111,6 +111,8 @@ class Flow{
 			if(isset($this->selected_class_pattern[$name][sizeof($args)])){
 				$name = $this->selected_class_pattern[$name][sizeof($args)]['name'];
 			}
+		}else if(isset($pattern['branch'])){
+			$name = $pattern['branch'].'#'.$name;
 		}
 		if(empty($name)){
 			\ebi\HttpHeader::redirect_referer();
@@ -518,6 +520,7 @@ class Flow{
 		$root_keys = [
 				0=>['media_path',
 					'nomatch_redirect',
+					'template_path',
 					'error_redirect','error_status','error_template',
 					'secure','find_template',
 				]
@@ -563,6 +566,7 @@ class Flow{
 						$bm = $fixed_vars($map_pattern_keys,$bv,$branch_map);
 						$bm['name'] = $name.'#'.$bm['name'];
 						$bm['pattern_id'] = $name.'#'.$bv['pattern_id'];
+						$bm['branch'] = $branch;
 						
 						$patterns[$k.(empty($bk) ? '' : '/'.$bk)] = $bm;
 					}
