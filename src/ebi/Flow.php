@@ -107,9 +107,6 @@ class Flow{
 			}
 			$args[$n] = $vars[$n];
 		}
-		if(isset($pattern['branch']) && strpos($name,'#') === false){
-			$name = $pattern['branch'].'#'.$name;
-		}
 		if(isset($pattern['@'])){
 			if(isset($this->selected_class_pattern[$name][sizeof($args)])){
 				$name = $this->selected_class_pattern[$name][sizeof($args)]['name'];
@@ -515,7 +512,6 @@ class Flow{
 					'template','template_path','template_super',
 					'error_redirect','error_status','error_template',
 					'suffix','secure','mode','after','post_after',
-					'summary',
 				]
 				,1=>['plugins','args','vars']
 		];
@@ -547,49 +543,50 @@ class Flow{
 			return $result;
 		};
 		
+		$patterns = [];
 		$map = $fixed_vars($root_keys,$map);
 		foreach($map['patterns'] as $k => $v){
-			if(is_int($k) || isset($map['patterns'][$k]['patterns'])){
-				$kurl = is_int($k) ? '' : ($k.(empty($k) ? '' : '/'));
-				$kpattern = $map['patterns'][$k]['patterns'];
-				unset($map['patterns'][$k]['patterns']);
-				
-				foreach($kpattern as $pk => $pv){
-					$map['patterns'][$kurl.$pk] = $fixed_vars($map_pattern_keys,$map['patterns'][$k],$pv);
-				}
-				if(!array_key_exists('',$kpattern)){
-					unset($map['patterns'][$k]);
-				}
-			}else if(isset($map['patterns'][$k]['app'])){
-				$branch_path = $map['patterns'][$k]['app'];
-				$name = isset($map['patterns'][$k]['name']) ? $map['patterns'][$k]['name'] : $k;
+			if(isset($v['app'])){
+				$branch = $v['app'];
+				$name = isset($v['name']) ? $v['name'] : $k;
 				unset($map['patterns'][$k]);
-
-				if(is_file($f=$this->apps_path.$branch_path.'.php')){
+			
+				if(is_file($f=$this->apps_path.$branch.'.php')){
 					self::$is_get_branch = true;
-					self::$branch_map = [];
 					ob_start();
 						$rtn = include($f);
 					ob_end_clean();
 					self::$is_get_branch = false;
-					self::$branch_map = $fixed_vars($root_keys,$this->read(self::$branch_map));
-										
-					foreach(array_keys(self::$branch_map['patterns']) as $bk){
-						 $bm = $fixed_vars($map_pattern_keys,self::$branch_map['patterns'][$bk],self::$branch_map);
-						 $bm['name'] = $name.'#'.$bm['name'];
-						 $bm['branch'] = $branch_path;
-						 $map['patterns'][$k.(empty($bk) ? '' :'/'.$bk)] = $bm;
+					$branch_map = $fixed_vars($root_keys,$this->read(self::$branch_map));
+			
+					foreach($branch_map['patterns'] as $bk => $bv){
+						$bm = $fixed_vars($map_pattern_keys,$bv,$branch_map);
+						$bm['name'] = $name.'#'.$bm['name'];
+						$bm['pattern_id'] = $name.'#'.$bv['pattern_id'];
+						
+						$patterns[$k.(empty($bk) ? '' : '/'.$bk)] = $bm;
 					}
-					unset(self::$branch_map['patterns']);
-					$map['branch'][$branch_path] = self::$branch_map;
 				}
 			}else{
-				$map['patterns'][$k] = $fixed_vars($map_pattern_keys,$map['patterns'][$k]);
+				if(isset($v['patterns'])){
+					$kurl = is_int($k) ? '' : ($k.(empty($k) ? '' : '/'));
+					$kpattern = $v['patterns'];
+					unset($v['patterns']);
+					
+					foreach($kpattern as $pk => $pv){
+						$patterns[$kurl.$pk] = $fixed_vars($map_pattern_keys,$v,$pv);
+					}
+				}else{
+					$patterns[$k] = $fixed_vars($map_pattern_keys,$v);
+				}
 			}
 		}
+		$map['patterns'] = [];
+		
 		$http = $this->app_url;
 		$https = str_replace('http://','https://',$this->app_url);
 		$conf_secure = (\ebi\Conf::get('secure',true) === true);
+		
 		$url_format_func = function($url,$map_secure) use($conf_secure,$https,$http){
 			$num = 0;
 			$format = \ebi\Util::path_absolute(
@@ -598,12 +595,11 @@ class Flow{
 			);
 			return [str_replace(array('\\\\','\\.','_ESC_'),array('_ESC_','.','\\'),$format),$num];
 		};
-		$patterns = $map['patterns'];
-		$map['patterns'] = [];
 		$pattern_id = 1;
-		
 		foreach($patterns as $k => $v){
-			$v['pattern_id'] = $pattern_id++;
+			if(!isset($v['pattern_id'])){
+				$v['pattern_id'] = $pattern_id++;
+			}
 			if(!isset($v['name'])){
 				$v['name'] = (empty($k) ? 'index' : $k);
 			}
@@ -618,6 +614,7 @@ class Flow{
 				$map['patterns'][$k] = $v;
 			}
 		}
+		
 		uasort($map['patterns'],function($a,$b){
 			return (strlen($a['format']) < strlen($b['format']));
 		});

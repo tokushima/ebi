@@ -9,5 +9,6 @@
 		'secure'=>['name'=>'secure','template'=>'secure.html','secure'=>true],
 		'nosecure'=>['name'=>'nosecure','template'=>'secure.html'],
 		'noresult'=>['name'=>'noresult'],
+		'automap'=>['action'=>'test.flow.AutoAction','name'=>'autoaction'],
 	]
 ]);
