@@ -243,7 +243,7 @@ class Request{
 				$this->set_login_redirect(\ebi\Request::current_url().\ebi\Request::request_string(true));
 			}
 			$req = new \ebi\Request();
-			$this->sess->vars(__CLASS__.'_login_vars',array(time(),$req->ar_vars()));
+			$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
 			
 			if(isset($selected_pattern['@'])){
 				$this->set_before_redirect('do_login');

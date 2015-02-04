@@ -358,10 +358,10 @@ class Browser{
 				,$this->request_header
 			)
 		);
-		curl_setopt($this->resource,CURLOPT_HEADERFUNCTION,array($this,'callback_head'));
+		curl_setopt($this->resource,CURLOPT_HEADERFUNCTION,[$this,'callback_head']);
 		
 		if(empty($download_path)){
-			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,array($this,'callback_body'));
+			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,[$this,'callback_body']);
 		}else{
 			if(strpos($download_path,'://') === false && !is_dir(dirname($download_path))){
 				mkdir(dirname($download_path),0777,true);

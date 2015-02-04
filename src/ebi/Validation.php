@@ -20,7 +20,7 @@ class Validation{
 			case 'text':
 				if(is_array($v)) throw new \InvalidArgumentException();
 				$v = is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
-				return ($t == 'text') ? $v : str_replace(array("\r\n","\r","\n"),'',$v);
+				return ($t == 'text') ? $v : str_replace(["\r\n","\r","\n"],'',$v);
 			default:
 				if($v === '') return null;
 				switch($t){

@@ -29,7 +29,7 @@ class TwitterBootstrap3Helper{
 			}
 			$value = $xml->value();
 			$value = preg_replace("/<(rt:.+?)>/ms","&lt;\\1&gt;",$value);
-			$value = str_replace(array('<php>','</php>'),array('<?php','?>'),$value);
+			$value = str_replace(['<php>','</php>'],['<?php','?>'],$value);
 			$value = $this->pre($value);
 			if(empty($value)){
 				$value = PHP_EOL;
@@ -64,9 +64,9 @@ class TwitterBootstrap3Helper{
 					$plain = $xml->get();
 				}else{
 					$value = str_replace("\t","&nbsp;&nbsp;",$value);
-					$value = str_replace(array("<",">","'","\""),array("&lt;","&gt;","&#039;","&quot;"),$value);
+					$value = str_replace(['<','>','\'','"'],['&lt;','&gt;','&#039;','&quot;'],$value);
 					$xml->value($value);
-					$plain = str_replace(array('$','='),array('__RTD__','__RTE__'),$xml->get());
+					$plain = str_replace(['$','='],['__RTD__','__RTE__'],$xml->get());
 				}
 				if(!empty($caption)){
 					$plain = '<div style="margin-top:20px; color:#7a43b6; font-weight: bold;">'.$caption.'</div>'.$plain;
@@ -80,7 +80,7 @@ class TwitterBootstrap3Helper{
 		$src = preg_replace("/!!(.+?)!!/ms",'<span class="label label-danger">\\1</span>',$src);
 		$src = preg_replace("/##(.+?)##/ms",'<span class="label label-warning">\\1</span>',$src);
 		$src = str_replace('<table>','<table class="table table-striped table-bordered table-condensed">',$src);
-		$src = str_replace(array('__RTD__','__RTE__'),array('$','='),$src);
+		$src = str_replace(['__RTD__','__RTE__'],['$','='],$src);
 		return $src;		
 	}
 	private function pre($text){

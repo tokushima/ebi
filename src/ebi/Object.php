@@ -44,7 +44,7 @@ class Object implements \IteratorAggregate{
 		}
 		if(method_exists($this,'__init__')){
 			$args = func_get_args();
-			call_user_func_array(array($this,'__init__'),$args);
+			call_user_func_array([$this,'__init__'],$args);
 		}
 	}
 	public function __call($n,$args){
@@ -144,7 +144,7 @@ class Object implements \IteratorAggregate{
 	}
 	private function ___fm___($f=null,$d=null){
 		$p = $this->_;
-		$v = (method_exists($this,$m=('__get_'.$p.'__'))) ? call_user_func(array($this,$m)) : $this->___get___();
+		$v = (method_exists($this,$m=('__get_'.$p.'__'))) ? call_user_func([$this,$m]) : $this->___get___();
 		switch($this->prop_anon($p,'type')){
 			case 'timestamp': return ($v === null) ? null : (date((empty($f) ? 'Y/m/d H:i:s' : $f),(int)$v));
 			case 'date': return ($v === null) ? null : (date((empty($f) ? 'Y/m/d' : $f),(int)$v));
@@ -156,7 +156,7 @@ class Object implements \IteratorAggregate{
 				$m = str_replace(' ','0',rtrim(str_replace('0',' ',(substr(($v - ($h * 3600) - ($i * 60) - $s),2,12)))));
 				return (($h == 0) ? '' : $h.':').(sprintf('%02d:%02d',$i,$s)).(($m == 0) ? '' : '.'.$m);
 			case 'intdate': if($v === null) return null;
-							return str_replace(array('Y','m','d'),array(substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)),(empty($f) ? 'Y/m/d' : $f));
+							return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? 'Y/m/d' : $f));
 			case 'boolean': return ($v) ? (isset($d) ? $d : 'true') : (empty($f) ? 'false' : $f);
 		}
 		return $v;

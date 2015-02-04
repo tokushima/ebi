@@ -223,7 +223,7 @@ class FlowHelper{
 	 * @return string
 	 */
 	public function one_liner($value,$glue=" "){
-		return str_replace(array("\r\n","\r","\n","<br>","<br />"),$glue,$value);
+		return str_replace(["\r\n","\r","\n","<br>","<br />"],$glue,$value);
 	}
 	/**
 	 * 文字列を丸める
@@ -253,7 +253,7 @@ class FlowHelper{
 	 * @return string
 	 */
 	public function html($value,$length=0,$lines=0,$postfix=null,$nl2br=true){
-		$value = str_replace(array("\r\n","\r"),"\n",$value);
+		$value = str_replace(["\r\n","\r"],"\n",$value);
 		if($length > 0){
 			$det = mb_detect_encoding($value);
 			$value = mb_substr($value,0,$length,$det);
@@ -267,7 +267,7 @@ class FlowHelper{
 			$l = explode("\n",$value);
 			$value = implode("\n",array_slice($l,0)).((sizeof($l) > $lines) ? $postfix : null);
 		}
-		$value = str_replace(array("<",">","'","\""),array("&lt;","&gt;","&#039;","&quot;"),$value);
+		$value = str_replace(["<",">","'","\""],["&lt;","&gt;","&#039;","&quot;"],$value);
 		return ($nl2br) ? nl2br($value,true) : $value;
 	}
 	/**

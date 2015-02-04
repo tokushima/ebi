@@ -134,7 +134,7 @@ class Template{
 	}
 	private function execute($src){
 		$src = $this->exec($src);
-		$src = str_replace(array('#PS#','#PE#'),array('<?','?>'),$this->html_reform($src));
+		$src = str_replace(['#PS#','#PE#'],['<?','?>'],$this->html_reform($src));
 		
 		/**
 		 * 実行後処理
@@ -149,7 +149,7 @@ class Template{
 	private function replace($src,$template_name){
 		$this->selected_template = $template_name;
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
-		$src = str_replace(array("\\\\","\\\"","\\'"),array('__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'),$src);
+		$src = str_replace(["\\\\","\\\"","\\'"],['__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'],$src);
 		$src = $this->replace_xtag($src);
 		/**
 		 * 初期処理

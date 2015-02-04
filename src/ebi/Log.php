@@ -29,7 +29,7 @@ class Log{
 	private static function cur_level(){
 		if(!isset(self::$id)){
 			self::$id = base_convert(date('md'),10,36).base_convert(date('G'),10,36).base_convert(mt_rand(1296,46655),10,36);
-			register_shutdown_function(array(__CLASS__,'flush'));
+			register_shutdown_function([__CLASS__,'flush']);
 		}
 		if(self::$current_level === null){
 			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);

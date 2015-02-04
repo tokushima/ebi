@@ -29,7 +29,7 @@ class Request implements \IteratorAggregate{
 					$marge_func = function($arr,$pk,$files,&$map) use(&$marge_func){
 						if(is_array($arr)){
 							foreach($arr as $k => $v){
-								$marge_func($v,array_merge($pk,array($k)),$files,$map);
+								$marge_func($v,array_merge($pk,[$k]),$files,$map);
 							}
 						}else{
 							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));

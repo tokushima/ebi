@@ -48,8 +48,10 @@ class Archive{
 	 */
 	public function write($filename){
 		$fp = fopen($filename,'wb');
-		foreach(array(5,0) as $t){
-			if(!empty($this->tree[$t])) ksort($this->tree[$t]);
+		foreach([5,0] as $t){
+			if(!empty($this->tree[$t])){
+				ksort($this->tree[$t]);
+			}
 			foreach($this->tree[$t] as $a => $n){
 				if(strpos($n,'/.') === false){
 					if($t == 0){
@@ -111,7 +113,7 @@ class Archive{
 		$zip = new \ZipArchive();
 		$mode = $compress ? \ZipArchive::CREATE : (\ZipArchive::CM_STORE|\ZipArchive::CREATE);
 		if($zip->open($filename,$mode) === true){
-			foreach(array(5,0) as $t){
+			foreach([5,0] as $t){
 				ksort($this->tree[$t]);
 				foreach($this->tree[$t] as $a => $n){
 					if(strpos($n,'/.') === false){

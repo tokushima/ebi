@@ -130,7 +130,7 @@ class Q{
 						}
 					}else if($arg->type() == self::AND_BLOCK){
 						if(!$arg->none()){
-							call_user_func_array(array($this,'add'),$arg->ar_and_block());
+							call_user_func_array([$this,'add'],$arg->ar_and_block());
 							$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 						}
 					}else if($arg->type() == self::OR_BLOCK){

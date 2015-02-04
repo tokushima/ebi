@@ -23,7 +23,7 @@ trait TemplateVariable{
 		foreach($this->match_variable($src) as $variable){
 			$name = $this->parse_plain_variable($variable);
 			$value = $this->php_exception_catch('<?php $_t_->print_variable('.$name.'); ?>');
-			$src = str_replace(array($variable."\n",$variable),array($value."<?php 'PLRP'; ?>\n\n",$value),$src);
+			$src = str_replace([$variable."\n",$variable],[$value."<?php 'PLRP'; ?>\n\n",$value],$src);
 			$src = str_replace($variable,$value,$src);
 		}
 		return $src;

@@ -70,7 +70,7 @@ class Man{
 							$method_description = substr($method_description,1);
 						}
 						if(strpos($method_description,'::') !== false){
-							list($c,$m) = explode('::',str_replace(array('(',')'),'',$method_description));
+							list($c,$m) = explode('::',str_replace(['(',')'],'',$method_description));
 							try{
 								$i = self::method_info($c,$m);
 								list($method_description) = explode("\n",$i['description']);
@@ -127,7 +127,7 @@ class Man{
 		}
 		$conf = self::get_conf_list($r,$src);		
 		$properties = [];
-		$anon = \ebi\Annotation::decode(str_replace(array('.','/'),array('\\','\\'),$class),'param',$r->getNamespaceName());
+		$anon = \ebi\Annotation::decode(str_replace(['.','/'],['\\','\\'],$class),'param',$r->getNamespaceName());
 		
 		foreach($r->getProperties() as $prop){
 			if(!$prop->isPrivate()){
@@ -172,7 +172,7 @@ class Man{
 	 * @param boolean $deep 
 	 */
 	public static function method_info($class,$method,$deep=false){
-		$ref = new \ReflectionMethod(str_replace(array('.','/'),array('\\','\\'),$class),$method);
+		$ref = new \ReflectionMethod(str_replace(['.','/'],['\\','\\'],$class),$method);
 		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws =[];
 		$document = $src = null;
 		$deprecated = false;
@@ -342,7 +342,7 @@ class Man{
 		$doc = trim(substr($doc,0,strrpos($doc,"\n")));
 		if(substr($doc,-2) == '*'.'/'){
 			$doc = substr($doc,strrpos($doc,'/'.'**'));
-			$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$doc)));
+			$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$doc)));
 			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$doc,$m)){
 				foreach(array_keys($m[2]) as $n){
 					$arr[$name][1][$m[2][$n]] = [$m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n])];
@@ -362,7 +362,7 @@ class Man{
 		return '';
 	}
 	private static function method_doc(\ReflectionMethod $ref){
-		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(array("/"."**","*"."/"),"",$ref->getDocComment())));
+		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())));
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){
 		$list = [];

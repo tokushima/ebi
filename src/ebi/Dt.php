@@ -101,7 +101,7 @@ class Dt{
 		foreach(self::classes() as $info){
 			$r = new \ReflectionClass($info['class']);
 			$class_doc = $r->getDocComment();
-			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$class_doc))));
+			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
 			list($summary) = explode("\n",$document);
 			$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
 		}
@@ -187,7 +187,7 @@ class Dt{
 			if((!$r->isInterface() && !$r->isAbstract()) && is_subclass_of($class,'\ebi\Dao')){
 				$class_doc = $r->getDocComment();
 				$package = str_replace('\\','.',substr($class,1));
-				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(array('/'.'**','*'.'/'),'',$class_doc))));
+				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
 				list($summary) = explode("\n",$document);
 				$errors[$package] = null;
 				$con[$package] = true;
@@ -259,7 +259,7 @@ class Dt{
 		}
 		$object_list = [];
 		$paginator = new \ebi\Paginator(20,$req->in_vars('page',1));
-		$paginator->cp(array('order'=>$order));
+		$paginator->cp(['order'=>$order]);
 		
 		if($req->is_vars('search')){
 			$q = new Q();
@@ -405,7 +405,7 @@ class Dt{
 		}
 		if($req->is_post() && !empty($sql)){
 			$excute_sql = [];
-			$sql = str_replace(array('\\r\\n','\\r','\\n','\;'),array("\n","\n","\n",'{SEMICOLON}'),$sql);
+			$sql = str_replace(['\\r\\n','\\r','\\n','\;'],["\n","\n","\n",'{SEMICOLON}'],$sql);
 			foreach(explode(';',$sql) as $q){
 				$q = trim(str_replace('{SEMICOLON}',';',$q));
 				$excute_sql[] = $q;

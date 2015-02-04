@@ -107,7 +107,9 @@ class Helper{
 				case 'boolean':
 					$options = [];
 					$options[] = '<option value=""></option>';
-					foreach(array('true','false') as $choice) $options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
+					foreach(['true','false'] as $choice){
+						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
+					}
 					return sprintf('<select name="search_%s_%s">%s</select>',$type,$name,implode('',$options));
 				case 'timestamp':
 				case 'date':
@@ -138,7 +140,7 @@ class Helper{
 				if(sizeof($primarys) != 1) return sprintf('<input name="%s" type="text" class="form-control" />',$name);
 				foreach($primarys as $primary) break;
 				$pri = $primary->name();
-				foreach(call_user_func_array(array($mo,'find'),[]) as $dao){
+				foreach(call_user_func_array([$mo,'find'],[]) as $dao){
 					$options[] = sprintf('<option value="%s">%s</option>',$dao->{$pri}(),(string)$dao);
 				}
 			}
@@ -153,7 +155,7 @@ class Helper{
 					if(!$obj->prop_anon($name,'require')){
 						$options[] = '<option value=""></option>';
 					}
-					foreach(array('true','false') as $choice){
+					foreach(['true','false'] as $choice){
 						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
 					}
 					return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));

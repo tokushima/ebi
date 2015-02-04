@@ -19,7 +19,7 @@ class Db implements \Iterator{
 	 * @param string{} $def 接続情報の配列
 	 */
 	public function __construct(array $def=[]){
-		foreach(array('type','host','dbname','user','password','port','sock','encode','timezone') as $k){
+		foreach(['type','host','dbname','user','password','port','sock','encode','timezone'] as $k){
 			${$k} = isset($def[$k]) ? $def[$k] : null;
 		}
 		if(empty($type)){
@@ -37,7 +37,7 @@ class Db implements \Iterator{
 		}
 		$r = new \ReflectionClass($type);
 		$this->dbname = $dbname;
-		$this->connector = $r->newInstanceArgs(array($encode,$timezone));
+		$this->connector = $r->newInstanceArgs([$encode,$timezone]);
 		
 		if($this->connector instanceof \ebi\DbConnector){
 			if(self::$autocommit === null){

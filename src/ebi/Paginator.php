@@ -240,8 +240,16 @@ class Paginator implements \IteratorAggregate{
 	 */
 	public function query_prev(){
 		$prev = $this->prev();
-		$vars = array_merge($this->vars,array($this->query_name()=>($this->dynamic && isset($this->tmp[3]) ? (isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : $prev)));
-		if(isset($this->order)) $vars['order'] = $this->order;
+		$vars = array_merge($this->vars,[
+					$this->query_name() => (($this->dynamic && isset($this->tmp[3])) ? 
+						(isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : 
+						$prev
+					)
+				]);
+
+		if(isset($this->order)){
+			$vars['order'] = $this->order;
+		}
 		return Query::get($vars);
 	}
 	/**
@@ -249,8 +257,10 @@ class Paginator implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function query_next(){
-		$vars = array_merge($this->vars,array($this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())));
-		if(isset($this->order)) $vars['order'] = $this->order;
+		$vars = array_merge($this->vars,[$this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())]);
+		if(isset($this->order)){
+			$vars['order'] = $this->order;
+		}
 		return Query::get($vars);
 	}
 	/**
@@ -266,7 +276,7 @@ class Paginator implements \IteratorAggregate{
 		}
 		return Query::get(array_merge(
 							$this->vars
-							,array('order'=>$order,'porder'=>$this->order())
+							,['order'=>$order,'porder'=>$this->order()]
 						));
 	}
 	/**
@@ -275,8 +285,10 @@ class Paginator implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function query($current){
-		$vars = array_merge($this->vars,array($this->query_name()=>$current));
-		if(isset($this->order)) $vars['order'] = $this->order;
+		$vars = array_merge($this->vars,[$this->query_name()=>$current]);
+		if(isset($this->order)){
+			$vars['order'] = $this->order;
+		}
 		return Query::get($vars);
 	}
 	

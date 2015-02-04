@@ -68,7 +68,7 @@ class Mail{
 		$this->notification = $mail;
 	}
 	public function subject($subject){
-		$this->subject = str_replace("\n","",str_replace(array("\r\n","\r"),"\n",$subject));
+		$this->subject = str_replace("\n","",str_replace(["\r\n","\r"],"\n",$subject));
 	}
 	public function message($message){
 		$this->message = $message;
@@ -336,7 +336,7 @@ class Mail{
 				$this->notification($notification->in_attr('notification'));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
-			$subject = trim(str_replace(array("\r\n","\r","\n"),'',$xml->find_get('subject')->value()));
+			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
 			$template->cp($vars);
 			$this->message(\ebi\Util::plain_text("\n".$template->get($xml->find_get('body')->value())."\n"));

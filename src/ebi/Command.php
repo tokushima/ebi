@@ -154,7 +154,7 @@ class Command{
 			if(!$multiline) break;
 		}
 		if($invisible && substr(PHP_OS,0,3) != 'WIN') `tty -s && stty echo`;
-		$result = substr(str_replace(array("\r\n","\r","\n"),"\n",$result),0,-1);
+		$result = substr(str_replace(["\r\n","\r","\n"],"\n",$result),0,-1);
 		if(empty($result)) $result = $default;
 		if(empty($choice) || in_array($result,$choice)) return $result;
 	}

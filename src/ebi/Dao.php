@@ -240,14 +240,14 @@ abstract class Dao extends \ebi\Object{
 						if(empty($has_var)){
 							throw new \LogicException('annotation error : `'.$name.'`');
 						}
-						$dao = new $column_type(array('_class_id_'=>$p.'___'.self::$_cnt_++));
+						$dao = new $column_type(['_class_id_'=>$p.'___'.self::$_cnt_++]);
 						$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
 					}else{
 						if($is_has){
 							if(empty($has_var)){
 								throw new \LogicException('annotation error : `'.$name.'`');
 							}
-							$dao = new $column_type(array('_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy));
+							$dao = new $column_type(['_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy]);
 							$this->{$name}($dao);
 
 							$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
@@ -322,15 +322,15 @@ abstract class Dao extends \ebi\Object{
 				$_where_columns_[$name] = $column;
 			}
 		}
-		self::$_dao_[$this->_class_id_] = (object)array(
-														'_self_columns_'=>$_self_columns_,
-														'_where_columns_'=>$_where_columns_,
-														'_conds_'=>$_conds_,
-														'_join_conds_'=>$_join_conds_,
-														'_alias_'=>$_alias_,
-														'_has_dao_'=>$_has_dao_,
-														'_has_many_conds_'=>$_has_many_conds_
-														);
+		self::$_dao_[$this->_class_id_] = (object)[
+			'_self_columns_'=>$_self_columns_,
+			'_where_columns_'=>$_where_columns_,
+			'_conds_'=>$_conds_,
+			'_join_conds_'=>$_join_conds_,
+			'_alias_'=>$_alias_,
+			'_has_dao_'=>$_has_dao_,
+			'_has_many_conds_'=>$_has_many_conds_
+		];
 	}
 	/**
 	 * Columnの一覧を取得する
@@ -537,7 +537,7 @@ abstract class Dao extends \ebi\Object{
 					foreach($this->primary_columns() as $primary){
 						if(null !== $this->{$primary->name()}) $q[] = Q::neq($primary->name(),$this->{$primary->name()});
 					}
-					if(0 < call_user_func_array(array(get_class($this),'find_count'),$q)){
+					if(0 < call_user_func_array([get_class($this),'find_count'],$q)){
 						\ebi\Exceptions::add(new \ebi\exception\UniqueException($name.' unique'),$name);
 					}
 				}
@@ -553,7 +553,7 @@ abstract class Dao extends \ebi\Object{
 					}
 					$mo = $r->newInstanceArgs();
 					$primarys = $mo->primary_columns();
-					if(empty($primarys) || 0 === call_user_func_array(array($mo,'find_count'),array(Q::eq(key($primarys),$this->{$name})))){
+					if(empty($primarys) || 0 === call_user_func_array([$mo,'find_count'],[Q::eq(key($primarys),$this->{$name})])){
 						\ebi\Exceptions::add(new \ebi\exception\NotFoundException($name.' master not found'),$name);
 					}
 				}
@@ -576,7 +576,9 @@ abstract class Dao extends \ebi\Object{
 			if(isset($args[0]) && is_string($args[0])) $gorup_name = array_shift($args);
 		}
 		$query = new \ebi\Q();
-		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
+		if(!empty($args)){
+			call_user_func_array([$query,'add'],$args);
+		}
 		$daq = static::call_class_plugin_funcs($exe.'_sql',$this,$target_name,$gorup_name,$query);
 		return $this->func_query($daq,$is_list);
 	}
@@ -733,7 +735,7 @@ abstract class Dao extends \ebi\Object{
 		$query->add(new \ebi\Paginator(1,1));
 		
 		if(!empty($args)){
-			call_user_func_array(array($query,'add'),$args);
+			call_user_func_array([$query,'add'],$args);
 		}
 		foreach(self::get_statement_iterator($dao,$query) as $d){
 			return $d;
@@ -753,7 +755,7 @@ abstract class Dao extends \ebi\Object{
 		$query->add($dao->__find_conds__());
 
 		if(!empty($args)){
-			call_user_func_array(array($query,'add'),$args);
+			call_user_func_array([$query,'add'],$args);
 		}
 		if(!$query->is_order_by()){
 			$query->order($name);
@@ -764,7 +766,7 @@ abstract class Dao extends \ebi\Object{
 			if($query->is_order_by()){
 				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
 			}
-			$paginator->total(call_user_func_array(array(get_called_class(),'find_count'),$args));
+			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
 			if($paginator->total() == 0){
 				return [];
 			}
@@ -820,14 +822,16 @@ abstract class Dao extends \ebi\Object{
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
 		if(!empty($args)){
-			call_user_func_array(array($query,'add'),$args);
+			call_user_func_array([$query,'add'],$args);
 		}
 		
 		$paginator = $query->paginator();
 		if($paginator instanceof \ebi\Paginator){
 			if($query->is_order_by()) $paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
-			$paginator->total(call_user_func_array(array(get_called_class(),'find_count'),$args));
-			if($paginator->total() == 0) return [];
+			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
+			if($paginator->total() == 0){
+				return [];
+			}
 		}
 		return static::get_statement_iterator($dao,$query);
 	}
@@ -838,7 +842,9 @@ abstract class Dao extends \ebi\Object{
 	public static function find_all(){
 		$args = func_get_args();
 		$result = [];
-		foreach(call_user_func_array(array(get_called_class(),'find'),$args) as $p) $result[] = $p;
+		foreach(call_user_func_array([get_called_class(),'find'],$args) as $p){
+			$result[] = $p;
+		}
 		return $result;
 	}
 	/**
@@ -865,7 +871,9 @@ abstract class Dao extends \ebi\Object{
 			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
 		}
 		$query = new \ebi\Q();
-		if(!empty($args)) call_user_func_array(array($query,'add'),$args);
+		if(!empty($args)){
+			call_user_func_array([$query,'add'],$args);
+		}
 		/**
 		 * delete文の生成
 		 * @param self $this
@@ -1034,7 +1042,7 @@ abstract class Dao extends \ebi\Object{
 			$query = new \ebi\Q();
 			
 			if(!empty($args)){
-				call_user_func_array(array($query,'add'),$args);
+				call_user_func_array([$query,'add'],$args);
 			}
 			/**
 			 * updateを実行するSQL文の生成
