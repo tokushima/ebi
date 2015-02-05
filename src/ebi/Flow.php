@@ -122,10 +122,11 @@ class Flow{
 		$this->redirect($name,$args);
 	}
 	private function execute($map){
-		if(is_string($map)){
+		if(is_array($map) && !isset($map['patterns'])){
+			$map['patterns'] = $map;
+		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
-		}
-		if(!isset($map['patterns']) || !is_array($map['patterns'])){
+		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
 			throw new \InvalidArgumentException('pattern not found');
 		}
 		/**
@@ -553,6 +554,9 @@ class Flow{
 		$patterns = [];
 		$map = $fixed_vars($root_keys,$map);
 		foreach($map['patterns'] as $k => $v){
+			if(is_callable($v)){
+				$v = ['action'=>$v];
+			}
 			if(isset($v['app'])){
 				$branch = $v['app'];
 				$name = isset($v['name']) ? $v['name'] : $k;
@@ -625,7 +629,6 @@ class Flow{
 				$map['patterns'][$k] = $v;
 			}
 		}
-		
 		uasort($map['patterns'],function($a,$b){
 			return (strlen($a['format']) < strlen($b['format']));
 		});
