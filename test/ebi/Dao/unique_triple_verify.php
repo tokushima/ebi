@@ -18,6 +18,7 @@ try{
 	$obj->save();
 	fail();
 }catch(\ebi\Exception $e){
+	\ebi\Exceptions::clear();
 }
 
 $obj = new \test\db\UniqueTripleVerify();

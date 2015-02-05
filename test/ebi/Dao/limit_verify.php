@@ -11,10 +11,12 @@ $obj->save();
 $obj = new \test\db\LimitVerify();
 $obj->value1('1234');
 $obj->value2(4);
+
 try{
 	$obj->save();
 	fail();
 }catch(\ebi\Exception $e){
+	\ebi\Exceptions::clear();
 }
 
 
@@ -25,6 +27,7 @@ try{
 	$obj->save();
 	fail();
 }catch(\ebi\Exception $e){
+	\ebi\Exceptions::clear();
 }
 
 $obj = new \test\db\LimitVerify();

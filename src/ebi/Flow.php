@@ -101,21 +101,23 @@ class Flow{
 		$var_names = (!empty($map) && is_array($map)) ? $map : [];
 		$args = [];
 		
+		if(empty($name)){
+			\ebi\HttpHeader::redirect_referer();
+		}		
 		foreach($var_names as $n){
 			if(!isset($vars[$n])){
 				throw new \InvalidArgumentException('variable '.$n.' not found');
 			}
 			$args[$n] = $vars[$n];
 		}
-		if(isset($pattern['@'])){
-			if(isset($this->selected_class_pattern[$name][sizeof($args)])){
-				$name = $this->selected_class_pattern[$name][sizeof($args)]['name'];
+		if(strpos($name,'://') === false){
+			if(isset($pattern['@'])){
+				if(isset($this->selected_class_pattern[$name][sizeof($args)])){
+					$name = $this->selected_class_pattern[$name][sizeof($args)]['name'];
+				}
+			}else if(isset($pattern['branch'])){
+				$name = $pattern['branch'].'#'.$name;
 			}
-		}else if(isset($pattern['branch'])){
-			$name = $pattern['branch'].'#'.$name;
-		}
-		if(empty($name)){
-			\ebi\HttpHeader::redirect_referer();
 		}
 		$this->redirect($name,$args);
 	}
@@ -175,7 +177,7 @@ class Flow{
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
 		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		$this->template = new \ebi\Template();
-
+		
 		self::$map = $this->read($map);
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -183,11 +185,11 @@ class Flow{
 		}
 		$result_vars = [];
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
-				
-		if(preg_match('/^\/'.preg_quote($this->package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){
+		
+		if(preg_match('/^\/'.preg_quote($this->package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){			
 			foreach(self::$map['patterns'] as $p){
-				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_dir($dir=($p['@'].'/resources/media/'.$m[2]))){
-					\ebi\HttpFile::attach($dir);
+				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
+					\ebi\HttpFile::attach($file);
 				}
 			}
 			\ebi\HttpHeader::send_status(404);
@@ -533,7 +535,7 @@ class Flow{
 			foreach($fixed_keys as $t => $keys){
 				foreach($keys as $k){
 					if($t == 0){
-						$result[$k] = isset($exmap[$k]) ? $exmap[$k] : (isset($map[$k]) ? $map[$k] : null);
+						$result[$k] = isset($map[$k]) ? $map[$k] : (isset($exmap[$k]) ? $exmap[$k] : null);
 					}else{
 						$result[$k] = [];
 						if(isset($map[$k])){

@@ -56,13 +56,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	 */
 	public static function throw_over(){
 		if(isset(self::$self) && !empty(self::$self->messages)){
-			$exception = new self();
-			foreach(self::$self->messages as $v){
-				$exception->messages[] = $v;
-				$exception->message .= $v['exception']->getMessage().PHP_EOL;
-			}
-			self::clear();
-			throw $exception;
+			throw self::$self;
 		}
 	}
 	/**
