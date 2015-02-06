@@ -65,30 +65,27 @@ class Flow{
 		$this->terminate();
 		exit;
 	}
-	private function redirect($url,$args=[]){
+	/**
+	 * pattern名でリダイレクトする
+	 * ://がある場合はURLとみなす
+	 * map_nameが連想配列の場合は、$varsにmap_nameのキーが含まれていた場合にのみリダイレクトする
+	 *  ext.. [['exec'=>'ptn1','confirm'=>'ptn2'],['confirm'=>true]]
+	 * map_nameが配列の場合は最初の値をmap_nameとし残りをpatternに渡す値としてvarsからとる
+	 *  ext.. [['ptn1','var1','var2'],['var2'=>123,'var1'=>456]]
+	 * 
+	 * @param string $map_name
+	 * @param  array $vars
+	 * @param array $pattern
+	 * @throws \InvalidArgumentException
+	 */
+	private function map_redirect($map_name,$vars=[],$pattern=[]){
 		$this->terminate();
-		if(is_array($url)){
-			$tmp = array_shift($url);
-			if(empty($args)){
-				$args = $url;
-			}
-			$url = $tmp;
-		}
-		if(strpos($url,'://') !== false){
-			\ebi\HttpHeader::redirect($url);
-		}
-		if(isset($this->url_pattern[$url][sizeof($args)])){
-			$format = $this->url_pattern[$url][sizeof($args)];
-			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));
-		}
-		throw new \InvalidArgumentException('map `'.$url.'` not found');
-	}
-	private function map_redirect($map,array $vars,$pattern){
-		if(is_array($map) && !isset($map[0])){
+		
+		if(is_array($map_name) && !isset($map_name[0])){
 			$bool = false;
-			foreach($map as $k => $a){
+			foreach($map_name as $k => $a){
 				if(array_key_exists($k,$vars)){
-					$map = $a;
+					$map_name = $a;
 					$bool = true;
 					break;
 				}
@@ -97,16 +94,16 @@ class Flow{
  				return;
  			}
 		}
-		$name = is_string($map) ? $map : (is_array($map) ? array_shift($map) : null);
-		$var_names = (!empty($map) && is_array($map)) ? $map : [];
+		$name = is_string($map_name) ? $map_name : (is_array($map_name) ? array_shift($map_name) : null);
+		$var_names = (!empty($map_name) && is_array($map_name)) ? $map_name : [];
 		$args = [];
 		
 		if(empty($name)){
 			\ebi\HttpHeader::redirect_referer();
-		}		
+		}
 		foreach($var_names as $n){
 			if(!isset($vars[$n])){
-				throw new \InvalidArgumentException('variable '.$n.' not found');
+				throw new \ebi\exception\InvalidArgumentException('variable '.$n.' not found');
 			}
 			$args[$n] = $vars[$n];
 		}
@@ -119,7 +116,14 @@ class Flow{
 				$name = $pattern['branch'].'#'.$name;
 			}
 		}
-		$this->redirect($name,$args);
+		if(strpos($name,'://') !== false){
+			\ebi\HttpHeader::redirect($name);
+		}
+		if(isset($this->url_pattern[$name][sizeof($args)])){
+			$format = $this->url_pattern[$name][sizeof($args)];
+			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));
+		}
+		throw new \InvalidArgumentException('map `'.$name.'` not found');
 	}
 	private function execute($map){
 		if(is_array($map) && !isset($map['patterns'])){
@@ -196,6 +200,7 @@ class Flow{
 			\ebi\HttpHeader::send_status(404);
 			exit;
 		}
+		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(isset($pattern['mode']) && !empty($pattern['mode'])){
@@ -254,7 +259,7 @@ class Flow{
 						}
 					}
 					if(isset($pattern['redirect'])){
-						$this->redirect($pattern['redirect']);
+						$this->map_redirect($pattern['redirect'],[],$pattern);
 					}
 					foreach(array_merge(self::$map['plugins'],$pattern['plugins']) as $m){
 						$o = $this->to_instance($m);
@@ -419,11 +424,11 @@ class Flow{
 					if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
 						$this->template($result_vars,$ins,$t,$this->app_url.$this->package_media_url.'/'.$pattern['pattern_id']);
 					}else if(isset($pattern['error_redirect'])){
-						$this->redirect($pattern['error_redirect']);
+						$this->map_redirect($pattern['error_redirect'],[],$pattern);
 					}else if(isset($pattern['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,$pattern['error_template']));
 					}else if(isset(self::$map['error_redirect'])){
-						$this->redirect(self::$map['error_redirect']);
+						$this->map_redirect(self::$map['error_redirect'],[],$pattern);
 					}else if(isset(self::$map['error_template'])){
 						$this->template($result_vars,$ins,\ebi\Util::path_absolute($this->template_path,self::$map['error_template']));
 					}else if($this->has_object_plugin('flow_exception')){
@@ -459,7 +464,7 @@ class Flow{
 					}
 				}
 			}
-			$this->redirect(self::$map['nomatch_redirect']);
+			$this->map_redirect(self::$map['nomatch_redirect'],[],[]);
 		}
 		\ebi\HttpHeader::send_status(404);
 		return $this->terminate();
@@ -554,6 +559,12 @@ class Flow{
 		$patterns = [];
 		$map = $fixed_vars($root_keys,$map);
 		foreach($map['patterns'] as $k => $v){
+			if(substr($k,0,1) == '/'){
+				$k = substr($k,1);
+			}
+			if(substr($k,-1) == '/'){
+				$k = substr($k,0,-1);			
+			}
 			if(is_callable($v)){
 				$v = ['action'=>$v];
 			}
