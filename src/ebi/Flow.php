@@ -58,7 +58,7 @@ class Flow{
 		$this->template->set_object_plugin(new \ebi\Paginator());
 		$this->template->media_url($media);
 		$this->template->cp($vars);
-		$this->template->vars('t',new \ebi\FlowHelper($this->app_url,$this->media_url,$this->url_pattern,$this->selected_pattern,$this->selected_class_pattern,$ins));
+		$this->template->vars('t',new \ebi\FlowHelper($this->app_url,$this->media_url,$this->url_pattern,$this->selected_pattern['name'],$this->selected_class_pattern,$ins));
 		$src = $this->template->read($path);
 		
 		print($src);
@@ -147,7 +147,6 @@ class Flow{
 		$this->apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		
 		if(empty($this->app_url)){
-			$host = \ebi\Conf::get('host',\ebi\Request::host());
 			$entry_file = null;
 			foreach(debug_backtrace(false) as $d){
 				if($d['file'] !== __FILE__){
@@ -155,14 +154,7 @@ class Flow{
 					break;
 				}
 			}
-			if(empty($host)){
-				$this->app_url = 'http://localhost:8000/'.basename($entry_file);
-			}else{
-				$hasport = (boolean)preg_match('/:\d+/',$host);
-				$entry = preg_replace("/.+\/workspace(\/.+)/","\\1",$entry_file);
-				$this->app_url = $host.'/'.($hasport ? basename($entry) : $entry);
-				$this->media_url = dirname($this->app_url).'/resources/media/';
-			}
+			$this->app_url = 'http://localhost:8000/'.basename($entry_file);
 		}else if(substr($this->app_url,-1) == '*'){
 			$entry_file = null;
 			foreach(debug_backtrace(false) as $d){
@@ -180,9 +172,14 @@ class Flow{
 			$this->media_url = $media_path.'resources/media/';
 		}
 		$this->media_url = \ebi\Util::path_slash($this->media_url,null,true);
+		
+		/**
+		 * テンプレートのパス
+		 */
 		$this->template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		$this->template = new \ebi\Template();
 		
+		// TODO
 		self::$map = $this->read($map);
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -203,24 +200,18 @@ class Flow{
 		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
-				if(isset($pattern['mode']) && !empty($pattern['mode'])){
-					$mode = \ebi\Conf::appmode();
-					$mode_alias = \ebi\Conf::get('mode');
-					$bool = false;
-					foreach(explode(',',$pattern['mode']) as $m){
-						foreach((
-								(substr(trim($m),0,1) == '@' && isset($mode_alias[substr(trim($m),1)])) ?
-								explode(',',$mode_alias[substr(trim($m),1)]) :
-								[$m]
-						) as $me){
-							if($mode == trim($me)){
-								$bool = true;
-								break;
-							}
-						}
+				if(!empty($pattern['mode'])){
+					/**
+					 * Flowの実行モード
+					 */
+					$mode = \ebi\Conf::get('mode',\ebi\Conf::appmode());
+					if(!in_array($mode,explode(',',$pattern['mode']))) {
+						break;
 					}
-					if(!$bool) break;
 				}
+				/**
+				 * URLをhttpsにするか
+				 */
 				if($pattern['secure'] === true && \ebi\Conf::get('secure',true) !== false){
 					if(substr(\ebi\Request::current_url(),0,5) === 'http:' &&
 						(
@@ -395,24 +386,8 @@ class Flow{
 				}catch(\Exception $e){
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
+					\ebi\Log::warn($e);
 					
-					if(($level = \ebi\Conf::get('exception_log_level')) !== null && in_array($level,['error','warn','info','debug'])){
-						$es = ($e instanceof \ebi\Exceptions) ? $e : [$e];
-						$ignore = \ebi\Conf::get('exception_log_ignore');
-						foreach($es as $ev){
-							$in = true;
-							if(!empty($ignore)){
-								foreach((is_array($ignore) ? $ignore : [$ignore]) as $p){
-									if(($in = !(preg_match('/'.str_replace('/','\\/',$p).'/',(string)$ev))) === false){
-										break;
-									}
-								}
-							}
-							if($in){
-								\ebi\Log::$level($ev);
-							}
-						}
-					}
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
 					}else if(isset(self::$map['error_status'])){

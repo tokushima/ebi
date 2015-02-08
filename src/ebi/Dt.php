@@ -11,13 +11,15 @@ class Dt{
 	private $flow_output_maps = [];
 	
 	public function get_flow_plugins(){
-		return ['ebi.flow.plugin.TwitterBootstrap3Helper','ebi.Dt.FormFormat'];
+		return [
+			'ebi.flow.plugin.TwitterBootstrap3Helper',
+			'ebi.Dt.FormFormat'
+		];
 	}
 	public function get_after_vars(){
 		return [
 				'f'=>new \ebi\Dt\Helper(),
 				'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
-				'media_url'=>\ebi\Util::path_slash(\ebi\Conf::get('media_url'),null,false),
 				];
 	}
 	private function get_flow_output_maps(){

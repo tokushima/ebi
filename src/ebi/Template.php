@@ -8,7 +8,6 @@ namespace ebi;
  * @var string $put_block ブロックファイル
  * @var string $template_super 継承元テンプレート
  * @var string $media_url メディアファイルへのURLの基点
- * @conf boolean $display_exception 例外が発生した場合にメッセージを表示するか
  */
 class Template{
 	use \ebi\Plugin,\ebi\TemplateVariable;
@@ -67,7 +66,7 @@ class Template{
 		if(is_array($array) || is_object($array)){
 			foreach($array as $k => $v) $this->vars[$k] = $v;
 		}else{
-			throw new \InvalidArgumentException('must be an of array');
+			throw new \ebi\exception\InvalidArgumentException('must be an of array');
 		}
 		return $this;
 	}
@@ -87,7 +86,9 @@ class Template{
 	 * @return string
 	 */
 	public function read($file,$template_name=null){
-		if(!is_file($file) && strpos($file,'://') === false) throw new \InvalidArgumentException($file.' not found');
+		if(!is_file($file) && strpos($file,'://') === false){
+			throw new \ebi\exception\InvalidArgumentException($file.' not found');
+		}
 		$this->file = $file;
 		$cname = md5($this->template_super.$this->put_block.$this->file.$this->selected_template);
 		/**
@@ -210,7 +211,7 @@ class Template{
 			if(is_array($this->vars) && !empty($this->vars)){
 				extract($this->vars);
 			}
-			$rtn = eval('?><?php $_display_exception_='.((\ebi\Conf::get('display_exception') === true) ? 'true' : 'false').'; ?>'.$_src_);
+			$rtn = eval('?>'.$_src_);
 		$_eval_src_ = ob_get_clean();
 
 		if($rtn === false){
@@ -291,10 +292,10 @@ class Template{
 					if(substr($href,0,1) == '#') $href = $filename.$href;
 					$href = \ebi\Util::path_absolute(str_replace("\\",'/',dirname($filename)),$href);
 					if(empty($href) || !is_file(preg_replace('/^(.+)#.*$/','\\1',$href))){
-						throw new \LogicException('href not found '.$filename);
+						throw new \ebi\exception\InvalidTemplateException('href not found '.$filename);
 					}
 					if($filename === $href){
-						throw new \LogicException('Infinite Recursion Error'.$filename);
+						throw new \ebi\exception\InvalidTemplateException('Infinite Recursion Error'.$filename);
 					}
 					$readxml = \ebi\Xml::anonymous($this->rtcomment($src));
 					foreach($readxml->find('rt:block') as $b){
@@ -413,7 +414,9 @@ class Template{
 				while(true){
 					$tag = \ebi\Xml::extract($src,$rttag);
 					$tag->escape(false);
-					if(!$tag->is_attr('param')) throw new \LogicException('if');
+					if(!$tag->is_attr('param')){
+						throw new \ebi\exception\InvalidTemplateException('if');
+					}
 					$arg1 = $this->variable_string($this->parse_plain_variable($tag->in_attr('param')));
 	
 					if($tag->is_attr('value')){

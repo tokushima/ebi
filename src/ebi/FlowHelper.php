@@ -20,10 +20,10 @@ class FlowHelper{
 	 * @param string $app_url
 	 * @param string $media_url
 	 */
-	public function __construct($app_url=null,$media_url=null,$url_pattern=[],$selected_pattern=[],$selected_class_pattern=[],$obj=null){
+	public function __construct($app_url=null,$media_url=null,$url_pattern=[],$selected_pattern_name=null,$selected_class_pattern=[],$obj=null){
 		$this->app_url = $app_url;
 		$this->media_url = $media_url;
-		$this->name = isset($selected_pattern['name']) ? $selected_pattern['name'] : null;
+		$this->name = $selected_pattern_name;
 		$this->url_pattern = $url_pattern;
 		$this->selected_class_pattern = $selected_class_pattern;
 		

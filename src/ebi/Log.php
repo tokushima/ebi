@@ -9,7 +9,6 @@ namespace ebi;
  * @var string $file 発生したファイル名
  * @var integer $line 発生した行
  * @var mixed $value 内容
- * @conf string $level ログレベル (none,error,warn,info,debug)
  */
 class Log{
 	use \ebi\Plugin;
@@ -32,6 +31,9 @@ class Log{
 			register_shutdown_function([__CLASS__,'flush']);
 		}
 		if(self::$current_level === null){
+			/**
+			 * ログレベル (none,error,warn,info,debug)
+			 */
 			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
 		}
 		return self::$current_level;
@@ -94,10 +96,14 @@ class Log{
 	 */
 	public static function flush(){
 		if(!empty(self::$logs)){
+			/**
+			 * boolean 標準出力に表示するか
+			 */
 			$stdout = \ebi\Conf::get('stdout',false);
-			$firebug = (\ebi\Conf::get('firebug',false) && php_sapi_name() != 'cli');
+			/**
+			 * ログを出力するファイルを指定する
+			 */
 			$file = \ebi\Conf::get('file');
-			$maildir = \ebi\Util::path_slash(\ebi\Conf::get('mail_dir'),null,true);
 			
 			if(!empty($file)){
 				if(!is_dir($dir = dirname($file))){
@@ -118,25 +124,8 @@ class Log{
 										FILE_APPEND
 						);
 					}
-					if(!empty($maildir) && is_file($f=($maildir.$level.'.xml'))){
-						$mail = new \ebi\Mail();
-						$mail->send_template($f,['log'=>$log,'env'=>new \ebi\Env()]);
-					}
 					if(self::$disp === true && $stdout){
-						if($firebug){
-							$level = $log->fm_level();
-							$is_s = is_string($log->value());
-							print(sprintf('<script>console.%s("[%s] %s:%s %s");%s</script>',
-									(($level == 'debug') ? 'log': $level),
-									$level,
-									$log->file(),
-									$log->line(),
-									($is_s ? $log->value() : 'object'),
-									($is_s ? '' : sprintf(' console.dir(%s);',json_encode($log->value())))
-							));
-						}else{
-							print(((string)$log).PHP_EOL);
-						}
+						print(((string)$log).PHP_EOL);
 					}
 					static::call_class_plugin_funcs($level,$log,self::$id);
 				}

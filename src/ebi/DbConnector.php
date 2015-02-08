@@ -29,17 +29,17 @@ class DbConnector{
 	 * @param boolean $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
+		unset($port,$user,$password,$sock);
+		
 		if(!extension_loaded('pdo_sqlite')){
 			throw new \ebi\exception\ConnectionException('pdo_sqlite not supported');
 		}
 		if(empty($host) && empty($name)){
 			throw new \ebi\exception\ConnectionException('undef connection name');
 		}
-		unset($port,$user,$password,$sock);
 		$con = null;
 		
 		if(empty($host)){
-			$host = \ebi\Conf::get('host');
 			if(empty($host)){
 				$host = empty($name) ? ':memory:' : getcwd();
 			}

@@ -50,7 +50,7 @@ trait TemplateVariable{
 	protected function php_exception_catch($tag){
 		return '<?php try{ ?>'
 		.$tag
-		.'<?php }catch(\Exception $e){ if(!isset($_nes_) && $_display_exception_){ $_t_->print_variable($e->getMessage()); } } ?>';
+		.'<?php }catch(\Exception $e){} ?>';
 	}
 	protected function match_variable($src){
 		$hash = [];
