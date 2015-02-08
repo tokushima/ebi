@@ -5,27 +5,13 @@ namespace ebi;
  * @author tokushima
  */
 class FlowHelper{
-	private $app_url;
-	private $media_url;
 	private $name;
-	
-	private $url_pattern = [];
-	private $selected_class_pattern = [];
 	
 	private $is_login = false;
 	private $user;
 	
-	/**
-	 * 
-	 * @param string $app_url
-	 * @param string $media_url
-	 */
-	public function __construct($app_url=null,$media_url=null,$url_pattern=[],$selected_pattern_name=null,$selected_class_pattern=[],$obj=null){
-		$this->app_url = $app_url;
-		$this->media_url = $media_url;
-		$this->name = $selected_pattern_name;
-		$this->url_pattern = $url_pattern;
-		$this->selected_class_pattern = $selected_class_pattern;
+	public function __construct($name=null,$obj=null){
+		$this->name = $name;
 		
 		if($obj instanceof \ebi\flow\Request){
 			$this->is_login = $obj->is_login();
@@ -42,13 +28,13 @@ class FlowHelper{
 		$args = func_get_args();
 		array_shift($args);
 	
-		if(!isset($this->url_pattern[$name])){
-			if(isset($this->url_pattern[$name.'/index'])){
+		if(!isset(\ebi\Flow::url_pattern()[$name])){
+			if(isset(\ebi\Flow::url_pattern()[$name.'/index'])){
 				$name = $name.'/index';
 			}
 		}
-		if(isset($this->url_pattern[$name][sizeof($args)])){
-			return vsprintf($this->url_pattern[$name][sizeof($args)],$args);
+		if(isset(\ebi\Flow::url_pattern()[$name][sizeof($args)])){
+			return vsprintf(\ebi\Flow::url_pattern()[$name][sizeof($args)],$args);
 		}
 	}
 	/**
@@ -82,8 +68,8 @@ class FlowHelper{
 		$args = func_get_args();
 		array_shift($args);
 		
-		if(isset($this->selected_class_pattern[$name][sizeof($args)])){
-			return vsprintf($this->selected_class_pattern[$name][sizeof($args)]['format'],$args);
+		if(isset(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)])){
+			return vsprintf(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)]['format'],$args);
 		}
 	}
 	/**
@@ -93,7 +79,7 @@ class FlowHelper{
 	 * @param string $false 一致しなかった場合に返す文字列
 	 */
 	public function match_package_method_switch($name,$true='on',$false=''){
-		$method = explode('/',$this->name,2);
+		$method = explode('/',$this->name(),2);
 		return ($name == (isset($method[1]) ? $method[1] : $method[0])) ? $true : $false;
 	}	
 	/**
@@ -177,7 +163,7 @@ class FlowHelper{
 	 * @return string
 	 */
 	public function media($url=null){
-		return \ebi\Util::path_absolute($this->media_url,$url);
+		return \ebi\Util::path_absolute(\ebi\Flow::media_url(),$url);
 	}
 	/**
 	 * アプリケーションのURLを返す
@@ -185,7 +171,7 @@ class FlowHelper{
 	 * @retunr string
 	 */
 	public function app_url($url=null){
-		return \ebi\Util::path_absolute($this->app_url,$url);
+		return \ebi\Util::path_absolute(\ebi\Flow::app_url(),$url);
 	}
 	/**
 	 * ゼロを桁数分前に埋める
