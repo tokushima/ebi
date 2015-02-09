@@ -3,9 +3,9 @@ namespace test\flow;
 /**
  * 
  * @author tokushima
- * @login @['type'=>'test.model.Member']
+ * @login @['type'=>'test.model.Member1']
  */
-class LoginRequestAction extends \ebi\flow\Request{
+class LoginRequestAction1 extends \ebi\flow\Request{
 	/**
 	 * @automap
 	 * @return multitype:number

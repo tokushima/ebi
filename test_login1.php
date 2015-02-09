@@ -2,7 +2,7 @@
 include_once('bootstrap.php');
 
 \ebi\Flow::app([
-	'plugins'=>'test.flow.plugin.Login',
+	'plugins'=>'test.flow.plugin.Login1',
 	'patterns'=>[
 		'login_url'=>[
 			'name'=>'login',
@@ -15,15 +15,15 @@ include_once('bootstrap.php');
 		],
 		'aaa'=>[
 			'name'=>'aaa',
-			'action'=>'test.flow.LoginRequestAction::aaa',
+			'action'=>'test.flow.LoginRequestAction1::aaa',
 		],
 		'aaa'=>[
 			'name'=>'aaa',
-			'action'=>'test.flow.LoginRequestAction::aaa',
+			'action'=>'test.flow.LoginRequestAction1::aaa',
 		],
 		'bbb'=>[
 			'name'=>'bbb',
-			'action'=>'test.flow.LoginRequestAction::bbb',
+			'action'=>'test.flow.LoginRequestAction1::bbb',
 		],
 		'notype'=>[
 			'name'=>'notype',
@@ -31,7 +31,7 @@ include_once('bootstrap.php');
 		],
 		'automap'=>[
 			'name'=>'automap',
-			'action'=>'test.flow.LoginRequestAction'
+			'action'=>'test.flow.LoginRequestAction1'
 		],
 		'dt'=>['action'=>'ebi.Dt']
 	]

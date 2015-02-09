@@ -555,6 +555,9 @@ class Flow{
 			if(is_callable($v)){
 				$v = ['action'=>$v];
 			}
+			
+			
+			// TODO appの遅延処理
 			if(isset($v['app'])){
 				$branch = $v['app'];
 				$name = isset($v['name']) ? $v['name'] : $k;
@@ -616,7 +619,7 @@ class Flow{
 			if(!isset($v['name'])){
 				$v['name'] = (empty($k) ? 'index' : $k);
 			}
-			if(isset($v['action']) && is_string($v['action']) && strpos($v['action'],'::') === false){				
+			if(isset($v['action']) && is_string($v['action']) && strpos($v['action'],'::') === false){
 				foreach(self::fixed_automap($k,$v['action'],$v['name']) as $murl => $am){
 					$vam = array_merge($v,$am);
 					list($vam['format'],$vam['num']) = $url_format_func($murl,$vam['secure']);
