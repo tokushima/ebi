@@ -137,25 +137,19 @@ class Flow{
 		}
 		throw new \InvalidArgumentException('map `'.$name.'` not found');
 	}
-	private static function execute($map){
-		if(is_array($map) && !isset($map['patterns'])){
-			$map = ['patterns'=>$map];
-		}else if(is_string($map)){
-			$map = ['patterns'=>[''=>['action'=>$map]]];
-		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
-			throw new \InvalidArgumentException('pattern not found');
-		}
+	
+	private static function init(){
 		/**
 		 * アプリケーションのベースURL
 		 */
 		self::$app_url = \ebi\Conf::get('app_url');
 		/**
 		 * メディアファイルのベースURL
-		 */
+		*/
 		self::$media_url = \ebi\Conf::get('media_url');
 		/**
 		 * apps(action appのファイル群)のディレクトリパス
-		 */
+		*/
 		self::$apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		
 		if(empty(self::$app_url)){
@@ -176,9 +170,9 @@ class Flow{
 				}
 			}
 			self::$app_url = substr(self::$app_url,0,-1).basename($entry_file);
-		}	
+		}
 		self::$app_url = \ebi\Util::path_slash(str_replace('https://','http://',self::$app_url),null,true);
-
+		
 		if(empty(self::$media_url)){
 			$media_path = preg_replace('/\/[^\/]+\.php[\/]$/','/',self::$app_url);
 			self::$media_url = $media_path.'resources/media/';
@@ -187,19 +181,31 @@ class Flow{
 		
 		/**
 		 * テンプレートのパス
-		 */
+		*/
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-		self::$template = new \ebi\Template();
+	}
+	private static function execute($map){
+		if(is_array($map) && !isset($map['patterns'])){
+			$map = ['patterns'=>$map];
+		}else if(is_string($map)){
+			$map = ['patterns'=>[''=>['action'=>$map]]];
+		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
+			throw new \ebi\exception\InvalidArgumentException('pattern not found');
+		}
 		
-		self::$map = self::read($map);
+		if(!isset(self::$app_url)){
+			self::init();
+		}
+		self::$map = self::read($map);		
+		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
 			return;
 		}
-		$result_vars = [];
+		
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
 		
-		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){			
+		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach(self::$map['patterns'] as $p){
 				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
 					\ebi\HttpFile::attach($file);
@@ -236,6 +242,8 @@ class Flow{
 					}
 					self::$media_url = str_replace('http://','https://',self::$media_url);
 				}
+				self::$template = new \ebi\Template();
+				
 				try{
 					$funcs = $class = $method = $template = $ins = null;
 					$exception = null;
