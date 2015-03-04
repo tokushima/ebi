@@ -26,11 +26,8 @@ class Log{
 	private $value;
 		
 	private static function cur_level(){
-		if(!isset(self::$id)){
-			self::$id = base_convert(date('md'),10,36).base_convert(date('G'),10,36).base_convert(mt_rand(1296,46655),10,36);
-			register_shutdown_function([__CLASS__,'flush']);
-		}
 		if(self::$current_level === null){
+			register_shutdown_function([__CLASS__,'flush']);
 			/**
 			 * ログレベル (none,error,warn,info,debug)
 			 */
@@ -89,7 +86,7 @@ class Log{
 		return $this->value;
 	}
 	public function __toString(){
-		return '['.date('Y-m-d H:i:s',$this->time).']'.'['.sprintf('%s',$this->fm_level()).']'.'['.self::$id.']'.':['.$this->file.':'.$this->line.']'.' '.$this->fm_value();
+		return '['.date('Y-m-d H:i:s',$this->time).']'.'['.sprintf('%s',$this->fm_level()).']'.':['.str_replace(getcwd().DIRECTORY_SEPARATOR,'',$this->file).':'.$this->line.']'.' '.$this->fm_value();
 	}
 	/**
 	 * 格納されたログを出力する
@@ -127,7 +124,7 @@ class Log{
 					if(self::$disp === true && $stdout){
 						print(((string)$log).PHP_EOL);
 					}
-					static::call_class_plugin_funcs($level,$log,self::$id);
+					static::call_class_plugin_funcs($level,$log);
 				}
 			}
 		}

@@ -232,8 +232,9 @@ class Request{
 	 */
 	private function login_required(){
 		$selected_pattern = $this->get_selected_pattern();
+		
 		if(!$this->is_login() 
-			&& isset($selected_pattern['action'])
+			&& array_key_exists('action',$selected_pattern)
 			&& strpos($selected_pattern['action'],'::do_login') === false
 		){
 			if($this->has_object_plugin('before_login_required')) {
@@ -245,7 +246,7 @@ class Request{
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
 			
-			if(isset($selected_pattern['@'])){
+			if(array_key_exists('@',$selected_pattern)){
 				$this->set_before_redirect('do_login');
 			}else{
 				$this->set_before_redirect('login');

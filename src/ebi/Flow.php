@@ -75,7 +75,7 @@ class Flow{
 	 */
 	private static function map_redirect($map_name,$vars=[],$pattern=[]){
 		self::terminate();
-		
+// TODO	map_redirectを直感的ななにかにする
 		if(is_array($map_name) && !isset($map_name[0])){
 			$bool = false;
 			foreach($map_name as $k => $a){
@@ -102,14 +102,8 @@ class Flow{
 			}
 			$args[$n] = $vars[$n];
 		}
-		if(strpos($name,'://') === false){
-			if(isset($pattern['@'])){
-				if(isset(self::$selected_class_pattern[$name][sizeof($args)])){
-					$name = self::$selected_class_pattern[$name][sizeof($args)]['name'];
-				}
-			}else if(isset($pattern['branch'])){
-				$name = $pattern['branch'].'#'.$name;
-			}
+		if(strpos($name,'://') === false && array_key_exists('@',$pattern) && isset(self::$selected_class_pattern[$name][sizeof($args)])){
+			$name = self::$selected_class_pattern[$name][sizeof($args)]['name'];
 		}
 		if(strpos($name,'://') !== false){
 			\ebi\HttpHeader::redirect($name);
@@ -118,7 +112,7 @@ class Flow{
 			$format = self::$url_pattern[$name][sizeof($args)];
 			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));
 		}
-		throw new \InvalidArgumentException('map `'.$name.'` not found');
+		throw new \ebi\exception\InvalidArgumentException('map `'.$name.'` not found');
 	}
 	private static function get_var($map,$k){
 		if(in_array($k,['plugins','args','vars'])){
@@ -173,7 +167,7 @@ class Flow{
 		
 		
 		// TODO
-		$automap_idx = 0;
+		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
 		self::$map = array_merge(self::$map,$map);		
@@ -197,7 +191,7 @@ class Flow{
 		
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach(self::$map['patterns'] as $p){
-				if((int)$p['pattern_id'] === (int)$m[1] && isset($p['@']) && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
+				if((int)$p['idx'] === (int)$m[1] && isset($p['@']) && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
 					\ebi\HttpFile::attach($file);
 				}
 			}
@@ -208,7 +202,7 @@ class Flow{
 		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
-				if(!array_key_exists('mode',$pattern)){
+				if(array_key_exists('mode',$pattern)){
 					if(!in_array(\ebi\Conf::get('mode',\ebi\Conf::appmode()),explode(',',$pattern['mode']))){
 						\ebi\HttpHeader::send_status(404);
 						return self::terminate();
@@ -245,20 +239,20 @@ class Flow{
 							throw new \ebi\exception\InvalidArgumentException($pattern['name'].' action invalid');
 						}
 					}
-					// name,num,format,pattern_idは必須
 					foreach(self::$map['patterns'] as $m){
 						self::$url_pattern[$m['name']][$m['num']] = $m['format'];
 						
-						if(!empty($class) && array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['pattern_id'] == $m['pattern_id']){
-							self::$selected_class_pattern[substr($pattern['action'],strlen($class.'::'))][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
+						if(array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['idx'] == $m['idx']){
+							list(,$mm) = explode('::',$m['action']);
+							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
-					}
+					}					
 					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],[],$pattern);
 					}
 					foreach(array_merge(
-						(array_keys('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
-						(array_keys('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : [])
+						(array_key_exists('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
+						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : [])
 					) as $m){
 						$o = self::to_instance($m);
 						self::set_class_plugin($o);
@@ -356,9 +350,9 @@ class Flow{
 						array_key_exists('@',$pattern)
 						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 					){
-						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['pattern_id']);
+						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
 					}else if(
-						self::$map['find_template'] === true
+						array_key_exists('find_template',self::$map) && self::$map['find_template'] === true
 						&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name'].'.html'))
 					){
 						self::template($result_vars,$pattern,$ins,$t);
@@ -404,7 +398,7 @@ class Flow{
 						$result_vars = array_merge($result_vars,$pattern['vars']);
 					}
 					if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
-						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['pattern_id']);
+						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
 					}else if(array_key_exists('error_redirect',$pattern)){
 						self::map_redirect($pattern['error_redirect'],[],$pattern);
 					}else if(array_key_exists('error_template',$pattern)){
