@@ -10,17 +10,12 @@ class Flow{
 
 	private static $app_url;
 	private static $media_url;
-	
 	private static $template_path;
-	private static $apps_path;
 	private static $package_media_url = 'package/resources/media';
 	
 	private static $url_pattern = [];
 	private static $selected_class_pattern = [];
-	
-	private static $is_get_branch = false;
-	private static $branch_map = [];
-	
+		
 	private static $is_get_map = false;
 	private static $map = [];
 	
@@ -53,18 +48,6 @@ class Flow{
 		}
 		return self::$map;
 	}
-	/**
-	 * アプリケーションの実行
-	 * @param array $map
-	 */
-	public static function app($map){
-		if(self::$is_get_branch){
-			self::$branch_map = $map;
-		}else{
-			 self::execute($map);
-		}
-	}
-	
 	private static function template(array $vars,$selected_pattern,$ins,$path,$media=null){
 		self::$template->set_object_plugin(new \ebi\FlowInvalid());
 		self::$template->set_object_plugin(new \ebi\Paginator());
@@ -137,20 +120,27 @@ class Flow{
 		}
 		throw new \InvalidArgumentException('map `'.$name.'` not found');
 	}
-	
-	private static function init(){
-		/**
-		 * アプリケーションのベースURL
-		 */
+	private static function get_var($map,$k){
+		if(in_array($k,['plugins','args','vars'])){
+			if(isset($map[$k])){
+				return (is_array($map[$k]) ? $map[$k] : [$map[$k]]);
+			}
+			return [];
+		}else{
+			return (isset($map[$k]) ? $map[$k] : null);
+		}
+	}
+	public static function app($map){
+		if(is_array($map) && !isset($map['patterns'])){
+			$map = ['patterns'=>$map];
+		}else if(is_string($map)){
+			$map = ['patterns'=>[''=>['action'=>$map]]];
+		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
+			throw new \ebi\exception\InvalidArgumentException('pattern not found');
+		}
+		
 		self::$app_url = \ebi\Conf::get('app_url');
-		/**
-		 * メディアファイルのベースURL
-		*/
 		self::$media_url = \ebi\Conf::get('media_url');
-		/**
-		 * apps(action appのファイル群)のディレクトリパス
-		*/
-		self::$apps_path = \ebi\Util::path_slash(\ebi\Conf::get('apps_path',getcwd().'/apps/'),null,true);
 		
 		if(empty(self::$app_url)){
 			$entry_file = null;
@@ -178,25 +168,25 @@ class Flow{
 			self::$media_url = $media_path.'resources/media/';
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
-		
-		/**
-		 * テンプレートのパス
-		*/
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-	}
-	private static function execute($map){
-		if(is_array($map) && !isset($map['patterns'])){
-			$map = ['patterns'=>$map];
-		}else if(is_string($map)){
-			$map = ['patterns'=>[''=>['action'=>$map]]];
-		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
-			throw new \ebi\exception\InvalidArgumentException('pattern not found');
+		
+		
+		
+		// TODO
+		$automap_idx = 0;
+		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
+		unset($map['patterns']);
+		self::$map = array_merge(self::$map,$map);		
+		
+		$http = self::$app_url;
+		$https = str_replace('http://','https://',self::$app_url);
+		$conf_secure = (\ebi\Conf::get('secure',true) === true);
+		
+		foreach(self::$map['patterns'] as $k => $v){
+			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = self::url_format_func($k,(array_key_exists('secure',$v) ? ($v['secure'] === true) : false),$conf_secure,$https,$http);
 		}
 		
-		if(!isset(self::$app_url)){
-			self::init();
-		}
-		self::$map = self::read($map);		
+		
 		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -212,24 +202,19 @@ class Flow{
 				}
 			}
 			\ebi\HttpHeader::send_status(404);
-			exit;
+			return self::terminate();
 		}
+
 		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
-				if(!empty($pattern['mode'])){
-					/**
-					 * Flowの実行モード
-					 */
-					$mode = \ebi\Conf::get('mode',\ebi\Conf::appmode());
-					if(!in_array($mode,explode(',',$pattern['mode']))) {
-						break;
+				if(!array_key_exists('mode',$pattern)){
+					if(!in_array(\ebi\Conf::get('mode',\ebi\Conf::appmode()),explode(',',$pattern['mode']))){
+						\ebi\HttpHeader::send_status(404);
+						return self::terminate();
 					}
 				}
-				/**
-				 * URLをhttpsにするか
-				 */
-				if($pattern['secure'] === true && \ebi\Conf::get('secure',true) !== false){
+				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && \ebi\Conf::get('secure',true) !== false){
 					if(substr(\ebi\Request::current_url(),0,5) === 'http:' &&
 						(
 							!isset($_SERVER['HTTP_X_FORWARDED_HOST']) ||
@@ -251,26 +236,30 @@ class Flow{
 					$result_vars = $plugins = [];
 					array_shift($param_arr);
 					
-					if(!empty($pattern['action'])){
+					if(array_key_exists('action',$pattern)){
 						if(is_string($pattern['action'])){
 							list($class,$method) = explode('::',$pattern['action']);							
 						}else if(is_callable($pattern['action'])){
 							$funcs = $pattern['action'];
 						}else{
-							throw new \InvalidArgumentException($pattern['name'].' action invalid');
+							throw new \ebi\exception\InvalidArgumentException($pattern['name'].' action invalid');
 						}
 					}
+					// name,num,format,pattern_idは必須
 					foreach(self::$map['patterns'] as $m){
 						self::$url_pattern[$m['name']][$m['num']] = $m['format'];
 						
-						if(!empty($class) && isset($pattern['@']) && isset($m['@']) && $pattern['pattern_id'] == $m['pattern_id']){
-							self::$selected_class_pattern[substr($m['action'],strlen($class.'::'))][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
+						if(!empty($class) && array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['pattern_id'] == $m['pattern_id']){
+							self::$selected_class_pattern[substr($pattern['action'],strlen($class.'::'))][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}
-					if(isset($pattern['redirect'])){
+					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],[],$pattern);
 					}
-					foreach(array_merge(self::$map['plugins'],$pattern['plugins']) as $m){
+					foreach(array_merge(
+						(array_keys('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
+						(array_keys('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : [])
+					) as $m){
 						$o = self::to_instance($m);
 						self::set_class_plugin($o);
 						$plugins[] = $o;
@@ -334,7 +323,7 @@ class Flow{
 						$template = $ins->get_template();
 						$result_vars = array_merge($result_vars,$ins->get_after_vars());							
 						$after_redirect = $ins->get_after_redirect();
-						if(isset($after_redirect) && !isset($pattern['after'])){
+						if(isset($after_redirect) && !array_key_exists('after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
 					}
@@ -347,25 +336,25 @@ class Flow{
 					}
 					\ebi\Exceptions::throw_over();
 					
-					if(isset($pattern['vars']) && is_array($pattern['vars'])){
-						$result_vars = array_merge($result_vars,$pattern['vars']);
+					if(array_key_exists('vars',$pattern)){
+						$result_vars = array_merge($result_vars,(is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']]));
 					}
-					if(isset($pattern['post_after']) && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
+					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('post_after',$pattern)){
 						self::map_redirect($pattern['post_after'],$result_vars,$pattern);
 					}
-					if(isset($pattern['after'])){
+					if(array_key_exists('after',$pattern)){
 						self::map_redirect($pattern['after'],$result_vars,$pattern);
 					}
-					if(isset($pattern['template'])){
-						if(isset($pattern['template_super'])){
+					if(array_key_exists('template',$pattern)){
+						if(array_key_exists('template_super',$pattern)){
 							self::$template->template_super(\ebi\Util::path_absolute(self::$template_path,$pattern['template_super']));
 						}
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['template']));
 					}else if(isset($template)){
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
 					}else if(
-						isset($pattern['@'])
-						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html'))
+						array_key_exists('@',$pattern)
+						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 					){
 						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['pattern_id']);
 					}else if(
@@ -416,13 +405,13 @@ class Flow{
 					}
 					if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
 						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['pattern_id']);
-					}else if(isset($pattern['error_redirect'])){
+					}else if(array_key_exists('error_redirect',$pattern)){
 						self::map_redirect($pattern['error_redirect'],[],$pattern);
-					}else if(isset($pattern['error_template'])){
+					}else if(array_key_exists('error_template',$pattern)){
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['error_template']));
-					}else if(isset(self::$map['error_redirect'])){
+					}else if(array_key_exists('error_redirect',self::$map)){
 						self::map_redirect(self::$map['error_redirect'],[],$pattern);
-					}else if(isset(self::$map['error_template'])){
+					}else if(array_key_exists('error_template',self::$map)){
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,self::$map['error_template']));
 					}else if(self::has_class_plugin('flow_exception')){
 						self::call_class_plugin_funcs('flow_exception',$e);
@@ -432,11 +421,13 @@ class Flow{
 						return self::terminate();
 					}
 					$message = [];
+					
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
-						$message[] = ['message'=>$e->getMessage(),
-										'group'=>$g,
-										'type'=>basename(str_replace("\\",'/',get_class($e)))
-										];
+						$message[] = [
+							'message'=>$e->getMessage(),
+							'group'=>$g,
+							'type'=>basename(str_replace("\\",'/',get_class($e)))
+						];
 					}
 					\ebi\Log::disable_display();
 					
@@ -448,13 +439,11 @@ class Flow{
 				}
 			}
 		}
-		if(isset(self::$map['nomatch_redirect'])){
-			if(strpos(self::$map['nomatch_redirect'],'://') === false){
-				foreach(self::$map['patterns'] as $m){
-					if(self::$map['nomatch_redirect'] == $m['name']){
-						self::$url_pattern[$m['name']][$m['num']] = $m['format'];
-						break;
-					}
+		if(array_key_exists('nomatch_redirect',self::$map) && strpos(self::$map['nomatch_redirect'],'://') === false){
+			foreach(self::$map['patterns'] as $m){
+				if(self::$map['nomatch_redirect'] == $m['name']){
+					self::$url_pattern[$m['name']][$m['num']] = $m['format'];
+					break;
 				}
 			}
 			self::map_redirect(self::$map['nomatch_redirect'],[],[]);
@@ -466,26 +455,54 @@ class Flow{
 		\ebi\FlowInvalid::clear();
 		return;
 	}
-	private static function fixed_vars($fixed_keys,$map,$exmap=[]){
+	
+	
+	
+	
+	private static function expand_patterns($pk,$patterns,$extends,&$automap_idx){
 		$result = [];
-		foreach($fixed_keys as $t => $keys){
-			foreach($keys as $k){
-				if($t == 0){
-					$result[$k] = isset($map[$k]) ? $map[$k] : (isset($exmap[$k]) ? $exmap[$k] : null);
+		$ext_plugins = [];
+	
+		if(array_key_exists('plugins',$extends)){
+			$ext_plugins = $extends['plugins'];
+			unset($extends['plugins']);
+		}
+		foreach($patterns as $k => $v){
+			if(!empty($extends)){
+				$v = array_merge($extends,$v);
+			}
+			if(!empty($ext_plugins)){
+				$v['plugins'] = array_key_exists('plugins',$v) ? (is_array($v['plugins']) ? $v['plugins'] : [$v['plugins']]) : [];
+				$v['plugins'] = array_merge($ext_plugins,$v['plugins']);
+			}
+			$pt = (empty($pk) ? '' : $pk.'/').$k;
+	
+			if(array_key_exists('patterns',$v)){
+				$vp = $v['patterns'];
+				unset($v['patterns']);
+				$result = array_merge($result,self::expand_patterns($pt,$vp,$v,$automap_idx));
+			}else{
+				if(!isset($v['name'])){
+					$v['name'] = $pt;
+				}
+	
+				if(isset($v['action'])){
+					if(strpos($v['action'],'::') === false){
+						foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
+							$result[$ak] = array_merge($v,$av);
+						}
+					}else{
+						$result[$pt] = $v;
+					}
 				}else{
-					$result[$k] = [];
-					if(isset($map[$k])){
-						$result[$k] = is_array($map[$k]) ? $map[$k] : [$map[$k]];
-					}
-					if(isset($exmap[$k])){
-						$result[$k] = array_merge($result[$k],(is_array($exmap[$k]) ? $exmap[$k] : [$exmap[$k]]));
-					}
+					$result[$pt] = $v;
 				}
 			}
 		}
 		return $result;
 	}
-	private static function fixed_automap($url,$class,$name){
+	
+	private static function automap($url,$class,$name,$idx){
 		$result = [];
 		try{
 			$r = new \ReflectionClass(str_replace('.','\\',$class));
@@ -509,12 +526,13 @@ class Flow{
 							unset($auto_anon['name']);
 						}
 						$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
-							
+	
 						for($i=0;$i<=$m->getNumberOfParameters()-$m->getNumberOfRequiredParameters();$i++){
 							$result[$murl.$suffix] = [
 									'name'=>$name.'/'.$base_name
 									,'action'=>$class.'::'.$m->getName()
 									,'@'=>$d
+									,'idx'=>$idx
 							];
 							if(!empty($auto_anon)){
 								$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
@@ -528,7 +546,7 @@ class Flow{
 			throw new \InvalidArgumentException($class.' not found');
 		}
 		return $result;
-	}
+	}	
 	private static function url_format_func($url,$map_secure,$conf_secure,$https,$http){
 		$num = 0;
 		$format = \ebi\Util::path_absolute(
@@ -536,135 +554,6 @@ class Flow{
 				(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
 		);
 		return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
-	}
-	private static function expand_branch($app_map){
-		$map_pattern_keys = [
-				0=>['name','action','redirect',
-						'media_path',
-						'template','template_path','template_super',
-						'error_redirect','error_status','error_template',
-						'suffix','secure','mode','after','post_after',
-				]
-				,1=>['plugins','args','vars']
-		];
-		$root_keys = [
-				0=>['media_path',
-						'nomatch_redirect',
-						'template_path',
-						'error_redirect','error_status','error_template',
-						'secure','find_template',
-				]
-				,1=>['plugins','patterns']
-		];		
-		$patterns = [];
-		if(is_file($f=self::$apps_path.$app_map['app'].'.php')){
-			self::$is_get_branch = true;
-			ob_start();
-				$rtn = include($f);
-			ob_end_clean();
-			self::$is_get_branch = false;
-			$branch_map = self::fixed_vars($root_keys,self::read(self::$branch_map),$app_map);
-
-			foreach($branch_map['patterns'] as $bk => $bv){
-				$bm = self::fixed_vars($map_pattern_keys,$bv,$branch_map);
-				$bm['name'] = $app_map['name'].'#'.$bm['name'];
-				$bm['pattern_id'] = $app_map['name'].'#'.$bv['pattern_id'];
-				$bm['branch'] = $app_map['app'];
-
-				if(isset($bv['@'])){
-					$bm['@'] = $bv['@'];
-				}
-				$patterns[$app_map['url'].(empty($bk) ? '' : '/'.$bk)] = $bm;
-			}
-		}
-		return $patterns;
-	}
-	private static function read($map){
-		$map_pattern_keys = [
-				0=>['name','action','redirect',
-					'media_path',
-					'template','template_path','template_super',
-					'error_redirect','error_status','error_template',
-					'suffix','secure','mode','after','post_after',
-				]
-				,1=>['plugins','args','vars']
-		];
-		$root_keys = [
-				0=>['media_path',
-					'nomatch_redirect',
-					'template_path',
-					'error_redirect','error_status','error_template',
-					'secure','find_template',
-				]
-				,1=>['plugins','patterns']
-		];
-		
-		$patterns = [];
-		$map = self::fixed_vars($root_keys,$map);
-		
-		foreach($map['patterns'] as $k => $v){
-			if(substr($k,0,1) == '/'){
-				$k = substr($k,1);
-			}
-			if(substr($k,-1) == '/'){
-				$k = substr($k,0,-1);			
-			}
-			if(is_callable($v)){
-				$v = ['action'=>$v];
-			}
-						
-			if(isset($v['app'])){
-				$app = $v['app'];
-				$v = self::fixed_vars($map_pattern_keys,$v);
-				$v['name'] = isset($v['name']) ? $v['name'] : $k;
-				$v['app'] = $app;
-				$v['url'] = $k;
-				$patterns[$k.'.+'] = $v;
-			}else{
-				if(isset($v['patterns'])){
-					$kurl = is_int($k) ? '' : ($k.(empty($k) ? '' : '/'));
-					$kpattern = $v['patterns'];
-					unset($v['patterns']);
-					
-					foreach($kpattern as $pk => $pv){
-						$patterns[$kurl.$pk] = self::fixed_vars($map_pattern_keys,$v,$pv);
-					}
-				}else{
-					$patterns[$k] = self::fixed_vars($map_pattern_keys,$v);
-				}
-			}
-		}
-		$map['patterns'] = self::map_patterns($patterns);		
-		return $map;
-	}
-	private static function map_patterns($patterns){
-		$map_pattenrs = [];
-		$http = self::$app_url;
-		$https = str_replace('http://','https://',self::$app_url);
-		$conf_secure = (\ebi\Conf::get('secure',true) === true);		
-		
-		$pattern_id = 1;
-		foreach($patterns as $k => $v){
-			$v['pattern_id'] = $pattern_id++;
-				
-			if(!isset($v['name'])){
-				$v['name'] = (empty($k) ? 'index' : $k);
-			}
-			if(isset($v['action']) && is_string($v['action']) && strpos($v['action'],'::') === false){
-				foreach(self::fixed_automap($k,$v['action'],$v['name']) as $murl => $am){
-					$vam = array_merge($v,$am);
-					list($vam['format'],$vam['num']) = self::url_format_func($murl,$vam['secure'],$conf_secure,$https,$http);
-					$map_pattenrs[$murl] = $vam;
-				}
-			}else{
-				list($v['format'],$v['num']) = self::url_format_func($k,$v['secure'],$conf_secure,$https,$http);
-				$map_pattenrs[$k] = $v;
-			}
-		}
-		uasort($map_pattenrs,function($a,$b){
-			return (strlen($a['format']) < strlen($b['format']));
-		});
-		return $map_pattenrs;
 	}
 	private static function to_instance($package){
 		if(is_object($package)) return $package;
