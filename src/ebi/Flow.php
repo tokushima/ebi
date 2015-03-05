@@ -165,8 +165,6 @@ class Flow{
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		
 		
-		
-		// TODO
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
@@ -179,6 +177,7 @@ class Flow{
 		foreach(self::$map['patterns'] as $k => $v){
 			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = self::url_format_func($k,(array_key_exists('secure',$v) ? ($v['secure'] === true) : false),$conf_secure,$https,$http);
 		}
+		krsort(self::$map['patterns']);
 		
 		
 		
@@ -321,7 +320,6 @@ class Flow{
 							$pattern['after'] = $after_redirect;
 						}
 					}
-					
 					if(self::has_class_plugin('after_flow_action')){
 						$result_vars = array_merge($result_vars,self::call_class_plugin_funcs('after_flow_action'));
 					}
