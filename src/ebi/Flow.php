@@ -443,10 +443,6 @@ class Flow{
 		\ebi\FlowInvalid::clear();
 		return;
 	}
-	
-	
-	
-	
 	private static function expand_patterns($pk,$patterns,$extends,&$automap_idx){
 		$result = [];
 		$ext_arr = ['plugins'=>[],'vars'=>[]];
@@ -477,7 +473,6 @@ class Flow{
 				if(!isset($v['name'])){
 					$v['name'] = $pt;
 				}
-	
 				if(isset($v['action'])){
 					if(strpos($v['action'],'::') === false){
 						foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
@@ -493,7 +488,6 @@ class Flow{
 		}
 		return $result;
 	}
-	
 	private static function automap($url,$class,$name,$idx){
 		$result = [];
 		try{
@@ -506,6 +500,7 @@ class Flow{
 						$suffix = '';
 						$auto_anon = preg_match('/@automap\s.*@(\[.*\])/',$m->getDocComment(),$a) ? \ebi\Annotation::activation($a[1]) : [];
 						$base_name = $m->getName();
+						
 						if(!is_array($auto_anon)){
 							throw new \ebi\exception\InvalidArgumentException($r->getName().'::'.$m->getName().' automap annotation error');
 						}
