@@ -35,16 +35,20 @@ include_once('bootstrap.php');
 	
 	'after'=>['name'=>'after','action'=>'test.flow.Sample::after_redirect','after'=>'after_to'],
 	'after/to'=>['name'=>'after_to','action'=>'test.flow.Sample::after_to'],
-	'after/to/arg1'=>['name'=>'after_arg1','action'=>'test.flow.Sample::after_redirect','after'=>['after_to_arg1','next_var_A']],
+	'after/to/arg1'=>['name'=>'after_arg1','action'=>'test.flow.Sample::after_redirect','after'=>['after_to_arg1',['next_var_A']]],
 	'after/to/(.+)'=>['name'=>'after_to_arg1','action'=>'test.flow.Sample::after_to'],
-	'after/to/arg2'=>['name'=>'after_arg2','action'=>'test.flow.Sample::after_redirect','after'=>['after_to_arg2','next_var_A','next_var_B']],
+	'after/to/arg2'=>['name'=>'after_arg2','action'=>'test.flow.Sample::after_redirect','after'=>['after_to_arg2',['next_var_A','next_var_B']]],
 	'after/to/(.+)/(.+)'=>['name'=>'after_to_arg2','action'=>'test.flow.Sample::after_to'],
 	
 	'post_after'=>['name'=>'post_after','action'=>'test.flow.Sample::after_redirect','post_after'=>'post_after_to'],
 	'post_after/to'=>['name'=>'post_after_to','action'=>'test.flow.Sample::after_to'],
-	'post_after/to/arg1'=>['name'=>'post_after_arg1','action'=>'test.flow.Sample::after_redirect','after'=>['post_after_to_arg1','next_var_A']],
+	'post_after/to/arg1'=>[
+		'name'=>'post_after_arg1',
+		'action'=>'test.flow.Sample::after_redirect',
+		'after'=>['post_after_to_arg1',['next_var_A']],
+	],
 	'post_after/to/(.+)'=>['name'=>'post_after_to_arg1','action'=>'test.flow.Sample::after_to'],
-	'post_after/to/arg2'=>['name'=>'post_after_arg2','action'=>'test.flow.Sample::after_redirect','after'=>['post_after_to_arg2','next_var_A','next_var_B']],
+	'post_after/to/arg2'=>['name'=>'post_after_arg2','action'=>'test.flow.Sample::after_redirect','after'=>['post_after_to_arg2',['next_var_A','next_var_B']]],
 	'post_after/to/(.+)/(.+)'=>['name'=>'post_after_to_arg2','action'=>'test.flow.Sample::after_to'],
 	
 	'helper/range'=>['name'=>'helper_range','template'=>'helper/range.html','vars'=>['max'=>5]],

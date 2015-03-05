@@ -449,6 +449,7 @@ class Dt{
 				if(strpos($src,'Flow') !== false){
 					$entry_name = substr($f->getFilename(),0,-4);
 					$map = \ebi\Flow::get_map($f->getPathname());
+					
 					foreach($map['patterns'] as $m){
 						$urls[$entry_name.'::'.$m['name']] = $m['format'];
 					}
