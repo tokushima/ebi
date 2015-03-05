@@ -63,10 +63,9 @@ class Flow{
 	/**
 	 * pattern名でリダイレクトする
 	 * ://がある場合はURLとみなす
-	 * map_nameが連想配列の場合は、$varsにmap_nameのキーが含まれていた場合にのみリダイレクトする
-	 *  ext.. [['exec'=>'ptn1','confirm'=>'ptn2'],['confirm'=>true]]
-	 * map_nameが配列の場合は最初の値をmap_nameとし残りをpatternに渡す値としてvarsからとる
-	 *  ext.. [['ptn1','var1','var2'],['var2'=>123,'var1'=>456]]
+	 *  
+	 * map_nameが配列の場合は一つ目がmap_nameとし残りをpatternに渡す値としてvarsで定義された名前を指定する
+	 *  ext.. ['ptn1',['var1','var2']]
 	 * 
 	 * @param string $map_name
 	 * @param  array $vars
@@ -75,28 +74,27 @@ class Flow{
 	 */
 	private static function map_redirect($map_name,$vars=[],$pattern=[]){
 		self::terminate();
-// TODO	map_redirectを直感的ななにかにする
-		if(is_array($map_name) && !isset($map_name[0])){
-			$bool = false;
-			foreach($map_name as $k => $a){
-				if(array_key_exists($k,$vars)){
-					$map_name = $a;
-					$bool = true;
-					break;
-				}
-			}
- 			if(!$bool){
- 				return;
- 			}
-		}
-		$name = is_string($map_name) ? $map_name : (is_array($map_name) ? array_shift($map_name) : null);
-		$var_names = (!empty($map_name) && is_array($map_name)) ? $map_name : [];
 		$args = [];
+		$params = [];
+		$name = null;
 		
+		if(is_array($map_name)){
+			if(sizeof($map_name) >= 2){
+				list($name,$params) = $map_name;
+				
+				if(!is_array($params)){
+					$params = [$params];
+				}
+			}else{
+				$name = array_shift($map_name);
+			}
+		}else{
+			$name = $map_name;
+		}
 		if(empty($name)){
 			\ebi\HttpHeader::redirect_referer();
 		}
-		foreach($var_names as $n){
+		foreach($params as $n){
 			if(!isset($vars[$n])){
 				throw new \ebi\exception\InvalidArgumentException('variable '.$n.' not found');
 			}
@@ -113,16 +111,6 @@ class Flow{
 			\ebi\HttpHeader::redirect(empty($args) ? $format : vsprintf($format,$args));
 		}
 		throw new \ebi\exception\InvalidArgumentException('map `'.$name.'` not found');
-	}
-	private static function get_var($map,$k){
-		if(in_array($k,['plugins','args','vars'])){
-			if(isset($map[$k])){
-				return (is_array($map[$k]) ? $map[$k] : [$map[$k]]);
-			}
-			return [];
-		}else{
-			return (isset($map[$k]) ? $map[$k] : null);
-		}
 	}
 	public static function app($map){
 		if(is_array($map) && !isset($map['patterns'])){
@@ -316,7 +304,8 @@ class Flow{
 						$template = $ins->get_template();
 						$result_vars = array_merge($result_vars,$ins->get_after_vars());							
 						$after_redirect = $ins->get_after_redirect();
-						if(isset($after_redirect) && !array_key_exists('after',$pattern)){
+						
+						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
 					}
@@ -333,6 +322,13 @@ class Flow{
 					}
 					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('post_after',$pattern)){
 						self::map_redirect($pattern['post_after'],$result_vars,$pattern);
+					}
+					if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
+						foreach($pattern['cond_after'] as $cak => $cav){
+							if(isset($result_vars[$cak])){
+								self::map_redirect($cav,$result_vars,$pattern);
+							}
+						}
 					}
 					if(array_key_exists('after',$pattern)){
 						self::map_redirect($pattern['after'],$result_vars,$pattern);
@@ -453,19 +449,23 @@ class Flow{
 	
 	private static function expand_patterns($pk,$patterns,$extends,&$automap_idx){
 		$result = [];
-		$ext_plugins = [];
+		$ext_arr = ['plugins'=>[],'vars'=>[]];
 	
-		if(array_key_exists('plugins',$extends)){
-			$ext_plugins = $extends['plugins'];
-			unset($extends['plugins']);
+		foreach($ext_arr as $k =>$v){
+			if(array_key_exists($k,$extends)){
+				$ext_arr[$k] = $extends[$k];
+				unset($extends[$k]);
+			}
 		}
 		foreach($patterns as $k => $v){
 			if(!empty($extends)){
 				$v = array_merge($extends,$v);
 			}
-			if(!empty($ext_plugins)){
-				$v['plugins'] = array_key_exists('plugins',$v) ? (is_array($v['plugins']) ? $v['plugins'] : [$v['plugins']]) : [];
-				$v['plugins'] = array_merge($ext_plugins,$v['plugins']);
+			foreach($ext_arr as $ek => $ev){
+				if(!empty($ev)){
+					$v[$ek] = array_key_exists($ek,$v) ? (is_array($v[$ek]) ? $v[$ek] : [$v[$ek]]) : [];
+					$v[$ek] = array_merge($ev,$v[$ek]);
+				}
 			}
 			$pt = (empty($pk) ? '' : $pk.'/').$k;
 	
