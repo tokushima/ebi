@@ -151,8 +151,7 @@ class Flow{
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-		
-		
+				
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
@@ -166,8 +165,6 @@ class Flow{
 			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = self::url_format_func($k,(array_key_exists('secure',$v) ? ($v['secure'] === true) : false),$conf_secure,$https,$http);
 		}
 		krsort(self::$map['patterns']);
-		
-		
 		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -185,8 +182,6 @@ class Flow{
 			\ebi\HttpHeader::send_status(404);
 			return self::terminate();
 		}
-
-		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(array_key_exists('mode',$pattern)){
@@ -454,6 +449,9 @@ class Flow{
 			}
 		}
 		foreach($patterns as $k => $v){
+			if(is_callable($v)){
+				$v = ['action'=>$v];
+			}
 			if(!empty($extends)){
 				$v = array_merge($extends,$v);
 			}
@@ -474,7 +472,7 @@ class Flow{
 					$v['name'] = $pt;
 				}
 				if(isset($v['action'])){
-					if(strpos($v['action'],'::') === false){
+					if(!is_callable($v['action']) && strpos($v['action'],'::') === false){
 						foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
 							$result[$ak] = array_merge($v,$av);
 						}
