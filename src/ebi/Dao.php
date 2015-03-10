@@ -798,6 +798,7 @@ abstract class Dao extends \ebi\Object{
 		$daq = static::call_class_plugin_funcs('select_sql',$dao,$query,$query->paginator());
 		$statement = $dao->query($daq);
 		$errors = $statement->errorInfo();
+		
 		if(isset($errors[1])){
 			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
 		}

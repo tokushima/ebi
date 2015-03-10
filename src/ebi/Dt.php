@@ -186,6 +186,7 @@ class Dt{
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$class = $class_info['class'];
 			$r = new \ReflectionClass($class);
+			
 			if((!$r->isInterface() && !$r->isAbstract()) && is_subclass_of($class,'\ebi\Dao')){
 				$class_doc = $r->getDocComment();
 				$package = str_replace('\\','.',substr($class,1));
@@ -193,10 +194,10 @@ class Dt{
 				list($summary) = explode("\n",$document);
 				$errors[$package] = null;
 				$con[$package] = true;
-
+				
 				try{
 					\ebi\Dao::start_record();
-						$class::find_get();
+						call_user_func([$class,'find_get']);
 					\ebi\Dao::stop_record();
 				}catch(\ebi\exception\NotFoundException $e){
 				}catch(\ebi\exception\ConnectionException $e){
@@ -321,7 +322,7 @@ class Dt{
 	/**
 	 * 更新
 	 * @param string $package モデル名
-	 * @automap @['post_after'=>['save_and_add_another'=>['do_create','package'],'save'=>['do_find','package']]]
+	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create',['package']],'save'=>['do_find',['package']]]]
 	 */
 	public function do_update($package){
 		$result = [];
@@ -346,7 +347,7 @@ class Dt{
 	/**
 	 * 作成
 	 * @param string $package モデル名
-	 * @automap @['post_after'=>['save_and_add_another'=>['do_create','package'],'save'=>['do_find','package']]]
+	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create',['package']],'save'=>['do_find',['package']]]]
 	 */
 	public function do_create($package){
 		$result = [];
