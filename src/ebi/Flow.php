@@ -80,8 +80,8 @@ class Flow{
 		$name = null;
 		
 		if(is_array($map_name)){
-			$name = array_key_exists('name',$map_name) ? $map_name['name'] : (array_key_exists(0,$map_name) ? $map_name[0] : null);
-			$params = array_key_exists('params',$map_name) ? $map_name['params'] : (array_key_exists(1,$map_name) ? $map_name[1] : []);
+			$name = array_key_exists(0,$map_name) ? $map_name[0] : null;
+			$params = array_key_exists(1,$map_name) ? $map_name[1] : [];
 			
 			if(!is_array($params)){
 				$params = [$params];
