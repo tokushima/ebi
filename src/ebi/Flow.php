@@ -74,19 +74,18 @@ class Flow{
 	 */
 	private static function map_redirect($map_name,$vars=[],$pattern=[]){
 		self::terminate();
+		
 		$args = [];
 		$params = [];
 		$name = null;
 		
 		if(is_array($map_name)){
-			if(sizeof($map_name) >= 2){
-				list($name,$params) = $map_name;
-				
-				if(!is_array($params)){
-					$params = [$params];
-				}
-			}else{
-				$name = array_shift($map_name);
+			$name = array_key_exists('name',$map_name) ? $map_name['name'] : (array_key_exists(0,$map_name) ? $map_name[0] : null);
+			$params = array_key_exists('params',$map_name) ? $map_name['params'] : (array_key_exists(1,$map_name) ? $map_name[1] : []);
+			
+			// TODO 実数も扱えるようにしたい
+			if(!is_array($params)){
+				$params = [$params];
 			}
 		}else{
 			$name = $map_name;
@@ -94,11 +93,11 @@ class Flow{
 		if(empty($name)){
 			\ebi\HttpHeader::redirect_referer();
 		}
-		foreach($params as $n){
-			if(!isset($vars[$n])){
-				throw new \ebi\exception\InvalidArgumentException('variable '.$n.' not found');
+		foreach($params as $vn){
+			if(!isset($vars[$vn])){
+				throw new \ebi\exception\InvalidArgumentException('variable '.$vn.' not found');
 			}
-			$args[$n] = $vars[$n];
+			$args[] = $vars[$vn];
 		}
 		if(strpos($name,'://') === false && array_key_exists('@',$pattern) && isset(self::$selected_class_pattern[$name][sizeof($args)])){
 			$name = self::$selected_class_pattern[$name][sizeof($args)]['name'];
@@ -132,7 +131,8 @@ class Flow{
 					break;
 				}
 			}
-			self::$app_url = 'http://localhost:8000/'.basename($entry_file);
+			$host = \ebi\Request::host();
+			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').basename($entry_file);
 		}else if(substr(self::$app_url,-1) == '*'){
 			$entry_file = null;
 			foreach(debug_backtrace(false) as $d){
