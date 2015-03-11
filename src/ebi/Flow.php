@@ -83,7 +83,6 @@ class Flow{
 			$name = array_key_exists('name',$map_name) ? $map_name['name'] : (array_key_exists(0,$map_name) ? $map_name[0] : null);
 			$params = array_key_exists('params',$map_name) ? $map_name['params'] : (array_key_exists(1,$map_name) ? $map_name[1] : []);
 			
-			// TODO 実数も扱えるようにしたい
 			if(!is_array($params)){
 				$params = [$params];
 			}
@@ -228,9 +227,12 @@ class Flow{
 							list(,$mm) = explode('::',$m['action']);
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
-					}					
+					}
+					if(array_key_exists('vars',$pattern)){
+						$result_vars = is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']];
+					}		
 					if(array_key_exists('redirect',$pattern)){
-						self::map_redirect($pattern['redirect'],[],$pattern);
+						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
 					foreach(array_merge(
 						(array_key_exists('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
@@ -276,15 +278,15 @@ class Flow{
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();
 						if(isset($before_redirect)){
-							self::map_redirect($before_redirect,[],$pattern);
+							self::map_redirect($before_redirect,$result_vars,$pattern);
 						}
 					}
 					if(isset($funcs)){
 						try{
-							$result_vars = call_user_func_array($funcs,$param_arr);
+							$action_result_vars = call_user_func_array($funcs,$param_arr);
 							
-							if(!is_array($result_vars)){
-								$result_vars = [];
+							if(is_array($action_result_vars)){
+								$result_vars = array_merge($result_vars,$action_result_vars);
 							}
 						}catch(\Exception $exception){
 						}
@@ -297,7 +299,7 @@ class Flow{
 							self::$template->put_block(\ebi\Util::path_absolute(self::$template_path,$ins->get_template_block()));
 						}
 						$template = $ins->get_template();
-						$result_vars = array_merge($result_vars,$ins->get_after_vars());							
+						$result_vars = array_merge($result_vars,$ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
 						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
@@ -312,9 +314,6 @@ class Flow{
 					}
 					\ebi\Exceptions::throw_over();
 					
-					if(array_key_exists('vars',$pattern)){
-						$result_vars = array_merge($result_vars,(is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']]));
-					}
 					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
 						if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
 							foreach($pattern['post_cond_after'] as $cak => $cav){
