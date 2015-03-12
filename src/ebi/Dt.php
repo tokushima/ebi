@@ -264,10 +264,10 @@ class Dt{
 	/**
 	 * TODO
 	 * @automap
-	 * @param unknown $package
 	 */
-	public function do_find_ajax($package){
+	public function do_find_ajax(){
 		$req = new \ebi\Request();
+		$package = $req->in_vars('model');
 		$class = '\\'.str_replace('.','\\',$package);
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
 		
