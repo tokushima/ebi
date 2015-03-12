@@ -19,8 +19,14 @@ class Annotation{
 		$d = null;
 		while($t->getName() != $parent){
 			$d = $t->getDocComment().$d;
+			
+			foreach($t->getTraits() as $trats){
+				$d = $trats->getDocComment().$d;
+			}
 			$t = $t->getParentClass();
-			if($t === false) break;
+			if($t === false){
+				break;
+			}
 		}
 		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
 		

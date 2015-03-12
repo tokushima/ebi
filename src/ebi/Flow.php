@@ -74,19 +74,17 @@ class Flow{
 	 */
 	private static function map_redirect($map_name,$vars=[],$pattern=[]){
 		self::terminate();
+		
 		$args = [];
 		$params = [];
 		$name = null;
 		
 		if(is_array($map_name)){
-			if(sizeof($map_name) >= 2){
-				list($name,$params) = $map_name;
-				
-				if(!is_array($params)){
-					$params = [$params];
-				}
-			}else{
-				$name = array_shift($map_name);
+			$name = array_key_exists(0,$map_name) ? $map_name[0] : null;
+			$params = array_key_exists(1,$map_name) ? $map_name[1] : [];
+			
+			if(!is_array($params)){
+				$params = [$params];
 			}
 		}else{
 			$name = $map_name;
@@ -94,11 +92,11 @@ class Flow{
 		if(empty($name)){
 			\ebi\HttpHeader::redirect_referer();
 		}
-		foreach($params as $n){
-			if(!isset($vars[$n])){
-				throw new \ebi\exception\InvalidArgumentException('variable '.$n.' not found');
+		foreach($params as $vn){
+			if(!isset($vars[$vn])){
+				throw new \ebi\exception\InvalidArgumentException('variable '.$vn.' not found');
 			}
-			$args[$n] = $vars[$n];
+			$args[] = $vars[$vn];
 		}
 		if(strpos($name,'://') === false && array_key_exists('@',$pattern) && isset(self::$selected_class_pattern[$name][sizeof($args)])){
 			$name = self::$selected_class_pattern[$name][sizeof($args)]['name'];
@@ -132,7 +130,8 @@ class Flow{
 					break;
 				}
 			}
-			self::$app_url = 'http://localhost:8000/'.basename($entry_file);
+			$host = \ebi\Request::host();
+			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').basename($entry_file);
 		}else if(substr(self::$app_url,-1) == '*'){
 			$entry_file = null;
 			foreach(debug_backtrace(false) as $d){
@@ -151,8 +150,7 @@ class Flow{
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-		
-		
+				
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
@@ -166,8 +164,6 @@ class Flow{
 			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = self::url_format_func($k,(array_key_exists('secure',$v) ? ($v['secure'] === true) : false),$conf_secure,$https,$http);
 		}
 		krsort(self::$map['patterns']);
-		
-		
 		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
@@ -185,8 +181,6 @@ class Flow{
 			\ebi\HttpHeader::send_status(404);
 			return self::terminate();
 		}
-
-		
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(array_key_exists('mode',$pattern)){
@@ -233,9 +227,12 @@ class Flow{
 							list(,$mm) = explode('::',$m['action']);
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
-					}					
+					}
+					if(array_key_exists('vars',$pattern)){
+						$result_vars = is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']];
+					}		
 					if(array_key_exists('redirect',$pattern)){
-						self::map_redirect($pattern['redirect'],[],$pattern);
+						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
 					foreach(array_merge(
 						(array_key_exists('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
@@ -281,15 +278,15 @@ class Flow{
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();
 						if(isset($before_redirect)){
-							self::map_redirect($before_redirect,[],$pattern);
+							self::map_redirect($before_redirect,$result_vars,$pattern);
 						}
 					}
 					if(isset($funcs)){
 						try{
-							$result_vars = call_user_func_array($funcs,$param_arr);
+							$action_result_vars = call_user_func_array($funcs,$param_arr);
 							
-							if(!is_array($result_vars)){
-								$result_vars = [];
+							if(is_array($action_result_vars)){
+								$result_vars = array_merge($result_vars,$action_result_vars);
 							}
 						}catch(\Exception $exception){
 						}
@@ -302,7 +299,7 @@ class Flow{
 							self::$template->put_block(\ebi\Util::path_absolute(self::$template_path,$ins->get_template_block()));
 						}
 						$template = $ins->get_template();
-						$result_vars = array_merge($result_vars,$ins->get_after_vars());							
+						$result_vars = array_merge($result_vars,$ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
 						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
@@ -317,11 +314,17 @@ class Flow{
 					}
 					\ebi\Exceptions::throw_over();
 					
-					if(array_key_exists('vars',$pattern)){
-						$result_vars = array_merge($result_vars,(is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']]));
-					}
-					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('post_after',$pattern)){
-						self::map_redirect($pattern['post_after'],$result_vars,$pattern);
+					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
+						if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
+							foreach($pattern['post_cond_after'] as $cak => $cav){
+								if(isset($result_vars[$cak])){
+									self::map_redirect($cav,$result_vars,$pattern);
+								}
+							}
+						}
+						if(array_key_exists('post_after',$pattern)){
+							self::map_redirect($pattern['post_after'],$result_vars,$pattern);
+						}
 					}
 					if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
 						foreach($pattern['cond_after'] as $cak => $cav){
@@ -454,6 +457,9 @@ class Flow{
 			}
 		}
 		foreach($patterns as $k => $v){
+			if(is_callable($v)){
+				$v = ['action'=>$v];
+			}
 			if(!empty($extends)){
 				$v = array_merge($extends,$v);
 			}
@@ -474,7 +480,7 @@ class Flow{
 					$v['name'] = $pt;
 				}
 				if(isset($v['action'])){
-					if(strpos($v['action'],'::') === false){
+					if(!is_callable($v['action']) && strpos($v['action'],'::') === false){
 						foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
 							$result[$ak] = array_merge($v,$av);
 						}
