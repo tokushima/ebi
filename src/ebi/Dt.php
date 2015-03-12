@@ -177,6 +177,41 @@ class Dt{
 	}
 	
 	/**
+	 * TODO
+	 * @automap
+	 */
+	public function model_list_ajax(){
+		$model_list = [];
+		
+		foreach(self::classes('\ebi\Dao') as $class_info){
+			$class = $class_info['class'];
+			$r = new \ReflectionClass($class);
+				
+			if((!$r->isInterface() && !$r->isAbstract()) && is_subclass_of($class,'\ebi\Dao')){
+				$class_doc = $r->getDocComment();
+				$package = str_replace('\\','.',substr($class,1));
+				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+				list($summary) = explode("\n",$document);
+				
+				$model_list[$package] = ['label'=>$package,'error'=>null,'error_query'=>null,'con'=>true,'summary'=>$summary];
+		
+				try{
+					\ebi\Dao::start_record();
+						call_user_func([$class,'find_get']);
+					\ebi\Dao::stop_record();
+				}catch(\ebi\exception\NotFoundException $e){
+				}catch(\ebi\exception\ConnectionException $e){
+					$model_list[$package]['error'] = $e->getMessage();
+					$model_list[$package]['con'] = false;
+				}catch(\Exception $e){
+					$model_list[$package]['error'] = $e->getMessage();
+					$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
+				}
+			}
+		}
+		return ['models'=>$model_list];	
+	}
+	/**
 	 * Daoモデルの一覧
 	 * @automap
 	 */
@@ -225,6 +260,28 @@ class Dt{
 			foreach($req->in_vars('primary') as $k => $v) $obj->{$k}($v);
 		}
 		return ($sync) ? $obj->sync() : $obj;
+	}
+	/**
+	 * TODO
+	 * @automap
+	 * @param unknown $package
+	 */
+	public function do_find_ajax($package){
+		$req = new \ebi\Request();
+		$class = '\\'.str_replace('.','\\',$package);
+		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
+		
+		if(!class_exists($class)){
+			throw new \ebi\exception\InvalidArgumentException($class.' not found');
+		}
+		
+		$inst = (new \ReflectionClass($class))->newInstance();
+		$paginator = new \ebi\Paginator(20,$req->in_vars('page',1));
+		$paginator->cp(['order'=>$order]);
+		
+		$object_list = $class::find_all($paginator,Q::select_order($order,$req->in_vars('porder')));
+		
+		return ['data'=>$object_list,'props'=>array_keys($inst->props())];
 	}
 	/**
 	 * 検索

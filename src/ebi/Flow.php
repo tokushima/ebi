@@ -174,7 +174,7 @@ class Flow{
 		
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach(self::$map['patterns'] as $p){
-				if((int)$p['idx'] === (int)$m[1] && isset($p['@']) && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
+				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1] && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
 					\ebi\HttpFile::attach($file);
 				}
 			}
