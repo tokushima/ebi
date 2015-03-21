@@ -26,7 +26,7 @@
 			</div>
 			<div class="modal-body">
 				<form method="get" name="search_frm" rt:aref="true">
-					<table rt:param="{$f.props($model,true)}" rt:var="name">
+					<table rt:param="{$f.props($model)}" rt:var="name">
 					<tr>
 						<td>{$t.trim_width($name,50,'..')}</td>
 						<td>{$t.noop($f.filter($model,$name))}</td>

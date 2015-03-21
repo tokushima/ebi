@@ -38,9 +38,9 @@ class Helper{
 	 * @param Dao $obj
 	 * @param integer $len 表示数
 	 */
-	public function props(\ebi\Dao $obj,$all=false){
+	public function props(\ebi\Dao $obj){
 		$props = array_keys($obj->props());
-		return ($all) ? $props : array_slice($props,0,5);
+		return $props;
 	}
 	/**
 	 * 更新可能なプロパティ一覧

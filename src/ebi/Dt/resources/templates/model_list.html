@@ -21,7 +21,7 @@
 
 <h2 class="title">Models</h2>
 
-<table rt:param="{$dao_models}" rt:key="package" rt:var="summary" rt:counter="count">
+<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count">
 <thead>
 	<tr>
 		<th>&nbsp;</th>
@@ -32,8 +32,8 @@
 <tbody>
 	<tr>
 		<td>
-			<rt:if param="{$dao_model_con[$package]}">
-				<rt:if param="{$dao_model_errors[$package]}">
+			<rt:if param="{$model['con']}">
+				<rt:if param="{$model['error']}">
 					<a class="glyphicon glyphicon-plus-sign" href="{$t.package_method_url('do_sql',$package)}?create_sql"></a>
 				<rt:else />
 					<a class="glyphicon glyphicon-list-alt" href="{$t.package_method_url('class_doc',$package)}"></a>
@@ -46,25 +46,25 @@
 			<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
 		</td>
 		<td style="width:90%;">
-			{$summary}
-			<rt:if param="{$dao_model_errors[$package]}">
-				<rt:if param="{$summary}"><br /></rt:if>
+			{$model['summary']}
+			<rt:if param="{$model['error']}">
+				<rt:if param="{$model['summary']}"><br /></rt:if>
 				
-				<rt:if param="{$dao_model_error_query[$package]}">
+				<rt:if param="{$model['error_query']}">
 					<div id="modal_error_query_{$count}" class="modal hide fade" style="display: none;">
 						<form>
 						<div class="modal-header">
 							<h3>Error Query</h3>
 						</div>
 						<div class="modal-body">
-							<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$dao_model_error_query[$package]}</textarea>
+							<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$model['error_query']}</textarea>
 						</div>
 						</form>
 		          	</div>
 					<a class="glyphicon glyphicon-question-sign" data-toggle="modal" href="#modal_error_query_{$count}"></a>
 				</rt:if>
 
-				<span style="color:#ff0000; font-weight: bold;">{$dao_model_errors[$package]}</span>
+				<span style="color:#ff0000; font-weight: bold;">{$model['error']}</span>
 			</rt:if>
 		</td>
 	</tr>

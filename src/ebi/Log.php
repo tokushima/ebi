@@ -14,10 +14,9 @@ class Log{
 	use \ebi\Plugin;
 	
 	private static $level_strs = ['none','error','warn','info','debug'];
-	private static $logs = [];
-	private static $id;
 	private static $current_level;
-	private static $disp = true;
+	private static $stdout;
+	private static $fpout;
 
 	private $level;
 	private $time;
@@ -27,10 +26,6 @@ class Log{
 		
 	private static function cur_level(){
 		if(self::$current_level === null){
-			register_shutdown_function([__CLASS__,'flush']);
-			/**
-			 * ログレベル (none,error,warn,info,debug)
-			 */
 			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
 		}
 		return self::$current_level;
@@ -88,63 +83,56 @@ class Log{
 	public function __toString(){
 		return '['.date('Y-m-d H:i:s',$this->time).']'.'['.sprintf('%s',$this->fm_level()).']'.':['.str_replace(getcwd().DIRECTORY_SEPARATOR,'',$this->file).':'.$this->line.']'.' '.$this->fm_value();
 	}
+	
 	/**
 	 * 格納されたログを出力する
 	 */
-	public static function flush(){
-		if(!empty(self::$logs)){
+	private static function flush(self $log){
+		if(!isset(self::$stdout)){
 			/**
-			 * boolean 標準出力に表示するか
+			 * boolean 標準出力に表示してもいいか
 			 */
-			$stdout = \ebi\Conf::get('stdout',false);
+			self::$stdout = \ebi\Conf::get('stdout',false);
 			/**
 			 * ログを出力するファイルを指定する
-			 */
-			$file = \ebi\Conf::get('file');
+			*/
+			self::$fpout = \ebi\Conf::get('file');
 			
-			if(!empty($file)){
-				if(!is_dir($dir = dirname($file))){
+			if(!empty(self::$fpout)){
+				if(!is_dir($dir = dirname(self::$fpout))){
 					@mkdir($dir,0777,true);
 				}
-				@file_put_contents($file,'',FILE_APPEND);
-			}
-			foreach(self::$logs as $log){
-				if(self::cur_level() >= $log->level()){
-					$level = $log->fm_level();
-					
-					if(is_file($file) && is_writable($file)){
-						file_put_contents($file,
-										((\ebi\Conf::get('nl2str') !== null) ? 
-											str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
-											(string)$log
-										).PHP_EOL,
-										FILE_APPEND
-						);
-					}
-					if(self::$disp === true && $stdout){
-						print(((string)$log).PHP_EOL);
-					}
-					static::call_class_plugin_funcs($level,$log);
+				@file_put_contents(self::$fpout,'',FILE_APPEND);
+				
+				if(!is_file(self::$fpout)){
+					throw new \ebi\exception\InvalidArgumentException('Write failure: '.self::$fpout);
 				}
 			}
 		}
-		self::$logs = [];
+		if(!empty(self::$fpout)){
+			file_put_contents(
+				self::$fpout,
+				((\ebi\Conf::get('nl2str') !== null) ? 
+					str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
+					(string)$log
+				).PHP_EOL,
+				FILE_APPEND
+			);
+		}
+		static::call_class_plugin_funcs($log->fm_level(),$log);
 	}
 	/**
-	 * 一時的に無効にされた標準出力へのログ出力を有効にする
-	 * ログのモードに依存する
+	 * 標準出力へのログを許可しているか
+	 * @return boolean
 	 */
-	public static function enable_display(){
-		self::debug('log stdout on');
-		self::$disp = true;
+	public static function is_stdout(){
+		return self::$stdout;
 	}
-	
 	/**
-	 * 標準出力へのログ出力を一時的に無効にする
+	 * 標準出力へのログ出力を無効にする
 	 */
 	public static function disable_display(){
-		self::debug('log stdout off');
-		self::$disp = false;
+		self::$stdout = false;
 	}
 	/**
 	 * errorを生成
@@ -153,7 +141,7 @@ class Log{
 	public static function error(){
 		if(self::cur_level() >= 1){
 			foreach(func_get_args() as $value){
-				self::$logs[] = new self(1,$value);
+				self::flush(new self(1,$value));
 			}
 		}
 	}
@@ -164,7 +152,7 @@ class Log{
 	public static function warn($value){
 		if(self::cur_level() >= 2){
 			foreach(func_get_args() as $value){
-				self::$logs[] = new self(2,$value);
+				self::flush(new self(2,$value));
 			}
 		}
 	}
@@ -175,7 +163,7 @@ class Log{
 	public static function info($value){
 		if(self::cur_level() >= 3){
 			foreach(func_get_args() as $value){
-				self::$logs[] = new self(3,$value);
+				self::flush(new self(3,$value));
 			}
 		}
 	}
@@ -186,7 +174,7 @@ class Log{
 	public static function debug($value){
 		if(self::cur_level() >= 4){
 			foreach(func_get_args() as $value){
-				self::$logs[] = new self(4,$value);
+				self::flush(new self(4,$value));
 			}
 		}
 	}
@@ -197,7 +185,7 @@ class Log{
 	public static function trace($value){
 		if(self::cur_level() >= -1){
 			foreach(func_get_args() as $value){
-				self::$logs[] = new self(-1,$value);
+				self::flush(new self(-1,$value));
 			}
 		}
 	}
