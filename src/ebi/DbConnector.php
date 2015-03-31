@@ -34,19 +34,14 @@ class DbConnector{
 		if(!extension_loaded('pdo_sqlite')){
 			throw new \ebi\exception\ConnectionException('pdo_sqlite not supported');
 		}
-		if(empty($host) && empty($name)){
-			throw new \ebi\exception\ConnectionException('undef connection name');
-		}
 		$con = null;
 		
 		if(empty($host)){
-			if(empty($host)){
-				$host = empty($name) ? ':memory:' : getcwd();
-			}
+			$host = empty($name) ? ':memory:' : getcwd();
 		}
 		if($host != ':memory:'){
 			if(empty($name)){
-				$name = 'default';
+				$name = 'data';
 			}
 			if(strpos($name,'.') === false){
 				$name = $name.'.sqlite3';
