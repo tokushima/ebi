@@ -37,7 +37,7 @@ abstract class Dao extends \ebi\Object{
 	 * @return \ebi\Db
 	 */
 	public static function connection($class){
-		if(!isset(self::$_connections_[self::$_co_anon_[$class][0]])){
+		if(!isset(self::$_co_anon_[$class][0]) || !isset(self::$_connections_[self::$_co_anon_[$class][0]])){
 			throw new \ebi\exception\ConnectionException('unable to connect to '.$class);
 		}
 		return self::$_connections_[self::$_co_anon_[$class][0]];
