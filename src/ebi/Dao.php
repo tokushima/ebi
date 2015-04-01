@@ -46,13 +46,23 @@ abstract class Dao extends \ebi\Object{
 	 * すべての接続でロールバックする
 	 */
 	public static function rollback_all(){
-		foreach(self::connections() as $con) $con->rollback();
+		foreach(self::connections() as $con){
+			try{
+				$con->rollback();
+			}catch(\ebi\exception\ConnectionException $e){
+			}
+		}
 	}
 	/**
 	 * すべての接続でコミットする
 	 */
 	public static function commit_all(){
-		foreach(self::connections() as $con) $con->commit();
+		foreach(self::connections() as $con){
+			try{
+				$con->commit();
+			}catch(\ebi\exception\ConnectionException $e){
+			}				
+		}
 	}
 	private static function get_db_settings($database,$class){
 		if(!isset(self::$_connections_[$database])){
@@ -962,8 +972,10 @@ abstract class Dao extends \ebi\Object{
 	public function save(){
 		$q = new \ebi\Q();
 		$new = false;
+		
 		foreach($this->primary_columns() as $column){
 			$value = $this->{$column->name()}();
+			
 			if($this->prop_anon($column->name(),'type') === 'serial' && empty($value)){
 				$new = true;
 				break;
@@ -971,13 +983,19 @@ abstract class Dao extends \ebi\Object{
 			$q->add(Q::eq($column->name(),$value));
 		}
 		$self = get_class($this);
-		if(!$new && $self::find_count($q) === 0) $new = true;
+		if(!$new && $self::find_count($q) === 0){
+			$new = true;
+		}
 		foreach($this->columns(true) as $column){
 			if($this->prop_anon($column->name(),'auto_now') === true){
 				switch($this->prop_anon($column->name(),'type')){
 					case 'timestamp':
-					case 'date': $this->{$column->name()}(time()); break;
-					case 'intdate': $this->{$column->name()}(date('Ymd')); break;
+					case 'date':
+						$this->{$column->name()}(time());
+						break;
+					case 'intdate':
+						$this->{$column->name()}(date('Ymd'));
+						break;
 				}
 			}else if($new && ($this->{$column->name()}() === null || $this->{$column->name()}() === '')){
 				if($this->prop_anon($column->name(),'type') == 'string' && $this->prop_anon($column->name(),'auto_code_add') === true){
@@ -985,8 +1003,12 @@ abstract class Dao extends \ebi\Object{
 				}else if($this->prop_anon($column->name(),'auto_now_add') === true){
 					switch($this->prop_anon($column->name(),'type')){
 						case 'timestamp':
-						case 'date': $this->{$column->name()}(time()); break;
-						case 'intdate': $this->{$column->name()}(date('Ymd')); break;
+						case 'date':
+							$this->{$column->name()}(time()); 
+							break;
+						case 'intdate':
+							$this->{$column->name()}(date('Ymd'));
+							break;
 					}
 				}else if($this->prop_anon($column->name(),'auto_future_add') === true){
 					$future = \ebi\Conf::get('future_date','2038/01/01 00:00:00');
@@ -996,7 +1018,9 @@ abstract class Dao extends \ebi\Object{
 						case 'date':
 							$this->{$column->name()}($time);
 							break;
-						case 'intdate': $this->{$column->name()}(date('Ymd',$time)); break;
+						case 'intdate':
+							$this->{$column->name()}(date('Ymd',$time));
+							break;
 					}
 				}
 			}

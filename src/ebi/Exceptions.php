@@ -56,7 +56,9 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	 */
 	public static function throw_over(){
 		if(isset(self::$self) && !empty(self::$self->messages)){
-			throw self::$self;
+			$self = self::$self;
+			self::$self = null;
+			throw $self;
 		}
 	}
 	/**
