@@ -284,6 +284,15 @@ class FlowHelper{
 		return json_encode($value);
 	}
 	/**
+	 * ==
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return boolean
+	 */
+	public function eq($a,$b){
+		return ($a == $b);
+	}
+	/**
 	 * aがbより小さい
 	 * @param integer $a
 	 * @param integer $b
