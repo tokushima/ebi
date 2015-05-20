@@ -184,9 +184,27 @@ class Flow{
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(array_key_exists('mode',$pattern)){
-					if(!in_array(\ebi\Conf::get('mode',\ebi\Conf::appmode()),explode(',',$pattern['mode']))){
-						\ebi\HttpHeader::send_status(404);
-						return self::terminate();
+					if(!in_array(\ebi\Conf::appmode(),explode(',',$pattern['mode']))){
+						$valid_mode = false;
+						
+						if(strpos($pattern['mode'],'@') !== false){
+							$alias = \ebi\Conf::get('mode',[]);
+							
+							if(!empty($alias)){
+								foreach(explode(',',$pattern['mode']) as $pm){
+									if(substr($pm,0,1) === '@' && array_key_exists(substr($pm,1),$alias)){
+										if(in_array(\ebi\Conf::appmode(),explode(',',$alias[substr($pm,1)]))){
+											$valid_mode = true;
+											break;
+										}
+									}
+								}
+							}
+						}
+						if(!$valid_mode){
+							\ebi\HttpHeader::send_status(404);
+							return self::terminate();
+						}
 					}
 				}
 				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && \ebi\Conf::get('secure',true) !== false){

@@ -43,7 +43,9 @@ class File{
 		 * attachする前に実行する
 		 * @param string $path
 		 */
-		if($this->has_object_plugin('before_attach')) $this->call_object_plugin_funcs('before_attach',$path);
+		if($this->has_object_plugin('before_attach')){
+			$this->call_object_plugin_funcs('before_attach',$path);
+		}
 		\ebi\HttpFile::attach(\ebi\Util::path_absolute($this->base(),$path));
 	}
 	private function base(){

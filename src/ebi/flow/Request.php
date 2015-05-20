@@ -26,7 +26,11 @@ class Request{
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::decode($this,'login',__CLASS__);
 	}
-	public function get_after_vars(){
+	/**
+	 * セットされた変数をFlowに渡す
+	 * @return mixid{}
+	 */
+	final public function get_after_vars(){
 		return $this->req->ar_vars();
 	}
 	/**
