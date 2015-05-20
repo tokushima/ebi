@@ -121,7 +121,7 @@ trait Plugin{
 		return $rtn;
 	}
 	/**
-	 * クラスのプラグインを実行する
+	 * クラスのプラグインをすべて実行する
 	 * @param string $n
 	 * @return mixed
 	 */
@@ -129,13 +129,30 @@ trait Plugin{
 		$r = null;
 		$a = func_get_args();
 		array_shift($a);
+		
 		foreach(static::get_class_plugin_funcs($n) as $o){
 			$r = call_user_func_array($o,$a);
 		}
 		return $r;
 	}
 	/**
-	 * オブジェクトのプラグインを実行する
+	 * クラスのプラグインを実行する
+	 * @param string $n
+	 * @return mixed
+	 */
+	protected static function call_class_plugin_func($n){
+		$plugins = static::get_class_plugin_funcs($n);
+		
+		if(!empty($plugins)){
+			$a = func_get_args();
+			array_shift($a);
+			
+			return call_user_func_array(array_pop($plugins), $a);
+		}
+		return null;
+	}
+	/**
+	 * オブジェクトのプラグインをすべて実行する
 	 * @param string $n
 	 * @return mixed
 	 */
@@ -143,10 +160,26 @@ trait Plugin{
 		$r = null;
 		$a = func_get_args();
 		array_shift($a);
+		
 		foreach($this->get_object_plugin_funcs($n) as $o){
 			$r = call_user_func_array($o,$a);
 		}
 		return $r;
+	}
+	/**
+	 * オブジェクトのプラグインを実行する
+	 * @param string $n
+	 */
+	protected function call_object_plugin_func($n){
+		$plugins = $this->get_object_plugin_funcs($n);
+		
+		if(!empty($plugins)){
+			$a = func_get_args();
+			array_shift($a);
+			
+			return call_user_func_array(array_pop($plugins), $a);
+		}
+		return null;
 	}
 	/**
 	 * 関数を指定して実行する
