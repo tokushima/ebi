@@ -56,8 +56,11 @@ class Dt{
 						
 						if(isset($m['method'])){
 							$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-							list($summary) = explode(PHP_EOL,$info['description']);
-							$m['summary'] = empty($summary) ? null : $summary;
+							
+							if(empty($m['summary'])){
+								list($summary) = explode(PHP_EOL,$info['description']);
+								$m['summary'] = empty($summary) ? null : $summary;
+							}
 						}
 					}catch(\Exception $e){
 						$m['error'] = $e->getMessage();

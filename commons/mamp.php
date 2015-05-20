@@ -15,9 +15,6 @@
 	],
 ]);
 
-
-\ebi\Conf::set('ebi.Flow','host','http://localhost/');
-
 include_once('local.php');
 
 //\ebi\Conf::set('ebi.Dt','media_url','http://localhost/work/media/');

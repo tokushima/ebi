@@ -40,7 +40,7 @@
 	</tr>
 	</thead>
 	<tbody>
-	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')}">
+	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 		<td>
 			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -67,7 +67,7 @@
 				{$map['name']}
 			</rt:if>
 		</td>
-		<td style="{$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
+		<td>
 			{$map['url']}
 		</td>
 		<td>
