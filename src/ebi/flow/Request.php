@@ -316,8 +316,8 @@ class Request{
 			if(!$this->is_sessions('logined_redirect_to') && $this->map_arg('login_redirect') != null){
 				$this->sessions('logined_redirect_to',$this->map_arg('login_redirect'));
 			}
-			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_funcs('login_condition',$this) === false){
-				$this->call_object_plugin_funcs('login_invalid',$this);
+			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) === false){
+				$this->call_object_plugin_func('login_invalid',$this);
 			}else{
 				$this->sessions($this->login_id,$this->login_id);
 				session_regenerate_id(true);
