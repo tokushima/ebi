@@ -18,9 +18,9 @@ class Dt{
 	}
 	public function get_after_vars(){
 		return [
-				'f'=>new \ebi\Dt\Helper(),
-				'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
-				];
+			'f'=>new \ebi\Dt\Helper(),
+			'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
+		];
 	}
 	private function get_flow_output_maps(){
 		if(empty($this->flow_output_maps)){
@@ -97,19 +97,41 @@ class Dt{
 	public function index(){
 		return ['map_list'=>$this->get_flow_output_maps()];
 	}
+	private static function get_use_vendor(){
+		$class_list = [];
+		$add = \ebi\Conf::get('use_vendor',[]);
+		if(is_string($add)){
+			$add = [$add];
+		}
+		foreach($add as $class){
+			$class = str_replace('.','\\',$class);
+			if(class_exists($class)){
+				$r = new \ReflectionClass($class);
+				$class_list[] = $r->getName();
+			}
+		}
+		return $class_list;
+	}
 	/**
 	 * ライブラリの一覧
 	 * @automap
 	 */
 	public function class_list(){
 		$libs = [];
+		$use_vendor = self::get_use_vendor();
+		
 		foreach(self::classes() as $info){
 			$r = new \ReflectionClass($info['class']);
-			$class_doc = $r->getDocComment();
-			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-			list($summary) = explode("\n",$document);
-			$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+			
+			if(in_array($r->getName(),$use_vendor) || ($r->getNamespaceName() != 'ebi' && strpos($r->getNamespaceName(),'ebi\\') !== 0)){
+				$class_doc = $r->getDocComment();
+				$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+				list($summary) = explode("\n",$document);
+				
+				$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+			}
 		}
+		ksort($libs);
 		return ['class_list'=>$libs];
 	}
 	/**
@@ -493,9 +515,9 @@ class Dt{
 						),\RecursiveIteratorIterator::SELF_FIRST
 				) as $e){
 					if(strpos($e->getPathname(),'/.') === false
-							&& strpos($e->getPathname(),'/_') === false
-							&& ctype_upper(substr($e->getFilename(),0,1))
-							&& substr($e->getFilename(),-4) == '.php'
+						&& strpos($e->getPathname(),'/_') === false
+						&& ctype_upper(substr($e->getFilename(),0,1))
+						&& substr($e->getFilename(),-4) == '.php'
 					){
 						try{
 							include_once($e->getPathname());
@@ -505,42 +527,26 @@ class Dt{
 				}
 			}
 		}
-		$valid = function($r,$include_path,$parent_class){
+		$valid = function($r,$parent_class){
 			if(!$r->isInterface() 
 				&& !$r->isAbstract() 
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
 				&& $r->getFileName() !== false
 			){
-				if(!empty($include_path)){
-					foreach($include_path as $libdir){
-						if(strpos($r->getFileName(),$libdir) === 0){
-							return true;
-						}
-					}
-				}else{
-					return true;
-				}
+				return true;
 			}
 			return false;
 		};
 		
 		foreach(get_declared_classes() as $class){
-			if($valid($r=(new \ReflectionClass($class)),$include_path,$parent_class)){
+			if($valid($r=(new \ReflectionClass($class)),$parent_class)){
 				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
 			}
 		}
-		$add = \ebi\Conf::get('use_vendor',[]);
-		if(is_string($add)){
-			$add = [$add];
-		}
-		foreach($add as $class){
-			$class = str_replace('.','\\',$class);
-			if(substr($class,0,1) != '\\'){
-				$class = '\\'.$class;
-			}
+		foreach(self::get_use_vendor() as $class){
 			if($valid($r=(new \ReflectionClass($class)),[],$parent_class)){
 				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
-			}				
+			}
 		}
 	}
 	/**
@@ -555,7 +561,8 @@ class Dt{
 	
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$r = new \ReflectionClass($class_info['class']);
-			if($r->getParentClass()->getName() == 'ebi\Dao'){
+			
+			if(($r->getParentClass() instanceof \ReflectionClass) && $r->getParentClass()->getName() == 'ebi\Dao'){
 				$model_list[] = $class_info['class'];
 			}
 		}
