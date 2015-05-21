@@ -9,7 +9,7 @@ $model_list = [];
 
 if(!empty($model)){
 	$model = str_replace('.','\\',$model);
-	class_exists($model);
+	class_exists($model); // autoload
 }
 foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
 	$r = new \ReflectionClass($class_info['class']);

@@ -34,9 +34,6 @@ $dir = getcwd();
 if(is_file($f=($dir.'/__settings__.php'))){
 	include_once($f);
 }
-if(is_file($f=($dir.'/test/testman.phar'))){
-	include_once($f);
-}
 if(!defined('COMMONDIR') && is_dir($dir.'/commons')){
 	define('COMMONDIR',$dir.'/commons');
 }
