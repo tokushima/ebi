@@ -364,23 +364,36 @@ class DbConnector{
 				$column_alias = $this->column_alias_sql($column,$q,$alias);
 				$is_add_value = true;
 
+				// TODO SELECT * from hoge where DATE_FORMAT(create_date,'%Y-%m-%d') >= '2015-05-26' 
 				switch($q->type()){
 					case Q::EQ:
 						if($value === null){
 							$is_add_value = false;
-							$column_alias .= ' is null'; break;
+							$column_alias .= ' is null';
+							break;
 						}
-						$column_alias .= ' = '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
+						$column_alias .= ' = '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
 					case Q::NEQ:
 						if($value === null){
 							$is_add_value = false;
-							$column_alias .= ' is not null'; break;
+							$column_alias .= ' is not null';
+							break;
 						}
-						$column_alias .= ' <> '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
-					case Q::GT: $column_alias .= ' > '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
-					case Q::GTE: $column_alias .= ' >= '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
-					case Q::LT: $column_alias .= ' < '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
-					case Q::LTE: $column_alias .= ' <= '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?'); break;
+						$column_alias .= ' <> '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
+					case Q::GT:
+						$column_alias .= ' > '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
+					case Q::GTE:
+						$column_alias .= ' >= '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
+					case Q::LT:
+						$column_alias .= ' < '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
+					case Q::LTE:
+						$column_alias .= ' <= '.(($value instanceof \ebi\Daq) ? '('.$value->unique_sql().')' : '?');
+						break;
 					case Q::CONTAINS:
 					case Q::START_WITH:
 					case Q::END_WITH:
@@ -403,7 +416,9 @@ class DbConnector{
 					$vars = array_merge($vars,$value->ar_vars());
 				}
 				$add_join_conds = $dao->join_conds($column->name());
-				if(!empty($add_join_conds)) $column_alias .= ' and '.$this->where_cond_columns($add_join_conds,$from);
+				if(!empty($add_join_conds)){
+					$column_alias .= ' and '.$this->where_cond_columns($add_join_conds,$from);
+				}
 				$or[] = $column_alias;
 
 				if($is_add_value){
@@ -437,17 +452,22 @@ class DbConnector{
 	}
 	protected function column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
 		$column_str = ($alias) ? $column->table_alias().'.'.$this->quotation($column->column()) : $this->quotation($column->column());
-		if($q->ignore_case()) return 'upper('.$column_str.')';
+		if($q->ignore_case()){
+			return 'upper('.$column_str.')';
+		}
 		return $column_str;
 	}
 	protected function format_column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
+		// TODO 
 		return $this->column_alias_sql($column,$q,$alias);
 	}
 	protected function quotation($name){
 		return $this->quotation.$name.$this->quotation;
 	}
 	public function create_table_sql(\ebi\Dao $dao){
-		$quote = function($name){ return '`'.$name.'`'; };
+		$quote = function($name){
+			return '`'.$name.'`';
+		};
 		$to_column_type = function($dao,$type,$name) use($quote){
 			switch($type){
 				case '':
@@ -458,15 +478,18 @@ class DbConnector{
 					return $quote($name).' TEXT';
 				case 'number':
 					return $quote($name).' REAL';
-				case 'serial': return $quote($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
+				case 'serial': 
+					return $quote($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
 				case 'boolean':
 				case 'timestamp':
 				case 'date':
 				case 'time':
 				case 'intdate':
-				case 'integer': return $quote($name).' INTEGER';
+				case 'integer':
+					return $quote($name).' INTEGER';
 				case 'email':
-				default: throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
+				default:
+					throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
 		};
 		$columndef = $primary = [];
@@ -476,6 +499,7 @@ class DbConnector{
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$prop_name).' null ';
 				$columndef[] = $column_str;
+				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
 					$primary[] = $quote($prop_name);
 				}
