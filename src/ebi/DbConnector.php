@@ -363,8 +363,7 @@ class DbConnector{
 				$column = $this->get_column($column_str,$self_columns);
 				$column_alias = $this->column_alias_sql($column,$q,$alias);
 				$is_add_value = true;
-
-				// TODO SELECT * from hoge where DATE_FORMAT(create_date,'%Y-%m-%d') >= '2015-05-26' 
+				
 				switch($q->type()){
 					case Q::EQ:
 						if($value === null){
@@ -458,7 +457,6 @@ class DbConnector{
 		return $column_str;
 	}
 	protected function format_column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
-		// TODO 
 		return $this->column_alias_sql($column,$q,$alias);
 	}
 	protected function quotation($name){
