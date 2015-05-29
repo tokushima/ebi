@@ -2,6 +2,67 @@
 namespace ebi;
 
 class Epub{
+	private $title;
+	private $width;
+	private $height;
+	private $page;
+	
+	public function __construct($title,$width,$height){
+		$this->title = $title;
+		$this->width = $width;
+		$this->height = $height;
+	}
+	public function image($page_no,$x,$y,$width,$height,$path){
+		$this->page[$page_no][] = [1,$x,$y,$width,$height,$path];
+	}
+	public function text($page_no,$x,$y,$width,$height,$path){
+		$this->page[$page_no][] = [2,$x,$y,$width,$height,$path];
+	}
+	
+	private function xhtml($page_no){
+		$xml = new \ebi\Xml('html');
+		$xml->attr('xmlns','http://www.w3.org/1999/xhtml');
+		$xml->attr('xmlns:epub','http://www.idpf.org/2007/ops');
+		$xml->attr('xml:lang','ja');
+		
+		$head = new \ebi\Xml('head');
+		$head->add((new \ebi\Xml('meta'))->attr('charset','UTF-8'));
+		$head->add((new \ebi\Xml('title',$this->title)));
+		$head->add((new \ebi\Xml('meta'))->attr('name','viewport')->attr('content',sprintf('width=%d, height=%d',$this->width,$this->height)));
+		
+		$body = new \ebi\Xml('body');
+		$main = (new \ebi\Xml('div'))->attr('class','main');
+		$svg = (new \ebi\Xml('svg'))
+					->attr('xmlns','http://www.w3.org/2000/svg')
+					->attr('version','1.1')
+					->attr('xmlns:xlink','http://www.w3.org/1999/xlink')
+					->attr('width','100%')
+					->attr('height','100%')
+					->attr('viewBox',sprintf('0 0 %d %d',$this->width,$this->height));
+		
+		if(isset($this->page[$page_no]) && is_array($this->page[$page_no])){
+			foreach($this->page[$page_no] as $obj){
+				if($obj[0] == 1){
+					$o = (new \ebi\Xml('image'))
+							->attr('width', $img[3])
+							->attr('height',$img[4])
+							->attr('xlink:href',$img[5]);
+				}else if($obj[0] == 2){
+					$o = (new \ebi\Xml('image'))
+							->attr('width', $img[3])
+							->attr('height',$img[4])
+							->attr('xlink:href',$img[5]);					
+				}
+				$svg->add($o);
+			}
+		}
+		$main->add($svg);
+		$body->add($main);
+		$xml->add($head);
+		$xml->add($body);
+		
+		return '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<!DOCTYPE html>'.$xml->get();
+	}
 	/**
 	 * 
 	 * @param 書き出し先のepubファイルパス $filename
