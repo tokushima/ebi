@@ -244,7 +244,7 @@ class Request{
 			if($this->has_object_plugin('before_login_required')) {
 				$this->call_object_plugin_funcs('before_login_required',$this);
 			}
-			if(!$this->is_sessions('logined_redirect_to')){
+			if(strpos($selected_pattern['action'],'::do_logout') === false){
 				$this->set_login_redirect(\ebi\Request::current_url().\ebi\Request::request_string(true));
 			}
 			$req = new \ebi\Request();
