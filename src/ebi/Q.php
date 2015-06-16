@@ -23,6 +23,7 @@ class Q{
 
 	const OR_BLOCK = 16;
 	const AND_BLOCK = 17;
+	const DATE_FORMAT = 18;
 
 	const IGNORE = 2;
 	const NOT = 4;
@@ -35,6 +36,7 @@ class Q{
 	private $or_block = [];
 	private $paginator;
 	private $order_by = [];
+	private $date_format = [];
 
 	public function __construct($type=self::AND_BLOCK,$arg1=null,$arg2=null,$param=null){
 		if($type === self::AND_BLOCK){
@@ -50,6 +52,7 @@ class Q{
 		}
 		$this->arg2 = $arg2;
 		$this->type = $type;
+		
 		if($param !== null){
 			if(!ctype_digit((string)$param)) throw new \InvalidArgumentException('`'.(string)$param.'` invalid param type');
 			$this->param = decbin($param);
@@ -122,22 +125,26 @@ class Q{
 						$this->order_by[] = $arg;
 					}else if($arg->type() == self::ORDER){
 						foreach($arg->ar_arg1() as $column){
-							if($column[0] === "-"){
+							if($column[0] === '-'){
 								$this->add(new self(self::ORDER_DESC,substr($column,1)));
 							}else{
 								$this->add(new self(self::ORDER_ASC,$column));
 							}
 						}
+					}else if($arg->type() == self::DATE_FORMAT){
+						$this->date_format[$arg->arg1] = $arg->arg2;
 					}else if($arg->type() == self::AND_BLOCK){
 						if(!$arg->none()){
 							call_user_func_array([$this,'add'],$arg->ar_and_block());
 							$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 						}
 					}else if($arg->type() == self::OR_BLOCK){
-						if(!$arg->none()) $this->or_block = array_merge($this->or_block,$arg->ar_or_block());
+						if(!$arg->none()){
+							$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
+						}
 					}else{
 						$this->and_block[] = $arg;
-					}
+					}	
 				}else if($arg instanceof \ebi\Paginator){
 					$this->paginator = $arg;
 				}else{
@@ -340,5 +347,13 @@ class Q{
 	public static function b(){
 		$args = func_get_args();
 		return new self(self::AND_BLOCK,$args);
+	}
+	
+	
+	public static function date_format($column_str,$require){
+		return new self(self::DATE_FORMAT,$column_str,$require);
+	}
+	public function ar_date_format(){
+		return $this->ar_value($this->date_format);
 	}
 }
