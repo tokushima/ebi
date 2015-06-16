@@ -151,17 +151,20 @@ class DbConnector{
 	 */
 	public function select_sql(\ebi\Dao $dao,\ebi\Q $query,$paginator,$name=null){
 		$select = $from = [];
+		$break = false;
+		$date_format = $query->ar_date_format();
 
-		if(empty($name)){
-			foreach($dao->columns() as $column){
-				$select[] = $column->table_alias().'.'.$this->quotation($column->column()).' '.$column->column_alias();
+		foreach($dao->columns() as $column){
+			if($name === null || ($break = ($column->name() == $name))){
+				$column_map = $column->table_alias().'.'.$this->quotation($column->column());
+					
+				if(isset($date_format[$column->name()])){
+					$column_map = $this->date_format($column_map,$date_format[$column->name()]);
+				}
+				$select[] = $column_map.' '.$column->column_alias();
 				$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
-			}
-		}else{
-			foreach($dao->columns() as $column){
-				if($column->name() == $name){
-					$select[] = $column->table_alias().'.'.$this->quotation($column->column()).' '.$column->column_alias();
-					$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
+				
+				if($break){
 					break;
 				}
 			}
@@ -170,12 +173,11 @@ class DbConnector{
 			throw new \ebi\exception\BadMethodCallException('select invalid');
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
-		return new \ebi\Daq(('select '.implode(',',$select).' from '.implode(',',$from)
-				.(empty($where_sql) ? '' : ' where '.$where_sql)
-				.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
-		)
-				,$where_vars
-		);
+		return new \ebi\Daq((
+						'select '.implode(',',$select).' from '.implode(',',$from)
+						.(empty($where_sql) ? '' : ' where '.$where_sql)
+						.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
+					),$where_vars);
 	}
 	protected function select_order($query,array $self_columns){
 		$order = [];
@@ -277,13 +279,20 @@ class DbConnector{
 			throw new \ebi\exception\BadMethodCallException('undef primary');
 		}
 		if(!empty($gorup_name)){
+			$date_format = $query->ar_date_format();
 			$group_column = $this->get_column($gorup_name,$dao->columns());
-			$select[] = $group_column->table_alias().'.'.$this->quotation($group_column->column()).' key_column';
+			$column_map = $group_column->table_alias().'.'.$this->quotation($group_column->column());
+			
+			if(isset($date_format[$group_column->name()])){
+				$column_map = $this->date_format($column_map,$date_format[$group_column->name()]);
+			}
+			$select[] = $column_map.' key_column';			
 		}
 		foreach($dao->columns() as $column){
 			$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
+		
 		return new \ebi\Daq(('select '.$exe.'('.$target_column->table_alias().'.'.$this->quotation($target_column->column()).') target_column'
 					.(empty($select) ? '' : ','.implode(',',$select))
 					.' from '.implode(',',$from)
@@ -531,6 +540,16 @@ class DbConnector{
 		}catch(\Exception $e){
 		}
 		return $value;
+	}
+	protected function date_format($table_column,$require){
+		$fmt = [];
+		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%M','s'=>'%S'];
+	
+		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
+			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
+		}
+		$f = $fmt[0].'/'.$fmt[1].'/'.$fmt[2].' '.$fmt[3].':'.$fmt[4].':'.$fmt[5];
+		return 'strftime(\''.$f.'\',replace('.$table_column.',\'/\',\'-\'))';
 	}
 }
 
