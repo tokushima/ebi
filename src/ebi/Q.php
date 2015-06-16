@@ -349,7 +349,13 @@ class Q{
 		return new self(self::AND_BLOCK,$args);
 	}
 	
-	
+	/**
+	 * 日付型で有効とするフォーマットを指定する
+	 * 
+	 * @param string $column_str
+	 * @param string $require YmdHis
+	 * @return \ebi\Q
+	 */	
 	public static function date_format($column_str,$require){
 		return new self(self::DATE_FORMAT,$column_str,$require);
 	}
