@@ -80,12 +80,8 @@ class Flow{
 		$name = null;
 		
 		if(is_array($map_name)){
-			$name = array_key_exists(0,$map_name) ? $map_name[0] : null;
-			$params = array_key_exists(1,$map_name) ? $map_name[1] : [];
-			
-			if(!is_array($params)){
-				$params = [$params];
-			}
+			$name = array_shift($map_name);
+			$params = $map_name;
 		}else{
 			$name = $map_name;
 		}
@@ -93,10 +89,16 @@ class Flow{
 			\ebi\HttpHeader::redirect_referer();
 		}
 		foreach($params as $vn){
-			if(!isset($vars[$vn])){
-				throw new \ebi\exception\InvalidArgumentException('variable '.$vn.' not found');
+			if(is_string($vn) && isset($vn[0]) && $vn[0] == '@'){
+				$vnm = substr($vn,1);
+
+				if(!isset($vars[$vnm])){
+					throw new \ebi\exception\InvalidArgumentException('variable '.$vnm.' not found');
+				}
+				$args[] = $vars[$vnm];
+			}else{
+				$args[] = $vn;
 			}
-			$args[] = $vars[$vn];
 		}
 		if(strpos($name,'://') === false && array_key_exists('@',$pattern) && isset(self::$selected_class_pattern[$name][sizeof($args)])){
 			$name = self::$selected_class_pattern[$name][sizeof($args)]['name'];
@@ -331,7 +333,7 @@ class Flow{
 						throw $exception;
 					}
 					\ebi\Exceptions::throw_over();
-					
+										
 					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
 						if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
 							foreach($pattern['post_cond_after'] as $cak => $cav){
