@@ -272,7 +272,7 @@ class Template{
 			list($filename,$name) = [$m[1],$m[2]];
 		}
 		$src = file_get_contents($filename);
-		$src = (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename)) : $src;
+		$src = (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename).'/') : $src;
 		
 		foreach(\ebi\Xml::anonymous($this->rtcomment($src))->find('rt:template') as $tag){
 			if(empty($name) || $tag->in_attr('name') == $name){
@@ -290,7 +290,7 @@ class Template{
 					$e = \ebi\Xml::extract($this->rtcomment($src),'rt:extends');
 					$href = $e->in_attr('href');
 					if(substr($href,0,1) == '#') $href = $filename.$href;
-					$href = \ebi\Util::path_absolute(str_replace("\\",'/',dirname($filename)),$href);
+					$href = \ebi\Util::path_absolute(str_replace("\\",'/',dirname($filename)).'/',$href);
 					if(empty($href) || !is_file(preg_replace('/^(.+)#.*$/','\\1',$href))){
 						throw new \ebi\exception\InvalidTemplateException('href not found '.$filename);
 					}
@@ -329,7 +329,7 @@ class Template{
 				}
 			}else{
 				if(!empty($this->template_super)){
-					$src = $this->read_src(\ebi\Util::path_absolute(str_replace("\\",'/',dirname($base_filename)),$this->template_super));
+					$src = $this->read_src(\ebi\Util::path_absolute(str_replace("\\",'/',dirname($base_filename).'/'),$this->template_super));
 				}				
 				try{
 					while(true){

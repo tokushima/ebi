@@ -181,7 +181,9 @@ class Archive{
 					case 0:	
 						$size = base_convert($data['size'],8,10);
 						$cur = ftell($fr);
-						if(!is_dir(dirname($f))) Util::mkdir(dirname($f),0777);
+						if(!is_dir(dirname($f))){
+							Util::mkdir(dirname($f),0777);
+						}
 						$fw = fopen($f,'wb');
 							for($i=0;$i<=$size;$i+=512){
 								fwrite($fw,fread($fr,512));
