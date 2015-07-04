@@ -100,6 +100,7 @@ class Dt{
 	private static function get_use_vendor(){
 		$class_list = [];
 		$add = \ebi\Conf::get('use_vendor',[]);
+		
 		if(is_string($add)){
 			$add = [$add];
 		}
@@ -488,13 +489,13 @@ class Dt{
 		$result = [];
 		
 		$include_path = [];
-		if(is_dir(getcwd().'/lib')){
-			$include_path[] = realpath(getcwd().'/lib');
+		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
+			$include_path[] = realpath(getcwd().DIRECTORY_SEPARATOR.'lib');
 		}
 		if(class_exists('Composer\Autoload\ClassLoader')){
 			$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
 			$vendor_dir = dirname(dirname($r->getFileName()));
-			if(is_file($loader_php=$vendor_dir.'/autoload.php')){
+			if(is_file($loader_php=$vendor_dir.DIRECTORY_SEPARATOR.'autoload.php')){
 				$loader = include($loader_php);
 				// vendor以外の定義されているパスを探す
 				foreach($loader->getPrefixes() as $ns){
@@ -510,12 +511,12 @@ class Dt{
 			if($libdir !== '.'){
 				foreach(new \RecursiveIteratorIterator(
 						new \RecursiveDirectoryIterator(
-								$libdir,
-								\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
+							$libdir,
+							\FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS
 						),\RecursiveIteratorIterator::SELF_FIRST
 				) as $e){
-					if(strpos($e->getPathname(),'/.') === false
-						&& strpos($e->getPathname(),'/_') === false
+					if(strpos($e->getPathname(),DIRECTORY_SEPARATOR.'.') === false
+						&& strpos($e->getPathname(),DIRECTORY_SEPARATOR.'_') === false
 						&& ctype_upper(substr($e->getFilename(),0,1))
 						&& substr($e->getFilename(),-4) == '.php'
 					){

@@ -1,13 +1,24 @@
 <?php
-$text = \ebi\Util::plain_text("\n\taaa\n\tbbb");
-eq("aaa\nbbb",$text);
+$text = \ebi\Util::plain_text('
+	aaa
+	bbb
+');
+eq('aaa'."\n".'bbb',$text);
 
 
-$text = \ebi\Util::plain_text("hoge\nhoge");
-eq("hoge\nhoge",$text);
+$text = \ebi\Util::plain_text('
+hoge
+hoge
+');
+eq('hoge'."\n".'hoge',$text);
 
 
-$text = \ebi\Util::plain_text("hoge\nhoge\nhoge\nhoge");
-eq("hoge\nhoge\nhoge\nhoge",$text);
+$text = \ebi\Util::plain_text('
+hoge
+hoge
+hoge
+hoge
+');
+eq('hoge'."\n".'hoge'."\n".'hoge'."\n".'hoge',$text);
 
 

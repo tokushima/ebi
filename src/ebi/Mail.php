@@ -339,7 +339,7 @@ class Mail{
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
 			$template->cp($vars);
-			$this->message(\ebi\Util::plain_text("\n".$template->get($xml->find_get('body')->value())."\n"));
+			$this->message(\ebi\Util::plain_text(PHP_EOL.$template->get($xml->find_get('body')->value()).PHP_EOL));
 			$this->subject($template->get($subject));
 			
 			try{
