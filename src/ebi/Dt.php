@@ -342,7 +342,7 @@ class Dt{
 	/**
 	 * 更新
 	 * @param string $package モデル名
-	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create',['package']],'save'=>['do_find',['package']]]]
+	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_update($package){
 		$result = [];
@@ -367,7 +367,7 @@ class Dt{
 	/**
 	 * 作成
 	 * @param string $package モデル名
-	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create',['package']],'save'=>['do_find',['package']]]]
+	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_create($package){
 		$result = [];
