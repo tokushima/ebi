@@ -35,3 +35,8 @@ eq("http://www.ebi.org/hoge/login.cgi",\ebi\Util::path_absolute("http://www.ebi.
 eq("http://www.ebi.org/login",\ebi\Util::path_absolute("http://ebi.org/hoge/hoge","http://www.ebi.org/login"));
 eq("http://localhost:8888/spec/css/style.css",\ebi\Util::path_absolute("http://localhost:8888/spec/","./css/style.css"));
 
+eq('phar://C:/abc/def/ghi/xyz.html',\ebi\Util::path_absolute("phar://C:/abc/def/ghi/","xyz.html"));
+eq('phar://C:/abc/def/xyz.html',\ebi\Util::path_absolute("phar://C:/abc/def/ghi","../xyz.html"));
+
+
+
