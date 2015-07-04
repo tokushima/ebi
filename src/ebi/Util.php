@@ -156,7 +156,7 @@ class Util{
 		if(is_file($directory)){
 			$directory = dirname($directory);
 		}
-		if(is_readable($directory) && is_dir($directory)){
+		if(is_dir($directory)){
 			$it = new \RecursiveDirectoryIterator($directory,\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS);
 			if($recursive){
 				$it = new \RecursiveIteratorIterator($it);
@@ -250,11 +250,19 @@ class Util{
 	 */
 	public static function plain_text($text){
 		if(!empty($text)){
+			$text = str_replace(["\r\n","\r","\n"],"\n",$text);
+			
 			$lines = explode("\n",$text);
 			if(sizeof($lines) > 2){
-				if(trim($lines[0]) == '') array_shift($lines);
-				if(trim($lines[sizeof($lines)-1]) == '') array_pop($lines);
-				return preg_match("/^([\040\t]+)/",$lines[0],$match) ? preg_replace("/^".$match[1]."/m","",implode("\n",$lines)) : implode("\n",$lines);
+				if(trim($lines[0]) == ''){
+					array_shift($lines);
+				}
+				if(trim($lines[sizeof($lines)-1]) == ''){
+					array_pop($lines);
+				}
+				return preg_match("/^([\040\t]+)/",$lines[0],$match) ? 
+							preg_replace('/^'.$match[1].'/m','',implode("\n",$lines)) : 
+							implode("\n",$lines);
 			}
 		}
 		return $text;
