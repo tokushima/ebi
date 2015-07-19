@@ -153,11 +153,11 @@ class DbConnector{
 		$select = $from = [];
 		$break = false;
 		$date_format = $query->ar_date_format();
-
+		
 		foreach($dao->columns() as $column){
 			if($name === null || ($break = ($column->name() == $name))){
 				$column_map = $column->table_alias().'.'.$this->quotation($column->column());
-					
+
 				if(isset($date_format[$column->name()])){
 					$column_map = $this->date_format($column_map,$date_format[$column->name()]);
 				}
@@ -267,6 +267,7 @@ class DbConnector{
 	protected function which_aggregator_sql($exe,\ebi\Dao $dao,$target_name,$gorup_name,\ebi\Q $query){
 		$select = $from = [];
 		$target_column = $group_column = null;
+		
 		if(empty($target_name)){
 			$self_columns = $dao->columns(true);
 			$primary_columns = $dao->primary_columns();
@@ -278,8 +279,13 @@ class DbConnector{
 		if(empty($target_column)){
 			throw new \ebi\exception\BadMethodCallException('undef primary');
 		}
+		$date_format = $query->ar_date_format();
+		$exec_map = $target_column->table_alias().'.'.$this->quotation($target_column->column());
+		
+		if(isset($date_format[$target_column->name()])){
+			$exec_map = $this->date_format($exec_map,$date_format[$target_column->name()]);
+		}
 		if(!empty($gorup_name)){
-			$date_format = $query->ar_date_format();
 			$group_column = $this->get_column($gorup_name,$dao->columns());
 			$column_map = $group_column->table_alias().'.'.$this->quotation($group_column->column());
 			
@@ -293,7 +299,7 @@ class DbConnector{
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		
-		return new \ebi\Daq(('select '.$exe.'('.$target_column->table_alias().'.'.$this->quotation($target_column->column()).') target_column'
+		return new \ebi\Daq(('select '.$exe.'('.$exec_map.') target_column'
 					.(empty($select) ? '' : ','.implode(',',$select))
 					.' from '.implode(',',$from)
 					.(empty($where_sql) ? '' : ' where '.$where_sql)
