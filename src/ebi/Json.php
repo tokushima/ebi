@@ -20,7 +20,7 @@ class Json{
 		return $json;
 	}
 	private static function encode_object($val){
-		if(is_object($val)){
+		if(is_object($val) || is_array($val)){
 			$rtn = [];
 			
 			foreach($val as $k => $v){
