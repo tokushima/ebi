@@ -59,14 +59,16 @@ class Session{
 		 * @param string $name
 		 * @return boolean
 		 */
-		return static::call_class_plugin_funcs('session_open',$path,$name);
+		$bool = static::call_class_plugin_funcs('session_open',$path,$name);
+		return (!is_bool($bool)) ? true : $bool;
 	}
 	public function close(){
 		/**
 		 * writeが実行された後で実行される
 		 * @return boolean
 		 */
-		return static::call_class_plugin_funcs('session_close');
+		$bool = static::call_class_plugin_funcs('session_close');
+		return (!is_bool($bool)) ? true : $bool;
 	}
 	public function read($id){
 		/**
@@ -83,7 +85,8 @@ class Session{
 		 * @param mixed $sess_data
 		 * @return boolean
 		 */
-		return static::call_class_plugin_funcs('session_write',$id,$sess_data);
+		$bool = static::call_class_plugin_funcs('session_write',$id,$sess_data);
+		return (!is_bool($bool)) ? true : $bool;
 	}
 	public function destroy($id){
 		/**
@@ -91,7 +94,8 @@ class Session{
 		 * @param string $id
 		 * @return boolean
 		 */
-		return static::call_class_plugin_funcs('session_destroy',$id);
+		$bool = static::call_class_plugin_funcs('session_destroy',$id);
+		return (!is_bool($bool)) ? true : $bool;
 	}
 	public function gc($maxlifetime){
 		/**
@@ -99,7 +103,8 @@ class Session{
 		 * @param integer $maxlifetime session.gc_maxlifetime
 		 * @return boolean
 		 */
-		return static::call_class_plugin_funcs('session_gc',$maxlifetime);
+		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
+		return (!is_bool($bool)) ? true : $bool;
 	}
 	/**
 	 * セッションの設定

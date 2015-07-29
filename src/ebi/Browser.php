@@ -206,7 +206,7 @@ class Browser{
 	 * @return $this
 	 */
 	public function do_json($url){
-		$this->header('Content-type','application/json');
+		$this->header('Content-Type','application/json');
 		return $this->do_raw($url,json_encode($this->request_vars));
 	}
 	/**
@@ -260,6 +260,7 @@ class Browser{
 		if(!isset($this->resource)) $this->resource = curl_init();
 		$url_info = parse_url($url);
 		$cookie_base_domain = (isset($url_info['host']) ? $url_info['host'] : '').(isset($url_info['path']) ? $url_info['path'] : '');
+		
 		if(isset($url_info['query'])){
 			parse_str($url_info['query'],$vars);
 			foreach($vars as $k => $v){
@@ -268,7 +269,7 @@ class Browser{
 			list($url) = explode('?',$url,2);
 		}
 		switch($method){
-			case 'RAW';
+			case 'RAW':
 			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
 			case 'GET': curl_setopt($this->resource,CURLOPT_HTTPGET,true); break;
 			case 'HEAD': curl_setopt($this->resource,CURLOPT_NOBODY,true); break;
@@ -315,6 +316,10 @@ class Browser{
 		curl_setopt($this->resource,CURLOPT_FAILONERROR,false);
 		curl_setopt($this->resource,CURLOPT_TIMEOUT,$this->timeout);
 		
+		if(\ebi\Conf::get('ssl-verify',true) === false){
+			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
+			curl_setopt($this->resource, CURLOPT_SSL_VERIFYPEER,false);
+		}
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
 		}		
@@ -380,7 +385,7 @@ class Browser{
 			fclose($fp);
 		}
 		if(($err_code = curl_errno($this->resource)) > 0){
-			if($err_code == 47) return $this;
+			if($err_code == 47 || $err_code == 52) return $this;
 			throw new \RuntimeException($err_code.': '.curl_error($this->resource));
 		}
 		$this->url = curl_getinfo($this->resource,CURLINFO_EFFECTIVE_URL);
@@ -446,8 +451,8 @@ class Browser{
 	 * bodyを解析しXMLオブジェクトとして返す
 	 * @return \ebi\Xml
 	 */
-	public function xml(){
-		return \ebi\Xml::extract($this->body());
+	public function xml($name=null){
+		return \ebi\Xml::extract($this->body(),$name);
 	}
 	/**
 	 * bodyを解析し配列として返す
