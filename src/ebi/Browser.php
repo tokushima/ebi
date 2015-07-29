@@ -315,6 +315,10 @@ class Browser{
 		curl_setopt($this->resource,CURLOPT_FAILONERROR,false);
 		curl_setopt($this->resource,CURLOPT_TIMEOUT,$this->timeout);
 		
+		if(\ebi\Conf::get('ssl-verify',true) === false){
+			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
+			curl_setopt($this->resource, CURLOPT_SSL_VERIFYPEER,false);
+		}
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
 		}		
@@ -380,7 +384,7 @@ class Browser{
 			fclose($fp);
 		}
 		if(($err_code = curl_errno($this->resource)) > 0){
-			if($err_code == 47) return $this;
+			if($err_code == 47 || $err_code == 52) return $this;
 			throw new \RuntimeException($err_code.': '.curl_error($this->resource));
 		}
 		$this->url = curl_getinfo($this->resource,CURLINFO_EFFECTIVE_URL);
