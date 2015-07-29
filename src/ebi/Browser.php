@@ -206,7 +206,7 @@ class Browser{
 	 * @return $this
 	 */
 	public function do_json($url){
-		$this->header('Content-type','application/json');
+		$this->header('Content-Type','application/json');
 		return $this->do_raw($url,json_encode($this->request_vars));
 	}
 	/**
@@ -260,6 +260,7 @@ class Browser{
 		if(!isset($this->resource)) $this->resource = curl_init();
 		$url_info = parse_url($url);
 		$cookie_base_domain = (isset($url_info['host']) ? $url_info['host'] : '').(isset($url_info['path']) ? $url_info['path'] : '');
+		
 		if(isset($url_info['query'])){
 			parse_str($url_info['query'],$vars);
 			foreach($vars as $k => $v){
@@ -268,7 +269,7 @@ class Browser{
 			list($url) = explode('?',$url,2);
 		}
 		switch($method){
-			case 'RAW';
+			case 'RAW':
 			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
 			case 'GET': curl_setopt($this->resource,CURLOPT_HTTPGET,true); break;
 			case 'HEAD': curl_setopt($this->resource,CURLOPT_NOBODY,true); break;
