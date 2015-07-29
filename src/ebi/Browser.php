@@ -450,8 +450,8 @@ class Browser{
 	 * bodyを解析しXMLオブジェクトとして返す
 	 * @return \ebi\Xml
 	 */
-	public function xml(){
-		return \ebi\Xml::extract($this->body());
+	public function xml($name=null){
+		return \ebi\Xml::extract($this->body(),$name);
 	}
 	/**
 	 * bodyを解析し配列として返す
