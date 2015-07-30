@@ -11,13 +11,15 @@ class Request implements \IteratorAggregate{
 	private $_method;
 
 	public function __construct(){
-		if('' != ($pathinfo = (isset($_SERVER['PATH_INFO'])) ? $_SERVER['PATH_INFO'] : '')){
+		if('' != ($pathinfo = array_key_exists('PATH_INFO',$_SERVER) ? $_SERVER['PATH_INFO'] : '')){
 			if($pathinfo[0] != '/') $pathinfo = '/'.$pathinfo;
 			$this->args = preg_replace("/(.*?)\?.*/","\\1",$pathinfo);
 		}
-		if(isset($_SERVER['REQUEST_METHOD'])){
-			if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
-				if(isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])){
+		if(array_key_exists('REQUEST_METHOD',$_SERVER)){
+			$this->_method = $_SERVER['REQUEST_METHOD'];			
+			
+			if($_SERVER['REQUEST_METHOD'] == 'POST'){
+				if(array_key_exists('HTTP_X_HTTP_METHOD_OVERRIDE',$_SERVER)){
 					$this->_method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
 				}
 				if(isset($_POST) && is_array($_POST)){
@@ -44,7 +46,7 @@ class Request implements \IteratorAggregate{
 						if(is_array($v['name'])){
 							$this->files[$k] = [];
 							$marge_func($v['name'],[],$v,$this->files[$k]);
-						}else if(isset($v['tmp_name']) && !empty($v['tmp_name'])){
+						}else if(array_key_exists('tmp_name',$v) && !empty($v['tmp_name'])){
 							$this->files[$k] = $v;
 						}
 					}
@@ -61,18 +63,18 @@ class Request implements \IteratorAggregate{
 					}
 				}
 			}
-			if(isset($this->vars['_method'])){
+			if(array_key_exists('_method',$this->vars)){
 				if(empty($this->_method)){
 					$this->_method = strtoupper($this->vars['_method']);
 				}
 				unset($this->vars['_method']);
 			}
-			if(empty($this->_method)){
-				$this->_method = $_SERVER['REQUEST_METHOD'];
-			}
 			if(
-				(isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'],'application/json') === 0) &&
-				($this->_method == 'PUT' || $this->_method == 'DELETE' || $this->_method == 'POST')
+				($this->_method == 'POST' || $this->_method == 'PUT' || $this->_method == 'DELETE') &&
+				(
+						(array_key_exists('HTTP_CONTENT_TYPE',$_SERVER) && strpos($_SERVER['HTTP_CONTENT_TYPE'],'application/json') === 0) ||
+						(array_key_exists('CONTENT_TYPE',$_SERVER) && strpos($_SERVER['CONTENT_TYPE'],'application/json') === 0)
+				)
 			){
 				$json = json_decode(file_get_contents('php://input'),true);
 				if(is_array($json)){
