@@ -37,9 +37,9 @@ class Xml implements \IteratorAggregate{
 	 * @param boolean
 	 * @return boolean
 	 */
-	public function close_empty(){
-		if(func_num_args() > 0) $this->close_empty = (boolean)func_get_arg(0);
-		return $this->close_empty;
+	public function close_empty($bool){
+		$this->close_empty = (boolean)$bool;
+		return $this;
 	}
 	/**
 	 * エスケープするか
@@ -167,17 +167,24 @@ class Xml implements \IteratorAggregate{
 	 * XML文字列を返す
 	 * @param string $encoding
 	 */
-	public function get($encoding=null,$format=true,$indent_str="\t"){
-		if($this->name === null) throw new \LogicException('undef name');
+	public function get($encoding=null,$format=false,$indent_str="\t"){
+		if($this->name === null){
+			throw new \ebi\exception\NotFoundException('undef name');
+		}
 		$attr = '';
 		$value = ($this->value === null || $this->value === '') ? null : (string)$this->value;
+		
+		if($format && !empty($value)){
+			$value = PHP_EOL.self::format($value,$indent_str,1);
+		}
 		foreach(array_keys($this->attr) as $k){
 			$attr .= ' '.$k.'="'.$this->in_attr($k).'"';
 		}
 		return ((empty($encoding)) ? '' : '<?xml version="1.0" encoding="'.$encoding.'" ?'.'>'.PHP_EOL)
 				.('<'.$this->name.$attr.(implode(' ',$this->plain_attr)).(($this->close_empty && !isset($value)) ? ' /' : '').'>')
-				.$this->value
-				.((!$this->close_empty || isset($value)) ? sprintf('</%s>',$this->name) : '');
+				.$value
+				.((!$this->close_empty || isset($value)) ? sprintf('</%s>',$this->name) : '')
+				.($format ? PHP_EOL : '');
 	}
 	public function __toString(){
 		return $this->get();
@@ -354,9 +361,10 @@ class Xml implements \IteratorAggregate{
 	 * 整形する
 	 * @param string $src XML文字列
 	 * @param string $indent_str インデント文字
+	 * @param integer $depth インデントの初期値
 	 * @return string
 	 */
-	public static function format($src,$indent_str="\t"){
+	public static function format($src,$indent_str="\t",$depth=0){
 		$rtn = '';
 		$i = 0;
 		
@@ -378,7 +386,7 @@ class Xml implements \IteratorAggregate{
 			}else if($lc == 0){
 				$indent = 2;
 			}
-			$rtn .= (($indent != 2) ? str_repeat($indent_str,$i) : '').$line.PHP_EOL;
+			$rtn .= (($indent != 2) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
 		
 			if($indent == 1){
 				$i++;
