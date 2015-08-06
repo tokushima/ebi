@@ -307,6 +307,9 @@ class Request implements \IteratorAggregate{
 	 * @return boolean
 	 */
 	public function has_file($file_info){
+		if(is_string($file_info)){
+			$file_info = $this->in_files($file_info);
+		}
 		return isset($file_info['tmp_name']) && is_file($file_info['tmp_name']);
 	}
 	/**
@@ -315,6 +318,9 @@ class Request implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function file_original_name($file_info){
+		if(is_string($file_info)){
+			$file_info = $this->in_files($file_info);
+		}
 		return isset($file_info['name']) ? $file_info['name'] : null;
 	}
 	/**
@@ -323,6 +329,9 @@ class Request implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function file_path($file_info){
+		if(is_string($file_info)){
+			$file_info = $this->in_files($file_info);
+		}
 		return isset($file_info['tmp_name']) ? $file_info['tmp_name'] : null;
 	}
 	/**
@@ -331,10 +340,16 @@ class Request implements \IteratorAggregate{
 	 * @param string $newname
 	 */
 	public function move_file($file_info,$newname){
-		if(!$this->has_file($file_info)) throw new \LogicException('file not found ');
-		if(!is_dir(dirname($newname))) Util::mkdir(dirname($newname));
-		copy($file_info['tmp_name'],$newname);
-		chmod($newname,0777);
-		unlink($file_info['tmp_name']);
+		if(is_string($file_info)){
+			$file_info = $this->in_files($file_info);
+		}		
+		if(!$this->has_file($file_info)){
+			throw new \LogicException('file not found ');
+		}
+		if(!is_dir(dirname($newname))){
+			\ebi\Util::mkdir(dirname($newname));
+		}
+		\ebi\Util::copy($file_info['tmp_name'],$newname);
+		\ebi\Util::rm($file_info['tmp_name']);
 	}
 }

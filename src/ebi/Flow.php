@@ -248,9 +248,12 @@ class Flow{
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}
-					if(array_key_exists('vars',$pattern)){
-						$result_vars = is_array($pattern['vars']) ? $pattern['vars'] : [$pattern['vars']];
-					}		
+					if(array_key_exists('vars',self::$map) && is_array(self::$map['vars'])){
+						$result_vars = self::$map['vars'];
+					}
+					if(array_key_exists('vars',$pattern) && is_array($pattern['vars'])){
+						$result_vars =  array_merge($result_vars,$pattern['vars']);
+					}
 					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
