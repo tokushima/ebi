@@ -401,7 +401,7 @@ class Flow{
 						\ebi\Log::disable_display();
 							
 						\ebi\HttpHeader::send('Content-Type','application/json');
-						print(json_encode(['result'=>$to_array($result_vars)]));
+						print(\ebi\Json::encode(['result'=>$to_array($result_vars)]));
 						return self::terminate();
 					}
 				}catch(\Exception $e){
