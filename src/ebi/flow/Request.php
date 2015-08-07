@@ -62,6 +62,13 @@ class Request{
 		return $this->req->is_delete();
 	}
 	/**
+	 * 変数の一覧を返す
+	 * @return array
+	 */
+	public function ar_files(){
+		return $this->req->ar_files();
+	}
+	/**
 	 * 添付ファイル情報の取得
 	 * @param string $n
 	 * @return array
