@@ -67,22 +67,22 @@ if(!is_file($path.'/test/testman.phar') && !is_file($path.'/testman.phar')){
 		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
 		\cmdman\Std::println_success('Written file '.$f);
 		
-		file_put_contents($f=$path.'/test/testman.settings.php',<<< __SRC__
+		file_put_contents($f=$path.'/test/testman.settings.php',<<< '__SRC__'
 <?php
 \ebi\Conf::set('ebi.Db','autocommit',true);
-\testman\Conf::set('urls',\ebi\Dt::get_urls());		
+\testman\Conf::set('urls',\ebi\Dt::get_urls());
 __SRC__
 		);
 		\cmdman\Std::println_success('Written file '.$f);
 		
-		file_put_contents($f=$path.'/test/testman.fixture.php',<<< __SRC__
+		file_put_contents($f=$path.'/test/testman.fixture.php',<<< '__SRC__'
 <?php
 \ebi\Dt::setup();
 __SRC__
 		);
 		\cmdman\Std::println_success('Written file '.$f);
 		
-		file_put_contents($f=$path.'/test/__setup__.php',<<< __SRC__
+		file_put_contents($f=$path.'/test/__setup__.php',<<< '__SRC__'
 <?php
 \ebi\Exceptions::clear();
 __SRC__
