@@ -580,6 +580,18 @@ class Dt{
 		return $result;
 	}
 	/**
+	 * モデルからデータを全削除する
+	 */
+	public static function delete_all(){
+		foreach(self::classes('\ebi\Dao') as $class_info){
+			$r = new \ReflectionClass($class_info['class']);
+	
+			if(($r->getParentClass() instanceof \ReflectionClass) && $r->getParentClass()->getName() == 'ebi\Dao'){
+				call_user_func([$r->getName(),'find_delete']);
+			}
+		}
+	}
+	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
 	 * @param string $to
 	 * @param string $subject
