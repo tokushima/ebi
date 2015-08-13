@@ -466,6 +466,9 @@ class Browser{
 		if($array === false){
 			throw new \ebi\exception\NotFoundException('Invalid data');
 		}
+		if(empty($name)){
+			return $array;
+		}
 		$names = explode($delimiter,$name);
 		foreach($names as $key){
 			if(array_key_exists($key,$array)){
