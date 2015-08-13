@@ -437,11 +437,14 @@ class Flow{
 					$message = [];
 					
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
-						$message[] = [
+						$em = [
 							'message'=>$e->getMessage(),
-							'group'=>$g,
 							'type'=>basename(str_replace("\\",'/',get_class($e)))
 						];
+						if(!empty($g)){
+							$em['group'] = $g;
+						}
+						$message[] = $em;
 					}
 					\ebi\Log::disable_display();
 					
