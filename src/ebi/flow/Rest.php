@@ -17,14 +17,21 @@ class Rest extends \ebi\flow\Request{
 		$this->model = $model;
 		return $this;
 	}
-	/**
-	 * 検索
-	 */
-	public function search(){
+	private function find_model($model){
+		if(!empty($model) && empty($this->model)){
+			$this->model = \ebi\Util::strtoinstance($model);
+		}
 		if(empty($this->model)){
 			\ebi\HttpHeader::send_status(405);
 			exit;
 		}
+	}
+	/**
+	 * 検索
+	 */
+	public function search($model=null){
+		$this->find_model($model);
+		
 		$class = get_class($this->model);
 		$paginator = new \ebi\Paginator($this->in_vars('paginate_by',100),$this->in_vars('page',1));
 		$q = new \ebi\Q();
@@ -38,11 +45,9 @@ class Rest extends \ebi\flow\Request{
 	/**
 	 * 追加
 	 */
-	public function create(){
-		if(empty($this->model)){
-			\ebi\HttpHeader::send_status(405);
-			exit;
-		}
+	public function create($model=null){
+		$this->find_model($model);
+		
 		if($this->is_post()){
 			foreach($this->model->props(false) as $k => $v){
 				if($this->is_vars($k)){
@@ -57,11 +62,9 @@ class Rest extends \ebi\flow\Request{
 	 * 取得
 	 * @param mixed $id
 	 */
-	public function show($id){
-		if(empty($this->model)){
-			\ebi\HttpHeader::send_status(405);
-			exit;
-		}
+	public function show($id,$model=null){
+		$this->find_model($model);
+		
 		$class = get_class($this->model);
 		$model = $class::find_get(\ebi\Q::eq($this->primary(),$id));
 		
@@ -71,11 +74,9 @@ class Rest extends \ebi\flow\Request{
 	 * 削除
 	 * @param mixed $id
 	 */
-	public function delete($id){
-		if(empty($this->model)){
-			\ebi\HttpHeader::send_status(405);
-			exit;
-		}
+	public function delete($id,$model=null){
+		$this->find_model($model);
+		
 		$class = get_class($this->model);
 		$model = $class::find_get(\ebi\Q::eq($this->primary(),$id));		
 		
@@ -86,11 +87,9 @@ class Rest extends \ebi\flow\Request{
 	 * 更新
 	 * @param mixed $id
 	 */
-	public function update($id){
-		if(empty($this->model)){
-			\ebi\HttpHeader::send_status(405);
-			exit;
-		}
+	public function update($id,$model=null){
+		$this->find_model($model);
+		
 		$class = get_class($this->model);
 		$model = $class::find_get(\ebi\Q::eq($this->primary(),$id));		
 		
