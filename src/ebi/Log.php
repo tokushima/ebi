@@ -26,6 +26,9 @@ class Log{
 		
 	private static function cur_level(){
 		if(self::$current_level === null){
+			/**
+			 * エラーレベル (none,error,warn,info,debug)
+			 */
 			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
 		}
 		return self::$current_level;
@@ -110,9 +113,14 @@ class Log{
 			}
 		}
 		if(!empty(self::$fpout)){
+			/**
+			 * 出力に改行を含むかの真偽値
+			 */
+			$nl2str = (\ebi\Conf::get('nl2str') !== null);
+			
 			file_put_contents(
 				self::$fpout,
-				((\ebi\Conf::get('nl2str') !== null) ? 
+				($nl2str ? 
 					str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
 					(string)$log
 				).PHP_EOL,
