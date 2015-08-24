@@ -261,12 +261,12 @@ class Flow{
 						(array_key_exists('plugins',self::$map) ? (is_array(self::$map['plugins']) ? self::$map['plugins'] : [self::$map['plugins']]) : []),
 						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : [])
 					) as $m){
-						$o = self::to_instance($m);
+						$o = \ebi\Util::strtoinstance($m);
 						self::set_class_plugin($o);
 						$plugins[] = $o;
 					}
 					if(!isset($funcs) && isset($class)){
-						$ins = self::to_instance($class);
+						$ins = \ebi\Util::strtoinstance($class);
 						$ins_r = new \ReflectionClass($ins);
 						$traits = [];
 						
@@ -278,7 +278,7 @@ class Flow{
 						}
 						if($has_flow_plugin = in_array('ebi\\FlowPlugin',$traits)){
 							foreach($ins->get_flow_plugins() as $m){
-								$o = self::to_instance($m);
+								$o = \ebi\Util::strtoinstance($m);
 								$plugins[] = $o;
 								self::set_class_plugin($o);
 							}
@@ -573,12 +573,5 @@ class Flow{
 				(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
 		);
 		return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
-	}
-	private static function to_instance($package){
-		if(is_object($package)) return $package;
-		$package = str_replace('.','\\',$package);
-		if($package[0] == '\\') $package = substr($package,1);
-		$r = new \ReflectionClass($package);
-		return $r->newInstance();
 	}
 }

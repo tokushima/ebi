@@ -3,7 +3,7 @@ $b = new \testman\Browser();
 $b->do_get(url('test_login2::automap/aaa'));
 eq(401,$b->status());
 eq(url('test_login2::automap/do_login'),$b->url());
-eq('{"error":[{"message":"Unauthorized","group":"","type":"UnauthorizedException"}]}',$b->body());
+eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 
 
 $b->vars('user','tokushima');
@@ -23,5 +23,5 @@ eq('{"result":{"login":false}}',$b->body());
 $b->do_get(url('test_login2::automap/aaa'));
 eq(401,$b->status());
 eq(url('test_login2::automap/do_login'),$b->url());
-eq('{"error":[{"message":"Unauthorized","group":"","type":"UnauthorizedException"}]}',$b->body());
+eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 

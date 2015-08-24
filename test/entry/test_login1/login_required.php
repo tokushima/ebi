@@ -8,7 +8,7 @@ $b = new \testman\Browser();
 $b->do_get(url('test_login1::bbb'));
 eq(401,$b->status());
 eq(url('test_login1::login'),$b->url());
-eq('{"error":[{"message":"Unauthorized","group":"","type":"UnauthorizedException"}]}',$b->body());
+eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 
 // ログインしたらbbbに戻る
 $b->vars('user','tokushima');

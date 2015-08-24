@@ -5,5 +5,6 @@ include_once('bootstrap.php');
 	'patterns'=>[
 		''=>['action'=>'ebi.Dt','mode'=>'local'],
 		'abc'=>['template'=>'abc.html'],
+		'rest/search/(.+)'=>['action'=>'\ebi\flow\Rest::search']
 	]
 ]);

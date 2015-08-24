@@ -328,4 +328,20 @@ class Util{
 		if($len > mb_strlen($rtn)) $rtn .= $postfix;
 		return $rtn;
 	}
+	/**
+	 * 文字列からインスタンスを返す
+	 * @param string $package
+	 * @return object
+	 */
+	public static function strtoinstance($package){
+		if(is_object($package)){
+			return $package;
+		}
+		$package = str_replace(['.','/'],'\\',$package);
+		if($package[0] == '\\'){
+			$package = substr($package,1);
+		}
+		$r = new \ReflectionClass($package);
+		return $r->newInstance();
+	}
 }
