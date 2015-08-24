@@ -13,7 +13,6 @@ class Session{
 
 	/**
 	 * セッションを開始する
-	 * 
 	 * @param string $name
 	 * @return $this
 	 * 
@@ -63,6 +62,50 @@ class Session{
 	}
 	
 	/**
+	 * セッションの設定
+	 * @param string $name
+	 * @param mixed $value
+	 */
+	public function vars($key,$value){
+		$_SESSION[$this->ses_n][$key] = $value;
+	}
+	
+	/**
+	 * セッションの取得
+	 * @param string $n
+	 * @param mixed $d 未定義の場合の値
+	 * @return mixed
+	 */
+	public function in_vars($n,$d=null){
+		return isset($_SESSION[$this->ses_n][$n]) ? $_SESSION[$this->ses_n][$n] : $d;
+	}
+	
+	/**
+	 * すべてのセッションの取得
+	 * @return array
+	 */
+	public function ar_vars(){
+		return isset($_SESSION[$this->ses_n]) ? $_SESSION[$this->ses_n] : [];
+	}
+	
+	/**
+	 * キーが存在するか
+	 * @param string $n
+	 * @return boolean
+	 */
+	public function is_vars($n){
+		return isset($_SESSION[$this->ses_n]) ? array_key_exists($n,$_SESSION[$this->ses_n]) : false;
+	}
+	
+	/**
+	 * セッションを削除
+	 */
+	public function rm_vars(){
+		foreach(((func_num_args() === 0) ? array_keys($_SESSION[$this->ses_n]) : func_get_args()) as $n) unset($_SESSION[$this->ses_n][$n]);
+	}
+	
+	
+	/**
 	 * セッションを開くときに実行される
 	 * @param string $path
 	 * @param string $name
@@ -106,7 +149,7 @@ class Session{
 	 * セッションを破棄した場合に実行される
 	 * @param string $id
 	 * @return boolean
-	 */	
+	 */
 	public function destroy($id){
 		$bool = static::call_class_plugin_funcs('session_destroy',$id);
 		return (!is_bool($bool)) ? true : $bool;
@@ -120,48 +163,5 @@ class Session{
 	public function gc($maxlifetime){
 		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
 		return (!is_bool($bool)) ? true : $bool;
-	}
-	
-	/**
-	 * セッションの設定
-	 * @param string $name
-	 * @param mixed $value
-	 */
-	public function vars($key,$value){
-		$_SESSION[$this->ses_n][$key] = $value;
-	}
-	
-	/**
-	 * セッションの取得
-	 * @param string $n
-	 * @param mixed $d 未定義の場合の値
-	 * @return mixed
-	 */
-	public function in_vars($n,$d=null){
-		return isset($_SESSION[$this->ses_n][$n]) ? $_SESSION[$this->ses_n][$n] : $d;
-	}
-	
-	/**
-	 * すべてのセッションの取得
-	 * @return array
-	 */
-	public function ar_vars(){
-		return isset($_SESSION[$this->ses_n]) ? $_SESSION[$this->ses_n] : [];
-	}
-	
-	/**
-	 * キーが存在するか
-	 * @param string $n
-	 * @return boolean
-	 */
-	public function is_vars($n){
-		return isset($_SESSION[$this->ses_n]) ? array_key_exists($n,$_SESSION[$this->ses_n]) : false;
-	}
-	
-	/**
-	 * セッションを削除
-	 */
-	public function rm_vars(){
-		foreach(((func_num_args() === 0) ? array_keys($_SESSION[$this->ses_n]) : func_get_args()) as $n) unset($_SESSION[$this->ses_n][$n]);
 	}
 }
