@@ -13,7 +13,6 @@ class Session{
 
 	/**
 	 * セッションを開始する
-	 * 
 	 * @param string $name
 	 * @return $this
 	 * 
@@ -22,11 +21,20 @@ class Session{
 		$this->ses_n = $name;
 		if('' === session_id()){
 			/**
-			 * セッション名 初期値はSID
+			 * セッション名
 			 */
 			$session_name = \ebi\Conf::get('session_name','SID');
-			if(!ctype_alpha($session_name)) throw new \InvalidArgumentException('session name is is not a alpha value');
+			
+			if(!ctype_alpha($session_name)){
+				throw new \InvalidArgumentException('session name is is not a alpha value');
+			}
+			/**
+			 * キャッシュリミッタの名前
+			 */
 			session_cache_limiter(\ebi\Conf::get('session_limiter','nocache'));
+			/**
+			 * キャッシュの有効期限 (秒)、ただし設定は分に変換される
+			 */
 			session_cache_expire((int)(\ebi\Conf::get('session_expire',10800)/60));
 			session_name();
 
@@ -52,60 +60,7 @@ class Session{
 			});
 		}
 	}
-	public function open($path,$name){
-		/**
-		 * セッションを開くときに実行される
-		 * @param string $path
-		 * @param string $name
-		 * @return boolean
-		 */
-		$bool = static::call_class_plugin_funcs('session_open',$path,$name);
-		return (!is_bool($bool)) ? true : $bool;
-	}
-	public function close(){
-		/**
-		 * writeが実行された後で実行される
-		 * @return boolean
-		 */
-		$bool = static::call_class_plugin_funcs('session_close');
-		return (!is_bool($bool)) ? true : $bool;
-	}
-	public function read($id){
-		/**
-		 * セッションが開始したとき実行されます
-		 * @param string $id
-		 * @return mixed
-		 */
-		return static::call_class_plugin_funcs('session_read',$id);
-	}
-	public function write($id,$sess_data){
-		/**
-		 * セッションの保存や終了が必要となったときに実行されます
-		 * @param string $id
-		 * @param mixed $sess_data
-		 * @return boolean
-		 */
-		$bool = static::call_class_plugin_funcs('session_write',$id,$sess_data);
-		return (!is_bool($bool)) ? true : $bool;
-	}
-	public function destroy($id){
-		/**
-		 * セッションを破棄した場合に実行される
-		 * @param string $id
-		 * @return boolean
-		 */
-		$bool = static::call_class_plugin_funcs('session_destroy',$id);
-		return (!is_bool($bool)) ? true : $bool;
-	}
-	public function gc($maxlifetime){
-		/**
-		 * ガベージコレクタ
-		 * @param integer $maxlifetime session.gc_maxlifetime
-		 * @return boolean
-		 */
-		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
-		return (!is_bool($bool)) ? true : $bool;
-	}
+	
 	/**
 	 * セッションの設定
 	 * @param string $name
@@ -114,6 +69,7 @@ class Session{
 	public function vars($key,$value){
 		$_SESSION[$this->ses_n][$key] = $value;
 	}
+	
 	/**
 	 * セッションの取得
 	 * @param string $n
@@ -123,6 +79,7 @@ class Session{
 	public function in_vars($n,$d=null){
 		return isset($_SESSION[$this->ses_n][$n]) ? $_SESSION[$this->ses_n][$n] : $d;
 	}
+	
 	/**
 	 * すべてのセッションの取得
 	 * @return array
@@ -130,6 +87,7 @@ class Session{
 	public function ar_vars(){
 		return isset($_SESSION[$this->ses_n]) ? $_SESSION[$this->ses_n] : [];
 	}
+	
 	/**
 	 * キーが存在するか
 	 * @param string $n
@@ -138,10 +96,72 @@ class Session{
 	public function is_vars($n){
 		return isset($_SESSION[$this->ses_n]) ? array_key_exists($n,$_SESSION[$this->ses_n]) : false;
 	}
+	
 	/**
 	 * セッションを削除
 	 */
 	public function rm_vars(){
 		foreach(((func_num_args() === 0) ? array_keys($_SESSION[$this->ses_n]) : func_get_args()) as $n) unset($_SESSION[$this->ses_n][$n]);
+	}
+	
+	
+	/**
+	 * セッションを開くときに実行される
+	 * @param string $path
+	 * @param string $name
+	 * @return boolean
+	 */
+	public function open($path,$name){
+		$bool = static::call_class_plugin_funcs('session_open',$path,$name);
+		return (!is_bool($bool)) ? true : $bool;
+	}
+	
+	/**
+	 * writeが実行された後で実行される
+	 * @return boolean
+	 */
+	public function close(){
+		$bool = static::call_class_plugin_funcs('session_close');
+		return (!is_bool($bool)) ? true : $bool;
+	}
+	
+	/**
+	 * セッションが開始したとき実行されます
+	 * @param string $id
+	 * @return mixed
+	 */
+	public function read($id){
+		return static::call_class_plugin_funcs('session_read',$id);
+	}
+	
+	/**
+	 * セッションの保存や終了が必要となったときに実行されます
+	 * @param string $id
+	 * @param mixed $sess_data
+	 * @return boolean
+	 */
+	public function write($id,$sess_data){
+		$bool = static::call_class_plugin_funcs('session_write',$id,$sess_data);
+		return (!is_bool($bool)) ? true : $bool;
+	}
+	
+	/**
+	 * セッションを破棄した場合に実行される
+	 * @param string $id
+	 * @return boolean
+	 */
+	public function destroy($id){
+		$bool = static::call_class_plugin_funcs('session_destroy',$id);
+		return (!is_bool($bool)) ? true : $bool;
+	}
+	
+	/**
+	 * ガベージコレクタ
+	 * @param integer $maxlifetime session.gc_maxlifetime
+	 * @return boolean
+	 */
+	public function gc($maxlifetime){
+		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
+		return (!is_bool($bool)) ? true : $bool;
 	}
 }
