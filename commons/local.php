@@ -14,7 +14,7 @@
 	'ebi.Flow'=>[
 		'exception_log_level'=>'warn',
 		'app_url'=>'http://localhost:8000/*',
-//		'secure'=>false,
+		'secure'=>false,
 	],
 ]);
 

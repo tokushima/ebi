@@ -160,18 +160,34 @@ class Flow{
 		
 		$http = self::$app_url;
 		$https = str_replace('http://','https://',self::$app_url);
+		
 		$conf_secure = (\ebi\Conf::get('secure',true) === true);
+		$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
+
+		$url_format_func = function($url,$map_secure,$conf_secure,$https,$http){
+			$num = 0;
+			$format = \ebi\Util::path_absolute(
+				(($conf_secure && $map_secure === true) ? $https : $http),
+				(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
+			);
+			return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
+		};
 		
 		foreach(self::$map['patterns'] as $k => $v){
-			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = self::url_format_func($k,(array_key_exists('secure',$v) ? ($v['secure'] === true) : false),$conf_secure,$https,$http);
+			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = $url_format_func(
+				$k,
+				(array_key_exists('secure',$v) ? ($v['secure'] === true) : $map_secure),
+				$conf_secure,
+				$https,
+				$http
+			);
 		}
 		krsort(self::$map['patterns']);
 		
 		if(self::$is_get_map){
 			self::$is_get_map = false;
 			return;
-		}
-		
+		}		
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
 		
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
@@ -209,7 +225,7 @@ class Flow{
 						}
 					}
 				}
-				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && \ebi\Conf::get('secure',true) !== false){
+				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && $conf_secure !== false){
 					if(substr(\ebi\Request::current_url(),0,5) === 'http:' &&
 						(
 							!isset($_SERVER['HTTP_X_FORWARDED_HOST']) ||
@@ -565,13 +581,5 @@ class Flow{
 			throw new \InvalidArgumentException($class.' not found');
 		}
 		return $result;
-	}	
-	private static function url_format_func($url,$map_secure,$conf_secure,$https,$http){
-		$num = 0;
-		$format = \ebi\Util::path_absolute(
-				(($conf_secure && $map_secure === true) ? $https : $http),
-				(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
-		);
-		return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
 	}
 }
