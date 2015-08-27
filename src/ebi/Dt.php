@@ -508,7 +508,7 @@ class Dt{
 			}
 		}
 		foreach($include_path as $libdir){
-			if($libdir !== '.'){
+			if($libdir !== '.' && is_dir($libdir)){
 				foreach(new \RecursiveIteratorIterator(
 						new \RecursiveDirectoryIterator(
 							$libdir,
