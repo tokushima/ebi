@@ -316,6 +316,9 @@ class Browser{
 		curl_setopt($this->resource,CURLOPT_FAILONERROR,false);
 		curl_setopt($this->resource,CURLOPT_TIMEOUT,$this->timeout);
 		
+		/**
+		 * SSL証明書を確認するかの真偽値
+		 */
 		if(\ebi\Conf::get('ssl-verify',true) === false){
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYPEER,false);

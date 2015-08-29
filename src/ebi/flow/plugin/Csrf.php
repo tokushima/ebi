@@ -13,6 +13,9 @@ class Csrf{
 	 */
 	public function before_flow_action(){
 		$req = new \ebi\Request();
+		/**
+		 * シークレットキー
+		 */
 		$secret_key = \ebi\Conf::get('secret_key',sha1(__FILE__));
 		$session = new \ebi\Session();
 		

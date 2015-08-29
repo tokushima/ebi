@@ -12,6 +12,9 @@ class TemplateParts{
 	 * @return Ambigous <string, string, mixed>|string
 	 */
 	public function init_template($src){
+		/**
+		 * テンプレートパーツのファイルがあるディレクトリ
+		 */
 		$path = \ebi\Util::path_slash(\ebi\Conf::get('path',\ebi\Conf::resource_path('parts')),null,true);
 		
 		return \ebi\Xml::find_replace($src, 'rt:parts', function($xml) use($path){
