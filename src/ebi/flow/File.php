@@ -49,6 +49,9 @@ class File{
 		\ebi\HttpFile::attach(\ebi\Util::path_absolute($this->base(),$path));
 	}
 	private function base(){
+		/**
+		 * 一覧を行うディレクトリ
+		 */
 		$base = \ebi\Util::path_slash(\ebi\Conf::get('document_root'),null,true);
 		return $base.\ebi\Util::path_slash($this->map_arg('path'),null,true);
 	}

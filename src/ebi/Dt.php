@@ -99,6 +99,9 @@ class Dt{
 	}
 	private static function get_use_vendor(){
 		$class_list = [];
+		/**
+		 * 利用するvendorのクラス、複数ある場合は配列
+		 */
 		$add = \ebi\Conf::get('use_vendor',[]);
 		
 		if(is_string($add)){

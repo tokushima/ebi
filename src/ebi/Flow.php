@@ -120,8 +120,13 @@ class Flow{
 		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
 			throw new \ebi\exception\InvalidArgumentException('pattern not found');
 		}
-		
+		/**
+		 * アプリケーションURL
+		 */
 		self::$app_url = \ebi\Conf::get('app_url');
+		/**
+		 * メディアURL
+		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
 		if(empty(self::$app_url)){
@@ -151,8 +156,11 @@ class Flow{
 			self::$media_url = $media_path.'resources/media/';
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
+		/**
+		 * テンプレートファイルのディレクトリ
+		 */
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-				
+		
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
@@ -161,6 +169,9 @@ class Flow{
 		$http = self::$app_url;
 		$https = str_replace('http://','https://',self::$app_url);
 		
+		/**
+		 * HTTPSを有効にするか (falseの場合、mapのsecureフラグもすべてfalseとなる)
+		 */
 		$conf_secure = (\ebi\Conf::get('secure',true) === true);
 		$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
 
@@ -206,12 +217,12 @@ class Flow{
 						$valid_mode = false;
 						
 						if(strpos($pattern['mode'],'@') !== false){
-							$alias = \ebi\Conf::get('mode',[]);
+							$appmode_group = \ebi\Conf::appmode_group();
 							
-							if(!empty($alias)){
+							if(!empty($appmode_group)){
 								foreach(explode(',',$pattern['mode']) as $pm){
-									if(substr($pm,0,1) === '@' && array_key_exists(substr($pm,1),$alias)){
-										if(in_array(\ebi\Conf::appmode(),explode(',',$alias[substr($pm,1)]))){
+									if(substr($pm,0,1) === '@' && array_key_exists(substr($pm,1),$appmode_group)){
+										if(in_array(\ebi\Conf::appmode(),explode(',',$appmode_group[substr($pm,1)]))){
 											$valid_mode = true;
 											break;
 										}

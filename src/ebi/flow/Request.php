@@ -15,6 +15,9 @@ class Request{
 	
 	public function __construct(){
 		$this->req = new \ebi\Request();
+		/**
+		 * セッショングループ名
+		 */
 		$session_group = \ebi\Conf::get('session_group');
 		
 		$d = debug_backtrace(false);

@@ -13,6 +13,9 @@ class Xml{
 		$xml->add($array);
 		
 		\ebi\HttpHeader::send('Content-Type','application/xml');
+		/**
+		 * XMLのencodingに指定するエンコード名
+		 */
 		print($xml->get(\ebi\Conf::get('encoding')));
 	}
 	/**

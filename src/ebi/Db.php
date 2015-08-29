@@ -41,6 +41,9 @@ class Db implements \Iterator{
 		
 		if($this->connector instanceof \ebi\DbConnector){
 			if(self::$autocommit === null){
+				/**
+				 * オートコミットを行うかの真偽値
+				 */
 				self::$autocommit = \ebi\Conf::get('autocommit',false);
 			}
 			$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);

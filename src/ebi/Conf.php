@@ -83,17 +83,34 @@ class Conf{
 	public static function appmode(){
 		return defined('APPMODE') ? constant('APPMODE') : null;
 	}
-	
+	/**
+	 * アプリケーションモードのグループ定義
+	 * @return string{}
+	 */
+	public static function appmode_group(){
+		/**
+		 * アプリケーションモードのグループ  [グループ名=>[モード,モード] ]で定義する
+		 */
+		return \ebi\Conf::get('appmode_group',[]);
+	}
 	/**
 	 * 作業ディレクトリのパス
 	 * @param string $path
 	 * @return string
 	 */
 	public static function work_path($path=null){
-		$dir = self::get('work_dir');
-		if(empty($dir)) $dir = defined('WORK_DIR') ? constant('WORK_DIR') : (getcwd().'/work/');
+		/**
+		 * ワーキングディレクトリ
+		 */
+		$dir = \ebi\Conf::get('work_dir');
+		
+		if(empty($dir)){
+			$dir = defined('WORK_DIR') ? constant('WORK_DIR') : (getcwd().'/work/');
+		}
 		$dir = str_replace("\\",'/',$dir);
-		if(substr($dir,-1) != '/') $dir = $dir.'/';
+		if(substr($dir,-1) != '/'){
+			$dir = $dir.'/';
+		}
 		return $dir.$path;
 	}
 	/**
@@ -102,10 +119,18 @@ class Conf{
 	 * @return string
 	 */
 	public static function resource_path($path=null){
-		$dir = self::get('resource_dir');
-		if(empty($dir)) $dir = defined('RESOURCE_DIR') ? constant('RESOURCE_DIR') : (getcwd().'/resources/');
+		/**
+		 * リソースファイルのディレクトリ
+		 */
+		$dir = \ebi\Conf::get('resource_dir');
+		
+		if(empty($dir)){
+			$dir = defined('RESOURCE_DIR') ? constant('RESOURCE_DIR') : (getcwd().'/resources/');
+		}
 		$dir = str_replace("\\",'/',$dir);
-		if(substr($dir,-1) != '/') $dir = $dir.'/';
+		if(substr($dir,-1) != '/'){
+			$dir = $dir.'/';
+		}
 		return $dir.$path;
 	}
 	/**
