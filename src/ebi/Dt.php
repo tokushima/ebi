@@ -198,8 +198,10 @@ class Dt{
 		$conf_list = [];
 		foreach(self::classes() as $info){
 			$ref = new \ReflectionClass($info['class']);
+			
 			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
-				$conf_list[] = ['package'=>str_replace(['\\','/'],['/','.'],$ref->getName()),'key'=>$k,'description'=>$c[0]];
+				$p = str_replace(['\\','/'],['/','.'],$ref->getName());
+				$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
 			}
 		}
 		return ['conf_list'=>$conf_list];
