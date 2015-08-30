@@ -1,6 +1,10 @@
 <?php
 namespace ebi;
-
+/**
+ * Flowのエラー時処理
+ * @author tokushima
+ *
+ */
 class FlowInvalid implements \Iterator{
 	private static $self;
 	private $messages = [];

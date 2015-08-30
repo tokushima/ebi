@@ -1,6 +1,10 @@
 <?php
 namespace ebi;
-
+/**
+ * Epubの書き出し
+ * @author tokushima
+ *
+ */
 class Epub{
 	/**
 	 * ディレクトリからコンテンツ情報(OEBPSの中身)を生成する

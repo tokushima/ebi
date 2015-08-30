@@ -8,15 +8,17 @@ namespace ebi;
 class Annotation{
 	/**
 	 * アノテーション文字列をデコードする
+	 * @param string $class 対象のクラス名
 	 * @param text $d デコード対象となる文字列
 	 * @param string[] $names デコード対象のアノテーション名
-	 * @throws \InvalidArgumentException
+	 * @param string $parent 遡る最上のクラス名
 	 */
 	public static function decode($class,$names,$parent='stdClass'){
 		$return = [];
 		
 		$t = new \ReflectionClass($class);
 		$d = null;
+		
 		while($t->getName() != $parent){
 			$d = $t->getDocComment().$d;
 			
@@ -63,6 +65,12 @@ class Annotation{
 		}
 		return is_array($names) ? $return : $return[$names];
 	}
+	/**
+	 * アノテーション文字列の有効化
+	 * @param  string $s アノテーション文字列
+	 * @throws \InvalidArgumentException 有効化に失敗した
+	 * @return mixed{} アノテーションの連想配列
+	 */
 	public static function activation($s){
 		if(empty($s)){
 			return [];

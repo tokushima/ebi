@@ -109,6 +109,7 @@ class Dt{
 		}
 		foreach($add as $class){
 			$class = str_replace('.','\\',$class);
+			
 			if(class_exists($class)){
 				$r = new \ReflectionClass($class);
 				$class_list[] = $r->getName();
