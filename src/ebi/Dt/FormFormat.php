@@ -1,6 +1,10 @@
 <?php
 namespace ebi\Dt;
-
+/**
+ * Dt用のHTML form フォーマッタ
+ * @author tokushima
+ *
+ */
 class FormFormat{
 	public function after_exec_template($src){
 		$xml = \ebi\Xml::anonymous($src);

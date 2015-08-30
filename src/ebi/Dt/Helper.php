@@ -1,6 +1,10 @@
 <?php
 namespace ebi\Dt;
-
+/**
+ * DT用のヘルパー
+ * @author tokushima
+ *
+ */
 class Helper{
 	public function package_name($p){
 		$p = str_replace(['/','\\'],['.','.'],$p);
