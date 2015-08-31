@@ -299,6 +299,13 @@ class Request implements \IteratorAggregate{
 	 * @return array
 	 */
 	public function in_files($n){
+		if(($err = error_get_last()) !== null && 
+			$err['file'] == 'Unknown' && 
+			$err['line'] == 0 && 
+			strpos($err['message'],'POST Content-Length of') !== false
+		){
+			throw new \ebi\exception\ContentLengthException();
+		}		
 		return array_key_exists($n,$this->files) ? $this->files[$n] :  null;
 	}
 	/**
