@@ -56,6 +56,8 @@ include_once('bootstrap.php');
 	'raise/template'=>['name'=>'raise_template','action'=>'test.flow.Action::raise','error_template'=>'exceptions.html'],
 	'raise/template/parent'=>['name'=>'raise_template_parent','action'=>'test.flow.Action::raise','error_template'=>'exceptions_parent.html'],
 	'exceptions'=>['name'=>'exceptions','action'=>'test.flow.Action::exceptions'],
+	'exceptions/403'=>['name'=>'exceptions403','action'=>'test.flow.Action::exceptions','error_status'=>403],
+	'exceptions/405'=>['name'=>'exceptions405','action'=>'test.flow.Action::exceptions405'],
 	'exceptions/group'=>['name'=>'exceptions_group','action'=>'test.flow.Action::exceptions_group'],
 		
 	'html_filter'=>[

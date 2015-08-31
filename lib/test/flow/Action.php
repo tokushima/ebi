@@ -24,6 +24,13 @@ class Action{
 		\ebi\Exceptions::add(new \LogicException('logic'));
 		\ebi\Exceptions::throw_over();
 	}
+	
+	public function exceptions405(){
+		\ebi\HttpHeader::send_status(405);
+		\ebi\Exceptions::add(new \LogicException('Method Not Allowed'));
+		\ebi\Exceptions::throw_over();
+	}	
+	
 	public function get_method(){
 		$req = new \ebi\Request();
 		
