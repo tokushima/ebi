@@ -14,8 +14,14 @@ class Action{
 	public function raise(){
 		throw new \LogicException('raise test');
 	}
+	public function exceptions_group(){
+		\ebi\Exceptions::add(new \InvalidArgumentException('invalid argument'),'newgroup');
+		\ebi\Exceptions::add(new \LogicException('logic'),'newgroup');
+		\ebi\Exceptions::throw_over();
+	}
 	public function exceptions(){
-		\ebi\Exceptions::add(new \LogicException('raise test'),'newgroup');
+		\ebi\Exceptions::add(new \InvalidArgumentException('invalid argument'));
+		\ebi\Exceptions::add(new \LogicException('logic'));
 		\ebi\Exceptions::throw_over();
 	}
 	public function get_method(){
