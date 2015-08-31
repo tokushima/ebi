@@ -112,7 +112,13 @@ class Flow{
 		}
 		throw new \ebi\exception\InvalidArgumentException('map `'.$name.'` not found');
 	}
-	public static function app($map){
+	
+	/**
+	 * アプリケーションを実行する
+	 * @param mixed{} $map
+	 * @throws \ebi\exception\InvalidArgumentException
+	 */
+	public static function app($map){		
 		if(is_array($map) && !isset($map['patterns'])){
 			$map = ['patterns'=>$map];
 		}else if(is_string($map)){
