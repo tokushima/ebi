@@ -97,44 +97,22 @@ class Dt{
 	public function index(){
 		return ['map_list'=>$this->get_flow_output_maps()];
 	}
-	private static function get_use_vendor(){
-		$class_list = [];
-		/**
-		 * 利用するvendorのクラス、複数ある場合は配列
-		 */
-		$add = \ebi\Conf::get('use_vendor',[]);
-		
-		if(is_string($add)){
-			$add = [$add];
-		}
-		foreach($add as $class){
-			$class = str_replace('.','\\',$class);
-			
-			if(class_exists($class)){
-				$r = new \ReflectionClass($class);
-				$class_list[] = $r->getName();
-			}
-		}
-		return $class_list;
-	}
+
 	/**
 	 * ライブラリの一覧
 	 * @automap
 	 */
 	public function class_list(){
 		$libs = [];
-		$use_vendor = self::get_use_vendor();
 		
 		foreach(self::classes() as $info){
 			$r = new \ReflectionClass($info['class']);
 			
-			if(in_array($r->getName(),$use_vendor) || ($r->getNamespaceName() != 'ebi' && strpos($r->getNamespaceName(),'ebi\\') !== 0)){
-				$class_doc = $r->getDocComment();
-				$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-				list($summary) = explode("\n",$document);
-				
-				$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
-			}
+			$class_doc = $r->getDocComment();
+			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+			list($summary) = explode("\n",$document);
+			
+			$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
 		}
 		ksort($libs);
 		return ['class_list'=>$libs];
@@ -500,9 +478,11 @@ class Dt{
 		}
 		if(class_exists('Composer\Autoload\ClassLoader')){
 			$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
+			
 			$vendor_dir = dirname(dirname($r->getFileName()));
 			if(is_file($loader_php=$vendor_dir.DIRECTORY_SEPARATOR.'autoload.php')){
 				$loader = include($loader_php);
+				
 				// vendor以外の定義されているパスを探す
 				foreach($loader->getPrefixes() as $ns){
 					foreach($ns as $path){
@@ -545,13 +525,37 @@ class Dt{
 			return false;
 		};
 		
-		foreach(get_declared_classes() as $class){
-			if($valid($r=(new \ReflectionClass($class)),$parent_class)){
-				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
+		/**
+		 * 利用するvendorのクラス、複数ある場合は配列
+		 */
+		$add = \ebi\Conf::get('use_vendor',[]);
+		
+		if(is_string($add)){
+			$add = [$add];
+		}
+		foreach($add as $class){
+			$class = str_replace('.','\\',$class);
+			$inc = false;
+			
+			if(substr($class,-1) == '*'){
+				$inc = true;
+				$class = substr($class,0,-1);
+			}			
+			if(class_exists($class)){
+				$r = new \ReflectionClass($class);
+				
+				if($inc){
+					foreach(\ebi\Util::ls($r->getFileName(),true,'/\.php$/') as $file){
+						if(ctype_upper($file->getFilename()[0])){
+							include_once($file->getPathname());
+						}
+					}
+				}
 			}
 		}
-		foreach(self::get_use_vendor() as $class){
-			if($valid($r=(new \ReflectionClass($class)),[],$parent_class)){
+		
+		foreach(get_declared_classes() as $class){
+			if($valid($r=(new \ReflectionClass($class)),$parent_class)){
 				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
 			}
 		}
