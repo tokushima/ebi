@@ -333,6 +333,7 @@ class Flow{
 					if($has_flow_plugin){
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();
+						
 						if(isset($before_redirect)){
 							self::map_redirect($before_redirect,$result_vars,$pattern);
 						}
@@ -355,6 +356,9 @@ class Flow{
 							self::$template->put_block(\ebi\Util::path_absolute(self::$template_path,$ins->get_template_block()));
 						}
 						$template = $ins->get_template();
+						if(!empty($template)){
+							$pattern['template'] = $template;
+						}
 						$result_vars = array_merge($result_vars,$ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
