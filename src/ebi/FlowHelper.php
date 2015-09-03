@@ -365,6 +365,11 @@ class FlowHelper{
 		}
 		return [];
 	}
+	/**
+	 * FLowで例外が発生しているか
+	 * @param string $group
+	 * @return boolean
+	 */
 	public function has_invalid($group=null){
 		return \ebi\FlowInvalid::has($group);
 	}

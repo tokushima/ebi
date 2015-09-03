@@ -11,24 +11,45 @@ trait FlowPlugin{
 	private $_before_redirect;
 	private $_after_redirect;
 	
-	public function set_pattern(array $selected_pattern){
+	/**
+	 * Flowが利用
+	 * @param array $selected_pattern
+	 */
+	final public function set_pattern(array $selected_pattern){
 		$this->_selected_pattern = $selected_pattern;
 	}
+	/**
+	 * Flowにpluginをさす
+	 * @return string[]
+	 */
 	public function get_flow_plugins(){
 		return [];
 	}
 	
-	
+	/**
+	 * action実行後にリダイレクトするURL
+	 * @param string $url
+	 */
 	public function set_after_redirect($url){
 		$this->_after_redirect = $url;
 	}
-	public function get_after_redirect(){
+	/**
+	 * Flowが利用
+	 */
+	final public function get_after_redirect(){
 		return $this->_after_redirect;
 	}
+	/**
+	 * action実行前にリダイレクトするURL
+	 * @param string $url
+	 */
 	public function set_before_redirect($url){
 		$this->_before_redirect = $url;
 	}
-	public function get_before_redirect(){
+	/**
+	 * Flowが利用
+	 */
+	final public function get_before_redirect(){
 		return $this->_before_redirect;
 	}	
 	
@@ -47,10 +68,9 @@ trait FlowPlugin{
 		return [];
 	}
 	/**
-	 * テンプレートブロックを取得
-	 * @return string
+	 * Flowが利用
 	 */
-	public function get_template_block(){
+	final public function get_template_block(){
 		return $this->_template_block;
 	}
 	/**
@@ -60,11 +80,11 @@ trait FlowPlugin{
 	public function set_template_block($block){
 		$this->_template_block = $block;
 	}
+
 	/**
-	 *設定されているテンプレートを取得
-	 * @return string
+	 * Flowが利用
 	 */
-	public function get_template(){
+	final public function get_template(){
 		return $this->_template;
 	}
 	/**

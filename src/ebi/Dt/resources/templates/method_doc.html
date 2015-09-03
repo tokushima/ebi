@@ -8,7 +8,6 @@
 	::
 	{$method_name}
 
-
 	<rt:if param="{$is_post}">
 		<span class="label important">POST</span>
 	</rt:if>
@@ -29,12 +28,13 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
 		</tr>
 	</tbody>
-	</table>	
+	</table>
 </rt:if>
+
 <rt:if param="{$see_method}">
 	<h3>See</h3>
 	<table rt:param="{$see_method}" rt:var="class_method">
@@ -45,7 +45,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td><a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">{$f.type($class_method[0])}</a></td>
 			<td><a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">{$class_method[1]}</a></td>
 		</tr>
@@ -62,7 +62,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td><a href="{$url}">{$url}</a></td>
 		</tr>
 	</tbody>
@@ -70,36 +70,34 @@
 </rt:if>
 
 
-<rt:if param="{$params}">
-	<h3>Params</h3>		
-	<table rt:param="{$params}" rt:var="param" rt:key="param_name">
-	<thead>
-		<tr>
-			<th style="width:200px">name</th>
-			<th style="width:100px">type</th>
-			<th style="width:100px">default</th>
-			<th>summary</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr class="even">
-			<td>
-				<rt:if param="{$param[1]}">&</rt:if>
-				{$param_name}
-			</td>
-			<td>
-				<rt:if param="{$f.type($param[0])}">
-					<a href="{$t.package_method_url('class_doc',$f.type($param[0]))}">{$param[0]}</a>
-				<rt:else />
-					{$param[0]}
-				</rt:if>
-			</td>
-			<td>{$param[3]}</td>
-			<td>{$t.html($param[4])}</td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
+<h3>Params</h3>
+<table rt:param="{$params}" rt:var="param" rt:key="param_name">
+<thead>
+	<tr>
+		<th style="width:200px">name</th>
+		<th style="width:100px">type</th>
+		<th style="width:100px">default</th>
+		<th>summary</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>
+			<rt:if param="{$param[1]}">&</rt:if>
+			{$param_name}
+		</td>
+		<td>
+			<rt:if param="{$f.type($param[0])}">
+				<a href="{$t.package_method_url('class_doc',$f.type($param[0]))}">{$param[0]}</a>
+			<rt:else />
+				{$param[0]}
+			</rt:if>
+		</td>
+		<td>{$param[3]}</td>
+		<td>{$t.html($param[4])}</td>
+	</tr>
+</tbody>
+</table>
 
 <rt:if param="{$request}">
 	<h3>Request</h3>		
@@ -112,7 +110,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td>{$name}</td>
 			<td>
 				<rt:if param="{$f.type($arg[0])}">
@@ -138,7 +136,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td>{$name}</td>
 			<td>
 				<rt:if param="{$f.type($arg[0])}">
@@ -163,7 +161,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td>{$name}</td>
 			<td>{$t.html($summary)}</td>
 		</tr>
@@ -171,47 +169,46 @@
 	</table>
 </rt:if>
 
-<rt:if param="{$return}">
-	<h3>Return</h3>		
-	<table>
-	<thead>
-		<tr>
-			<th style="width:200px">type</th>
-			<th>summary</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr class="even">
-			<td>
-				<rt:if param="{$f.type($return[0])}">
-					<a href="{$t.package_method_url('class_doc',$f.type($return[0]))}">{$return[0]}</a>
-				<rt:else />
-					{$return[0]}
-				</rt:if>
-			</td>
-			<td>{$t.html($return[1])}</td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
 
-<rt:if param="{$throws}">
-	<h3>Throws</h3>		
-	<table rt:param="{$throws}" rt:var="e">
-	<thead>
-		<tr>
-			<th style="width:200px">name</th>
-			<th>summary</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr class="even">
-			<td><a href="{$t.package_method_url('class_doc',$f.type($e[0]))}">{$f.type($e[0])}</a></td>
-			<td>{$t.html($e[1])}</td>
-		</tr>
-	</tbody>
-	</table>	
-</rt:if>
+<h3>Return</h3>		
+<table rt:param="{$return}" rt:var="r">
+<thead>
+	<tr>
+		<th style="width:200px">type</th>
+		<th>summary</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>
+			<rt:if param="{$f.type($r)}">
+				<a href="{$t.package_method_url('class_doc',$f.type($r))}">{$r}</a>
+			<rt:else />
+				{$r}
+			</rt:if>
+		</td>
+		<td>{$t.html($r)}</td>
+	</tr>
+</tbody>
+</table>
+
+
+<h3>Throws</h3>		
+<table rt:param="{$throws}" rt:var="e">
+<thead>
+	<tr>
+		<th style="width:200px">name</th>
+		<th>summary</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td><a href="{$t.package_method_url('class_doc',$f.type($e[0]))}">{$f.type($e[0])}</a></td>
+		<td>{$t.html($e[1])}</td>
+	</tr>
+</tbody>
+</table>	
+
 
 <rt:if param="{$modules}">
 	<h3>Modules</h3>
@@ -222,7 +219,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr class="even">
+		<tr>
 			<td><a href="{$t.package_method_url('class_doc',$f.type($pkg))}">{$f.type($pkg)}</a></td>
 		</tr>
 	</tbody>
