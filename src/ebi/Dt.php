@@ -8,7 +8,6 @@ use \ebi\Q;
  */
 class Dt{
 	use \ebi\FlowPlugin;
-	private $flow_output_maps = [];
 	
 	public function get_flow_plugins(){
 		return [
@@ -22,63 +21,25 @@ class Dt{
 			'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
 		];
 	}
-	private function get_flow_output_maps(){
-		if(empty($this->flow_output_maps)){
-			$self_class = str_replace('\\','.',__CLASS__);
-			$entry = null;
-			$trace = debug_backtrace(false);
-			krsort($trace);
-			foreach($trace as $t){
-				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
-					$entry = $t;
-					break;					
-				}
-			}
-			$map = \ebi\Flow::get_map();
-			$patterns = $map['patterns'];
-			unset($map['patterns']);
-			
-			foreach($patterns as $k => $m){
-				if(!isset($m['deprecated'])) $m['deprecated'] = false;
-				if(!isset($m['mode'])) $m['mode'] = null;
-				if(!isset($m['summary'])) $m['summary'] = null;
-				if(!isset($m['template'])) $m['template'] = null;
-				
-				if(isset($m['action']) && is_string($m['action'])){
-					list($m['class'],$m['method']) = explode('::',$m['action']);
-					if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
-					$m['class'] = str_replace('\\','.',$m['class']);
-				}
-				if(!isset($m['class']) || $m['class'] != $self_class){
-					try{
-						$m['error'] = null;
-						$m['url'] = $k;
-						
-						if(isset($m['method'])){
-							$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-							
-							if(empty($m['summary'])){
-								list($summary) = explode(PHP_EOL,$info['description']);
-								$m['summary'] = empty($summary) ? null : $summary;
-							}
-						}
-					}catch(\Exception $e){
-						$m['error'] = $e->getMessage();
-					}
-					foreach($m as $k => $v){
-						if(is_array($v) && isset($map[$k]) && !empty($map[$k])){
-							$m[$k] = array_merge($map[$k],$v);
-						}else{
-							if(!isset($v) && isset($map[$k])){
-								$m[$k] = $map[$k];
-							}
-						}
-					}
-					$this->flow_output_maps[$m['name']] = $m;
+	private function filter_query($query,$value){
+		$bool = true;
+		$value = strtolower($value);
+		
+		if(!empty($query)){
+			foreach($query as $q){
+				if(strpos($value,strtolower($q)) === false){
+					$bool = false;
 				}
 			}
 		}
-		return $this->flow_output_maps;	
+		return $bool;
+	}
+	private function get_query(){
+		$req = new \ebi\Request();
+		$q = $req->in_vars('q');
+		$query = empty($q) ? [] : explode(' ',str_replace('　',' ',$q));
+		
+		return $query;
 	}
 	/**
 	 * @automap
@@ -95,7 +56,64 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
-		return ['map_list'=>$this->get_flow_output_maps()];
+		$query = $this->get_query();
+		
+		$self_class = str_replace('\\','.',__CLASS__);
+		$entry = null;
+		$trace = debug_backtrace(false);
+		krsort($trace);
+		foreach($trace as $t){
+			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+				$entry = $t;
+				break;
+			}
+		}
+		$map = \ebi\Flow::get_map();
+		$patterns = $map['patterns'];
+		unset($map['patterns']);
+			
+		foreach($patterns as $k => $m){
+			if(!isset($m['deprecated'])) $m['deprecated'] = false;
+			if(!isset($m['mode'])) $m['mode'] = null;
+			if(!isset($m['summary'])) $m['summary'] = null;
+			if(!isset($m['template'])) $m['template'] = null;
+	
+			if(isset($m['action']) && is_string($m['action'])){
+				list($m['class'],$m['method']) = explode('::',$m['action']);
+				if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
+				$m['class'] = str_replace('\\','.',$m['class']);
+			}
+			if(!isset($m['class']) || $m['class'] != $self_class){
+				try{
+					$m['error'] = null;
+					$m['url'] = $k;
+	
+					if(isset($m['method'])){
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+							
+						if(empty($m['summary'])){
+							list($summary) = explode(PHP_EOL,$info['description']);
+							$m['summary'] = empty($summary) ? null : $summary;
+						}
+					}
+				}catch(\Exception $e){
+					$m['error'] = $e->getMessage();
+				}
+				foreach($m as $k => $v){
+					if(is_array($v) && isset($map[$k]) && !empty($map[$k])){
+						$m[$k] = array_merge($map[$k],$v);
+					}else{
+						if(!isset($v) && isset($map[$k])){
+							$m[$k] = $map[$k];
+						}
+					}
+				}
+				if($this->filter_query($query,$m['name'].$m['url'].$m['summary'])){
+					$flow_output_maps[$m['name']] = $m;
+				}
+			}
+		}
+		return ['map_list'=>$flow_output_maps,'q'=>implode(' ',$query)];
 	}
 
 	/**
@@ -103,6 +121,7 @@ class Dt{
 	 * @automap
 	 */
 	public function class_list(){
+		$query = $this->get_query();
 		$libs = [];
 		
 		foreach(self::classes() as $info){
@@ -112,10 +131,12 @@ class Dt{
 			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
 			list($summary) = explode("\n",$document);
 			
-			$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+			if($this->filter_query($query,$info['class'].$document)){
+				$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+			}
 		}
 		ksort($libs);
-		return ['class_list'=>$libs];
+		return ['class_list'=>$libs,'q'=>implode(' ',$query)];
 	}
 	/**
 	 * クラスのドキュメント
@@ -157,15 +178,16 @@ class Dt{
 	 */
 	public function plugin_doc($class,$plugin_name){
 		$ref = \ebi\Dt\Man::class_info($class);
+		
 		if(!isset($ref['plugins'][$plugin_name])){
 			throw new \LogicException($plugin_name.' not found');
 		}
 		return [
-				'package'=>$class,
-				'plugin_name'=>$plugin_name,
-				'description'=>$ref['plugins'][$plugin_name][0],
-				'params'=>$ref['plugins'][$plugin_name][1],
-				'return'=>$ref['plugins'][$plugin_name][2],
+			'package'=>$class,
+			'plugin_name'=>$plugin_name,
+			'description'=>$ref['plugins'][$plugin_name][0],
+			'params'=>$ref['plugins'][$plugin_name][1],
+			'return'=>$ref['plugins'][$plugin_name][2],
 		];
 	}
 
@@ -174,22 +196,27 @@ class Dt{
 	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
+		$query = $this->get_query();
 		$conf_list = [];
 		foreach(self::classes() as $info){
 			$ref = new \ReflectionClass($info['class']);
 			
 			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
 				$p = str_replace(['\\','/'],['/','.'],$ref->getName());
-				$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
+				
+				if($this->filter_query($query,$p.$c[0])){
+					$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
+				}
 			}
 		}
-		return ['conf_list'=>$conf_list];
+		return ['conf_list'=>$conf_list,'q'=>implode(' ',$query)];
 	}
 	
 	/**
 	 * @automap
 	 */
 	public function model_list(){
+		$query = $this->get_query();
 		$model_list = [];
 		
 		foreach(self::classes('\ebi\Dao') as $class_info){
@@ -202,24 +229,32 @@ class Dt{
 				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
 				list($summary) = explode("\n",$document);
 				
-				$model_list[$package] = ['label'=>$package,'error'=>null,'error_query'=>null,'con'=>true,'summary'=>$summary];
-		
-				try{
-					\ebi\Dao::start_record();
-						call_user_func([$class,'find_get']);
-					\ebi\Dao::stop_record();
-				}catch(\ebi\exception\NotFoundException $e){
-				}catch(\ebi\exception\ConnectionException $e){
-					$model_list[$package]['error'] = $e->getMessage();
-					$model_list[$package]['con'] = false;
-				}catch(\Exception $e){
-					$model_list[$package]['error'] = $e->getMessage();
-					$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
+				if($this->filter_query($query,$package.$document)){
+					$model_list[$package] = [
+						'label'=>$package,
+						'error'=>null,
+						'error_query'=>null,
+						'con'=>true,
+						'summary'=>$summary
+					];
+			
+					try{
+						\ebi\Dao::start_record();
+							call_user_func([$class,'find_get']);
+						\ebi\Dao::stop_record();
+					}catch(\ebi\exception\NotFoundException $e){
+					}catch(\ebi\exception\ConnectionException $e){
+						$model_list[$package]['error'] = $e->getMessage();
+						$model_list[$package]['con'] = false;
+					}catch(\Exception $e){
+						$model_list[$package]['error'] = $e->getMessage();
+						$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
+					}
 				}
 			}
 		}
 		ksort($model_list);
-		return ['models'=>$model_list];	
+		return ['models'=>$model_list,'q'=>implode(' ',$query)];	
 	}
 
 	private function get_model($name,$sync=true){

@@ -185,10 +185,10 @@ class Man{
 			$use_method_list = ($deep) ? self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) :
 											[$ref->getDeclaringClass().'::'.$method];
 			
-// 			if(preg_match("/@return\s+([^\s]+)(.*)/",$document,$match)){
-// 				// type, summary
-// 				$return = [self::type(trim($match[1]),$class),trim($match[2])];
-// 			}
+			if(preg_match("/@return\s+([^\s]+)(.*)/",$document,$match)){
+				// type, summary
+				$return = [self::type(trim($match[1]),$class),trim($match[2])];
+			}
 			foreach($ref->getParameters() as $p){
 				$params[$p->getName()] = [
 					// type, is_ref, has_default, default, summary
