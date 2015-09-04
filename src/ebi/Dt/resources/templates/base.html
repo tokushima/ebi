@@ -47,7 +47,14 @@
 					<li class="{$t.match_package_method_switch('phpinfo','active','inactive')}"><a href="{$t.package_method_url('phpinfo')}">phpinfo</a></li>
 					
 				</ul>
+				
+				<rt:block name="list_search">
+					<form class="navbar-form navbar-right" rt:ref="true">
+						<input type="text" class="form-control" name="q" placeholder="Search...">
+					</form>
+				</rt:block>
 			</div>
+
 		</div>
 	</div>
 	<div class="container">

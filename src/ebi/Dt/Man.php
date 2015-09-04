@@ -173,7 +173,7 @@ class Man{
 	 */
 	public static function method_info($class,$method,$deep=false){
 		$ref = new \ReflectionMethod(str_replace(['.','/'],['\\','\\'],$class),$method);
-		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws =[];
+		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws = [];
 		$document = $src = null;
 		$deprecated = false;
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
@@ -214,6 +214,21 @@ class Man{
 					if($is_request_flow){
 						$context[$n] = $request[$n];
 					}
+				}
+			}
+			if(preg_match_all('/->in_files\((["\'])(.+?)\\1/',$src,$match)){
+				foreach($match[2] as $n){
+					$request[$n] = ['file',null];
+				}
+			}
+			if(preg_match_all('/->move_file\((["\'])(.+?)\\1/',$src,$match)){
+				foreach($match[2] as $n){
+					$request[$n] = ['file',null];
+				}
+			}
+			if(preg_match_all('/->file_path\((["\'])(.+?)\\1/',$src,$match)){
+				foreach($match[2] as $n){
+					$request[$n] = ['file',null];
 				}
 			}
 			if($is_request_flow && preg_match_all('/\$this->rm_vars\((["\'])(.+?)\\1/',$src,$match)){
