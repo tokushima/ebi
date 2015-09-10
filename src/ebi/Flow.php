@@ -147,13 +147,17 @@ class Flow{
 			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').basename($entry_file);
 		}else if(substr(self::$app_url,-1) == '*'){
 			$entry_file = null;
+			
 			foreach(debug_backtrace(false) as $d){
 				if($d['file'] !== __FILE__){
 					$entry_file = str_replace("\\",'/',$d['file']);
 					break;
 				}
 			}
-			self::$app_url = substr(self::$app_url,0,-1).basename($entry_file);
+			/**
+			 * app_urlを〜*とした場合にエントリファイル名の.phpを残すの真偽値　
+			 */
+			self::$app_url = substr(self::$app_url,0,-1).basename($entry_file,(\ebi\Conf::get('entry_suffix',true) ? : '.php'));
 		}
 		self::$app_url = \ebi\Util::path_slash(str_replace('https://','http://',self::$app_url),null,true);
 		
