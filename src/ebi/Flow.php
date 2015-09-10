@@ -157,7 +157,7 @@ class Flow{
 			/**
 			 * app_urlを〜*とした場合にエントリファイル名の.phpを残すの真偽値　
 			 */
-			self::$app_url = substr(self::$app_url,0,-1).basename($entry_file,(\ebi\Conf::get('entry_suffix',true) ? : '.php'));
+			self::$app_url = substr(self::$app_url,0,-1).basename($entry_file,(\ebi\Conf::get('entry_suffix',true) ? null : '.php'));
 		}
 		self::$app_url = \ebi\Util::path_slash(str_replace('https://','http://',self::$app_url),null,true);
 		
