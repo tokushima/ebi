@@ -116,6 +116,8 @@ include_once('bootstrap.php');
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.Action::file_upload'],
 		
 	'get_method'=>['name'=>'ge_method','action'=>'test.flow.Action::get_method'],
+		
+	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],
 	'dt'=>['action'=>'ebi.Dt']
 ]);
 
