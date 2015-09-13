@@ -112,7 +112,9 @@ class Log{
 				}
 			}
 		}
-		if(!empty(self::$fpout)){
+		if(empty(self::$fpout)){
+			@file_put_contents('php://stderr',(string)$log);
+		}else{
 			/**
 			 * 出力に改行を含むかの真偽値
 			 */
