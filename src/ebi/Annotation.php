@@ -9,16 +9,19 @@ class Annotation{
 	/**
 	 * アノテーション文字列をデコードする
 	 * @param string $class 対象のクラス名
-	 * @param text $d デコード対象となる文字列
 	 * @param string[] $names デコード対象のアノテーション名
 	 * @param string $parent 遡る最上のクラス名
+	 * @param string $doc_name 説明を取得する場合の添字
 	 */
-	public static function decode($class,$names,$parent='stdClass'){
+	public static function decode($class,$names,$parent=null,$doc_name=null){
 		$return = [];
 		
 		$t = new \ReflectionClass($class);
 		$d = null;
 		
+		if(empty($parent)){
+			$parent = 'stdClass';
+		}
 		while($t->getName() != $parent){
 			$d = $t->getDocComment().$d;
 			
@@ -49,10 +52,17 @@ class Annotation{
 							list($result[$n]['type'],$result[$n]['attr']) = (false != ($h = strpos($m[1],'{}')) || false !== strpos($m[1],'[]')) ? 
 																				[substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : 
 																				[$m[1],null];
-							
+
+							if(!empty($doc_name)){
+								$result[$n][$doc_name] = trim(($s === false) ? $m[3] : substr($m[3],0,strpos($m[3],'@[')));
+							}
 							if(!ctype_lower($t=$result[$n]['type'])){
-								if($t[0]!='\\') $t='\\'.$t;
-								if(!class_exists($t=str_replace('.','\\',$t))) throw new \InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
+								if($t[0]!='\\'){
+									$t='\\'.$t;
+								}
+								if(!class_exists($t=str_replace('.','\\',$t))){
+									throw new \InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
+								}
 								$result[$n]['type'] = (($t[0] !== '\\') ? '\\' : '').str_replace('.','\\',$t);
 							}
 						}else{
