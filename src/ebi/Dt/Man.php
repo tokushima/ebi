@@ -127,7 +127,7 @@ class Man{
 		}
 		$conf = self::get_conf_list($r,$src);		
 		$properties = [];
-		$anon = \ebi\Annotation::decode(str_replace(['.','/'],['\\','\\'],$class),'param',$r->getNamespaceName());
+		$anon = \ebi\Annotation::decode(str_replace(['.','/'],['\\','\\'],$class),'var',null,'summary');
 		
 		foreach($r->getProperties() as $prop){
 			if(!$prop->isPrivate()){
@@ -151,7 +151,6 @@ class Man{
 		ksort($methods[1]);
 		ksort($protected_methods[1]);
 		ksort($protected_static_methods[1]);
-		ksort($properties);
 		ksort($plugins);
 		
 		return [
