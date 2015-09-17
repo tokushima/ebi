@@ -351,23 +351,45 @@ class DbConnector{
 		}
 		if($q->type() == Q::MATCH){
 			$query = new \ebi\Q();
-			foreach($q->ar_arg1() as $cond){
-				if(strpos($cond,'=') !== false){
-					list($column,$value) = explode('=',$cond);
-					$not = (substr($value,0,1) == '!');
-					$value = ($not) ? ((strlen($value) > 1) ? substr($value,1) : '') : $value;
-					
-					if($value === ''){
-						$query->add(($not) ? Q::neq($column,'') : Q::eq($column,''));
-					}else{
-						$query->add(($not) ? Q::contains($column,$value,$q->param()|Q::NOT) : Q::contains($column,$value,$q->param()));
-					}
-				}else{
-					$columns = [];
-					foreach($self_columns as $column) $columns[] = $column->name();
-					$query->add(Q::contains(implode(',',$columns),explode(' ',$cond),$q->param()));
+			$target = $q->ar_arg2();
+			$ob = $columns = [];
+			
+			foreach($self_columns as $column){
+				if(empty($target) || in_array($column->name(),$target)){
+					$columns[$column->name()] = $dao->prop_anon($column->name(),'type');
 				}
 			}
+
+			foreach($columns as $cn => $ct){
+				$and = [];
+				
+				foreach($q->ar_arg1() as $cond){
+					$op = null;
+					if(substr($cond,0,1) == '-'){
+						$cond = substr($cond,1);
+						$op = Q::NOT;
+					}
+					switch($ct){
+						case 'number':
+						case 'serial': 
+						case 'boolean':
+						case 'timestamp':
+						case 'date':
+						case 'time':
+						case 'intdate':
+						case 'integer':
+							$and[] = Q::eq($cn,$cond,$op);
+							break;
+						default:
+							$and[] = Q::contains($cn,$cond,$op);
+					}
+				}
+				if(!empty($and)){
+					$ob[] = call_user_func_array(['\ebi\Q','b'],$and);
+				}
+			}
+			$query->add(call_user_func_array(['\ebi\Q','ob'],$ob));
+			
 			return $this->where_sql($dao,$from,$query,$self_columns,null,$alias);
 		}
 		$and = $vars = [];

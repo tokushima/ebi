@@ -42,9 +42,13 @@ class Q{
 		if($type === self::AND_BLOCK){
 			$this->and_block = $arg1;
 		}else if($type === self::OR_BLOCK){
-			if(!is_array($arg1) || sizeof($arg1) < 2) throw new \InvalidArgumentException('require multiple blocks');
+			if(!is_array($arg1) || sizeof($arg1) < 2){
+				throw new \InvalidArgumentException('require multiple blocks');
+			}
 			foreach($arg1 as $a){
-				if(!$a->is_block()) throw new \InvalidArgumentException('require multiple blocks');
+				if(!$a->is_block()){
+					throw new \InvalidArgumentException('require multiple blocks');
+				}
 			}
 			$this->or_block = $arg1;
 		}else{
@@ -54,7 +58,9 @@ class Q{
 		$this->type = $type;
 		
 		if($param !== null){
-			if(!ctype_digit((string)$param)) throw new \InvalidArgumentException('`'.(string)$param.'` invalid param type');
+			if(!ctype_digit((string)$param)){
+				throw new \InvalidArgumentException('`'.(string)$param.'` invalid param type');
+			}
 			$this->param = decbin($param);
 		}
 	}
@@ -327,12 +333,14 @@ class Q{
 	}
 	/**
 	 * 検索文字列による検索条件
-	 * @param string $dict 検索文字列
-	 * @param integer $param
+	 * @param string $dict 検索文字列 スペース区切り
+	 * @param string[] $param 対象のカラム
 	 */
-	public static function match($dict,$param=null){
-		if(!($param === null || $param === self::IGNORE)) throw new \InvalidArgumentException('invalid param');
-		return new self(self::MATCH,str_replace(' ',',',trim($dict)),null,$param);
+	public static function match($dict,$columns=[]){
+		if(!empty($columns) && !is_array($columns)){
+			$columns = [$columns];
+		}
+		return new self(self::MATCH,str_replace(['　',' '],',',trim($dict)),$columns);
 	}
 	/**
 	 * OR条件ブロック

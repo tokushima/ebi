@@ -200,10 +200,10 @@ foreach(\test\db\Find::find(Q::neq('value1','ccc'),new \ebi\Paginator(1,2),Q::or
 	eq(isset($r[$i]) ? $r[$i] : null,$obj->value1());
 	$i++;
 }
-$result = \test\db\Find::find_all(Q::match('AAA',Q::IGNORE));
+$result = \test\db\Find::find_all(Q::match('AAA'));
 eq(3,sizeof($result));
 
-$result = \test\db\Find::find_all(Q::match('AA',Q::IGNORE));
+$result = \test\db\Find::find_all(Q::match('AA'));
 eq(3,sizeof($result));
 
 $result = \test\db\Find::find_all(Q::eq('value2',null));
