@@ -932,7 +932,7 @@ abstract class Dao extends \ebi\Object{
 				$base .= '0123456789';
 			}
 			if(empty($ctype)){
-				$base .= 'ABCDEFGHJKLMNPQRSTUVWXY';				
+				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';			
 			}else if($ctype != 'digit'){
 				if($this->prop_anon($prop_name,'upper',false) === true){
 					$base .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -944,7 +944,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		$code = '';
 		$challenge = 0;
-		$challenge_max = \ebi\Conf::get('generate_code_challenge',100);
+		$challenge_max = \ebi\Conf::get('generate_code_challenge',10);
 		$bool = true;
 		
 		while($code == ''){
@@ -967,7 +967,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			$code = '';
 			$this->{$prop_name}($code);
-			usleep(\ebi\Conf::get('generate_code_retry_wait',10000)); // 10ms
+			usleep(\ebi\Conf::get('generate_code_retry_wait',1000)); // 1ms
 		}
 		return $code;
 	}
