@@ -182,6 +182,19 @@ class Paginator implements \IteratorAggregate{
 		$self->total = $self->first = $self->last = null;
 		return $self;
 	}
+	/**
+	 * RequestのPaginator
+	 * @param \ebi\Request $req
+	 * @param number $paginate_by
+	 * @return \ebi\Paginator
+	 */
+	public static function request(\ebi\Request $req,$paginate_by=20){
+		$self = new self($paginate_by,$req->in_vars('page',1));
+		$self->cp($req->ar_vars());
+		
+		return $self;
+	}
+	
 	public function __construct($paginate_by=20,$current=1,$total=0){
 		$this->limit($paginate_by);
 		$this->total($total);

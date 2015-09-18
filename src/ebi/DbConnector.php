@@ -349,7 +349,7 @@ class DbConnector{
 			}
 			return [$where_sql,$vars];
 		}
-		if($q->type() == Q::MATCH){
+		if($q->type() == Q::MATCH && sizeof($q->ar_arg1()) > 0){
 			$query = new \ebi\Q();
 			$target = $q->ar_arg2();
 			$ob = $columns = [];
@@ -359,7 +359,6 @@ class DbConnector{
 					$columns[$column->name()] = $dao->prop_anon($column->name(),'type');
 				}
 			}
-
 			foreach($columns as $cn => $ct){
 				$and = [];
 				
