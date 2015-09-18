@@ -923,15 +923,17 @@ abstract class Dao extends \ebi\Object{
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$base = $this->prop_anon($prop_name,'base');
 		if(empty($base)){
-			$ctype = $this->prop_anon($prop_name,'ctype','alnum');
+			$ctype = $this->prop_anon($prop_name,'ctype');
 			
-			if($ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit'){
+			if(!empty($ctype) && $ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit'){
 				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
 			}			
-			if($ctype == 'alnum' || $ctype == 'digit'){
+			if(empty($ctype) || $ctype == 'alnum' || $ctype == 'digit'){
 				$base .= '0123456789';
 			}
-			if($ctype != 'digit'){
+			if(empty($ctype)){
+				$base .= 'ABCDEFGHJKLMNPQRSTUVWXY';				
+			}else if($ctype != 'digit'){
 				if($this->prop_anon($prop_name,'upper',false) === true){
 					$base .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 				}
