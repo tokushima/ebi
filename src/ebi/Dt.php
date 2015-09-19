@@ -249,14 +249,12 @@ class Dt{
 						$model_list[$package]['error'] = $e->getMessage();
 						$model_list[$package]['con'] = false;
 					}catch(\Exception $e){
-	\ebi\Log::trace($e);					
 						$model_list[$package]['error'] = $e->getMessage();
 						$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
 					}
 				}
 			}
 		}
-\ebi\Log::trace($model_list);		
 		ksort($model_list);
 		return ['models'=>$model_list,'q'=>implode(' ',$query)];	
 	}

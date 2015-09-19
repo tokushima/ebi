@@ -123,8 +123,11 @@ class Flow{
 			$map = ['patterns'=>[''=>['action'=>'ebi.Dt']]];
 		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
-		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){
-			throw new \ebi\exception\InvalidArgumentException('pattern not found');
+		}else if(is_array($map) && !isset($map['patterns'])){
+			$map = ['patterns'=>$map];
+		}
+		if(!isset($map['patterns']) || !is_array($map['patterns'])){
+			throw new \ebi\exception\InvalidArgumentException('patterns not found');
 		}
 		/**
 		 * アプリケーションURL 最後尾に*で実行エントリに自動変換、**でエントリファイル名(.php付き)に変換される
