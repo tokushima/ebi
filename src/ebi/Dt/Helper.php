@@ -86,20 +86,36 @@ class Helper{
 		}
 		return false;
 	}
+	/**
+	 * 検索用フォーム生成
+	 * @param \ebi\Dao $obj
+	 * @param string $name
+	 * @return string
+	 */
 	public function filter(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
 			$options = [];
 			$options[] = '<option value=""></option>';
 			$master = $obj->prop_anon($name,'master');
+			
 			if(!empty($master)){
 				$master = str_replace('.',"\\",$master);
-				if($master[0] !== "\\") $master = "\\".$master;
+				
+				if($master[0] !== "\\"){
+					$master = "\\".$master;
+				}
 				$r = new \ReflectionClass($master);
 				$mo = $r->newInstanceArgs();
 				$primarys = $mo->primary_columns();
-				if(sizeof($primarys) != 1) return sprintf('<input name="%s" type="text" />',$name);
-				foreach($primarys as $primary) break;
+				
+				if(sizeof($primarys) != 1){
+					return sprintf('<input name="%s" type="text" />',$name);
+				}
+				foreach($primarys as $primary){
+					break;
+				}
 				$pri = $primary->name();
+				
 				foreach($master::find() as $dao){
 					$options[] = sprintf('<option value="%s">%s</option>',$dao->{$pri}(),(string)$dao);
 				}
@@ -107,27 +123,41 @@ class Helper{
 			return sprintf('<select name="%s">%s</select>',$name,implode('',$options));
 		}else{
 			$type = $obj->prop_anon($name,'type');
+			
 			switch($type){
 				case 'boolean':
 					$options = [];
 					$options[] = '<option value=""></option>';
+					
 					foreach(['true','false'] as $choice){
 						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
 					}
 					return sprintf('<select name="search_%s_%s">%s</select>',$type,$name,implode('',$options));
 				case 'timestamp':
+					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name).
+					' 〜 '.
+					sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name);
 				case 'date':
-					return sprintf('<input name="search_%s_from_%s" type="text" class="span2" />',$type,$name).' : '.sprintf('<input name="search_%s_to_%s" type="text" class="span2" />',$type,$name);
+					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name).
+						' 〜 '.
+						sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name);
 				default:
-					return sprintf('<input name="search_%s_%s" type="text"　/>',$type,$name);
+					return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
 			}
 		}
 	}
-	
+	/**
+	 * 登録用フォーム生成
+	 * @param \ebi\Dao $obj
+	 * @param string $name
+	 * @return string
+	 */
 	public function form(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
 			$options = [];
-			if(!$obj->prop_anon($name,'require')) $options[] = '<option value=""></option>';
+			if(!$obj->prop_anon($name,'require')){
+				$options[] = '<option value=""></option>';
+			}
 			$master = $obj->prop_anon($name,'master');
 			if(!empty($master)){
 				$master = str_replace('.',"\\",$master);

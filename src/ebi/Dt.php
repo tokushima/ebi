@@ -295,6 +295,7 @@ class Dt{
 		}
 		if(empty($order)){
 			$dao = new $class();
+			
 			foreach($dao->props() as $n => $v){
 				if($dao->prop_anon($n,'primary')){
 					$order = '-'.$n;
@@ -303,38 +304,38 @@ class Dt{
 			}
 		}
 		$object_list = [];
-		$paginator = new \ebi\Paginator(20,$req->in_vars('page',1));
-		$paginator->cp(['order'=>$order]);
+		$req->vars('order',$order);
+		$paginator = \ebi\Paginator::request($req);
 		
-		if($req->is_vars('search')){
-			$q = new Q();
-			foreach($req->ar_vars() as $k => $v){
-				if($v !== '' && strpos($k,'search_') === 0){
-					list(,$type,$key) = explode('_',$k,3);
-					switch($type){
-						case 'timestamp':
-						case 'date':
-							list($fromto,$key) = explode('_',$key);
-							$q->add(($fromto == 'to') ? Q::lte($key,$v) : Q::gte($key,$v));
-							break;
-						default:
-							$q->add(Q::contains($key,$v));
-					}
-					$paginator->vars($k,$v);
+		$q = new Q();
+		foreach($req->ar_vars() as $k => $v){
+			if($v !== '' && strpos($k,'search_') === 0){
+				list(,$type,$key) = explode('_',$k,3);
+				switch($type){
+					case 'timestamp':
+					case 'date':
+						list($fromto,$key) = explode('_',$key);
+						$q->add(($fromto == 'to') ? Q::lte($key,$v) : Q::gte($key,$v));
+						break;
+					default:
+						$q->add(Q::contains($key,$v));
 				}
-				$paginator->vars('search',true);
+				$paginator->vars($k,$v);
 			}
-			$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
-			$req->rm_vars('q');
-		}else{
-			$object_list = $class::find_all(Q::match($req->in_vars('q')),$paginator,Q::select_order($order,$req->in_vars('porder')));
-			$paginator->vars('q',$req->in_vars('q'));
-		}		
-		$result = $req->ar_vars();
-		$result['object_list'] = $object_list;
-		$result['paginator'] = $paginator;
-		$result['model'] = new $class();
-		$result['package'] = $package;
+			$paginator->vars('search',true);
+		}
+		$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
+		// TODO
+		return array_merge(
+			$req->ar_vars(),
+			[
+				'object_list'=>$object_list,
+				'paginator'=>$paginator,
+				'model'=>new $class(),
+				'package'=>$package,
+			]
+		);
+		
 		return $result;
 	}
 	/**
