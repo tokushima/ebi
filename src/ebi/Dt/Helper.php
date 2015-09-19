@@ -105,15 +105,14 @@ class Helper{
 					$master = "\\".$master;
 				}
 				$r = new \ReflectionClass($master);
+
 				$mo = $r->newInstanceArgs();
 				$primarys = $mo->primary_columns();
 				
 				if(sizeof($primarys) != 1){
 					return sprintf('<input name="%s" type="text" />',$name);
 				}
-				foreach($primarys as $primary){
-					break;
-				}
+				$primary = array_shift($primarys);
 				$pri = $primary->name();
 				
 				foreach($master::find() as $dao){

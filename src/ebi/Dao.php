@@ -81,6 +81,16 @@ abstract class Dao extends \ebi\Object{
 		}
 		return self::$_connection_settings_[$database];
 	}
+	public function __toString(){
+		$props = $this->props();
+		
+		foreach(['name','label','id'] as $n){
+			if(array_key_exists($n,$props)){
+				return $props[$n];
+			}
+		}
+		return get_class($this);
+	}
 	public function __construct(){
 		call_user_func_array('parent::__construct',func_get_args());
 		
