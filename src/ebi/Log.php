@@ -77,6 +77,9 @@ class Log{
 	public function file(){
 		return $this->file;
 	}
+	public function file_relative(){
+		return str_replace(getcwd().DIRECTORY_SEPARATOR,'',$this->file);
+	}
 	public function line(){
 		return $this->line;
 	}
@@ -84,7 +87,7 @@ class Log{
 		return $this->value;
 	}
 	public function __toString(){
-		return '['.date('Y-m-d H:i:s',$this->time).']'.'['.sprintf('%s',$this->fm_level()).']'.':['.str_replace(getcwd().DIRECTORY_SEPARATOR,'',$this->file).':'.$this->line.']'.' '.$this->fm_value();
+		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_value();
 	}
 	
 	/**
@@ -113,7 +116,7 @@ class Log{
 			}
 		}
 		if(empty(self::$fpout)){
-			@file_put_contents('php://stderr',(string)$log);
+			@file_put_contents('php://stdout',(string)$log.PHP_EOL);
 		}else{
 			/**
 			 * 出力に改行を含むかの真偽値

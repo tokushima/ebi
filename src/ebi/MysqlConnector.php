@@ -36,6 +36,8 @@ class MysqlConnector extends \ebi\DbConnector{
 					sprintf('mysql:dbname=%s;unix_socket=%s',$name,$sock);
 		try{
 			$con = new \PDO($dsn,$user,$password);
+			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
+			
 			if(!$autocommit){
 				$this->prepare_execute($con,'set autocommit=0');
 				$this->prepare_execute($con,'set session transaction isolation level read committed');

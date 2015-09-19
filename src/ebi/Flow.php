@@ -118,9 +118,9 @@ class Flow{
 	 * @param mixed{} $map
 	 * @throws \ebi\exception\InvalidArgumentException
 	 */
-	public static function app($map){		
-		if(is_array($map) && !isset($map['patterns'])){
-			$map = ['patterns'=>$map];
+	public static function app($map=[]){
+		if(empty($map)){
+			$map = ['patterns'=>[''=>['action'=>'ebi.Dt']]];
 		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
 		}else if(!isset($map['patterns']) || !is_array($map['patterns'])){

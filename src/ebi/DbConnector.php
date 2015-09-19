@@ -47,12 +47,15 @@ class DbConnector{
 				$name = $name.'.sqlite3';
 			}
 			$host = str_replace('\\','/',$host);
-			if(substr($host,-1) != '/') $host = $host.'/';
+			if(substr($host,-1) != '/'){
+				$host = $host.'/';
+			}
 			$path = \ebi\Util::path_absolute($host,$name);
 			\ebi\Util::mkdir(dirname($path));
 		}
 		try{
 			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $path));
+			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException($e->getMessage());
 		}

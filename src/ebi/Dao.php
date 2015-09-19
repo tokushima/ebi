@@ -460,30 +460,31 @@ abstract class Dao extends \ebi\Object{
 		if(self::$recording_query){
 			self::$record_query[] = [$daq->sql(),$daq->ar_vars()];
 		}
-		$statement = self::connection(get_class($this))->prepare($daq->sql());
-		if($statement === false){
-			throw new \ebi\exception\InvalidQueryException('prepare fail: '.$daq->sql());
+		try{
+			$statement = self::connection(get_class($this))->prepare($daq->sql());
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
 		$statement->execute($daq->ar_vars());
 		return $statement;
 	}
 	private function update_query(\ebi\Daq $daq){
-		$statement = $this->query($daq);
-		$errors = $statement->errorInfo();
-		
-		if(isset($errors[1])){
-			static::rollback();
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+		try{
+			$statement = $this->query($daq);
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
 		return $statement->rowCount();
 	}
 	private function func_query(\ebi\Daq $daq,$is_list=false){
-		$statement = $this->query($daq);
-		$errors = $statement->errorInfo();
-		if(isset($errors[1])){
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+		try{
+			$statement = $this->query($daq);
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
+		}				
+		if($statement->columnCount() == 0){
+			return ($is_list) ? [] : null;
 		}
-		if($statement->columnCount() == 0) return ($is_list) ? [] : null;
 		return ($is_list) ? $statement->fetchAll(\PDO::FETCH_ASSOC) : $statement->fetchAll(\PDO::FETCH_COLUMN,0);
 	}
 	private function save_verify_primary_unique(){
@@ -809,22 +810,22 @@ abstract class Dao extends \ebi\Object{
 		 * @return Daq
 		 */
 		$daq = static::call_class_plugin_funcs('select_sql',$dao,$query,$query->paginator());
-		$statement = $dao->query($daq);
-		$errors = $statement->errorInfo();
-		
-		if(isset($errors[1])){
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
-		}
-		while(true){
-			$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
-			if($resultset === false){
-				break;
-			}
-			$obj = clone($dao);
-			$obj->parse_resultset($resultset);
+		try{
+			$statement = $dao->query($daq);
 			
-			yield $obj;
-		}		
+			while(true){
+				$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
+				if($resultset === false){
+					break;
+				}
+				$obj = clone($dao);
+				$obj->parse_resultset($resultset);
+				
+				yield $obj;
+			}
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e);
+		}
 	}
 	/**
 	 * 検索を実行する

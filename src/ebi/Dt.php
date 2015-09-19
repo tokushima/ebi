@@ -56,12 +56,14 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
+		$flow_output_maps = [];
 		$query = $this->get_query();
 		
 		$self_class = str_replace('\\','.',__CLASS__);
 		$entry = null;
 		$trace = debug_backtrace(false);
 		krsort($trace);
+		
 		foreach($trace as $t){
 			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
 				$entry = $t;
@@ -247,12 +249,14 @@ class Dt{
 						$model_list[$package]['error'] = $e->getMessage();
 						$model_list[$package]['con'] = false;
 					}catch(\Exception $e){
+	\ebi\Log::trace($e);					
 						$model_list[$package]['error'] = $e->getMessage();
 						$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
 					}
 				}
 			}
 		}
+\ebi\Log::trace($model_list);		
 		ksort($model_list);
 		return ['models'=>$model_list,'q'=>implode(' ',$query)];	
 	}

@@ -28,7 +28,11 @@ class PgsqlConnector extends \ebi\DbConnector{
 					sprintf("pgsql:dbname=%s unix_socket=%s",$name,$sock);
 		try{
 			$con = new \PDO($dsn,$user,$password);
-			if(!empty($this->encode)) $this->prepare_execute($con,sprintf("set names '%s'",$this->encode));
+			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
+			
+			if(!empty($this->encode)){
+				$this->prepare_execute($con,sprintf("set names '%s'",$this->encode));
+			}
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException(__CLASS__.' connect failed');
 		}

@@ -113,7 +113,7 @@ class Db implements \Iterator{
 		$errors = $this->statement->errorInfo();
 		if(isset($errors[1])){
 			$this->rollback();
-			throw new \LogicException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : '.$sql);
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : '.$sql);
 		}
 		return $this;
 	}

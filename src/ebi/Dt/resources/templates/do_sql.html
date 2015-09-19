@@ -20,7 +20,10 @@
 </form>
 
 <rt:if param="{$excute_sql}">
-<pre format="plain">{$excute_sql}</pre>
+
+<div class="alert alert-error">
+	<pre>{$excute_sql}</pre>
+</div>
 </rt:if>
 
 <rt:if param="maximum">

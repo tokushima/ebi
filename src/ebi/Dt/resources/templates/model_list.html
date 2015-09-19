@@ -47,21 +47,27 @@
 		</td>
 		<td style="width:90%;">
 			{$model['summary']}
+			
 			<rt:if param="{$model['error']}">
-				<rt:if param="{$model['summary']}"><br /></rt:if>
-				
 				<rt:if param="{$model['error_query']}">
-					<div id="modal_error_query_{$count}" class="modal hide fade" style="display: none;">
-						<form>
-						<div class="modal-header">
-							<h3>Error Query</h3>
+					<div class="modal fade" id="modal_error_query_{$count}">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+									<h4 class="modal-title">Error Query</h4>
+								</div>
+								<div class="modal-body">
+									<form>
+										<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$model['error_query']}</textarea>
+									</form>
+								</div>
+								<div class="modal-footer">
+								</div>
+							</div>
 						</div>
-						<div class="modal-body">
-							<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$model['error_query']}</textarea>
-						</div>
-						</form>
-		          	</div>
-					<a class="glyphicon glyphicon-question-sign" data-toggle="modal" href="#modal_error_query_{$count}"></a>
+					</div>
+					<a class="glyphicon glyphicon-question-sign" data-toggle="modal" data-target="#modal_error_query_{$count}"></a>
 				</rt:if>
 
 				<span style="color:#ff0000; font-weight: bold;">{$model['error']}</span>
