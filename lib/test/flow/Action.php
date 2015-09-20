@@ -57,4 +57,8 @@ class Action{
 		\ebi\Log::debug('DEBUG');
 		\ebi\Log::trace('TRACE');
 	}
+	public function form_obj(){
+		$req = new \ebi\Request();
+		return array_merge($req->ar_vars(),['object'=>new \test\model\Form(10,'ABC',999)]);
+	}
 }

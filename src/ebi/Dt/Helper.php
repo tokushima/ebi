@@ -180,8 +180,18 @@ class Helper{
 			return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 		}else if($obj->prop_anon($name,'save',true)){
 			switch($obj->prop_anon($name,'type')){
-				case 'serial': return sprintf('<input name="%s" type="text" disabled="disabled" class="form-control" /><input name="%s" type="hidden" />',$name,$name);
-				case 'text': return sprintf('<textarea name="%s" style="height:10em;" class="form-control"></textarea>',$name);
+				case 'serial': 
+					return sprintf(
+						'<input name="%s" type="text" disabled="disabled" class="form-control" />'.
+						'<input name="%s" type="hidden" />',
+						$name,
+						$name
+					);
+				case 'text':
+					return sprintf(
+						'<textarea name="%s" style="height:10em;" class="form-control"></textarea>',
+						$name
+					);
 				case 'boolean':
 					$options = [];
 					

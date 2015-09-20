@@ -30,8 +30,11 @@ class Object implements \IteratorAggregate{
 		foreach(array_keys($this->props()) as $n){
 			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){
 				switch($this->prop_anon($n,'type')){
-					case 'boolean': $r[$n] = $this->{$n}(); break;
-					default: $r[$n] = $this->{'fm_'.$n}();
+					case 'boolean':
+						$r[$n] = $this->{$n}();
+						break;
+					default:
+						$r[$n] = $this->{'fm_'.$n}();
 				}
 			}
 		}
@@ -146,18 +149,26 @@ class Object implements \IteratorAggregate{
 		$p = $this->_;
 		$v = (method_exists($this,$m=('__get_'.$p.'__'))) ? call_user_func([$this,$m]) : $this->___get___();
 		switch($this->prop_anon($p,'type')){
-			case 'timestamp': return ($v === null) ? null : (date((empty($f) ? 'Y/m/d H:i:s' : $f),(int)$v));
-			case 'date': return ($v === null) ? null : (date((empty($f) ? 'Y/m/d' : $f),(int)$v));
+			case 'timestamp':
+				return ($v === null) ? null : (date((empty($f) ? 'Y/m/d H:i:s' : $f),(int)$v));
+			case 'date':
+				return ($v === null) ? null : (date((empty($f) ? 'Y/m/d' : $f),(int)$v));
 			case 'time':
-				if($v === null) return 0;
+				if($v === null){
+					return 0;
+				}
 				$h = floor($v / 3600);
 				$i = floor(($v - ($h * 3600)) / 60);
 				$s = floor($v - ($h * 3600) - ($i * 60));
 				$m = str_replace(' ','0',rtrim(str_replace('0',' ',(substr(($v - ($h * 3600) - ($i * 60) - $s),2,12)))));
 				return (($h == 0) ? '' : $h.':').(sprintf('%02d:%02d',$i,$s)).(($m == 0) ? '' : '.'.$m);
-			case 'intdate': if($v === null) return null;
-							return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? 'Y/m/d' : $f));
-			case 'boolean': return ($v) ? (isset($d) ? $d : 'true') : (empty($f) ? 'false' : $f);
+			case 'intdate':
+				if($v === null){
+					return null;
+				}
+				return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? 'Y/m/d' : $f));
+			case 'boolean':
+				return ($v) ? (isset($d) ? $d : 'true') : (empty($f) ? 'false' : $f);
 		}
 		return $v;
 	}
