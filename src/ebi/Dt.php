@@ -263,8 +263,11 @@ class Dt{
 		$req = new \ebi\Request();
 		$r = new \ReflectionClass('\\'.str_replace('.','\\',$name));
 		$obj = $r->newInstance();
+		
 		if(is_array($req->in_vars('primary'))){
-			foreach($req->in_vars('primary') as $k => $v) $obj->{$k}($v);
+			foreach($req->in_vars('primary') as $k => $v){
+				$obj->{$k}($v);
+			}
 		}
 		return ($sync) ? $obj->sync() : $obj;
 	}
@@ -370,6 +373,7 @@ class Dt{
 	public function do_update($package){
 		$result = [];
 		$req = new \ebi\Request();
+		
 		if($req->is_post()){
 			$obj = $this->get_model($package,false);
 			$obj->set_props($req->ar_vars());
@@ -378,9 +382,6 @@ class Dt{
 			$result[($req->is_vars('save_and_add_another') ? 'save_and_add_another' : 'save')] = true;
 		}else{
 			$obj = $this->get_model($package);
-		}
-		foreach($obj->props() as $k => $v){
-			$result[$k] = $v;
 		}
 		$result['model'] = $obj;
 		$result['package'] = $package;

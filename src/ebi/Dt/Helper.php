@@ -40,10 +40,17 @@ class Helper{
 	/**
 	 * プロパティ一覧
 	 * @param Dao $obj
-	 * @param integer $len 表示数
 	 */
 	public function props(\ebi\Dao $obj){
 		$props = array_keys($obj->props());
+		
+		foreach($props as $i => $n){
+			$type = $obj->prop_anon($n,'type');
+			
+			if(!preg_match('/^[a-z]+$/',$type)){
+				unset($props[$i]);
+			}
+		}
 		return $props;
 	}
 	/**
@@ -141,7 +148,9 @@ class Helper{
 						' 〜 '.
 						sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name);
 				default:
-					return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
+					if(preg_match('/^[a-z]+$/',$type)){
+						return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
+					}
 			}
 		}
 	}
@@ -180,8 +189,18 @@ class Helper{
 			return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 		}else if($obj->prop_anon($name,'save',true)){
 			switch($obj->prop_anon($name,'type')){
-				case 'serial': return sprintf('<input name="%s" type="text" disabled="disabled" class="form-control" /><input name="%s" type="hidden" />',$name,$name);
-				case 'text': return sprintf('<textarea name="%s" style="height:10em;" class="form-control"></textarea>',$name);
+				case 'serial': 
+					return sprintf(
+						'<input name="%s" type="text" disabled="disabled" class="form-control" />'.
+						'<input name="%s" type="hidden" />',
+						$name,
+						$name
+					);
+				case 'text':
+					return sprintf(
+						'<textarea name="%s" style="height:10em;" class="form-control"></textarea>',
+						$name
+					);
 				case 'boolean':
 					$options = [];
 					

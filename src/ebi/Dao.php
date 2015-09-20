@@ -230,10 +230,12 @@ abstract class Dao extends \ebi\Object{
 			}else if(false !== strpos($anon_cond,'(')){
 				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
 				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
+				
 				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
 					list(,$self_var,$conds_string,$has_var) = $match;
 					$conds = [];
 					$ref_table = $ref_table_alias = null;
+					
 					if(!empty($conds_string)){
 						foreach(explode(',',$conds_string) as $cond){
 							$tcc = explode('.',$cond,3);
