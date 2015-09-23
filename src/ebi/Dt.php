@@ -328,7 +328,7 @@ class Dt{
 			$paginator->vars('search',true);
 		}
 		$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
-		// TODO
+		
 		return array_merge(
 			$req->ar_vars(),
 			[

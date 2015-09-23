@@ -45,7 +45,7 @@ class Helper{
 		$props = array_keys($obj->props());
 		
 		foreach($props as $i => $n){
-			$type = $obj->prop_anon($n,'type');
+			$type = $obj->prop_anon($n,'type','string');
 			
 			if(!preg_match('/^[a-z]+$/',$type)){
 				unset($props[$i]);
@@ -212,7 +212,7 @@ class Helper{
 					}
 					return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 				default:
-					return sprintf('<input name="%s" type="text" class="form-control" rtdt:type="%s" />',$name,$obj->prop_anon($name,'type'));
+					return sprintf('<input name="%s" type="text" class="form-control" rtdt:type="%s" />',$name,$obj->prop_anon($name,'type','string'));
 			}
 		}
 	}
