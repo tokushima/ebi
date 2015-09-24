@@ -79,35 +79,32 @@ class Util{
 	 * $sourceがフォルダで$inc_selfがfalseの場合は$sourceフォルダ以下のみ削除
 	 * @param string $source 削除するパス
 	 * @param boolean $inc_self $sourceも削除するか
-	 * @return boolean
 	 */
 	public static function rm($source,$inc_self=true){
-		if(!is_dir($source) && !is_file($source)) return true;
-		if(!$inc_self){
-			foreach(self::dir($source) as $d) self::rm($d);
-			foreach(self::ls($source) as $f) self::rm($f);
-			return true;
-		}
-		if(is_writable($source)){
-			if(is_dir($source)){
-				if($handle = opendir($source)){
-					$list = [];
-					while($pointer = readdir($handle)){
-						if($pointer != '.' && $pointer != '..') $list[] = sprintf('%s/%s',$source,$pointer);
+		if(is_dir($source)){
+			$source = realpath($source);
+			$dir = [];
+			
+			$it = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator($source,\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::UNIX_PATHS)
+			);
+			foreach($it as $f){
+				if($f->getFilename() == '.'){
+					if($inc_self || $source != $f->getPath()){
+						$dir[$f->getPath()] = 1;
 					}
-					closedir($handle);
-					foreach($list as $path){
-						if(!self::rm($path)) return false;
-					}
+				}else if($f->getFilename() != '..'){
+					unlink($f->getPathname());
 				}
-				if(rmdir($source)){
-					clearstatcache();
-					return true;
-				}
-			}else if(is_file($source) && unlink($source)){
-				clearstatcache();
-				return true;
 			}
+			krsort($dir);
+						
+			foreach(array_keys($dir) as $d){
+				rmdir($d);
+			}
+			return;
+		}else if(is_file($source) && unlink($source)){
+			return;
 		}
 		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
@@ -118,31 +115,25 @@ class Util{
 	 * @param string $dest コピー先のファイルパス
 	 */
 	public static function copy($source,$dest){
-		if(!is_dir($source) && !is_file($source)){
-			throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
-		}
-		self::mkdir(dirname($dest));
-		
 		if(is_dir($source)){
-			$bool = true;
-			if($handle = opendir($source)){
-				while($pointer = readdir($handle)){
-					if($pointer != '.' && $pointer != '..'){
-						$srcname = sprintf('%s/%s',$source,$pointer);
-						$destname = sprintf('%s/%s',$dest,$pointer);
-						if(false === ($bool = self::copy($srcname,$destname))) break;
-					}
-				}
-				closedir($handle);
+			$source = realpath($source);
+			$len = strlen($source);
+			
+			self::mkdir($dest);
+			$dest = realpath($dest);
+			
+			foreach(self::ls($source,true) as $f){
+				$destp = $dest.'/'.substr($f->getPathname(),$len);				
+				self::mkdir(dirname($destp));
+				copy($f->getPathname(),$destp);
 			}
-			return $bool;
-		}else{
-			$dest = (is_dir($dest))	? $dest.basename($source) : $dest;
-			if(is_writable(dirname($dest))){
-				copy($source,$dest);
-			}
-			return is_file($dest);
+			return;
+		}else if(is_file($source)){
+			self::mkdir(dirname($dest));
+			copy($source,$dest);
+			return;
 		}
+		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * ディレクトリ内のイテレータ
