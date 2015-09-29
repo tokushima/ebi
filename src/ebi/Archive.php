@@ -230,7 +230,7 @@ class Archive{
 			$outpath = $outpath.'/';
 		}
 		if(!is_dir($outpath)){
-			Util::mkdir($outpath,0777);
+			\ebi\Util::mkdir($outpath,0777);
 		}		
 		$zip->extractTo($outpath);
 		$zip->close();
@@ -240,6 +240,7 @@ class Archive{
 	 * @param string $pharfile 解凍するZIPファイル
 	 * @param string $outpath 解凍先のファイルパス
 	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return string 
 	 */
 	public static function unphar($pharfile,$outpath){
 		if(is_file($pharfile)){
@@ -247,9 +248,11 @@ class Archive{
 				$outpath = $outpath.'/';
 			}
 			if(!is_dir($outpath)){
-				Util::mkdir($outpath,0777);
+				\ebi\Util::mkdir($outpath,0777);
 			}			
-			(new Phar($pharfile))->extractTo($out.'/'.basename($pharfile,'.phar'));
+			(new \Phar($pharfile))->extractTo($outpath.basename($pharfile,'.phar'));
+			
+			return realpath($outpath);
 		}
 		throw new \ebi\exception\InvalidArgumentException($pharfile.' not found');
 	}

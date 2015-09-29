@@ -1,7 +1,7 @@
 <?php
 namespace ebi;
 /**
- * 
+ * Class Loader
  * @author tokushima
  *
  */
@@ -19,7 +19,7 @@ class Loader{
 			throw new \ebi\exception\InvalidArgumentException($path.' not found');
 		}
 		if(empty($namespace)){
-			$namespace = str_replace('_','/',basename($path,'.phar'));
+			$namespace = str_replace(['_','.'],'/',basename($path,'.phar'));
 		}
 		$namespace = str_replace("\\",'/',$namespace);
 		
