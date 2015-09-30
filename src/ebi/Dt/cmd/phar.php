@@ -1,27 +1,22 @@
 <?php
 /**
  * ライブラリをpharで固める
- * @param string $d 対象のルートフォルダ 
- * @param string $o pahrファイル名
+ * @param string $d 対象のルートフォルダ @['require'=>true]
+ * @param string $o pahrファイル名 @['require'=>true]
  */
 
-// TODO アーカイブ失敗する？
-if(empty($o)){
-	$o = basename(getcwd());
-}
-if(strpos($o,'.phar') === false){
-	$o = $o.'.phar';
-}
-$output = $o;
-
-if(empty($d)){
-	$d = getcwd().'/lib';
-}
 $d = realpath($d);
-
 if($d === false){
 	throw new \InvalidArgumentException($d.' not found');
 }
+
+if(strpos($o,'.phar') === false){
+	$o = $o.'.phar';
+}
+\ebi\Util::mkdir(dirname($o));
+$output = $o;
+
+
 
 $basedir = $d;
 $basedirlen = strlen($basedir);
@@ -29,10 +24,12 @@ $basedirlen = strlen($basedir);
 if(is_file($output)){
 	unlink($output);
 }
+
+
 try{
 	$mkdir = [];
 	$files = [];
-	$phar = new \Phar($output,0,$f);
+	$phar = new \Phar($output,0,basename($output));
 
 	foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(
 			$basedir,
