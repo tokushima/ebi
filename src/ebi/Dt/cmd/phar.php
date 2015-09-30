@@ -1,7 +1,7 @@
 <?php
 /**
- * ライブラリをpharで固める
- * @param string $d 対象のルートフォルダ @['require'=>true]
+ * ライブラリをpharにする
+ * @param string $d ライブラリのルートフォルダ @['require'=>true]
  * @param string $o pahrファイル名 @['require'=>true]
  */
 
