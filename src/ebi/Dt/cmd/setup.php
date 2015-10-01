@@ -100,7 +100,7 @@ if(!is_file($f=$path.'/bootstrap.php')){
 		}
 	}else{
 		foreach(\ebi\Util::ls($path,true,'/ebi\.phar$/') as $p){
-			$autoload_file = $p;
+			$autoload_file = str_replace(str_replace("\\",'/',getcwd()).'/','',str_replace("\\",'/',$p));
 			break;
 		}
 	}
