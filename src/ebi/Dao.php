@@ -793,6 +793,7 @@ abstract class Dao extends \ebi\Object{
 				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
 			}
 			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
+			
 			if($paginator->total() == 0){
 				return [];
 			}
@@ -848,14 +849,18 @@ abstract class Dao extends \ebi\Object{
 		$dao = new static();
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
+		
 		if(!empty($args)){
 			call_user_func_array([$query,'add'],$args);
 		}
-		
 		$paginator = $query->paginator();
+		
 		if($paginator instanceof \ebi\Paginator){
-			if($query->is_order_by()) $paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			if($query->is_order_by()){
+				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			}
 			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
+			
 			if($paginator->total() == 0){
 				return [];
 			}
