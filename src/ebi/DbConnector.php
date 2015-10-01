@@ -372,9 +372,15 @@ class DbConnector{
 						$op = Q::NOT;
 					}
 					switch($ct){
+						case 'boolean':
+							if($cond == 'true'){
+								$and[] = Q::eq($cn,true,$op);
+							}else if($cond == 'false'){
+								$and[] = Q::eq($cn,false,$op);								
+							}
+							break;
 						case 'number':
 						case 'serial': 
-						case 'boolean':
 						case 'timestamp':
 						case 'date':
 						case 'time':
