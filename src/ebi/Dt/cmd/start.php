@@ -20,7 +20,6 @@ php -S localhost:%s
 __SRC__
 	,$port));
 
-
 \ebi\Util::file_write('start.html',sprintf(<<< '__SRC__'
 <!DOCTYPE html>
 <html>
@@ -38,7 +37,7 @@ __SRC__
 	,$port,$entry,$port,$entry,$port,$entry));
 
 chmod('start.sh',0755);
-
+chmod('start.html',0666);
 
 \cmdman\Std::println_success('Written: '.realpath('start.sh'));
 \cmdman\Std::println_success('Written: '.realpath('start.html'));
