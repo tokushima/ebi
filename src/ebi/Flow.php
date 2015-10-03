@@ -129,39 +129,44 @@ class Flow{
 		if(!isset($map['patterns']) || !is_array($map['patterns'])){
 			throw new \ebi\exception\InvalidArgumentException('patterns not found');
 		}
+		
+		$entry_file = null;
+		foreach(debug_backtrace(false) as $d){
+			if($d['file'] !== __FILE__){
+				$entry_file = basename($d['file']);
+				break;
+			}
+		}		
+		
 		/**
 		 * アプリケーションURL 最後尾に*で実行エントリに自動変換、**でエントリファイル名(.php付き)に変換される
 		 */
-		self::$app_url = \ebi\Conf::get('app_url');
+		$app_url = \ebi\Conf::get('app_url');
+		
+		if(is_array($app_url)){
+			if(isset($app_url[$entry_file])){
+				$app_url = $app_url[$entry_file];
+			}else if(isset($app_url['*'])){
+				$app_url = $app_url['*'];
+			}else{
+				$app_url = null;
+			}
+		}
+		self::$app_url = $app_url;
+		
 		/**
 		 * メディアURL
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
 		if(empty(self::$app_url)){
-			$entry_file = null;
-			
-			foreach(debug_backtrace(false) as $d){
-				if($d['file'] !== __FILE__){
-					$entry_file = str_replace("\\",'/',$d['file']);
-					break;
-				}
-			}
 			$host = \ebi\Request::host();
-			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').basename($entry_file);
+			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').$entry_file;
 		}else if(substr(self::$app_url,-1) == '*'){
-			$entry_file = null;
-			
-			foreach(debug_backtrace(false) as $d){
-				if($d['file'] !== __FILE__){
-					$entry_file = str_replace("\\",'/',$d['file']);
-					break;
-				}
-			}
 			self::$app_url = substr(self::$app_url,0,-1);
 			self::$app_url = (substr(self::$app_url,-1) == '*') ? 
-				substr(self::$app_url,0,-1).basename($entry_file) :
-				self::$app_url.basename($entry_file,'.php');
+				substr(self::$app_url,0,-1).$entry_file :
+				self::$app_url.substr($entry_file,0,-4);
 		}
 		self::$app_url = \ebi\Util::path_slash(str_replace('https://','http://',self::$app_url),null,true);
 		
