@@ -284,7 +284,7 @@ class Q{
 	/**
 	 * in
 	 * @param string $column_str 指定のプロパティ名
-	 * @param string $words 絞り込み文字列
+	 * @param string[] $words 絞り込み文字列
 	 * @param integer $param 
 	 */
 	public static function in($column_str,$words,$param=null){
@@ -295,14 +295,22 @@ class Q{
 		}
 	}
 	private static function words_array($words){
-		if($words === '' || $words === null) throw new \InvalidArgumentException();
+		if($words === '' || $words === null){
+			throw new \InvalidArgumentException();
+		}
 		if(is_array($words)){
 			$result = [];
+			
 			foreach($words as $w){
 				$w = (string)$w;
-				if($w !== '') $result[] = $w;
+				
+				if($w !== ''){
+					$result[] = $w;
+				}
 			}
-			if(empty($result)) throw new \InvalidArgumentException();
+			if(empty($result)){
+				throw new \InvalidArgumentException();
+			}
 			return $result;
 		}
 		return [$words];
