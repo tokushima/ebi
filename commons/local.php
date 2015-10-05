@@ -1,15 +1,8 @@
 <?php
 \ebi\Conf::set([
-	'ebi.Dao'=>[
-		'connection'=>[
-//			'ebi.SessionDao'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'session.db'],
-			'*'=>['host'=>dirname(__DIR__).'/work/db','dbname'=>'all.db'],
-		]
-	],
 	'ebi.Log'=>[
-		'level'=>'warn',
+		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
-		'stdout'=>true,
 	],
 	'ebi.Flow'=>[
 		'exception_log_level'=>'warn',

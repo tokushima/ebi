@@ -48,12 +48,6 @@ __SRC__
 }else{
 	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
-if(\cmdman\Std::read('setup .htaccess?','n',['y','n']) == 'y'){
-	$base = \cmdman\Std::read('base path?','/'.basename(getcwd()));
-	
-	list($path,$rules) = \ebi\Dt::htaccess($base);
-	\cmdman\Std::println_warning('Written '.realpath($path));
-}
 
 foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
 	if(\cmdman\Std::read('create table','n',['y','n']) == 'y'){
@@ -106,7 +100,7 @@ if(!is_file($f=$path.'/bootstrap.php')){
 		}
 	}else{
 		foreach(\ebi\Util::ls($path,true,'/ebi\.phar$/') as $p){
-			$autoload_file = $p;
+			$autoload_file = str_replace(str_replace("\\",'/',getcwd()).'/','',str_replace("\\",'/',$p));
 			break;
 		}
 	}
@@ -119,15 +113,6 @@ if(!is_file($f=$path.'/bootstrap.php')){
 $setup_cmd = substr(\ebi\Dt::setup_file(),0,-4).'.cmd.php';
 if(is_file($setup_cmd)){
 	include($setup_cmd);
-}else if(\cmdman\Std::read('getting started?','n',['y','n']) == 'y'){
-	\ebi\Util::mkdir($path.'/lib/my');
-	\ebi\Util::mkdir($path.'/resources/media');
-	\ebi\Util::mkdir($path.'/resources/templates');
-	\ebi\Util::copy(__DIR__.'/setup/lib/my/Calc.php',$path.'/lib/my/Calc.php');		
-	\ebi\Util::copy(__DIR__.'/setup/templates/start.html',$path.'/resources/templates/start.html');
-	\ebi\Util::copy(__DIR__.'/setup/templates/days.html',$path.'/resources/templates/days.html');
-	\ebi\Util::copy(__DIR__.'/setup/templates/calc.html',$path.'/resources/templates/calc.html');
-	\ebi\Util::copy(__DIR__.'/setup/index.php',$path.'/index.php');
 }
 if(is_file($f=\ebi\Dt::setup_file())){
 	\cmdman\Std::println_info('Run setup.');

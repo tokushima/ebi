@@ -281,9 +281,13 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 変数の一覧を返す
+	 * @param mixed{}
 	 * @return array
 	 */
-	public function ar_vars(){
+	public function ar_vars($arr=[]){
+		if(!empty($arr) && is_array($arr)){
+			return array_merge($this->vars,$arr);
+		}
 		return $this->vars;
 	}
 	/**

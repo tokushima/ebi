@@ -135,8 +135,11 @@ class Template{
 	}
 	private function execute($src){
 		$src = $this->exec($src);
-		$src = str_replace(['#PS#','#PE#'],['<?','?>'],$this->html_reform($src));
 		
+		if(strpos($src,'rt:ref') !== false){
+			$src = str_replace(['#PS#','#PE#'],['<?','?>'],$this->html_form($src));
+			$src = $this->exec($this->parse_print_variable($this->html_input($src)));
+		}
 		/**
 		 * 実行後処理
 		 * @param string $src
@@ -463,38 +466,15 @@ class Template{
 		}
 		return ($i > 0);
 	}
-	private function html_reform($src){
-		foreach(\ebi\Xml::anonymous($src)->find('form') as $obj){
-			if($obj->is_attr('rt:aref')){
-				$bool = ($obj->in_attr('rt:aref') === 'true');
-				$obj->rm_attr('rt:aref');
-				$obj->escape(false);
-				$value = $obj->get();
-
-				if($bool){
-					foreach($obj->find('input|select|textarea') as $tag){
-						if(!$tag->is_attr('rt:ref') && ($tag->is_attr('name') || $tag->is_attr('id'))){
-							switch(strtolower($tag->in_attr('type','text'))){
-								case 'button':
-								case 'submit':
-								case 'file':
-									break;
-								default:
-									$tag->attr('rt:ref','true');
-									$obj->value(str_replace($tag->plain(),$tag->get(),$obj->value()));
-							}
-						}
-					}
-					$value = $this->exec($this->parse_print_variable($this->html_input($obj->get())));
-				}
-				$src = str_replace($obj->plain(),$value,$src);
-			}
-		}
-		return $src;
-	}
 	private function html_form($src){
 		foreach(\ebi\Xml::anonymous($src)->find('form') as $obj){
-			if($this->is_reference($obj)){
+			if($obj->in_attr('rt:aref') === 'true'){
+				$obj->rm_attr('rt:aref');
+				$obj->attr('rt:ref','true');
+				$src = str_replace($obj->plain(),$obj->get(),$src);
+			}else if($this->is_reference($obj)){
+				$obj->escape(false);
+
 				if($obj->is_attr('rt:param')){
 					$param = $this->variable_string($this->parse_plain_variable($obj->in_attr('rt:param')));
 					$uniq = uniqid('');
@@ -504,11 +484,13 @@ class Template{
 					$tag = $this->php_exception_catch(sprintf(
 							'<?php '
 							.'%s=%s; '
-							.'if( isset(%s) && ( is_array(%s) || (is_object(%s) && %s instanceof \Traversable) ) ){ '
-							.'foreach(%s as %s => %s){ '
-							.'if(!isset($%s) && preg_match(\'/^[a-zA-Z0-9_]+$/\',%s)){ $%s = %s; }'
+							.'if( isset(%s) && ( is_array(%s) || (is_object(%s) && %s instanceof \Traversable) ) ){'
+							.' foreach(%s as %s => %s){'
+							.'  if(!isset($%s) && preg_match(\'/^[a-zA-Z0-9_]+$/\',%s)){'
+							.'   $%s = %s;'
+							.'  }'
+							.' }'
 							.'}'
-							.'} '
 							.' ?>'
 							,$var,$param
 							,$var,$var,$var,$var
@@ -518,7 +500,6 @@ class Template{
 					$obj->rm_attr('rt:param');
 					$obj->value($tag.$obj->value());
 				}
-				$obj->escape(false);
 				foreach($obj->find('input|select|textarea') as $tag){
 					if(!$tag->is_attr('rt:ref') && ($tag->is_attr('name') || $tag->is_attr('id'))){
 						switch(strtolower($tag->in_attr('type','text'))){
@@ -540,6 +521,10 @@ class Template{
 		}
 		return $this->html_input($src);
 	}
+	
+	
+	
+	
 	private function html_input($src){
 		foreach(\ebi\Xml::anonymous($src)->find('input|textarea|select') as $obj){
 			if('' != ($originalName = $obj->in_attr('name',$obj->in_attr('id','')))){

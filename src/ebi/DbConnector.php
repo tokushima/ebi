@@ -47,12 +47,15 @@ class DbConnector{
 				$name = $name.'.sqlite3';
 			}
 			$host = str_replace('\\','/',$host);
-			if(substr($host,-1) != '/') $host = $host.'/';
+			if(substr($host,-1) != '/'){
+				$host = $host.'/';
+			}
 			$path = \ebi\Util::path_absolute($host,$name);
 			\ebi\Util::mkdir(dirname($path));
 		}
 		try{
 			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $path));
+			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException($e->getMessage());
 		}
@@ -369,9 +372,15 @@ class DbConnector{
 						$op = Q::NOT;
 					}
 					switch($ct){
+						case 'boolean':
+							if($cond == 'true'){
+								$and[] = Q::eq($cn,true,$op);
+							}else if($cond == 'false'){
+								$and[] = Q::eq($cn,false,$op);								
+							}
+							break;
 						case 'number':
 						case 'serial': 
-						case 'boolean':
 						case 'timestamp':
 						case 'date':
 						case 'time':

@@ -56,12 +56,14 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
+		$flow_output_maps = [];
 		$query = $this->get_query();
 		
 		$self_class = str_replace('\\','.',__CLASS__);
 		$entry = null;
 		$trace = debug_backtrace(false);
 		krsort($trace);
+		
 		foreach($trace as $t){
 			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
 				$entry = $t;
@@ -261,8 +263,11 @@ class Dt{
 		$req = new \ebi\Request();
 		$r = new \ReflectionClass('\\'.str_replace('.','\\',$name));
 		$obj = $r->newInstance();
+		
 		if(is_array($req->in_vars('primary'))){
-			foreach($req->in_vars('primary') as $k => $v) $obj->{$k}($v);
+			foreach($req->in_vars('primary') as $k => $v){
+				$obj->{$k}($v);
+			}
 		}
 		return ($sync) ? $obj->sync() : $obj;
 	}
@@ -293,6 +298,7 @@ class Dt{
 		}
 		if(empty($order)){
 			$dao = new $class();
+			
 			foreach($dao->props() as $n => $v){
 				if($dao->prop_anon($n,'primary')){
 					$order = '-'.$n;
@@ -301,38 +307,38 @@ class Dt{
 			}
 		}
 		$object_list = [];
-		$paginator = new \ebi\Paginator(20,$req->in_vars('page',1));
-		$paginator->cp(['order'=>$order]);
+		$req->vars('order',$order);
+		$paginator = \ebi\Paginator::request($req);
 		
-		if($req->is_vars('search')){
-			$q = new Q();
-			foreach($req->ar_vars() as $k => $v){
-				if($v !== '' && strpos($k,'search_') === 0){
-					list(,$type,$key) = explode('_',$k,3);
-					switch($type){
-						case 'timestamp':
-						case 'date':
-							list($fromto,$key) = explode('_',$key);
-							$q->add(($fromto == 'to') ? Q::lte($key,$v) : Q::gte($key,$v));
-							break;
-						default:
-							$q->add(Q::contains($key,$v));
-					}
-					$paginator->vars($k,$v);
+		$q = new Q();
+		foreach($req->ar_vars() as $k => $v){
+			if($v !== '' && strpos($k,'search_') === 0){
+				list(,$type,$key) = explode('_',$k,3);
+				switch($type){
+					case 'timestamp':
+					case 'date':
+						list($fromto,$key) = explode('_',$key);
+						$q->add(($fromto == 'to') ? Q::lte($key,$v) : Q::gte($key,$v));
+						break;
+					default:
+						$q->add(Q::contains($key,$v));
 				}
-				$paginator->vars('search',true);
+				$paginator->vars($k,$v);
 			}
-			$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
-			$req->rm_vars('q');
-		}else{
-			$object_list = $class::find_all(Q::match($req->in_vars('q')),$paginator,Q::select_order($order,$req->in_vars('porder')));
-			$paginator->vars('q',$req->in_vars('q'));
-		}		
-		$result = $req->ar_vars();
-		$result['object_list'] = $object_list;
-		$result['paginator'] = $paginator;
-		$result['model'] = new $class();
-		$result['package'] = $package;
+			$paginator->vars('search',true);
+		}
+		$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
+		
+		return array_merge(
+			$req->ar_vars(),
+			[
+				'object_list'=>$object_list,
+				'paginator'=>$paginator,
+				'model'=>new $class(),
+				'package'=>$package,
+			]
+		);
+		
 		return $result;
 	}
 	/**
@@ -367,6 +373,7 @@ class Dt{
 	public function do_update($package){
 		$result = [];
 		$req = new \ebi\Request();
+		
 		if($req->is_post()){
 			$obj = $this->get_model($package,false);
 			$obj->set_props($req->ar_vars());
@@ -375,9 +382,6 @@ class Dt{
 			$result[($req->is_vars('save_and_add_another') ? 'save_and_add_another' : 'save')] = true;
 		}else{
 			$obj = $this->get_model($package);
-		}
-		foreach($obj->props() as $k => $v){
-			$result[$k] = $v;
 		}
 		$result['model'] = $obj;
 		$result['package'] = $package;
@@ -661,30 +665,7 @@ class Dt{
 		}
 		throw new \LogicException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
 	}
-
-	/**
-	 * entryを探しhtaccessを生成する
-	 * @param string $base
-	 */
-	public static function htaccess($base){
-		if(substr($base,0,1) !== '/') $base = '/'.$base;
-		$rules = "RewriteEngine On\nRewriteBase ".$base."\n\n";
-		foreach(new \DirectoryIterator(getcwd()) as $f){
-			if($f->isFile() && substr($f->getPathname(),-4) == '.php' && substr($f->getFilename(),0,1) != '_' && $f->getFilename() != 'index.php'){
-				$src = file_get_contents($f->getPathname());
-				if(strpos($src,'Flo'.'w::app(') !== false){
-					$app = substr($f->getFilename(),0,-4);
-					$rules .= "RewriteCond %{REQUEST_FILENAME} !-f\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule ^".$app."[/]{0,1}(.*)\$ ".$app.".php/\$1?%{QUERY_STRING} [L]\n\n";
-				}
-			}
-		}
-		if(is_file(getcwd().'/index.php')){
-			$rules .= "RewriteCond %{REQUEST_FILENAME} !-f\nRewriteRule ^(.*)\$ index.php/\$1?%{QUERY_STRING} [L]\n\n";
-		}
-		file_put_contents('.htaccess',$rules);
-
-		return [realpath('.htaccess'),$rules];
-	}
+	
 	/**
 	 * アプリケーションモードに従い初期処理を行うファイルのパス
 	 * @return string

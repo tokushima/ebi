@@ -34,6 +34,7 @@ class MysqlUnbufferedConnector extends \ebi\MysqlConnector{
 					sprintf('mysql:dbname=%s;unix_socket=%s',$name,$sock);
 		try{
 			$con = new \PDO($dsn,$user,$password);
+			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
 			$con->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,false);
 			
 			if(!$autocommit){

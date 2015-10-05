@@ -81,6 +81,16 @@ abstract class Dao extends \ebi\Object{
 		}
 		return self::$_connection_settings_[$database];
 	}
+	public function __toString(){
+		$props = $this->props();
+		
+		foreach(['name','label','id'] as $n){
+			if(array_key_exists($n,$props)){
+				return $props[$n];
+			}
+		}
+		return get_class($this);
+	}
 	public function __construct(){
 		call_user_func_array('parent::__construct',func_get_args());
 		
@@ -220,10 +230,12 @@ abstract class Dao extends \ebi\Object{
 			}else if(false !== strpos($anon_cond,'(')){
 				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
 				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
+				
 				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
 					list(,$self_var,$conds_string,$has_var) = $match;
 					$conds = [];
 					$ref_table = $ref_table_alias = null;
+					
 					if(!empty($conds_string)){
 						foreach(explode(',',$conds_string) as $cond){
 							$tcc = explode('.',$cond,3);
@@ -460,30 +472,31 @@ abstract class Dao extends \ebi\Object{
 		if(self::$recording_query){
 			self::$record_query[] = [$daq->sql(),$daq->ar_vars()];
 		}
-		$statement = self::connection(get_class($this))->prepare($daq->sql());
-		if($statement === false){
-			throw new \ebi\exception\InvalidQueryException('prepare fail: '.$daq->sql());
+		try{
+			$statement = self::connection(get_class($this))->prepare($daq->sql());
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
 		$statement->execute($daq->ar_vars());
 		return $statement;
 	}
 	private function update_query(\ebi\Daq $daq){
-		$statement = $this->query($daq);
-		$errors = $statement->errorInfo();
-		
-		if(isset($errors[1])){
-			static::rollback();
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+		try{
+			$statement = $this->query($daq);
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
 		return $statement->rowCount();
 	}
 	private function func_query(\ebi\Daq $daq,$is_list=false){
-		$statement = $this->query($daq);
-		$errors = $statement->errorInfo();
-		if(isset($errors[1])){
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$daq->sql().' )');
+		try{
+			$statement = $this->query($daq);
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
+		}				
+		if($statement->columnCount() == 0){
+			return ($is_list) ? [] : null;
 		}
-		if($statement->columnCount() == 0) return ($is_list) ? [] : null;
 		return ($is_list) ? $statement->fetchAll(\PDO::FETCH_ASSOC) : $statement->fetchAll(\PDO::FETCH_COLUMN,0);
 	}
 	private function save_verify_primary_unique(){
@@ -780,6 +793,7 @@ abstract class Dao extends \ebi\Object{
 				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
 			}
 			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
+			
 			if($paginator->total() == 0){
 				return [];
 			}
@@ -809,22 +823,22 @@ abstract class Dao extends \ebi\Object{
 		 * @return Daq
 		 */
 		$daq = static::call_class_plugin_funcs('select_sql',$dao,$query,$query->paginator());
-		$statement = $dao->query($daq);
-		$errors = $statement->errorInfo();
-		
-		if(isset($errors[1])){
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : ''));
-		}
-		while(true){
-			$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
-			if($resultset === false){
-				break;
-			}
-			$obj = clone($dao);
-			$obj->parse_resultset($resultset);
+		try{
+			$statement = $dao->query($daq);
 			
-			yield $obj;
-		}		
+			while(true){
+				$resultset = $statement->fetch(\PDO::FETCH_ASSOC);
+				if($resultset === false){
+					break;
+				}
+				$obj = clone($dao);
+				$obj->parse_resultset($resultset);
+				
+				yield $obj;
+			}
+		}catch(\PDOException $e){
+			throw new \ebi\exception\InvalidQueryException($e);
+		}
 	}
 	/**
 	 * 検索を実行する
@@ -835,14 +849,18 @@ abstract class Dao extends \ebi\Object{
 		$dao = new static();
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
+		
 		if(!empty($args)){
 			call_user_func_array([$query,'add'],$args);
 		}
-		
 		$paginator = $query->paginator();
+		
 		if($paginator instanceof \ebi\Paginator){
-			if($query->is_order_by()) $paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			if($query->is_order_by()){
+				$paginator->order($query->in_order_by(0)->ar_arg1(),$query->in_order_by(0)->type() == Q::ORDER_ASC);
+			}
 			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
+			
 			if($paginator->total() == 0){
 				return [];
 			}
@@ -923,15 +941,17 @@ abstract class Dao extends \ebi\Object{
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$base = $this->prop_anon($prop_name,'base');
 		if(empty($base)){
-			$ctype = $this->prop_anon($prop_name,'ctype','alnum');
+			$ctype = $this->prop_anon($prop_name,'ctype');
 			
-			if($ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit'){
+			if(!empty($ctype) && $ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit'){
 				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
 			}			
-			if($ctype == 'alnum' || $ctype == 'digit'){
+			if(empty($ctype) || $ctype == 'alnum' || $ctype == 'digit'){
 				$base .= '0123456789';
 			}
-			if($ctype != 'digit'){
+			if(empty($ctype)){
+				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';			
+			}else if($ctype != 'digit'){
 				if($this->prop_anon($prop_name,'upper',false) === true){
 					$base .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 				}
@@ -942,7 +962,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		$code = '';
 		$challenge = 0;
-		$challenge_max = \ebi\Conf::get('generate_code_challenge',100);
+		$challenge_max = \ebi\Conf::get('generate_code_challenge',10);
 		$bool = true;
 		
 		while($code == ''){
@@ -965,7 +985,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			$code = '';
 			$this->{$prop_name}($code);
-			usleep(\ebi\Conf::get('generate_code_retry_wait',10000)); // 10ms
+			usleep(\ebi\Conf::get('generate_code_retry_wait',1000)); // 1ms
 		}
 		return $code;
 	}

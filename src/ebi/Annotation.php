@@ -54,7 +54,11 @@ class Annotation{
 																				[$m[1],null];
 
 							if(!empty($doc_name)){
-								$result[$n][$doc_name] = trim(($s === false) ? $m[3] : substr($m[3],0,strpos($m[3],'@[')));
+								$doc = trim(($s === false) ? $m[3] : substr($m[3],0,strpos($m[3],'@[')));
+								
+								if(!empty($doc)){
+									$result[$n][$doc_name] = $doc;
+								}
 							}
 							if(!ctype_lower($t=$result[$n]['type'])){
 								if($t[0]!='\\'){

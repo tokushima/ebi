@@ -40,10 +40,17 @@ class Helper{
 	/**
 	 * プロパティ一覧
 	 * @param Dao $obj
-	 * @param integer $len 表示数
 	 */
 	public function props(\ebi\Dao $obj){
 		$props = array_keys($obj->props());
+		
+		foreach($props as $i => $n){
+			$type = $obj->prop_anon($n,'type','string');
+			
+			if(!preg_match('/^[a-z]+$/',$type)){
+				unset($props[$i]);
+			}
+		}
 		return $props;
 	}
 	/**
@@ -86,20 +93,35 @@ class Helper{
 		}
 		return false;
 	}
+	/**
+	 * 検索用フォーム生成
+	 * @param \ebi\Dao $obj
+	 * @param string $name
+	 * @return string
+	 */
 	public function filter(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
 			$options = [];
 			$options[] = '<option value=""></option>';
 			$master = $obj->prop_anon($name,'master');
+			
 			if(!empty($master)){
 				$master = str_replace('.',"\\",$master);
-				if($master[0] !== "\\") $master = "\\".$master;
+				
+				if($master[0] !== "\\"){
+					$master = "\\".$master;
+				}
 				$r = new \ReflectionClass($master);
+
 				$mo = $r->newInstanceArgs();
 				$primarys = $mo->primary_columns();
-				if(sizeof($primarys) != 1) return sprintf('<input name="%s" type="text" />',$name);
-				foreach($primarys as $primary) break;
+				
+				if(sizeof($primarys) != 1){
+					return sprintf('<input name="%s" type="text" />',$name);
+				}
+				$primary = array_shift($primarys);
 				$pri = $primary->name();
+				
 				foreach($master::find() as $dao){
 					$options[] = sprintf('<option value="%s">%s</option>',$dao->{$pri}(),(string)$dao);
 				}
@@ -107,27 +129,43 @@ class Helper{
 			return sprintf('<select name="%s">%s</select>',$name,implode('',$options));
 		}else{
 			$type = $obj->prop_anon($name,'type');
+			
 			switch($type){
 				case 'boolean':
 					$options = [];
 					$options[] = '<option value=""></option>';
+					
 					foreach(['true','false'] as $choice){
 						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
 					}
 					return sprintf('<select name="search_%s_%s">%s</select>',$type,$name,implode('',$options));
 				case 'timestamp':
+					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name).
+					' 〜 '.
+					sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name);
 				case 'date':
-					return sprintf('<input name="search_%s_from_%s" type="text" class="span2" />',$type,$name).' : '.sprintf('<input name="search_%s_to_%s" type="text" class="span2" />',$type,$name);
+					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name).
+						' 〜 '.
+						sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name);
 				default:
-					return sprintf('<input name="search_%s_%s" type="text"　/>',$type,$name);
+					if(preg_match('/^[a-z]+$/',$type)){
+						return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
+					}
 			}
 		}
 	}
-	
+	/**
+	 * 登録用フォーム生成
+	 * @param \ebi\Dao $obj
+	 * @param string $name
+	 * @return string
+	 */
 	public function form(\ebi\Dao $obj,$name){
 		if($obj->prop_anon($name,'master') !== null){
 			$options = [];
-			if(!$obj->prop_anon($name,'require')) $options[] = '<option value=""></option>';
+			if(!$obj->prop_anon($name,'require')){
+				$options[] = '<option value=""></option>';
+			}
 			$master = $obj->prop_anon($name,'master');
 			if(!empty($master)){
 				$master = str_replace('.',"\\",$master);
@@ -151,8 +189,18 @@ class Helper{
 			return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 		}else if($obj->prop_anon($name,'save',true)){
 			switch($obj->prop_anon($name,'type')){
-				case 'serial': return sprintf('<input name="%s" type="text" disabled="disabled" class="form-control" /><input name="%s" type="hidden" />',$name,$name);
-				case 'text': return sprintf('<textarea name="%s" style="height:10em;" class="form-control"></textarea>',$name);
+				case 'serial': 
+					return sprintf(
+						'<input name="%s" type="text" disabled="disabled" class="form-control" />'.
+						'<input name="%s" type="hidden" />',
+						$name,
+						$name
+					);
+				case 'text':
+					return sprintf(
+						'<textarea name="%s" style="height:10em;" class="form-control"></textarea>',
+						$name
+					);
 				case 'boolean':
 					$options = [];
 					
@@ -164,7 +212,7 @@ class Helper{
 					}
 					return sprintf('<select name="%s" class="form-control">%s</select>',$name,implode('',$options));
 				default:
-					return sprintf('<input name="%s" type="text" class="form-control" rtdt:type="%s" />',$name,$obj->prop_anon($name,'type'));
+					return sprintf('<input name="%s" type="text" class="form-control" rtdt:type="%s" />',$name,$obj->prop_anon($name,'type','string'));
 			}
 		}
 	}

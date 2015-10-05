@@ -12,7 +12,7 @@
 
 <form method="post" rt:ref="true">
 	<div>
-		<textarea name="sql" style="width: 100%; height:100px;"></textarea>
+		<textarea name="sql" style="width: 100%; height:200px;"></textarea>
 	</div>
 	<div style="margin-top: 10px;">
 		<input type="submit" name="save" value="execute" class="btn btn-danger" />
@@ -20,7 +20,10 @@
 </form>
 
 <rt:if param="{$excute_sql}">
-<pre format="plain">{$excute_sql}</pre>
+
+<div class="alert alert-error">
+	<pre>{$excute_sql}</pre>
+</div>
 </rt:if>
 
 <rt:if param="maximum">
