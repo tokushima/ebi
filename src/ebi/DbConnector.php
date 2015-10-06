@@ -454,6 +454,10 @@ class DbConnector{
 						' in('.substr(str_repeat('?,',sizeof($value)),0,-1).')'
 						);
 						break;
+					case Q::DISCORD:
+						$and[] = '1 = 2';
+						$is_add_value = false;
+						break;
 				}
 				if($value instanceof \ebi\Daq){
 					$is_add_value = false;
