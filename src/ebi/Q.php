@@ -1,5 +1,6 @@
 <?php
 namespace ebi;
+use ebi\exception\EmptyException;
 /**
  * Where query
  * @author tokushima
@@ -25,6 +26,8 @@ class Q{
 	const AND_BLOCK = 17;
 	const DATE_FORMAT = 18;
 
+	const DISCORD = 19;
+	
 	const IGNORE = 2;
 	const NOT = 4;
 
@@ -68,7 +71,9 @@ class Q{
 		return is_array($v) ? $v : (($v === null) ? [] : [$v]);
 	}
 	public function ar_arg1(){
-		if(empty($this->arg1)) return [];
+		if(empty($this->arg1)){
+			return [];
+		}
 		if(is_string($this->arg1)){
 			$result = [];
 			foreach(explode(',',$this->arg1) as $arg){
@@ -153,6 +158,10 @@ class Q{
 					}	
 				}else if($arg instanceof \ebi\Paginator){
 					$this->paginator = $arg;
+				}else if($arg instanceof \ebi\Request){
+					if($arg->is_vars('query')){
+						$this->add(self::match($arg->in_vars('query')));
+					}
 				}else{
 					throw new \BadMethodCallException('`'.(string)$arg.'` not supported');
 				}
@@ -251,8 +260,8 @@ class Q{
 	public static function startswith($column_str,$words,$param=null){
 		try{
 			return new self(self::START_WITH,$column_str,self::words_array($words),$param);
-		}catch(\InvalidArgumentException $e){
-			return new self();
+		}catch(\ebi\exception\EmptyException $e){
+			return new self(self::DISCORD,$column_str);
 		}
 	}
 	/**
@@ -264,8 +273,8 @@ class Q{
 	public static function endswith($column_str,$words,$param=null){
 		try{
 			return new self(self::END_WITH,$column_str,self::words_array($words),$param);
-		}catch(\InvalidArgumentException $e){
-			return new self();
+		}catch(\ebi\exception\EmptyException $e){
+			return new self(self::DISCORD,$column_str);
 		}
 	}
 	/**
@@ -277,32 +286,53 @@ class Q{
 	public static function contains($column_str,$words,$param=null){
 		try{
 			return new self(self::CONTAINS,$column_str,self::words_array($words),$param);
-		}catch(\InvalidArgumentException $e){
-			return new self();
+		}catch(\ebi\exception\EmptyException $e){
+			return new self(self::DISCORD,$column_str);
 		}
 	}
 	/**
 	 * in
 	 * @param string $column_str 指定のプロパティ名
-	 * @param string $words 絞り込み文字列
+	 * @param string[] $words 絞り込み文字列
 	 * @param integer $param 
 	 */
 	public static function in($column_str,$words,$param=null){
 		try{
 			return new self(self::IN,$column_str,($words instanceof \ebi\Daq) ? $words : [self::words_array($words)],$param);
-		}catch(\InvalidArgumentException $e){
-			return new self();
+		}catch(\ebi\exception\EmptyException $e){
+			return new self(self::DISCORD,$column_str);
 		}
 	}
 	private static function words_array($words){
-		if($words === '' || $words === null) throw new \InvalidArgumentException();
+		if($words === '' || $words === null){
+			throw new \ebi\exception\EmptyException();
+		}
 		if(is_array($words)){
 			$result = [];
-			foreach($words as $w){
-				$w = (string)$w;
-				if($w !== '') $result[] = $w;
+			
+			if(sizeof($words) == 2 && 
+				isset($words[0]) && (is_array($words[0]) || ($words[0] instanceof \Traversable)) && 
+				isset($words[1]) && is_string($words[1])
+			){
+				foreach($words[0] as $o){
+					$v = $o->{$words[1]}();
+					
+					if($v !== ''){
+						$result[] = $v;
+					}					
+				}
+			}else{
+				foreach($words as $w){
+					$w = (string)$w;
+					
+					if($w !== ''){
+						$result[] = $w;
+					}
+				}
 			}
-			if(empty($result)) throw new \InvalidArgumentException();
+			if(empty($result)){
+				throw new \ebi\exception\EmptyException();
+			}
 			return $result;
 		}
 		return [$words];

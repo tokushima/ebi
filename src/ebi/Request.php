@@ -284,9 +284,18 @@ class Request implements \IteratorAggregate{
 	 * @param mixed{}
 	 * @return array
 	 */
-	public function ar_vars($arr=[]){
-		if(!empty($arr) && is_array($arr)){
-			return array_merge($this->vars,$arr);
+	public function ar_vars(){
+		if(func_num_args() > 0){
+			$result = $this->vars;
+			
+			foreach(func_get_args() as $arg){
+				if(!empty($arg) && is_array($arg)){
+					$result = array_merge($result,$arg);
+				}else if($arg instanceof \ebi\Paginator){
+					$result['paginator'] = $arg;
+				}
+			}
+			return $result;
 		}
 		return $this->vars;
 	}
