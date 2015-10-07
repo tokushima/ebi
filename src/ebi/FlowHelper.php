@@ -197,9 +197,17 @@ class FlowHelper{
 	 * @param string $format フォーマット文字列 ( http://jp2.php.net/manual/ja/function.date.php )
 	 * @return string
 	 */
-	public function df($format='"Y/m/d H:i:s',$value=null){
+	public function date_format($format='"Y/m/d H:i:s',$value=null){
 		if(empty($value)) $value = time();
 		return date($format,$value);
+	}
+	/**
+	 * タイムスタンプを返す
+	 * @param number $add 加算する秒数
+	 * @return number
+	 */
+	public function time($add=0){
+		return (time() + $add);
 	}
 	/**
 	 * 改行を削除(置換)する
