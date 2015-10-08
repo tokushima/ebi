@@ -15,7 +15,7 @@ CURDIR=`pwd`
 
 open file://${CURDIR}/start.html
 
-php -S localhost:%s
+php -S 0.0.0.0:%s
 
 __SRC__
 	,$port));
@@ -25,7 +25,7 @@ __SRC__
 <html>
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="1; url=http://localhost:%s/%s">
+<meta http-equiv="refresh" content="2; url=http://localhost:%s/%s">
 </head>
 <body>
 	<h1>Please wait..</h1>
