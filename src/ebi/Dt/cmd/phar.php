@@ -1,120 +1,101 @@
 <?php
 /**
  * ライブラリをpharにする
- * @param string $d ライブラリのルートフォルダ @['require'=>true]
- * @param string $o pahrファイル名 @['require'=>true]
- * @param string $autoload ロード時に読み込むautoloadファイル
- * @param string $ns autoloadさせるnamespace
- * @param string $include_path include_pathに追加する実行時パス
+ * @param string $src ライブラリのルートフォルダ @['require'=>true]
  */
 
-$d = realpath($d);
-if($d === false){
-	throw new \InvalidArgumentException($d.' not found');
+$src = realpath($src);
+if($src === false || is_file($src)){
+	throw new \InvalidArgumentException($src.' not found');
 }
+$src = $src.'/';
+$ns = '';
+$mkdir = [];
+$files = [];
 
-if(strpos($o,'.phar') === false){
-	$o = $o.'.phar';
+$srclen = strlen($src);
+foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(
+	$src,
+	\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
+),\RecursiveIteratorIterator::SELF_FIRST) as $r){
+	if($r->isFile()){
+		if(empty($ns)){
+			$ns = str_replace($src,'',dirname($r->getPathname()));
+		}
+		$path = substr($r,$srclen);
+		$dir = dirname($path);
+
+		if($dir != '.'){
+			$d = explode('/',$dir);
+
+			while(!empty($d)){
+				$dp = implode('/',$d);
+
+				if(isset($mkdir[$dp])){
+					break;
+				}
+				$mkdir[$dp] = $dp;
+				array_shift($d);
+			}
+		}
+		$files[$path] = $r->getPathname();
+	}
 }
-\ebi\Util::mkdir(dirname($o));
-$output = $o;
+ksort($mkdir);
 
-$basedir = $d;
-$basedirlen = strlen($basedir);
-
+$output = $ns.'.phar';
 if(is_file($output)){
 	unlink($output);
 }
+\ebi\Util::mkdir(dirname($output));
+
 try{
-	$mkdir = [];
-	$files = [];
-	$stabstr = '';
-	
 	$phar = new \Phar($output,0,basename($output));
 
-	foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(
-			$basedir,
-			\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
-	),\RecursiveIteratorIterator::SELF_FIRST
-	) as $r){
-		if($r->isFile()){
-			$path = substr($r,$basedirlen);
-			$dir = dirname($path);
-
-			if($dir != '.'){
-				$d = explode('/',$dir);
-				
-				while(!empty($d)){
-					$dp = implode('/',$d);
-
-					if(isset($mkdir[$dp])){
-						break;
-					}
-					$mkdir[$dp] = $dp;
-					array_shift($d);
-				}
-			}
-			$files[$path] = $r->getPathname();
-		}
-	}
-	ksort($mkdir);
-
 	foreach($mkdir as $m){
-		$phar->addEmptyDir($m);
+		$phar->addEmptyDir('src/'.$m);
 	}
 	foreach($files as $k => $v){
-		$phar->addFile($v,$k);
+		$phar->addFile($v,'src/'.$k);
 	}
-	if(!empty($ns)){
-		if($ns[0] == '\\'){
-			$ns = substr($ns,1);
-		}
-		if(substr($ns,-1) == '\\'){
-			$ns = substr($ns,0,-1);
-		}
-		$ns = str_replace('\\','/',$ns);
-		
-		$stabstr .= sprintf(<<< 'STAB'
-	spl_autoload_register(function($c){
-		$c = str_replace('\\','/',$c);
-		if(substr($c,0,4) == '%s/' && is_file($f='phar://'.__FILE__.'/'.$c.'.php')){
-			require_once($f);
-		}
-		return false;
-	},true,false);
+	
+	$stabstr = sprintf("Phar::mapPhar('%s');",basename($output));
+	$stabstr .= sprintf(<<< 'STAB'
+		spl_autoload_register(function($c){
+			$c = str_replace('\\','/',$c);
+			
+			if(substr($c,0,4) == '%s/' && is_file($f='phar://'.__FILE__.'/src/'.$c.'.php')){
+				require_once($f);
+			}
+			return false;
+		},true,false);
 STAB
-		,$ns);
-	}
-	if(!empty($autoload)){
-		$phar->addFile($autoload,'autoload.php');
+	,$ns);
+
+	
+	if(is_file('autoload.php')){
+		$phar->addFile('autoload.php','autoload.php');
 		
 		$stabstr .= sprintf(PHP_EOL
 			."require_once('phar://%s/autoload.php');"
 			,basename($output)
 		);
 	}
-	if(!empty($include_path)){
-		if($include_path[0] != '/'){
-			$include_path = '/'.$include_path;
+	$stabstr .= sprintf(PHP_EOL.<<< 'STAB'
+		$dir = getcwd().'/lib';
+		if(is_dir($dir) && strpos(get_include_path(),$dir) === false){
+			set_include_path($dir.PATH_SEPARATOR.get_include_path());
 		}
-		$stabstr .= sprintf(PHP_EOL.<<< 'STAB'
-	$dir = getcwd().'%s';
-	if(is_dir($dir) && strpos(get_include_path(),$dir) === false){
-		set_include_path($dir.PATH_SEPARATOR.get_include_path());
-	}
 STAB
-			,$include_path);
-	}
+	);
 	
-	$stab = <<< 'STAB'
+	$phar->setStub(sprintf(<<< 'STAB'
 <?php
-	Phar::mapPhar('%s');
 	%s
 	__HALT_COMPILER();
 ?>
-STAB;
-	
-	$phar->setStub(sprintf($stab,basename($output),$stabstr));
+STAB
+	,$stabstr));
 	$phar->compressFiles(\Phar::GZ);
 
 	if(is_file($output)){
@@ -123,7 +104,7 @@ STAB;
 		\cmdman\Std::println_danger('Failed '.$output);
 	}
 }catch(\UnexpectedValueException $e){
-	\cmdman\Std::println_info($e->getMessage().PHP_EOL.'usage: php -d phar.readonly=0 cmdman.phar ebi.Dt::phar -d '.str_replace(getcwd().'/','',$d).' -o '.$o);
+	\cmdman\Std::println_info($e->getMessage().PHP_EOL.'usage: php -d phar.readonly=0 cmdman.phar ebi.Dt::phar --src '.str_replace(getcwd().'/','',$d));
 }catch (\Exception $e){
 	\cmdman\Std::println_danger($e->getMessage());
 	\cmdman\Std::println_warning($e->getTraceAsString());
