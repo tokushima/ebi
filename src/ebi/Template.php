@@ -486,7 +486,7 @@ class Template{
 							.'%s=%s; '
 							.'if( isset(%s) && ( is_array(%s) || (is_object(%s) && %s instanceof \Traversable) ) ){'
 							.' foreach(%s as %s => %s){'
-							.'  if(!isset($%s) && preg_match(\'/^[a-zA-Z0-9_]+$/\',%s)){'
+							.'  if(preg_match(\'/^[a-zA-Z0-9_]+$/\',%s) && !isset($%s)){'
 							.'   $%s = %s;'
 							.'  }'
 							.' }'
@@ -495,7 +495,8 @@ class Template{
 							,$var,$param
 							,$var,$var,$var,$var
 							,$var,$k,$v
-							,$k,$k,$k,$v
+							,$k,$k,
+							$k,$v
 					)).PHP_EOL;
 					$obj->rm_attr('rt:param');
 					$obj->value($tag.$obj->value());

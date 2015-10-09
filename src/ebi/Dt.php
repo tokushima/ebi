@@ -641,6 +641,38 @@ class Dt{
 		}
 	}
 	/**
+	 * dumpファイルを読み込む
+	 * @param string $file
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return Generator
+	 */
+	public static function get_dao_dump($file){
+		$update = $invalid = [];
+		$fp = fopen($file,'rb');
+		
+		$i = 0;
+		$line = '';
+		
+		while(!feof($fp)){
+			$i++;
+			$line .= fgets($fp);
+		
+			if(!empty($line)){
+				$arr = json_decode($line,true);
+		
+				if($arr !== false){
+					if(!isset($arr['model']) || !isset($arr['data']) || !class_exists($arr['model'])){
+						throw new \ebi\exception\InvalidArgumentException('Invalid line '.$i);
+					}
+					yield $arr;
+
+					$line = '';
+				}
+			}
+		}		
+	}
+	
+	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
 	 * @param string $to
 	 * @param string $subject

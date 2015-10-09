@@ -5,7 +5,7 @@
 
 A<rt:loop param="{$t.range(1,4)}" var="v">{$v}</rt:loop>A
 B<rt:loop param="{$t.range(1,$max)}" var="v">{$v}</rt:loop>B
-C<rt:loop param="{$t.range(1,$t.df('m',1377275399))}" var="v">{$v}</rt:loop>C
+C<rt:loop param="{$t.range(1,$t.date_format('m',1377275399))}" var="v">{$v}</rt:loop>C
 
 </body>
 </html>
