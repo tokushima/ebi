@@ -6,6 +6,7 @@
 if(empty($file)){
 	$file = getcwd().'/dao.dump';
 }
+\ebi\Util::file_write($file,'');
 
 foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
 	$r = new \ReflectionClass($class_info['class']);
