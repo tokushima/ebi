@@ -10,46 +10,31 @@ if(empty($file)){
 }
 
 $update = $invalid = [];
-$fp = fopen($file,'rb');
 \cmdman\Std::println_success('Load '.$file);
 
-$i = 0;
-$line = '';
 
-while(!feof($fp)){
-	$i++;
-	$line .= fgets($fp);
-	
-	if(!empty($line)){
-		$arr = json_decode($line,true);
+
+foreach(\ebi\Dt::get_dao_dump($file) as $arr){
+	$class = $arr['model'];
+	if(!isset($invalid[$class])){
+		$inst = (new \ReflectionClass($class))->newInstance();
 		
-		if($arr !== false){
-			if(!isset($arr['model']) || !isset($arr['data']) || !class_exists($arr['model'])){
-				throw new \ebi\exception\InvalidArgumentException('Invalid line '.$i);
-			}
-			$class = $arr['model'];
-			if(!isset($invalid[$class])){
-				$inst = (new \ReflectionClass($class))->newInstance();
-				
-				if(!isset($update[$class])){
-					$update[$class] = [call_user_func([$class,'find_count']),0];
-				}
-				try{
-					foreach($inst->props() as $k => $v){
-						if(array_key_exists($k,$arr['data'])){
-							if($inst->prop_anon($k,'cond') == null && $inst->prop_anon($k,'extra',false) === false){
-								$inst->prop_anon($k,'auto_now',false,true);
-								call_user_func_array([$inst,$k],[$arr['data'][$k]]);
-							}
-						}
+		if(!isset($update[$class])){
+			$update[$class] = [call_user_func([$class,'find_count']),0];
+		}
+		try{
+			foreach($inst->props() as $k => $v){
+				if(array_key_exists($k,$arr['data'])){
+					if($inst->prop_anon($k,'cond') == null && $inst->prop_anon($k,'extra',false) === false){
+						$inst->prop_anon($k,'auto_now',false,true);
+						call_user_func_array([$inst,$k],[$arr['data'][$k]]);
 					}
-					$inst->save();
-					$update[$class][1]++;
-				}catch(\ebi\exception\BadMethodCallException $e){
-					$invalid[$class] = true;
 				}
 			}
-			$line = '';
+			$inst->save();
+			$update[$class][1]++;
+		}catch(\ebi\exception\BadMethodCallException $e){
+			$invalid[$class] = true;
 		}
 	}
 }
