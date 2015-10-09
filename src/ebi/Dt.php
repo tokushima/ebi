@@ -661,7 +661,7 @@ class Dt{
 				$arr = json_decode($line,true);
 		
 				if($arr !== false){
-					if(!isset($arr['model']) || !isset($arr['data']) || !class_exists($arr['model'])){
+					if(!isset($arr['model']) || !isset($arr['data'])){
 						throw new \ebi\exception\InvalidArgumentException('Invalid line '.$i);
 					}
 					yield $arr;
