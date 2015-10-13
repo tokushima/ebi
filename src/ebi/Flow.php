@@ -120,7 +120,7 @@ class Flow{
 	 */
 	public static function app($map=[]){
 		if(empty($map)){
-			$map = ['patterns'=>[''=>['action'=>'ebi.Dt']]];
+			$map = ['patterns'=>[''=>['action'=>'ebi.Dt','mode'=>'@dev']]];
 		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
 		}else if(is_array($map) && !isset($map['patterns'])){
@@ -232,27 +232,9 @@ class Flow{
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if(array_key_exists('mode',$pattern)){
-					if(!in_array(\ebi\Conf::appmode(),explode(',',$pattern['mode']))){
-						$valid_mode = false;
-						
-						if(strpos($pattern['mode'],'@') !== false){
-							$appmode_group = \ebi\Conf::appmode_group();
-							
-							if(!empty($appmode_group)){
-								foreach(explode(',',$pattern['mode']) as $pm){
-									if(substr($pm,0,1) === '@' && array_key_exists(substr($pm,1),$appmode_group)){
-										if(in_array(\ebi\Conf::appmode(),explode(',',$appmode_group[substr($pm,1)]))){
-											$valid_mode = true;
-											break;
-										}
-									}
-								}
-							}
-						}
-						if(!$valid_mode){
-							\ebi\HttpHeader::send_status(404);
-							return self::terminate();
-						}
+					if(!\ebi\Conf::in_mode($pattern['mode'])){
+						\ebi\HttpHeader::send_status(404);
+						return self::terminate();
 					}
 				}
 				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && $conf_secure !== false){

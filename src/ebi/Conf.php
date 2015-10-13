@@ -84,14 +84,31 @@ class Conf{
 		return defined('APPMODE') ? constant('APPMODE') : null;
 	}
 	/**
-	 * アプリケーションモードのグループ定義
-	 * @return string{}
+	 * 現在のアプリケーションモードがモードに所属しているか
+	 * @param string $mode アプリケーションモード
+	 * @return  boolean
 	 */
-	public static function appmode_group(){
+	public static function in_mode($mode){
 		/**
 		 * アプリケーションモードのグループ  [グループ名=>[モード,モード] ]で定義する
 		 */
-		return \ebi\Conf::get('appmode_group',[]);
+		$group = \ebi\Conf::get('appmode_group',['dev'=>['local']]);
+		$chkmode = is_array($mode) ? 
+						$mode : 
+						((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));
+		
+		foreach($chkmode as $m){
+			if(substr($m,0,1) == '@'){
+				$mode = substr($mode,1);
+				
+				if(array_key_exists($mode,$group) && in_array(\ebi\Conf::appmode(),$group[$mode])){
+					return true;
+				}				
+			}else if($m == self::appmode()){
+				return true;
+			}
+		}
+		return false;
 	}
 	/**
 	 * 作業ディレクトリのパス
