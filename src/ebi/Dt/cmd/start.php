@@ -43,7 +43,7 @@ chmod('start.html',0666);
 \cmdman\Std::println_success('Written: '.realpath('start.html'));
 
 
-if(!is_file($entry)){
+if(substr($entry,-4) === '.php' && !is_file($entry)){
 	\ebi\Util::file_write($entry,<<< '__SRC__'
 <?php
 include('bootstrap.php');
