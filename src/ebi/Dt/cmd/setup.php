@@ -31,11 +31,6 @@ if($mode != $appmode || !is_file($settings_file)){
 		\ebi\Util::file_write($f,<<< '__SRC__'
 <?php
 \ebi\Conf::set([
-	'ebi.Log'=>[
-		'level'=>'warn',
-		'file'=>dirname(__DIR__).'/work/output.log',
-		'stdout'=>false,
-	],
 ]);
 __SRC__
 		);
