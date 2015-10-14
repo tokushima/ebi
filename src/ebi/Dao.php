@@ -116,7 +116,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			return;
 		}
-		$annotation = \ebi\Annotation::decode($p,['readonly','table']);		
+		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);		
 		$anon = [
 			null // con name
 			,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)

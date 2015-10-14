@@ -127,7 +127,7 @@ class Man{
 		}
 		$conf = self::get_conf_list($r,$src);		
 		$properties = [];
-		$anon = \ebi\Annotation::decode(str_replace(['.','/'],['\\','\\'],$class),'var',null,'summary');
+		$anon = \ebi\Annotation::get_class(str_replace(['.','/'],['\\','\\'],$class),'var','summary');
 		
 		foreach($r->getProperties() as $prop){
 			if(!$prop->isPrivate()){

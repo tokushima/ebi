@@ -43,7 +43,7 @@ class Object implements \IteratorAggregate{
 	public function __construct(){
 		$c = get_class($this);
 		if(!isset(self::$_m[$c])){
-			self::$_m[$c] = \ebi\Annotation::decode($c,'var',__CLASS__);
+			self::$_m[$c] = \ebi\Annotation::get_class($c,'var',null,__CLASS__);
 		}
 		if(method_exists($this,'__init__')){
 			$args = func_get_args();

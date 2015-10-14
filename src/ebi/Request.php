@@ -15,13 +15,10 @@ class Request implements \IteratorAggregate{
 			if($pathinfo[0] != '/') $pathinfo = '/'.$pathinfo;
 			$this->args = preg_replace("/(.*?)\?.*/","\\1",$pathinfo);
 		}
-		if(array_key_exists('REQUEST_METHOD',$_SERVER)){
-			$this->_method = $_SERVER['REQUEST_METHOD'];			
-			
-			if($_SERVER['REQUEST_METHOD'] == 'POST'){
-				if(array_key_exists('HTTP_X_HTTP_METHOD_OVERRIDE',$_SERVER)){
-					$this->_method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
-				}
+		$this->_method = self::method();
+		
+		if(isset($this->_method)){
+			if($this->_method == 'POST'){
 				if(isset($_POST) && is_array($_POST)){
 					foreach($_POST as $k => $v){
 						$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
@@ -102,6 +99,23 @@ class Request implements \IteratorAggregate{
 				}
 			}
 		}
+	}
+	/**
+	 * REQUEST_METHOD
+	 * @return string
+	 */
+	public static function method(){
+		if(array_key_exists('REQUEST_METHOD',$_SERVER)){
+			$method = $_SERVER['REQUEST_METHOD'];
+	
+			if($_SERVER['REQUEST_METHOD'] == 'POST'){
+				if(array_key_exists('HTTP_X_HTTP_METHOD_OVERRIDE',$_SERVER)){
+					$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+				}
+			}
+			return $method;
+		}
+		return null;
 	}
 	/**
 	 * (non-PHPdoc)
