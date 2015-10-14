@@ -27,7 +27,7 @@ class Request{
 		
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
-		$this->login_anon = \ebi\Annotation::decode($this,'login',__CLASS__);
+		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
 	}
 	/**
 	 * セットされた変数をFlowに渡す

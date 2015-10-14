@@ -10,6 +10,10 @@ class Abc extends \ebi\Dao{
 	protected $id;
 	protected $value;
 	
+	/**
+	 * @http_method post
+	 * @return multitype:NULL
+	 */
 	public function create(){
 		$req = new \ebi\Request();
 		$this->value($req->in_vars('value'));
