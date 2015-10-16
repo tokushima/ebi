@@ -1,3 +1,6 @@
 <?php
-\ebi\Log::warn('AAA');
-\ebi\Log::warn('BBB');
+\ebi\Log::info('INFO');
+\ebi\Log::warn('WARN');
+\ebi\Log::error('ERROR');
+\ebi\Log::debug('DEBUG');
+

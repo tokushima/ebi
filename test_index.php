@@ -8,7 +8,7 @@ include_once('bootstrap.php');
 	'template_abc/def'=>['name'=>'template_def','template'=>'abc.html'],
 	'template_abc/def/(.+)'=>['name'=>'template_def_arg1','template'=>'abc.html'],
 	'template_abc/def/(.+)/(.+)'=>['name'=>'template_def_arg2','template'=>'abc.html'],
-	'redirect_url'=>['redirect'=>'http://ebi.org'],
+	'redirect_url'=>['redirect'=>'http://email.address'],
 	'redirect_map'=>['redirect'=>'template_defa'],
 	'package/action'=>['action'=>'test.flow.PackageAction'],
 	'request'=>['action'=>'test.flow.RequestAction::index'],

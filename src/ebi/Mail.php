@@ -289,7 +289,7 @@ class Mail{
 	 * 
 	 * テンプレートサンプル
 	 * <mail>
-	 * <from address="support@ebi.org" name="tokushima" />
+	 * <from address="support@email.address" name="tokushima" />
 	 * <subject>メールのタイトル</subject>
 	 * <body>
 	 * メールの本文

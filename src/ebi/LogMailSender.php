@@ -56,6 +56,7 @@ class LogMailSender{
 			$this->template_base = \ebi\Conf::get('template_dir',\ebi\Conf::resource_path('log_mail'));
 		}
 		$template = \ebi\Util::path_absolute($this->template_base,$level.'.xml');
+		
 		if(is_file($template)){
 			$mail = new \ebi\Mail();
 			$mail->send_template($template,['log'=>$log,'env'=>new \ebi\Env()]);
