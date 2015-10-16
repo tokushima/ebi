@@ -1,18 +1,18 @@
 <?php
 $vars = ['abc'=>'ABC'];
 $mail = new \ebi\Mail();
-$mail->to("test@ebi.org");
+$mail->to("test@email.address");
 $mail->send_template('send.xml',$vars);
-$xml = \ebi\Dt::find_mail('test@ebi.org');
+$xml = \ebi\Dt::find_mail('test@email.address');
 eq('123ABC456'."\n",$xml->message());
 eq('テストサブジェクト',$xml->subject());
 
 
 $vars = ['abc'=>'ABC'];
 $mail = new \ebi\Mail();
-$mail->to("test@ebi.org");
+$mail->to("test@email.address");
 $mail->send_template('send_html.xml',$vars);
-$xml = \ebi\Dt::find_mail('test@ebi.org');
+$xml = \ebi\Dt::find_mail('test@email.address');
 eq('123ABC456'."\n",$xml->message());
 eq('テストサブジェクト',$xml->subject());
 meq('Content-Type: text/html;',$xml->manuscript());

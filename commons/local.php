@@ -27,7 +27,7 @@ foreach(\ebi\Util::ls($dir,true,'/\.php$/') as $f){
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>['ebi.SmtpBlackholeDao'],
 	'ebi.Session'=>['ebi.SessionDao'],
-//	'ebi.Queue'=>['ebi.queue.plugin.Dao'],
+	'ebi.Log'=>['ebi.LogMailSender'],
 ]);
 
 
