@@ -5,7 +5,7 @@
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 	],
 	'ebi.Flow'=>[
-		'exception_log_level'=>'warn',
+		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 		'secure'=>false,
 	],
