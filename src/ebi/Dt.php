@@ -532,6 +532,9 @@ class Dt{
 				}
 			}
 		}
+		foreach(\ebi\Loader::$loaded_phar as $package_dir => $ns){
+			$include_path[] = $package_dir;
+		}
 		foreach($include_path as $libdir){
 			if($libdir !== '.' && is_dir($libdir)){
 				foreach(new \RecursiveIteratorIterator(

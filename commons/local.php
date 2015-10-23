@@ -30,4 +30,7 @@ foreach(\ebi\Util::ls($dir,true,'/\.php$/') as $f){
 	'ebi.Log'=>['ebi.LogMailSender'],
 ]);
 
+\ebi\Loader::phar(dirname(__DIR__).'/test/testman.phar');
+\ebi\Loader::phar('/Users/tokushima/Downloads/aws.phar');
+
 
