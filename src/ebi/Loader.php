@@ -6,8 +6,6 @@ namespace ebi;
  *
  */
 class Loader{
-	static public $loaded_phar = [];
-	
 	/**
 	 * pharのパスを通す
 	 * @param string $path
@@ -37,7 +35,5 @@ class Loader{
 			}
 			return false;
 		},true,false);
-		
-		self::$loaded_phar[$package_dir] = $namespace;
 	}
 }

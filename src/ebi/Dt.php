@@ -118,6 +118,18 @@ class Dt{
 		return ['map_list'=>$flow_output_maps,'q'=>implode(' ',$query)];
 	}
 
+	private function class_list_summary($class,$query,&$libs){
+		$r = new \ReflectionClass($class);
+		
+		$class_doc = $r->getDocComment();
+		$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+		list($summary) = explode("\n",$document);
+		$pkg = str_replace('/','.',str_replace('\\','/',substr($class,1)));
+		
+		if($this->filter_query($query,$class.$document.$pkg)){
+			$libs[$pkg] = $summary;
+		}
+	}
 	/**
 	 * ライブラリの一覧
 	 * @automap
@@ -125,17 +137,19 @@ class Dt{
 	public function class_list(){
 		$query = $this->get_query();
 		$libs = [];
-		
-		foreach(self::classes() as $info){
-			$r = new \ReflectionClass($info['class']);
-			
-			$class_doc = $r->getDocComment();
-			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-			list($summary) = explode("\n",$document);
-			
-			if($this->filter_query($query,$info['class'].$document)){
-				$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+					
+		if(!empty($query)){
+			$q = str_replace('.','\\',implode('',$query));
+				
+			if($q[0] != '\\'){
+				$q = '\\'.$q;
 			}
+			if(class_exists($q)){
+				$this->class_list_summary($q,$query,$libs);
+			}
+		}
+		foreach(self::classes() as $info){
+			$this->class_list_summary($info['class'],$query,$libs);
 		}
 		ksort($libs);
 		return ['class_list'=>$libs,'q'=>implode(' ',$query)];
@@ -531,9 +545,6 @@ class Dt{
 					}
 				}
 			}
-		}
-		foreach(\ebi\Loader::$loaded_phar as $package_dir => $ns){
-			$include_path[] = $package_dir;
 		}
 		foreach($include_path as $libdir){
 			if($libdir !== '.' && is_dir($libdir)){
