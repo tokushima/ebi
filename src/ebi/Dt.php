@@ -118,6 +118,18 @@ class Dt{
 		return ['map_list'=>$flow_output_maps,'q'=>implode(' ',$query)];
 	}
 
+	private function class_list_summary($class,$query,&$libs){
+		$r = new \ReflectionClass($class);
+		
+		$class_doc = $r->getDocComment();
+		$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+		list($summary) = explode("\n",$document);
+		$pkg = str_replace('/','.',str_replace('\\','/',substr($class,1)));
+		
+		if($this->filter_query($query,$class.$document.$pkg)){
+			$libs[$pkg] = $summary;
+		}
+	}
 	/**
 	 * ライブラリの一覧
 	 * @automap
@@ -125,17 +137,19 @@ class Dt{
 	public function class_list(){
 		$query = $this->get_query();
 		$libs = [];
-		
-		foreach(self::classes() as $info){
-			$r = new \ReflectionClass($info['class']);
-			
-			$class_doc = $r->getDocComment();
-			$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-			list($summary) = explode("\n",$document);
-			
-			if($this->filter_query($query,$info['class'].$document)){
-				$libs[str_replace('/','.',str_replace('\\','/',substr($info['class'],1)))] = $summary;
+					
+		if(!empty($query)){
+			$q = str_replace('.','\\',implode('',$query));
+				
+			if($q[0] != '\\'){
+				$q = '\\'.$q;
 			}
+			if(class_exists($q)){
+				$this->class_list_summary($q,$query,$libs);
+			}
+		}
+		foreach(self::classes() as $info){
+			$this->class_list_summary($info['class'],$query,$libs);
 		}
 		ksort($libs);
 		return ['class_list'=>$libs,'q'=>implode(' ',$query)];
@@ -670,6 +684,67 @@ class Dt{
 				}
 			}
 		}		
+	}
+	/**
+	 * dao dumpをexportする
+	 * @param string $file
+	 * @return integer{}
+	 */
+	public static function export_dao_dump($file){
+		$export_result = [];
+		
+		\ebi\Util::file_write($file,'');
+		
+		foreach(self::classes('\ebi\Dao') as $class_info){
+			$r = new \ReflectionClass($class_info['class']);
+			$cnt = 0;
+		
+			if($r->getParentClass()->getName() == 'ebi\Dao'){
+				foreach(call_user_func([$r->getName(),'find']) as $obj){
+					\ebi\Util::file_append($file,json_encode(['model'=>$r->getName(),'data'=>$obj->props()]).PHP_EOL);
+					$cnt++;
+				}
+			}
+			if(!empty($cnt)){
+				$export_result[$r->getName()] = $cnt;
+			}
+		}
+		return $export_result;				
+	}
+	/**
+	 * dao dumpをimportする
+	 * @param string $dump_file
+	 * @return mixed{}
+	 */
+	public static function import_dao_dump($dump_file){
+		$update = $invalid = [];
+		
+		foreach(self::get_dao_dump($dump_file) as $arr){
+			$class = $arr['model'];
+			
+			if(!isset($invalid[$class])){
+				$inst = (new \ReflectionClass($class))->newInstance();
+		
+				if(!isset($update[$class])){
+					$update[$class] = [call_user_func([$class,'find_count']),0];
+				}
+				try{
+					foreach($inst->props() as $k => $v){
+						if(array_key_exists($k,$arr['data'])){
+							if($inst->prop_anon($k,'cond') == null && $inst->prop_anon($k,'extra',false) === false){
+								$inst->prop_anon($k,'auto_now',false,true);
+								call_user_func_array([$inst,$k],[$arr['data'][$k]]);
+							}
+						}
+					}
+					$inst->save();
+					$update[$class][1]++;
+				}catch(\ebi\exception\BadMethodCallException $e){
+					$invalid[$class] = true;
+				}
+			}
+		}
+		return ['update'=>$update,'invalid'=>$invalid];
 	}
 	
 	/**

@@ -473,6 +473,10 @@ class Flow{
 						self::call_class_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
 						return self::terminate();
 					}
+					/**
+					 *  Error Json出力時にException traceも出力するフラグ
+					 */
+					$trace = \ebi\Conf::get('exception_trace',false);
 					$message = [];
 					
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
@@ -480,6 +484,9 @@ class Flow{
 							'message'=>$e->getMessage(),
 							'type'=>basename(str_replace("\\",'/',get_class($e)))
 						];
+						if($trace){
+							$em['trace'] = $e->getTraceAsString();
+						}
 						if(!empty($g)){
 							$em['group'] = $g;
 						}

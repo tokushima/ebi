@@ -18,17 +18,19 @@ class Loader{
 		if($path === false){
 			throw new \ebi\exception\InvalidArgumentException($path.' not found');
 		}
-		if(empty($namespace)){
-			$namespace = str_replace(['_','.'],'/',basename($path,'.phar'));
+		if(!empty($namespace)){
+			$namespace = str_replace("\\",'/',$namespace);
+			
+			if($namespace[0] == '/'){
+				$namespace = substr($namespace,1);
+			}
 		}
-		$namespace = str_replace("\\",'/',$namespace);
+		$package_dir = 'phar://'.(is_dir('phar://'.$path.'/src/') ? $path.'/src' : $path);
 		
-		if($namespace[0] == '/'){
-			$namespace = substr($namespace,1);
-		}		
-		spl_autoload_register(function($c) use($path,$namespace){
+		spl_autoload_register(function($c) use($package_dir,$namespace){
 			$c = str_replace('\\','/',$c);
-			if(strpos($c,$namespace) === 0 && is_file($f='phar://'.$path.'/'.$c.'.php')){
+			
+			if((empty($namespace) || strpos($c,$namespace) === 0) && is_file($f=$package_dir.'/'.$c.'.php')){
 				require_once($f);
 			}
 			return false;
