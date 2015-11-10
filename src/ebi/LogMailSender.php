@@ -4,10 +4,10 @@ namespace ebi;
  * ログをメール送信する
  *
  * 以下パスにテンプレートファイルがあれば送信
- * [template_path]/debug_mail.xml
- * [template_path]/info_mail.xml
- * [template_path]/warn_mail.xml
- * [template_path]/error_mail.xml
+ * [template_path]/debug.xml
+ * [template_path]/info.xml
+ * [template_path]/warn.xml
+ * [template_path]/error.xml
  *
  * @author tokushima
  *
@@ -58,8 +58,21 @@ class LogMailSender{
 		$template = \ebi\Util::path_absolute($this->template_base,$level.'.xml');
 		
 		if(is_file($template)){
+			$vars = \ebi\Conf::get('vars',[]);
+			if(!is_array($vars)){
+				$vars = [];
+			}			
 			$mail = new \ebi\Mail();
-			$mail->send_template($template,['log'=>$log,'env'=>new \ebi\Env()]);
+			$mail->send_template(
+				$template,
+				array_merge(
+					$vars,
+					[
+						'log'=>$log,
+						'env'=>new \ebi\Env(),
+					]
+				)
+			);
 		}
 	}
 }
