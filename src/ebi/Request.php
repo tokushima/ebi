@@ -273,7 +273,14 @@ class Request implements \IteratorAggregate{
 	 * @return mixed
 	 */
 	public function in_vars($n,$d=null){
-		return array_key_exists($n,$this->vars) ? $this->vars[$n] : $d;
+		if(array_key_exists($n,$this->vars)){
+			return $this->vars[$n];
+		}
+		if($d !== null){
+			$this->vars[$n] = $d;
+			return $this->vars[$n];
+		}
+		return null;
 	}
 	/**
 	 * キーが存在するか
