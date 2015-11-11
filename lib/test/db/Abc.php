@@ -2,7 +2,7 @@
 namespace test\db;
 use ebi\Q;
 /**
- * @var serial $id
+ * @var serial $id @['hash'=>false]
  * @var string $value
  * @author tokushima
  */

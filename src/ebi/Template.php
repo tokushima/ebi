@@ -471,12 +471,17 @@ class Template{
 			if($obj->in_attr('rt:aref') === 'true'){
 				$obj->rm_attr('rt:aref');
 				$obj->attr('rt:ref','true');
+				
+				if($obj->is_attr('rt:param')){
+					// 評価を遅延させる
+					$obj->attr('rt:param',str_replace('{$','{#',$obj->in_attr('rt:param')));
+				}
 				$src = str_replace($obj->plain(),$obj->get(),$src);
 			}else if($this->is_reference($obj)){
 				$obj->escape(false);
 
 				if($obj->is_attr('rt:param')){
-					$param = $this->variable_string($this->parse_plain_variable($obj->in_attr('rt:param')));
+					$param = $this->variable_string($this->parse_plain_variable(str_replace('{#','{$',$obj->in_attr('rt:param'))));
 					$uniq = uniqid('');
 					$var = '$__form_var__'.$uniq;
 					$k = '$__form_k__'.$uniq;
