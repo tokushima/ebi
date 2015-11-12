@@ -2,7 +2,7 @@
 
 <rt:block name="content_body">
 
-<form method="post" id="update_form" rt:aref="true" class="form-horizontal" rt:param="model">
+<form method="post" id="update_form" rt:aref="true" class="form-horizontal" rt:param="{$model.props()}">
 
 <rt:loop param="{$f.update_props($model)}" var="name">
 <div class="form-group">
