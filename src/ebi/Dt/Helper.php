@@ -148,7 +148,7 @@ class Helper{
 						' 〜 '.
 						sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name);
 				default:
-					if(preg_match('/^[a-z]+$/',$type)){
+					if(empty($type) || preg_match('/^[a-z]+$/',$type)){
 						return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
 					}
 			}
