@@ -367,7 +367,13 @@ class Xml implements \IteratorAggregate{
 	public static function format($src,$indent_str="\t",$depth=0){
 		$rtn = '';
 		$i = 0;
+		$c = md5(__FILE__);
 		
+		if(preg_match_all('/<([\w_]+?)[^><]*><\/\\1>/', $src,$m)){
+			foreach($m[0] as $s){
+				$src = str_replace($s,str_replace('><','>'.$c.'<',$s),$src);
+			}
+		}
 		foreach(explode(PHP_EOL,preg_replace('/>\s*</','>'.PHP_EOL.'<',$src)) as $k => $line){
 			$indent = 0;
 			$lc = substr_count($line,'<');
@@ -392,6 +398,8 @@ class Xml implements \IteratorAggregate{
 				$i++;
 			}
 		}
+		$rtn = str_replace($c,'',$rtn);
+		
 		return $rtn;
 	}
 	/**
