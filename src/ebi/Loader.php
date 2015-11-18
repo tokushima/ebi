@@ -28,7 +28,7 @@ class Loader{
 		$package_dir = 'phar://'.(is_dir('phar://'.$path.'/src/') ? $path.'/src' : $path);
 		
 		spl_autoload_register(function($c) use($package_dir,$namespace){
-			$c = str_replace('\\','/',$c);
+			$c = str_replace(array('\\','_'),'/',$c);
 			
 			if((empty($namespace) || strpos($c,$namespace) === 0) && is_file($f=$package_dir.'/'.$c.'.php')){
 				require_once($f);
