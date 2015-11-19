@@ -6,6 +6,7 @@ namespace ebi;
  *
  */
 class Loader{
+	static private $read = [];
 	/**
 	 * pharのパスを通す
 	 * @param string $path
@@ -13,8 +14,12 @@ class Loader{
 	 * @throws \ebi\exception\InvalidArgumentException
 	 */
 	public static function phar($path,$namespace=null){
-		$path = realpath($path);
+		$base = \ebi\Conf::get('path',getcwd());
+		$path = realpath(\ebi\Util::path_absolute($base,$path));
 		
+		if(isset(self::$read[$path])){
+			return true;
+		}		
 		if($path === false){
 			throw new \ebi\exception\InvalidArgumentException($path.' not found');
 		}
@@ -35,5 +40,8 @@ class Loader{
 			}
 			return false;
 		},true,false);
+		
+		self::$read[$path] = true;
+		return true;
 	}
 }
