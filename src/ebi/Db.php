@@ -107,10 +107,14 @@ class Db implements \Iterator{
 	public function query($sql){
 		$args = func_get_args();
 		$this->statement = $this->prepare($sql);
-		if($this->statement === false) throw new \LogicException($sql);
+		
+		if($this->statement === false){
+			throw new \ebi\exception\InvalidQueryException($sql);
+		}
 		array_shift($args);
 		$this->statement->execute($args);
 		$errors = $this->statement->errorInfo();
+		
 		if(isset($errors[1])){
 			$this->rollback();
 			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : '.$sql);
@@ -121,13 +125,16 @@ class Db implements \Iterator{
 	 * 直前に実行したSQL ステートメントに値を変更して実行する
 	 */
 	public function re(){
-		if(!isset($this->statement)) throw new \LogicException();
+		if(!isset($this->statement)){
+			throw new \ebi\exception\BadMethodCallException('undefined statement');
+		}
 		$args = func_get_args();
 		$this->statement->execute($args);
 		$errors = $this->statement->errorInfo();
+		
 		if(isset($errors[1])){
 			$this->rollback();
-			throw new \LogicException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : #requery');
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : #requery');
 		}
 		return $this;
 	}
@@ -138,8 +145,11 @@ class Db implements \Iterator{
 	 */
 	public function next_result($name=null){
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);
+		
 		if($this->resultset !== false){
-			if($name === null) return $this->resultset;
+			if($name === null){
+				return $this->resultset;
+			}
 			return (isset($this->resultset[$name])) ? $this->resultset[$name] : null;
 		}
 		return null;

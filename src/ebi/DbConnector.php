@@ -72,12 +72,16 @@ class DbConnector{
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = [];
 		$autoid = null;
+		
 		foreach($dao->columns(true) as $column){
-			if($column->auto()) $autoid = $column->name();
+			if($column->auto()){
+				$autoid = $column->name();
+			}
 			$insert[] = $this->quotation($column->column());
 			$vars[] = $this->update_value($dao,$column->name());
 		}
-		return new \ebi\Daq('insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
+		return new \ebi\Daq(
+				'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
 				,$vars
 				,$autoid
 		);
@@ -90,6 +94,7 @@ class DbConnector{
 	 */
 	public function update_sql(\ebi\Dao $dao,\ebi\Q $query){
 		$where = $update = $wherevars = $updatevars = $from = [];
+		
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$wherevars[] = $this->update_value($dao,$column->name());
@@ -109,8 +114,8 @@ class DbConnector{
 		$vars = array_merge($updatevars,$wherevars);
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
-				'update '.$this->quotation($column->table()).' set '.implode(',',$update).' where '.implode(' and ',$where).(empty($where_sql) ? '' : ' and '.$where_sql)
-				,array_merge($vars,$where_vars)
+			'update '.$this->quotation($column->table()).' set '.implode(',',$update).' where '.implode(' and ',$where).(empty($where_sql) ? '' : ' and '.$where_sql)
+			,array_merge($vars,$where_vars)
 		);
 	}
 	/**
@@ -120,14 +125,17 @@ class DbConnector{
 	 */
 	public function delete_sql(\ebi\Dao $dao){
 		$where = $vars = [];
+		
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$vars[] = $dao->{$column->name()}();
 		}
-		if(empty($where)) throw new \ebi\exception\BadMethodCallException('not primary');
+		if(empty($where)){
+			throw new \ebi\exception\BadMethodCallException('not primary');
+		}
 		return new \ebi\Daq(
-				'delete from '.$this->quotation($column->table()).' where '.implode(' and ',$where)
-				,$vars
+			'delete from '.$this->quotation($column->table()).' where '.implode(' and ',$where)
+			,$vars
 		);
 	}
 	/**
@@ -140,8 +148,8 @@ class DbConnector{
 		$from = [];
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
-				'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
-				,$where_vars
+			'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
+			,$where_vars
 		);
 	}
 	/**
@@ -177,10 +185,10 @@ class DbConnector{
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq((
-						'select '.implode(',',$select).' from '.implode(',',$from)
-						.(empty($where_sql) ? '' : ' where '.$where_sql)
-						.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
-					),$where_vars);
+			'select '.implode(',',$select).' from '.implode(',',$from)
+			.(empty($where_sql) ? '' : ' where '.$where_sql)
+			.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
+		),$where_vars);
 	}
 	protected function select_order($query,array $self_columns){
 		$order = [];
@@ -274,8 +282,13 @@ class DbConnector{
 		if(empty($target_name)){
 			$self_columns = $dao->columns(true);
 			$primary_columns = $dao->primary_columns();
-			if(!empty($primary_columns)) $target_column = current($primary_columns);
-			if(empty($target_column) && !empty($self_columns)) $target_column = current($self_columns);
+			
+			if(!empty($primary_columns)){
+				$target_column = current($primary_columns);
+			}
+			if(empty($target_column) && !empty($self_columns)){
+				$target_column = current($self_columns);
+			}
 		}else{
 			$target_column = $this->get_column($target_name,$dao->columns());
 		}
@@ -303,14 +316,14 @@ class DbConnector{
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		
 		return new \ebi\Daq(('select '.$exe.'('.$exec_map.') target_column'
-					.(empty($select) ? '' : ','.implode(',',$select))
-					.' from '.implode(',',$from)
-					.(empty($where_sql) ? '' : ' where '.$where_sql)
-					.(empty($group_column) ? '' : ' group by key_column')
-					.' order by target_column'
-					)
-					,$where_vars
-				);
+			.(empty($select) ? '' : ','.implode(',',$select))
+			.' from '.implode(',',$from)
+			.(empty($where_sql) ? '' : ' where '.$where_sql)
+			.(empty($group_column) ? '' : ' group by key_column')
+			.' order by target_column'
+			)
+			,$where_vars
+		);
 	}
 	protected function where_cond_columns(array $cond_columns,array &$from){
 		$conds = [];
