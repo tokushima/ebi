@@ -26,7 +26,7 @@ class Session{
 			$session_name = \ebi\Conf::get('session_name','SID');
 			
 			if(!ctype_alpha($session_name)){
-				throw new \InvalidArgumentException('session name is is not a alpha value');
+				throw new \InvalidArgumentException('session name is not a alpha value');
 			}
 			/**
 			 * キャッシュリミッタの名前
