@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_index::after'));
 eq(200,$b->status());
 eq(url('test_index::after_to'),$b->url());

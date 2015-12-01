@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_login2::automap/aaa'));
 eq(401,$b->status());
 eq(url('test_login2::automap/do_login'),$b->url());

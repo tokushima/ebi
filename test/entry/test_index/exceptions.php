@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_index::exceptions'));
 eq(500,$b->status());
 eq('{"error":[{"message":"invalid argument","type":"InvalidArgumentException"},{"message":"logic","type":"LogicException"}]}',$b->body());

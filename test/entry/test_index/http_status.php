@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 
 $b->do_get(url('test_index::status400'));
 eq(400,$b->status());

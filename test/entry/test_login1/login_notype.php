@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_login1::notype'));
 eq(401,$b->status());
 eq(url('test_login1::login'),$b->url());

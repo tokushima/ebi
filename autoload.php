@@ -45,8 +45,8 @@ if(defined('COMMONDIR')){
 		include_once($f);
 	}
 }
-if(!defined('CMDMAN_ERROR_CALLBACK')){
-	define('CMDMAN_ERROR_CALLBACK','\\ebi\\Log::error');
+if(!defined('EBICO_ERROR_CALLBACK')){
+	define('EBICO_ERROR_CALLBACK','\\ebi\\Log::error');
 }
 
 

@@ -2,7 +2,7 @@
 /**
  * login要求のaction
  */
-$b = new \testman\Browser();
+$b = b();
 
 // loginにリダイレクトされる
 $b->do_get(url('test_login1::bbb'));
