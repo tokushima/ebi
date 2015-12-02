@@ -18,7 +18,7 @@ $ curl -LO http://git.io/ebico.phar
 ```
 
 
-### cmdmanを実行すると利用可能なコマンドが一覧されます
+### ebico を実行すると利用可能なコマンドが一覧されます
 
 ```
 $ php ebico.phar
@@ -43,7 +43,7 @@ ebi successfully installed to: /Users/tokushima/Documents/workspace/work/ebi.pha
 ```
 
 
-cmdmanにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
+ebicoにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
 
 ```
 $ php ebico.phar ebi.phar 
