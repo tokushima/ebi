@@ -4,10 +4,10 @@
  */
 include(__DIR__.'/setup.php');
 
-\cmdman\Std::println(PHP_EOL);
+\ebico\Std::println(PHP_EOL);
 
-$port = \cmdman\Std::read('port?','8000');
-$entry = \cmdman\Std::read('entry?','index.php');
+$port = \ebico\Std::read('port?','8000');
+$entry = \ebico\Std::read('entry?','index.php');
 
 \ebi\Util::file_write('start.sh',sprintf(<<< '__SRC__'
 cd `dirname $0`
@@ -39,8 +39,8 @@ __SRC__
 chmod('start.sh',0755);
 chmod('start.html',0666);
 
-\cmdman\Std::println_success('Written: '.realpath('start.sh'));
-\cmdman\Std::println_success('Written: '.realpath('start.html'));
+\ebico\Std::println_success('Written: '.realpath('start.sh'));
+\ebico\Std::println_success('Written: '.realpath('start.html'));
 
 
 if(substr($entry,-4) === '.php' && !is_file($entry)){
@@ -52,6 +52,6 @@ include('bootstrap.php');
 __SRC__
 	);
 	
-	\cmdman\Std::println_success('Written: '.realpath($entry));
+	\ebico\Std::println_success('Written: '.realpath($entry));
 }
 

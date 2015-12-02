@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_index::helper_range'));
 eq(200,$b->status());
 meq('A1234A',$b->body());

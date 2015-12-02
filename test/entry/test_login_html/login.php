@@ -12,7 +12,7 @@ $login_html =  <<< HTML
 HTML;
 
 
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_login_html::login'));
 eq(401,$b->status());
 eq(url('test_login_html::login'),$b->url());

@@ -1,6 +1,6 @@
 <?php
 
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_login_html_auto::temp1'));
 eq(401,$b->status());
 eq(url('test_login_html_auto::login'),$b->url());

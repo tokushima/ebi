@@ -1,5 +1,5 @@
 <?php
-$b = new \testman\Browser();
+$b = b();
 $b->do_get(url('test_index::template_parent'));
 eq(200,$b->status());
 meq('Parent',$b->body());

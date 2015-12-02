@@ -7,11 +7,11 @@ $a->save();
 \test\db\Abc::commit();
 
 
-$b = new \testman\Browser();
+$b = b();
 $b->vars('value','B');
 $b->do_post(url('test_index::abc'));
 
-$b = new \testman\Browser();
+$b = b();
 $b->vars('value','C');
 $b->do_post(url('test_index::abc'));
 
