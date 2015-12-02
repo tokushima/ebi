@@ -11,31 +11,33 @@ PHP framework (PHP 5 >= 5.5.0)
 ## Quick Start 
 
 
-### cmdmanのダウンロード
+### ebicoのダウンロード
 
 ```
-$ curl -LO http://git.io/cmdman.phar
+$ curl -LO http://git.io/ebico.phar
 ```
 
 
 ### cmdmanを実行すると利用可能なコマンドが一覧されます
 
 ```
-$ php cmdman.phar 
+$ php ebico.phar
 
-cmdman 0.3.8 (PHP 5.6.12)
-Type 'php cmdman.php subcommand --help' for usage.
+ebico 20151202.213659 (PHP 7.0.0RC4)
+Type 'php ebico.phar subcommand --help' for usage.
 
 Subcommands:
   ebi.phar      : Download ebi.phar
   composer.phar : Download composer.phar
+  archive       : Creating Phar Archives
+  extract       : Extract the contents of a phar archive to a directory
 ```
 
 
 ### ebiをダウンロードします
 
 ```
-$ php cmdman.phar ebi.phar 
+$ php ebico.phar ebi.phar 
 
 ebi successfully installed to: /Users/tokushima/Documents/workspace/work/ebi.phar
 ```
@@ -44,27 +46,24 @@ ebi successfully installed to: /Users/tokushima/Documents/workspace/work/ebi.pha
 cmdmanにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
 
 ```
-$ php cmdman.phar ebi.phar 
+$ php ebico.phar ebi.phar 
 
-cmdman 0.3.8 (PHP 5.6.12)
-Type 'php cmdman.php subcommand --help' for usage.
+ebico 20151202.213833 (PHP 7.0.0RC4)
+Type 'php ebico.phar subcommand --help' for usage.
 
 Subcommands:
   ebi.phar#ebi.Dt::dao_create_table : モデルからtableを作成する
   ebi.phar#ebi.Dt::dao_export       : dao data export
   ebi.phar#ebi.Dt::dao_import       : dao data import
-  ebi.phar#ebi.Dt::format           : PHPファイルの改行コードをCRに統一する
-  ebi.phar#ebi.Dt::phar             : ライブラリをpharにする
   ebi.phar#ebi.Dt::setup            : Application setup
   ebi.phar#ebi.Dt::start            : 簡易ランチャー作成
-  ebi.phar#ebi.Dt::unphar           : pharを展開する
 ```
 
 
 ### ebiの単純な構成をインストールします
 
 ```
-$ php cmdman.phar ebi.phar#ebi.Dt::start 
+$ php ebico.phar ebi.phar#ebi.Dt::start 
 
 Application mode (local) [local]: local
 Application mode is `local`
@@ -78,7 +77,7 @@ Written: /Users/tokushima/Documents/workspace/work/start.sh
 Written: /Users/tokushima/Documents/workspace/work/start.html
 ```
 
-testmanはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/testman )
+ebitenはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/ebiten )
 
 
 
