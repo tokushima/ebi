@@ -110,7 +110,10 @@ include_once('bootstrap.php');
 	'form1'=>['name'=>'form1','template'=>'form1.html','action'=>'ebi.flow.Request::noop'],
 	'form2'=>['name'=>'form2','template'=>'form2.html','action'=>'ebi.flow.Request::noop'],
 	'form/obj'=>['name'=>'form_obj','template'=>'form_obj.html','action'=>'test.flow.Action::form_obj'],
-	
+	'form1/esc'=>['name'=>'form1esc','template'=>'form1ref.html','action'=>function(){
+		return ['id1'=>'A\'"<>','id2'=>'ABC'];
+	}],	
+		
 	'abc'=>['name'=>'abc','action'=>'test.db.Abc::create'],
 	
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
