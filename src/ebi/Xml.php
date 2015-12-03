@@ -127,7 +127,7 @@ class Xml implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function in_attr($n,$d=null){
-		return isset($this->attr[strtolower($n)]) ? ($this->esc ? htmlentities($this->attr[strtolower($n)],ENT_QUOTES,'UTF-8') : $this->attr[strtolower($n)]) : (isset($d) ? (string)$d : null);
+		return isset($this->attr[strtolower($n)]) ? $this->attr[strtolower($n)] : (isset($d) ? (string)$d : null);
 	}
 	/**
 	 * アトリビュートから削除する
@@ -178,7 +178,7 @@ class Xml implements \IteratorAggregate{
 			$value = PHP_EOL.self::format($value,$indent_str,1);
 		}
 		foreach(array_keys($this->attr) as $k){
-			$attr .= ' '.$k.'="'.$this->in_attr($k).'"';
+			$attr .= ' '.$k.'="'.($this->esc ? htmlentities($this->in_attr($k),ENT_QUOTES,'UTF-8') : $this->in_attr($k)).'"';
 		}
 		return ((empty($encoding)) ? '' : '<?xml version="1.0" encoding="'.$encoding.'" ?'.'>'.PHP_EOL)
 				.('<'.$this->name.$attr.(implode(' ',$this->plain_attr)).(($this->close_empty && !isset($value)) ? ' /' : '').'>')

@@ -9,7 +9,7 @@ eq("456",$x->in_attr("ghi",456));
 $x->attr("def","'<>'");
 
 $x->escape(true);
-eq("&#039;&lt;&gt;&#039;",$x->in_attr("def"));
+eq("'<>'",$x->in_attr("def"));
 eq('<test abc="123" def="&#039;&lt;&gt;&#039;" />',$x->get());
 
 $x->escape(false);
@@ -53,7 +53,7 @@ $x->attr("DEf",555);
 eq(555,$x->in_attr("def"));
 eq(456,$x->in_attr("abc"));
 $x->attr("Abc","<aaa>");
-eq("&lt;aaa&gt;",$x->in_attr("abc"));
+eq("<aaa>",$x->in_attr("abc"));
 $x->attr("Abc",true);
 eq("true",$x->in_attr("abc"));
 $x->attr("Abc",false);
