@@ -10,6 +10,7 @@ class FormFormat{
 		$xml = \ebi\Xml::anonymous($src);
 		
 		foreach($xml->find('input') as $form){
+			$form->escape(false);
 			$type = $form->in_attr('rtdt:type');
 			$v = $form->in_attr('value');
 
