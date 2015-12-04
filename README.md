@@ -4,7 +4,7 @@ __2012-12-25__
 
 PHP framework (PHP 5 >= 5.5.0)
 
-
+![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/resources/media/ebi.png)
 
 
 
