@@ -4,11 +4,10 @@ namespace ebi;
  * O/R Mapper
  * @author tokushima
  */
-abstract class Dao extends \ebi\Object{
-	use \ebi\Plugin;
-	
+abstract class Dao extends \ebi\Object{	
 	private static $_dao_ = [];
-	private static $_cnt_ = 0;	
+	private static $_cnt_ = 0;
+	private static $_con_ = [];
 
 	private $_has_hierarchy_ = 1;
 	private $_class_id_;
@@ -32,14 +31,11 @@ abstract class Dao extends \ebi\Object{
 		return $connections;
 	}
 	/**
-	 * @param unknown $class
+	 * @param string $class
 	 * @throws \ebi\exception\ConnectionException
 	 * @return \ebi\Db
 	 */
 	public static function connection($class){
-		if(is_object($class)){
-			$class = get_class($class);
-		}
 		if(!isset(self::$_co_anon_[$class][0]) || !isset(self::$_connections_[self::$_co_anon_[$class][0]])){
 			throw new \ebi\exception\ConnectionException('unable to connect to '.$class);
 		}
@@ -164,7 +160,7 @@ abstract class Dao extends \ebi\Object{
 		$upper = (isset($db_settings['upper']) && $db_settings['upper'] === true);
 		$lower = (isset($db_settings['lower']) && $db_settings['lower'] === true);
 		
-		static::set_class_plugin(self::$_connections_[$anon[0]]->connector());
+		self::$_con_[get_called_class()] = self::$_connections_[$anon[0]]->connector();
 		
 		$set_table_name = function($name,$class) use($prefix,$upper,$lower){
 			$name = $prefix.$name;
@@ -605,7 +601,7 @@ abstract class Dao extends \ebi\Object{
 		if(!empty($args)){
 			call_user_func_array([$query,'add'],$args);
 		}
-		$daq = static::call_class_plugin_funcs($exe.'_sql',$this,$target_name,$gorup_name,$query);
+		$daq = self::$_con_[get_called_class()]->{$exe.'_sql'}($this,$target_name,$gorup_name,$query);
 		return $this->func_query($daq,$is_list);
 	}
 	private static function exec_aggregator_result_cast($dao,$target_name,$value,$cast){
@@ -798,15 +794,7 @@ abstract class Dao extends \ebi\Object{
 				return [];
 			}
 		}
-		/**
-		 * SELECT文の生成
-		 * @param self $dao
-		 * @param Q $query
-		 * @param ebi.Paginator $paginator
-		 * @param string $name
-		 * @return Daq
-		 */
-		return static::call_class_plugin_funcs('select_sql',$dao,$query,$paginator,$name);
+		return self::$_con_[get_called_class()]->select_sql($dao,$query,$paginator,$name);
 	}
 	private static function get_statement_iterator($dao,$query){
 		if(!$query->is_order_by()){
@@ -814,15 +802,7 @@ abstract class Dao extends \ebi\Object{
 				$query->order($column->name());
 			}
 		}
-		/**
-		 * SELECT文の生成
-		 * @param self $dao
-		 * @param Q $query
-		 * @param ebi.Paginator $paginator
-		 * @param string $name
-		 * @return Daq
-		 */
-		$daq = static::call_class_plugin_funcs('select_sql',$dao,$query,$query->paginator());
+		$daq = self::$_con_[get_called_class()]->select_sql($dao,$query,$query->paginator());
 		try{
 			$statement = $dao->query($daq);
 			
@@ -906,11 +886,7 @@ abstract class Dao extends \ebi\Object{
 		if(!empty($args)){
 			call_user_func_array([$query,'add'],$args);
 		}
-		/**
-		 * delete文の生成
-		 * @param self $this
-		 */
-		$daq = static::call_class_plugin_funcs('find_delete_sql',$dao,$query);
+		$daq = self::$_con_[get_called_class()]->find_delete_sql($dao,$query);
 		return $dao->update_query($daq);
 	}
 	/**
@@ -921,11 +897,7 @@ abstract class Dao extends \ebi\Object{
 			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
 		}
 		$this->__before_delete__();
-		/**
-		 * delete文の生成
-		 * @param self $this
-		 */
-		$daq = static::call_class_plugin_funcs('delete_sql',$this);
+		$daq = self::$_con_[get_called_class()]->delete_sql($this);
 		if($this->update_query($daq) == 0){
 			throw new \ebi\exception\NotFoundException('delete failed');
 		}
@@ -1056,22 +1028,12 @@ abstract class Dao extends \ebi\Object{
 			$this->__before_create__();
 			$this->save_verify_primary_unique();
 			$this->validate();
-			/**
-			 * createを実行するSQL文の生成
-			 * @param self $this
-			 * @return Daq
-			 */
-			$daq = static::call_class_plugin_funcs('create_sql',$this);
+			$daq = self::$_con_[get_called_class()]->create_sql($this);
 			if($this->update_query($daq) == 0){
 				throw new \ebi\exception\InvalidQueryException('create failed');
 			}
 			if($daq->is_id()){
-				/**
-				 * AUTOINCREMENTの値を取得するSQL文の生成
-				 * @param self $this
-				 * @return integer
-				 */
-				$result = $this->func_query(static::call_class_plugin_funcs('last_insert_id_sql',$this));
+				$result = $this->func_query(self::$_con_[get_called_class()]->last_insert_id_sql($this));
 				if(empty($result)){
 					throw new \ebi\exception\NoRowsAffectedException('create failed');
 				}
@@ -1092,12 +1054,7 @@ abstract class Dao extends \ebi\Object{
 			if(!empty($args)){
 				call_user_func_array([$query,'add'],$args);
 			}
-			/**
-			 * updateを実行するSQL文の生成
-			 * @param self $this
-			 * @return Daq
-			 */
-			$daq = static::call_class_plugin_funcs('update_sql',$this,$query);
+			$daq = self::$_con_[get_called_class()]->update_sql($this,$query);
 			$affected_rows = $this->update_query($daq);
 			
 			if($affected_rows === 0 && !empty($args)){
@@ -1158,11 +1115,11 @@ abstract class Dao extends \ebi\Object{
 	public static function create_table(){
 		$dao = new static();
 		if(!self::$_co_anon_[get_class($dao)][2]){
-			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
+			$daq = new \ebi\Daq(self::$_con_[get_called_class()]->exists_table_sql($dao));
  			$count = current($dao->func_query($daq));
 			
 			if($count == 0){
-				$daq = new \ebi\Daq(static::call_class_plugin_funcs('create_table_sql',$dao));
+				$daq = new \ebi\Daq(self::$_con_[get_called_class()]->create_table_sql($dao));
 				$dao->func_query($daq);
 				return true;
 			}
@@ -1175,11 +1132,11 @@ abstract class Dao extends \ebi\Object{
 	public static function drop_table(){
 		$dao = new static();
 		if(!self::$_co_anon_[get_class($dao)][2]){
-			$daq = new \ebi\Daq(static::call_class_plugin_funcs('exists_table_sql',$dao));
+			$daq = new \ebi\Daq(self::$_con_[get_called_class()]->exists_table_sql($dao));
 			$count = current($dao->func_query($daq));
 			
 			if($count == 1){
-				$daq = new \ebi\Daq(static::call_class_plugin_funcs('drop_table_sql',$dao));
+				$daq = new \ebi\Daq(self::$_con_[get_called_class()]->drop_table_sql($dao));
 				$dao->func_query($daq);
 				return true;
 			}
