@@ -106,12 +106,18 @@ class Session{
 	
 	
 	/**
-	 * セッションを開くときに実行される
-	 * @param string $path
-	 * @param string $name
+	 * 初期処理
+	 * @param string $path セッションを格納/取得するパス。
+	 * @param string $name セッション名
 	 * @return boolean
 	 */
 	public function open($path,$name){
+		/**
+		 * 初期処理
+		 * @param string $path セッションを格納/取得するパス
+		 * @param string $name セッション名
+		 * @return boolean
+		 */
 		$bool = static::call_class_plugin_funcs('session_open',$path,$name);
 		return (!is_bool($bool)) ? true : $bool;
 	}
@@ -121,46 +127,71 @@ class Session{
 	 * @return boolean
 	 */
 	public function close(){
+		/**
+		 * writeが実行された後で実行される
+		 * @return boolean
+		 */
 		$bool = static::call_class_plugin_funcs('session_close');
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
 	/**
-	 * セッションが開始したとき実行されます
+	 * データを読み込む
 	 * @param string $id
 	 * @return mixed
 	 */
 	public function read($id){
+		/**
+		 * データを読み込む
+		 * @param string $id セッションのid
+		 * @return mixed 読み込んだデータ
+		 */
 		return static::call_class_plugin_funcs('session_read',$id);
 	}
 	
 	/**
-	 * セッションの保存や終了が必要となったときに実行されます
-	 * @param string $id
-	 * @param mixed $sess_data
+	 * データを書き込む
+	 * @param string $id セッションのid
+	 * @param mixed $sess_data データ
 	 * @return boolean
 	 */
 	public function write($id,$sess_data){
+		/**
+		 * データを書き込む
+		 * @param string セッションのid
+		 * @param mixed データ
+		 * @return boolean
+		 */
 		$bool = static::call_class_plugin_funcs('session_write',$id,$sess_data);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
 	/**
-	 * セッションを破棄した場合に実行される
-	 * @param string $id
+	 * 破棄
+	 * @param string $id セッションのid
 	 * @return boolean
 	 */
 	public function destroy($id){
+		/**
+		 * 破棄
+		 * @param string セッションのid
+		 * @return boolean
+		 */
 		$bool = static::call_class_plugin_funcs('session_destroy',$id);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
 	/**
-	 * ガベージコレクタ
+	 * 古いセッションを削除する
 	 * @param integer $maxlifetime session.gc_maxlifetime
 	 * @return boolean
 	 */
 	public function gc($maxlifetime){
+		/**
+		 * 古いセッションを削除する
+		 * @param integer $maxlifetime session.gc_maxlifetime
+		 * @return boolean
+		 */
 		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
 		return (!is_bool($bool)) ? true : $bool;
 	}
