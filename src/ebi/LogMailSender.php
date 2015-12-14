@@ -28,8 +28,20 @@ class LogMailSender{
 		if(is_file($template)){
 			$mail = new \ebi\Mail();			
 			
+			/**
+			 * メールにバインドする変数
+			 * @param mixed{} $arg1
+			 */
 			$vars = \ebi\Conf::get('vars',[]);
+			/**
+			 * fromのメールアドレス
+			 * @param string $arg1
+			 */
 			$from = \ebi\Conf::get('from');
+			/**
+			 * toのメールアドレス
+			 * @param string $arg1
+			 */
 			$to = \ebi\Conf::get('to');
 			
 			if(!empty($from)){
