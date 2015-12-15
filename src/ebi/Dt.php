@@ -189,7 +189,7 @@ class Dt{
 	/**
 	 * pluginのキュメント
 	 * @param string $class
-	 * @param string $method
+	 * @param string $plugin_name
 	 * @automap
 	 */
 	public function plugin_doc($class,$plugin_name){
@@ -204,6 +204,26 @@ class Dt{
 			'description'=>$ref['plugins'][$plugin_name][0],
 			'params'=>$ref['plugins'][$plugin_name][1],
 			'return'=>$ref['plugins'][$plugin_name][2],
+		];
+	}
+	/**
+	 * Confのキュメント
+	 * @param string $class
+	 * @param string $conf_name
+	 * @automap
+	 */
+	public function conf_doc($class,$conf_name){
+		$ref = \ebi\Dt\Man::class_info($class);
+	
+		if(!isset($ref['conf_list'][$conf_name])){
+			throw new \LogicException($conf_name.' not found');
+		}
+		return [
+			'package'=>$class,
+			'conf_name'=>$conf_name,
+			'description'=>$ref['conf_list'][$conf_name][0],
+			'params'=>$ref['conf_list'][$conf_name][1],
+			'return'=>$ref['conf_list'][$conf_name][2],
 		];
 	}
 

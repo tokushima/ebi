@@ -139,7 +139,13 @@ class Flow{
 		}		
 		
 		/**
-		 * アプリケーションURL 最後尾に*で実行エントリに自動変換、**でエントリファイル名(.php付き)に変換される
+		 * アプリケーションURL 
+		 * 最後尾に「*」で実行エントリに自動変換
+		 * http://localhost:8000/ * => http://localhost:8000/api
+		 * 
+		 * 「**」でエントリファイル名(.php付き)に変換される
+		 * http://localhost:8000/** => http://localhost:8000/api.php
+		 * 
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
@@ -155,7 +161,8 @@ class Flow{
 		self::$app_url = $app_url;
 		
 		/**
-		 * メディアURL
+		 * メディアファイルのベースURL
+		 * http://localhost:8000/resources/media
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
