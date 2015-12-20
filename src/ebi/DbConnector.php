@@ -385,24 +385,23 @@ class DbConnector{
 						$op = Q::NOT;
 					}
 					switch($ct){
-						case 'boolean':
-							if($cond == 'true'){
-								$and[] = Q::eq($cn,true,$op);
-							}else if($cond == 'false'){
-								$and[] = Q::eq($cn,false,$op);								
-							}
-							break;
 						case 'number':
 						case 'serial': 
+						case 'integer':							
 						case 'timestamp':
 						case 'date':
 						case 'time':
 						case 'intdate':
-						case 'integer':
 							$and[] = Q::eq($cn,$cond,$op);
 							break;
-						default:
+						case 'string':
+						case 'email':
+						case 'alnum':
 							$and[] = Q::contains($cn,$cond,$op);
+							break;
+						case 'boolean':
+						case 'mixed':
+						default:
 					}
 				}
 				if(!empty($and)){

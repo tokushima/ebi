@@ -487,17 +487,27 @@ class Dt{
 		if($req->is_post() && !empty($sql)){
 			$excute_sql = [];
 			$sql = str_replace(['\\r\\n','\\r','\\n','\;'],["\n","\n","\n",'{SEMICOLON}'],$sql);
+			
 			foreach(explode(';',$sql) as $q){
 				$q = trim(str_replace('{SEMICOLON}',';',$q));
-				$excute_sql[] = $q;
-				if(!empty($q)) $con->query($q);
+
+				if(!empty($q)){
+					$excute_sql[] = $q;
+					$con->query($q);
+				}
 			}
-			foreach($con as $v){
-				if(empty($keys)) $keys = array_keys($v);
-				$result_list[] = $v;
-				$count++;
-					
-				if($count >= 100) break;
+			if(preg_match('/^(select|desc)\s.+/i',$q)){
+				foreach($con as $v){
+					if(empty($keys)){
+						$keys = array_keys($v);
+					}
+					$result_list[] = $v;
+					$count++;
+						
+					if($count >= 100){
+						break;
+					}
+				}
 			}
 			$req->vars('excute_sql',implode(';'.PHP_EOL,$excute_sql));
 		}
