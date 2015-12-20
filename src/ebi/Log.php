@@ -132,7 +132,11 @@ class Log{
 				FILE_APPEND
 			);
 		}
-		static::call_class_plugin_funcs($log->fm_level(),$log);
+		/**
+		 * ログ出力
+		 * @param \ebi\Log $log
+		 */
+		static::call_class_plugin_funcs('log_output',$log);
 	}
 	/**
 	 * 標準出力へのログを許可しているか

@@ -39,15 +39,17 @@ class Db implements \Iterator{
 		$this->dbname = $dbname;
 		$this->connector = $r->newInstanceArgs([$encode,$timezone]);
 		
-		if($this->connector instanceof \ebi\DbConnector){
-			if(self::$autocommit === null){
-				/**
-				 * オートコミットを行うかの真偽値
-				 */
-				self::$autocommit = \ebi\Conf::get('autocommit',false);
-			}
-			$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);
+		if(!($this->connector instanceof \ebi\DbConnector)){
+			throw new \ebi\exception\ConnectionException('must be an instance of \ebi\DbConnector');
 		}
+		if(self::$autocommit === null){
+			/**
+			 * オートコミットを行うかの真偽値
+			 */
+			self::$autocommit = \ebi\Conf::get('autocommit',false);
+		}
+		$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);
+		
 		if(empty($this->connection)){
 			throw new \ebi\exception\ConnectionException('connection fail '.$this->dbname);
 		}

@@ -10,8 +10,8 @@
 	],
 
 	'ebi.Flow'=>[
-		'app_url'=>null,
-		'secure'=>true,
+		'app_url'=>'http://localhost/ebid/**',
+// 		'secure'=>true,
 	],
 ]);
 

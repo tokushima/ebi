@@ -254,17 +254,23 @@ class Mail{
 	 * @return boolean
 	 */
 	public function send($subject=null,$message=null){
-		if($this->has_object_plugin('set_mail')){
-			$this->call_object_plugin_funcs('set_mail',$this);
-		}else if(self::has_class_plugin('set_mail')){
-			self::call_class_plugin_funcs('set_mail',$this);
+		if($subject !== null){
+			$this->subject($subject);
 		}
-		if($subject !== null) $this->subject($subject);
-		if($message !== null) $this->message($message);
-
+		if($message !== null){
+			$this->message($message);
+		}
 		if($this->has_object_plugin('send_mail')){
+			/**
+			 * メール送信する
+			 * @param \ebi\Mail $this 
+			 */
 			$this->call_object_plugin_funcs('send_mail',$this);
 		}else if(self::has_class_plugin('send_mail')){
+			/**
+			 * メール送信する
+			 * @param \ebi\Mail $this
+			 */
 			self::call_class_plugin_funcs('send_mail',$this);
 		}else{
 			if(empty($this->to)) throw new \ebi\exception\RequiredException('undefine to');

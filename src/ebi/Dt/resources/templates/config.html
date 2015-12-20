@@ -14,8 +14,8 @@
 <tbody>
 	<tr>
 		<td><a href="{$t.package_method_url('class_doc',$conf['package'])}">{$conf['package']}</a></td>
-		<td>{$conf['key']}</td>
-		<td>{$conf['description']}</td>
+		<td><a href="{$t.package_method_url('conf_doc',$conf['package'],$conf['key'])}">{$conf['key']}</a></td>
+		<td>{$t.html($conf['description'],200,1)}</td>
 	</tr>
 </tbody>
 </table>

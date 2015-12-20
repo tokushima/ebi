@@ -247,7 +247,7 @@ class FlowHelper{
 	 * @return string
 	 */
 	public function html($value,$length=0,$lines=0,$postfix=null,$nl2br=true){
-		$value = str_replace(["\r\n","\r"],"\n",$value);
+		$value = str_replace(["\r\n","\r","\n"],PHP_EOL,$value);
 		if($length > 0){
 			$det = mb_detect_encoding($value);
 			$value = mb_substr($value,0,$length,$det);
@@ -258,8 +258,8 @@ class FlowHelper{
 			}
 		}
 		if($lines > 0){
-			$l = explode("\n",$value);
-			$value = implode("\n",array_slice($l,0)).((sizeof($l) > $lines) ? $postfix : null);
+			$l = explode(PHP_EOL,$value);
+			$value = implode(PHP_EOL,array_slice($l,0,$lines)).((sizeof($l) > $lines) ? $postfix : null);
 		}
 		$value = str_replace(["<",">","'","\""],["&lt;","&gt;","&#039;","&quot;"],$value);
 		return ($nl2br) ? nl2br($value,true) : $value;

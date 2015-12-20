@@ -15,39 +15,7 @@ namespace ebi;
 class LogMailSender{
 	private $template_base;
 
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 * @param string $id
-	 */
-	public function debug(\ebi\Log $log){
-		$this->send('debug',$log);
-	}
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 * @param string $id
-	 */
-	public function info(\ebi\Log $log){
-		$this->send('info',$log);
-	}
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 * @param string $id
-	 */
-	public function warn(\ebi\Log $log){
-		$this->send('warn',$log);
-	}
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 * @param string $id
-	 */
-	public function error(\ebi\Log $log){
-		$this->send('error',$log);
-	}
-	protected function send($level,\ebi\Log $log){
+	public function log_output(\ebi\Log $log){
 		if(empty($this->template_base)){
 			/**
 			 * mailテンプレートのディレクトリ (debug.xml, info.xml, warn.xml, error.xml)
@@ -55,13 +23,25 @@ class LogMailSender{
 			 */
 			$this->template_base = \ebi\Conf::get('template_dir',\ebi\Conf::resource_path('log_mail'));
 		}
-		$template = \ebi\Util::path_absolute($this->template_base,$level.'.xml');
+		$template = \ebi\Util::path_absolute($this->template_base,$log->fm_level().'.xml');
 		
 		if(is_file($template)){
 			$mail = new \ebi\Mail();			
 			
+			/**
+			 * メールにバインドする変数
+			 * @param mixed{} $arg1
+			 */
 			$vars = \ebi\Conf::get('vars',[]);
+			/**
+			 * fromのメールアドレス
+			 * @param string $arg1
+			 */
 			$from = \ebi\Conf::get('from');
+			/**
+			 * toのメールアドレス
+			 * @param string $arg1
+			 */
 			$to = \ebi\Conf::get('to');
 			
 			if(!empty($from)){

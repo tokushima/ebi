@@ -224,7 +224,7 @@
 
 
 <rt:if param="{$plugins}">
-	<h3>Call Plugins</h3>
+	<h3>Call Plugin funcs</h3>
 	<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name">
 	<thead>
 		<tr>
@@ -270,8 +270,8 @@
 	</thead>
 	<tbody>
 		<tr>
-			<td class="span3">{$conf_name}</td>
-			<td>{$t.html($v[0],0,1)}</td>
+			<td class="span3"><a href="{$t.package_method_url('conf_doc',$package,$conf_name)}">{$conf_name}</a></td>
+			<td>{$t.html($v[0],200,1)}</td>
 		</tr>
 	</tbody>
 	</table>

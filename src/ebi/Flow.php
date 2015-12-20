@@ -139,7 +139,13 @@ class Flow{
 		}		
 		
 		/**
-		 * アプリケーションURL 最後尾に*で実行エントリに自動変換、**でエントリファイル名(.php付き)に変換される
+		 * アプリケーションURL 
+		 * 最後尾に「*」で実行エントリに自動変換
+		 * http://localhost:8000/ * => http://localhost:8000/api
+		 * 
+		 * 「**」でエントリファイル名(.php付き)に変換される
+		 * http://localhost:8000/** => http://localhost:8000/api.php
+		 * 
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
@@ -155,7 +161,8 @@ class Flow{
 		self::$app_url = $app_url;
 		
 		/**
-		 * メディアURL
+		 * メディアファイルのベースURL
+		 * http://localhost:8000/resources/media
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
@@ -323,6 +330,9 @@ class Flow{
 						self::$template->set_object_plugin($o);
 					}
 					if(self::has_class_plugin('before_flow_action')){
+						/**
+						 * 前処理
+						 */
 						self::call_class_plugin_funcs('before_flow_action');
 					}
 					if($has_flow_plugin){
@@ -369,6 +379,10 @@ class Flow{
 						}
 					}
 					if(self::has_class_plugin('after_flow_action')){
+						/**
+						 * 後処理
+						 * @return mixed{} actionの結果変数に上書きマージする
+						 */
 						$result_vars = array_merge($result_vars,self::call_class_plugin_funcs('after_flow_action'));
 					}
 					if(isset($exception)){
@@ -416,6 +430,10 @@ class Flow{
 					){
 						self::template($result_vars,$pattern,$ins,$t);
 					}else if(self::has_class_plugin('flow_output')){
+						/**
+						 * 結果を出力する
+						 * @param mixed{} $result_vars actionで返却された変数
+						 */
 						self::call_class_plugin_funcs('flow_output',$result_vars);
 						return self::terminate();
 					}else{
@@ -467,6 +485,10 @@ class Flow{
 					}else if(array_key_exists('error_template',self::$map)){
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,self::$map['error_template']));
 					}else if(self::has_class_plugin('flow_exception')){
+						/**
+						 * 例外発生時の処理・出力
+						 * @param \Exception $e 発生した例外
+						 */
 						self::call_class_plugin_funcs('flow_exception',$e);
 						return self::terminate();
 					}else if(self::has_class_plugin('flow_output')){

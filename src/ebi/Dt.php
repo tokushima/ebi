@@ -189,7 +189,7 @@ class Dt{
 	/**
 	 * pluginのキュメント
 	 * @param string $class
-	 * @param string $method
+	 * @param string $plugin_name
 	 * @automap
 	 */
 	public function plugin_doc($class,$plugin_name){
@@ -204,6 +204,26 @@ class Dt{
 			'description'=>$ref['plugins'][$plugin_name][0],
 			'params'=>$ref['plugins'][$plugin_name][1],
 			'return'=>$ref['plugins'][$plugin_name][2],
+		];
+	}
+	/**
+	 * Confのキュメント
+	 * @param string $class
+	 * @param string $conf_name
+	 * @automap
+	 */
+	public function conf_doc($class,$conf_name){
+		$ref = \ebi\Dt\Man::class_info($class);
+	
+		if(!isset($ref['conf_list'][$conf_name])){
+			throw new \LogicException($conf_name.' not found');
+		}
+		return [
+			'package'=>$class,
+			'conf_name'=>$conf_name,
+			'description'=>$ref['conf_list'][$conf_name][0],
+			'params'=>$ref['conf_list'][$conf_name][1],
+			'return'=>$ref['conf_list'][$conf_name][2],
 		];
 	}
 
@@ -467,17 +487,27 @@ class Dt{
 		if($req->is_post() && !empty($sql)){
 			$excute_sql = [];
 			$sql = str_replace(['\\r\\n','\\r','\\n','\;'],["\n","\n","\n",'{SEMICOLON}'],$sql);
+			
 			foreach(explode(';',$sql) as $q){
 				$q = trim(str_replace('{SEMICOLON}',';',$q));
-				$excute_sql[] = $q;
-				if(!empty($q)) $con->query($q);
+
+				if(!empty($q)){
+					$excute_sql[] = $q;
+					$con->query($q);
+				}
 			}
-			foreach($con as $v){
-				if(empty($keys)) $keys = array_keys($v);
-				$result_list[] = $v;
-				$count++;
-					
-				if($count >= 100) break;
+			if(preg_match('/^(select|desc)\s.+/i',$q)){
+				foreach($con as $v){
+					if(empty($keys)){
+						$keys = array_keys($v);
+					}
+					$result_list[] = $v;
+					$count++;
+						
+					if($count >= 100){
+						break;
+					}
+				}
 			}
 			$req->vars('excute_sql',implode(';'.PHP_EOL,$excute_sql));
 		}

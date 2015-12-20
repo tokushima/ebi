@@ -125,7 +125,7 @@ class Man{
 		if(in_array('ebi\\Plugin',$traits)){
 			$added_plugins = call_user_func([$r->getName(),'added_class_plugin_funcs']);
 		}
-		$conf = self::get_conf_list($r,$src);		
+		$conf = self::get_conf_list($r,$src);
 		$properties = [];
 		$anon = \ebi\Annotation::get_class(str_replace(['.','/'],['\\','\\'],$class),'var','summary');
 		
@@ -351,21 +351,32 @@ class Man{
 		return $type;
 	}
 	private static function	get_desc(&$arr,$match,$k,$name,$src,$class){
-		if(!isset($arr[$name])) $arr[$name] = [null,[],[]];
+		if(!isset($arr[$name])){
+			$arr[$name] = [null,[],[]];
+		}
 		$doc = substr($src,0,$match[0][$k][1]);
-		$doc = trim(substr($doc,0,strrpos($doc,"\n")));
+		$doc = trim(substr($doc,0,strrpos($doc,PHP_EOL)));
+		
 		if(substr($doc,-2) == '*'.'/'){
-			$doc = substr($doc,strrpos($doc,'/'.'**'));
-			$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$doc)));
-			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$doc,$m)){
+			$desc = '';
+			foreach(array_reverse(explode(PHP_EOL,$doc)) as $line){
+				if(strpos(ltrim($line),'/'.'**') !== 0){
+					$desc = $line.PHP_EOL.$desc;
+				}else{
+					$desc = substr($line,strpos($line,'/**')+3).PHP_EOL.$desc;
+					break;
+				}
+			}
+			$desc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace('*'.'/','',$desc)));
+			if(preg_match_all("/@param\s+([^\s]+)\s+\\$(\w+)(.*)/",$desc,$m)){
 				foreach(array_keys($m[2]) as $n){
 					$arr[$name][1][$m[2][$n]] = [$m[2][$n],self::type($m[1][$n],$class),trim($m[3][$n])];
 				}
 			}
-			if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
+			if(preg_match("/@return\s+([^\s]+)(.*)/",$desc,$m)){
 				$arr[$name][2] = [self::type(trim($m[1]),$class),trim($m[2])];
 			}
-			$arr[$name][0] = trim(preg_replace('/@.+/','',$doc));
+			$arr[$name][0] = trim(preg_replace('/@.+/','',$desc));
 		}
 		return $arr;
 	}
