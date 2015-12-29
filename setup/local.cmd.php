@@ -1,8 +1,8 @@
 <?php
-$run = \ebico\Std::read('install','n',['y','n']);
+$run = \cmdman\Std::read('install','n',['y','n']);
 if($run == 'y'){
-	\ebico\Std::println_success('install yes');
+	\cmdman\Std::println_success('install yes');
 }else{
-	\ebico\Std::println_success('install no');	
+	\cmdman\Std::println_success('install no');	
 }
 

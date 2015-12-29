@@ -11,20 +11,20 @@ PHP framework (PHP 5 >= 5.5.0)
 ## Quick Start 
 
 
-### ebicoのダウンロード
+### cmdmanのダウンロード
 
 ```
-$ curl -LO http://git.io/ebico.phar
+$ curl -LO http://git.io/cmdman.phar
 ```
 
 
-### ebico を実行すると利用可能なコマンドが一覧されます
+### cmdman を実行すると利用可能なコマンドが一覧されます
 
 ```
-$ php ebico.phar
+$ php cmdman.phar
 
-ebico 20151202.213659 (PHP 7.0.0RC4)
-Type 'php ebico.phar subcommand --help' for usage.
+cmdman 20151202.213659 (PHP 7.0.0RC4)
+Type 'php cmdman.phar subcommand --help' for usage.
 
 Subcommands:
   ebi.phar      : Download ebi.phar
@@ -37,19 +37,19 @@ Subcommands:
 ### ebiをダウンロードします
 
 ```
-$ php ebico.phar ebi.phar 
+$ php cmdman.phar ebi.phar 
 
 ebi successfully installed to: /Users/tokushima/Documents/workspace/work/ebi.phar
 ```
 
 
-ebicoにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
+cmdmanにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
 
 ```
-$ php ebico.phar ebi.phar 
+$ php cmdman.phar ebi.phar 
 
-ebico 20151202.213833 (PHP 7.0.0RC4)
-Type 'php ebico.phar subcommand --help' for usage.
+cmdman 20151202.213833 (PHP 7.0.0RC4)
+Type 'php cmdman.phar subcommand --help' for usage.
 
 Subcommands:
   ebi.phar#ebi.Dt::dao_create_table : モデルからtableを作成する
@@ -63,7 +63,7 @@ Subcommands:
 ### ebiの単純な構成をインストールします
 
 ```
-$ php ebico.phar ebi.phar#ebi.Dt::start 
+$ php cmdman.phar ebi.phar#ebi.Dt::start 
 
 Application mode (local) [local]: local
 Application mode is `local`
@@ -77,7 +77,7 @@ Written: /Users/tokushima/Documents/workspace/work/start.sh
 Written: /Users/tokushima/Documents/workspace/work/start.html
 ```
 
-ebitenはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/ebiten )
+testmanはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/testman )
 
 
 

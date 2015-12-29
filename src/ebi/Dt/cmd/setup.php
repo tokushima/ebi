@@ -15,7 +15,7 @@ if(is_dir($cmddir)){
 	}
 }
 $default = (empty($appmode) || array_search($appmode,$mode_list) !== false) ? $appmode : 'local';
-$mode = \ebico\Std::read('Application mode',$default,$mode_list);
+$mode = \cmdman\Std::read('Application mode',$default,$mode_list);
 $settings_file = getcwd().'/__settings__.php';
 $path = getcwd();
 
@@ -35,52 +35,52 @@ if($mode != $appmode || !is_file($settings_file)){
 __SRC__
 		);
 	}
-	\ebico\Std::println_success('Written: '.realpath($f));	
-	\ebico\Std::println_success('Written: '.realpath($settings_file));	
-	\ebico\Std::println_info('Application mode changed.');
-	\ebico\Std::println_danger('Not complete setup - please try again.');
+	\cmdman\Std::println_success('Written: '.realpath($f));	
+	\cmdman\Std::println_success('Written: '.realpath($settings_file));	
+	\cmdman\Std::println_info('Application mode changed.');
+	\cmdman\Std::println_danger('Not complete setup - please try again.');
 	exit;
 }else{
-	\ebico\Std::println_info('Application mode is `'.$mode.'`');
+	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
 
 foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
-	if(\ebico\Std::read('create table','n',['y','n']) == 'y'){
+	if(\cmdman\Std::read('create table','n',['y','n']) == 'y'){
 		foreach(\ebi\Dt::create_table() as $model){
-			\ebico\Std::println_primary('Created '.$model[1]);
+			\cmdman\Std::println_primary('Created '.$model[1]);
 		}
 	}
 	break;
 }
-if(!is_file($path.'/test/ebiten.phar') && !is_file($path.'/ebiten.phar')){
-	if(\ebico\Std::read('getting ebiten?','n',['y','n']) == 'y'){
+if(!is_file($path.'/test/testman.phar') && !is_file($path.'/testman.phar')){
+	if(\cmdman\Std::read('getting testman?','n',['y','n']) == 'y'){
 		\ebi\Util::mkdir($path.'/test');
 		
-		file_put_contents($f=$path.'/test/ebiten.phar',file_get_contents('http://git.io/ebiten.phar'));
-		\ebico\Std::println_success('Written file '.$f);
+		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
+		\cmdman\Std::println_success('Written file '.$f);
 		
-		file_put_contents($f=$path.'/test/ebiten.settings.php',<<< '__SRC__'
+		file_put_contents($f=$path.'/test/testman.settings.php',<<< '__SRC__'
 <?php
 \ebi\Conf::set('ebi.Db','autocommit',true);
-\ebiten\Conf::set('urls',\ebi\Dt::get_urls());
+\testman\Conf::set('urls',\ebi\Dt::get_urls());
 __SRC__
 		);
-		\ebico\Std::println_success('Written file '.$f);
+		\cmdman\Std::println_success('Written file '.$f);
 		
-		file_put_contents($f=$path.'/test/ebiten.fixture.php',<<< '__SRC__'
+		file_put_contents($f=$path.'/test/testman.fixture.php',<<< '__SRC__'
 <?php
 \ebi\Dt::setup();
 \ebi\Dt::create_table();
 __SRC__
 		);
-		\ebico\Std::println_success('Written file '.$f);
+		\cmdman\Std::println_success('Written file '.$f);
 		
 		file_put_contents($f=$path.'/test/__setup__.php',<<< '__SRC__'
 <?php
 \ebi\Exceptions::clear();
 __SRC__
 		);
-		\ebico\Std::println_success('Written file '.$f);
+		\cmdman\Std::println_success('Written file '.$f);
 	}
 }
 if(!is_file($f=$path.'/bootstrap.php')){
@@ -101,7 +101,7 @@ if(!is_file($f=$path.'/bootstrap.php')){
 	}
 	if(!empty($autoload_file)){
 		file_put_contents($f,'<?php'.PHP_EOL.'include_once(\''.$autoload_file.'\');');
-		\ebico\Std::println_success('Written file '.$f);
+		\cmdman\Std::println_success('Written file '.$f);
 	}
 }
 
@@ -110,8 +110,8 @@ if(is_file($setup_cmd)){
 	include($setup_cmd);
 }
 if(is_file($f=\ebi\Dt::setup_file())){
-	\ebico\Std::println_info('Run setup.');
+	\cmdman\Std::println_info('Run setup.');
 	\ebi\Dt::setup();
 }
-\ebico\Std::println_info('Done.');
+\cmdman\Std::println_info('Done.');
 
