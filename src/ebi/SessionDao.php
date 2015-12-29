@@ -31,7 +31,6 @@ class SessionDao extends \ebi\Dao{
 		try{
 			$obj = static::find_get(Q::eq('id',$id));
 			return $obj->data();
-		}catch(\ebi\exception\NotFoundException $e){
 		}catch(\Exception $e){
 		}
 		return '';
@@ -40,7 +39,6 @@ class SessionDao extends \ebi\Dao{
 	 * @plugin ebi.Session
 	 * @param string $id
 	 * @param string $sess_data
-	 * @return boolean
 	 */
 	public function session_write($id,$sess_data){
 		try{
@@ -48,11 +46,8 @@ class SessionDao extends \ebi\Dao{
 			$obj->id($id);
 			$obj->data($sess_data);
 			$obj->save();
-			
-			return true;
 		}catch(\Exception $e){
 		}
-		return false;
 	}
 	/**
 	 * @plugin ebi.Session
@@ -61,10 +56,7 @@ class SessionDao extends \ebi\Dao{
 	 */
 	public function session_destroy($id){
 		try{
-			$obj = new self();
-			$obj->id($id);
-			$obj->delete(true);
-
+			static::find_delete(Q::eq('id',$id));
 			return true;
 		}catch(\Exception $e){
 		}
