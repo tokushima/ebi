@@ -52,7 +52,7 @@ class Action{
 	}
 	public function log(){
 		\ebi\Log::error('ERROR');
-		\ebi\Log::warn('WARN');
+		\ebi\Log::warning('WARN');
 		\ebi\Log::info('INFO');
 		\ebi\Log::debug('DEBUG');
 		\ebi\Log::trace('TRACE');

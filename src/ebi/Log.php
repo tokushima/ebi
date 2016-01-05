@@ -8,32 +8,31 @@ namespace ebi;
  * @var timestamp $time 発生時間
  * @var string $file 発生したファイル名
  * @var integer $line 発生した行
- * @var mixed $value 内容
+ * @var mixed $message 内容
  */
 class Log{
 	use \ebi\Plugin;
 	
-	private static $level_strs = ['none','error','warn','info','debug'];
+	private static $level_strs = ['none','emergency','alert','critical','error','warning','notice','info','debug'];
 	private static $current_level;
-	private static $stdout;
 	private static $fpout;
 
 	private $level;
 	private $time;
 	private $file;
 	private $line;
-	private $value;
+	private $message;
 		
 	private static function cur_level(){
 		if(self::$current_level === null){
 			/**
-			 * エラーレベル (none,error,warn,info,debug)
+			 * エラーレベル ('emergency','alert','critical','error','warning','notice','info','debug')
 			 */
-			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
+			self::$current_level = array_search(\ebi\Conf::get('level','critical'),self::$level_strs);
 		}
 		return self::$current_level;
 	}
-	public function __construct($level,$value,$file=null,$line=null,$time=null){
+	public function __construct($level,$message,$file=null,$line=null,$time=null){
 		if($file === null){
 			$db = debug_backtrace(false);
 			array_shift($db);
@@ -50,20 +49,21 @@ class Log{
 		$this->file = $file;
 		$this->line = intval($line);
 		$this->time = ($time === null) ? time() : $time;
-		$this->value = (is_object($value)) ? 
-							(($value instanceof \Exception) ? 
-								(string)$value
-								: clone($value)
+		$this->message = (is_object($message)) ? 
+							(($message instanceof \Exception) ? 
+								(string)$message
+								: clone($message)
 							)
-							: $value;
+							: $message;
+		$this->flush($this);
 	}
-	public function fm_value(){
-		if(!is_string($this->value)){
+	public function fm_message(){
+		if(!is_string($this->message)){
 			ob_start();
-				var_dump($this->value);
+				var_dump($this->message);
 			return trim(ob_get_clean());
 		}
-		return $this->value;
+		return $this->message;
 	}
 	public function fm_level(){
 		return ($this->level >= 0) ? self::$level_strs[$this->level] : 'trace';
@@ -83,26 +83,26 @@ class Log{
 	public function line(){
 		return $this->line;
 	}
-	public function value(){
-		return $this->value;
+	public function message(){
+		return $this->message;
+	}
+	public function context(){
+		return [
+			'time'=>$this->time(),
+			'file'=>$this->file_relative(),
+			'line'=>$this->line(),
+		];
 	}
 	public function __toString(){
-		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_value();
+		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_message();
 	}
 	
-	/**
-	 * 格納されたログを出力する
-	 */
-	private static function flush(self $log){
-		if(!isset(self::$stdout)){
-			/**
-			 * boolean 標準出力に表示してもいいか
-			 */
-			self::$stdout = \ebi\Conf::get('stdout',false);
+	private function flush(self $log){
+		if(!isset(self::$fpout)){
 			/**
 			 * ログを出力するファイルを指定する
 			*/
-			self::$fpout = \ebi\Conf::get('file');
+			self::$fpout = \ebi\Conf::get('file','');
 			
 			if(!empty(self::$fpout)){
 				if(!is_dir($dir = dirname(self::$fpout))){
@@ -115,94 +115,122 @@ class Log{
 				}
 			}
 		}
-		if(empty(self::$fpout)){
-			@file_put_contents('php://stdout',(string)$log.PHP_EOL);
-		}else{
-			/**
-			 * 出力に改行を含むかの真偽値
-			 */
-			$nl2str = (\ebi\Conf::get('nl2str') !== null);
-			
+		if(!empty(self::$fpout)){
 			file_put_contents(
 				self::$fpout,
-				($nl2str ? 
-					str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
-					(string)$log
-				).PHP_EOL,
+				((string)$log).PHP_EOL,
 				FILE_APPEND
 			);
 		}
-		/**
-		 * ログ出力
-		 * @param \ebi\Log $log
-		 */
-		static::call_class_plugin_funcs('log_output',$log);
 	}
+
+	
 	/**
-	 * 標準出力へのログを許可しているか
-	 * @return boolean
+	 * System is unusable.
+	 * @param mixed $message
 	 */
-	public static function is_stdout(){
-		return self::$stdout;
+	public static function emergency(){
+		if(self::cur_level() >= 1){
+			foreach(func_get_args() as $message){
+				$log = new self(1,$message);
+				static::call_class_plugin_funcs('emergency',$log->fm_message(),$log->context());
+			}
+		}
 	}
 	/**
-	 * 標準出力へのログ出力を無効にする
+	 * Action must be taken immediately.
+	 * @param mixed $message
 	 */
-	public static function disable_display(){
-		self::$stdout = false;
+	public static function alert(){
+		if(self::cur_level() >= 2){
+			foreach(func_get_args() as $message){
+				$log = new self(2,$message);
+				static::call_class_plugin_funcs('alert',$log->fm_message(),$log->context());
+			}
+		}
 	}
 	/**
-	 * errorを生成
-	 * @param mixed $value 内容
+	 * Critical conditions.
+	 * @param mixed $message
+	 */
+	public static function critical(){
+		if(self::cur_level() >= 3){
+			foreach(func_get_args() as $message){
+				$log = new self(3,$message);
+				static::call_class_plugin_funcs('critical',$log->fm_message(),$log->context());
+			}
+		}
+	}
+	
+	/**
+	 * Runtime errors that do not require immediate action but should typically
+	 * @param mixed $message
 	 */
 	public static function error(){
-		if(self::cur_level() >= 1){
-			foreach(func_get_args() as $value){
-				self::flush(new self(1,$value));
-			}
-		}
-	}
-	/**
-	 * warnを生成
-	 * @param mixed $value 内容
-	 */
-	public static function warn($value){
-		if(self::cur_level() >= 2){
-			foreach(func_get_args() as $value){
-				self::flush(new self(2,$value));
-			}
-		}
-	}
-	/**
-	 * infoを生成
-	 * @param mixed $value 内容
-	 */
-	public static function info($value){
-		if(self::cur_level() >= 3){
-			foreach(func_get_args() as $value){
-				self::flush(new self(3,$value));
-			}
-		}
-	}
-	/**
-	 * debugを生成
-	 * @param mixed $value 内容
-	 */
-	public static function debug($value){
 		if(self::cur_level() >= 4){
-			foreach(func_get_args() as $value){
-				self::flush(new self(4,$value));
+			foreach(func_get_args() as $message){
+				$log = new self(4,$message);
+				static::call_class_plugin_funcs('error',$log->fm_message(),$log->context());
 			}
 		}
 	}
+	/**
+	 * Exceptional occurrences that are not errors.
+	 * @param mixed $message
+	 */
+	public static function warning($message){
+		if(self::cur_level() >= 5){
+			foreach(func_get_args() as $message){
+				$log = new self(5,$message);
+				static::call_class_plugin_funcs('warning',$log->fm_message(),$log->context());
+			}
+		}
+	}
+	/**
+	 * Normal but significant events.
+	 * @param mixed $message
+	 */
+	public static function notice($message){
+		if(self::cur_level() >= 6){
+			foreach(func_get_args() as $message){
+				$log = new self(6,$message);
+				static::call_class_plugin_funcs('notice',$log->fm_message(),$log->context());
+			}
+		}
+	}
+	/**
+	 * Interesting events.
+	 * @param mixed $message
+	 */
+	public static function info($message){
+		if(self::cur_level() >= 7){
+			foreach(func_get_args() as $message){
+				$log = new self(7,$message);
+				static::call_class_plugin_funcs('info',$log->fm_message(),$log->context());
+			}
+		}
+	}
+	/**
+	 * Detailed debug information.
+	 * @param mixed $message
+	 */
+	public static function debug($message){
+		if(self::cur_level() >= 8){
+			foreach(func_get_args() as $message){
+				$log = new self(8,$message);
+				static::call_class_plugin_funcs('debug',$log->fm_message(),$log->context());
+			}
+		}
+	}
+	
 	/**
 	 * traceを生成
-	 * @param mixed $value 内容
+	 * @param mixed $message 内容
 	 */
-	public static function trace($value){
+	public static function trace($message){
 		if(self::cur_level() >= -1){
-			foreach(func_get_args() as $value){
-				self::flush(new self(-1,$value));
+			foreach(func_get_args() as $message){
+				new self(-1,$message);
 			}
 		}
 	}

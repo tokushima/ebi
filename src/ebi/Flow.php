@@ -455,8 +455,6 @@ class Flow{
 							}
 							return $value;
 						};
-						\ebi\Log::disable_display();
-							
 						\ebi\HttpHeader::send('Content-Type','application/json');
 						print(\ebi\Json::encode(['result'=>$to_array($result_vars)]));
 						return self::terminate();
@@ -464,7 +462,7 @@ class Flow{
 				}catch(\Exception $e){
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
-					\ebi\Log::warn($e);
+					\ebi\Log::warning($e);
 					
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
@@ -514,8 +512,6 @@ class Flow{
 						}
 						$message[] = $em;
 					}
-					\ebi\Log::disable_display();
-					
 					\ebi\HttpHeader::send_status(500);
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));
