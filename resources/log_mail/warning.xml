@@ -2,5 +2,7 @@
 	<from address="from@email.address" />
 	<to address="to@email.address" />
 	<subject>Warn!</subject>
-	<body>{$log.value()}</body>
+	<body>
+		{$log.message()}
+	</body>
 </mail>

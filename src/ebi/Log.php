@@ -13,7 +13,7 @@ namespace ebi;
 class Log{
 	use \ebi\Plugin;
 	
-	private static $level_strs = ['none','emergency','alert','critical','error','warning','notice','info','debug'];
+	private static $level_strs = ['emergency','alert','critical','error','warning','notice','info','debug'];
 	private static $current_level;
 	private static $fpout;
 
@@ -33,6 +33,23 @@ class Log{
 		return self::$current_level;
 	}
 	public function __construct($level,$message,$file=null,$line=null,$time=null){
+		if(!isset(self::$fpout)){
+			/**
+			 * ログを出力するファイルを指定する
+			 */
+			self::$fpout = \ebi\Conf::get('file','');
+		
+			if(!empty(self::$fpout)){
+				if(!is_dir($dir = dirname(self::$fpout))){
+					@mkdir($dir,0777,true);
+				}
+				@file_put_contents(self::$fpout,'',FILE_APPEND);
+		
+				if(!is_file(self::$fpout)){
+					throw new \ebi\exception\InvalidArgumentException('Write failure: '.self::$fpout);
+				}
+			}
+		}
 		if($file === null){
 			$db = debug_backtrace(false);
 			array_shift($db);
@@ -50,12 +67,23 @@ class Log{
 		$this->line = intval($line);
 		$this->time = ($time === null) ? time() : $time;
 		$this->message = (is_object($message)) ? 
-							(($message instanceof \Exception) ? 
-								(string)$message
-								: clone($message)
-							)
-							: $message;
-		$this->flush($this);
+		(
+			($message instanceof \Exception) ? 
+			(string)$message : clone($message)
+		) : $message;
+		
+		if(!empty(self::$fpout)){
+			file_put_contents(
+				self::$fpout,
+				((string)$this).PHP_EOL,
+				FILE_APPEND
+			);
+		}
+		/**
+		 * ログ出力
+		 * @param \ebi\Log $arg1
+		 */
+		static::call_class_plugin_funcs('log_output',$this);
 	}
 	public function fm_message(){
 		if(!is_string($this->message)){
@@ -86,54 +114,18 @@ class Log{
 	public function message(){
 		return $this->message;
 	}
-	public function context(){
-		return [
-			'time'=>$this->time(),
-			'file'=>$this->file_relative(),
-			'line'=>$this->line(),
-		];
-	}
 	public function __toString(){
 		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_message();
 	}
-	
-	private function flush(self $log){
-		if(!isset(self::$fpout)){
-			/**
-			 * ログを出力するファイルを指定する
-			*/
-			self::$fpout = \ebi\Conf::get('file','');
-			
-			if(!empty(self::$fpout)){
-				if(!is_dir($dir = dirname(self::$fpout))){
-					@mkdir($dir,0777,true);
-				}
-				@file_put_contents(self::$fpout,'',FILE_APPEND);
-				
-				if(!is_file(self::$fpout)){
-					throw new \ebi\exception\InvalidArgumentException('Write failure: '.self::$fpout);
-				}
-			}
-		}
-		if(!empty(self::$fpout)){
-			file_put_contents(
-				self::$fpout,
-				((string)$log).PHP_EOL,
-				FILE_APPEND
-			);
-		}
-	}
-
 	
 	/**
 	 * System is unusable.
 	 * @param mixed $message
 	 */
 	public static function emergency(){
-		if(self::cur_level() >= 1){
+		if(self::cur_level() >= 0){
 			foreach(func_get_args() as $message){
-				$log = new self(1,$message);
-				static::call_class_plugin_funcs('emergency',$log->fm_message(),$log->context());
+				new self(0,$message);
 			}
 		}
 	}
@@ -142,10 +134,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function alert(){
-		if(self::cur_level() >= 2){
+		if(self::cur_level() >= 1){
 			foreach(func_get_args() as $message){
-				$log = new self(2,$message);
-				static::call_class_plugin_funcs('alert',$log->fm_message(),$log->context());
+				new self(1,$message);
 			}
 		}
 	}
@@ -154,10 +145,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function critical(){
-		if(self::cur_level() >= 3){
+		if(self::cur_level() >= 2){
 			foreach(func_get_args() as $message){
-				$log = new self(3,$message);
-				static::call_class_plugin_funcs('critical',$log->fm_message(),$log->context());
+				new self(2,$message);
 			}
 		}
 	}
@@ -167,10 +157,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function error(){
-		if(self::cur_level() >= 4){
+		if(self::cur_level() >= 3){
 			foreach(func_get_args() as $message){
-				$log = new self(4,$message);
-				static::call_class_plugin_funcs('error',$log->fm_message(),$log->context());
+				new self(3,$message);
 			}
 		}
 	}
@@ -179,10 +168,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function warning($message){
-		if(self::cur_level() >= 5){
+		if(self::cur_level() >= 4){
 			foreach(func_get_args() as $message){
-				$log = new self(5,$message);
-				static::call_class_plugin_funcs('warning',$log->fm_message(),$log->context());
+				new self(4,$message);
 			}
 		}
 	}
@@ -191,10 +179,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function notice($message){
-		if(self::cur_level() >= 6){
+		if(self::cur_level() >= 5){
 			foreach(func_get_args() as $message){
-				$log = new self(6,$message);
-				static::call_class_plugin_funcs('notice',$log->fm_message(),$log->context());
+				new self(5,$message);
 			}
 		}
 	}
@@ -203,10 +190,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function info($message){
-		if(self::cur_level() >= 7){
+		if(self::cur_level() >= 6){
 			foreach(func_get_args() as $message){
-				$log = new self(7,$message);
-				static::call_class_plugin_funcs('info',$log->fm_message(),$log->context());
+				new self(6,$message);
 			}
 		}
 	}
@@ -215,10 +201,9 @@ class Log{
 	 * @param mixed $message
 	 */
 	public static function debug($message){
-		if(self::cur_level() >= 8){
+		if(self::cur_level() >= 7){
 			foreach(func_get_args() as $message){
-				$log = new self(8,$message);
-				static::call_class_plugin_funcs('debug',$log->fm_message(),$log->context());
+				new self(7,$message);
 			}
 		}
 	}

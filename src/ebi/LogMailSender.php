@@ -4,10 +4,6 @@ namespace ebi;
  * ログをメール送信する
  *
  * 以下パスにテンプレートファイルがあれば送信
- * [template_path]/debug.xml
- * [template_path]/info.xml
- * [template_path]/warn.xml
- * [template_path]/error.xml
  *
  * @author tokushima
  *
@@ -18,7 +14,7 @@ class LogMailSender{
 	public function log_output(\ebi\Log $log){
 		if(empty($this->template_base)){
 			/**
-			 * mailテンプレートのディレクトリ (debug.xml, info.xml, warn.xml, error.xml)
+			 * mailテンプレートのディレクトリ
 			 * ファイルあった場合のみ送信する
 			 */
 			$this->template_base = \ebi\Conf::get('template_dir',\ebi\Conf::resource_path('log_mail'));
