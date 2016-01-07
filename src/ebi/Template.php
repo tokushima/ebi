@@ -557,7 +557,7 @@ class Template{
 					switch($tagname){
 						case 'select':
 							$value = sprintf('<rt:loop param="%s" var="%s" key="%s">'
-											.'<option value="{$%s}">{$%s}</option>'
+											.((trim($obj->value()) == '') ? '<option value="{$%s}">{$%s}</option>' : $obj->value())
 											.'</rt:loop>'
 											,$obj->in_attr('rt:param'),$obj->in_attr('rt:var','loop_var'.$uid),$obj->in_attr('rt:key','loop_key'.$uid)
 											,$obj->in_attr('rt:key','loop_key'.$uid),$obj->in_attr('rt:var','loop_var'.$uid)

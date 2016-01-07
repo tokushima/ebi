@@ -114,6 +114,7 @@ include_once('bootstrap.php');
 		return ['id1'=>'A\'"<>','id2'=>'ABC'];
 	}],
 	'form/select'=>['name'=>'form_select','template'=>'form_select.html','action'=>'test.flow.Action::select'],
+	'form/select/obj'=>['name'=>'form_select_obj','template'=>'form_select_obj.html','action'=>'test.flow.Action::select_obj'],
 		
 	'abc'=>['name'=>'abc','action'=>'test.db.Abc::create'],
 	
