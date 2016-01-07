@@ -15,3 +15,6 @@ $b->vars('id3','ghi');
 \ebi\HtmlForm::submit($b);
 meq('ID3=ghi',$b->body());
 
+
+$b->do_get(url('test_index::form_select'));
+meq('<select name="data_id"><option value="10">AAA</option><option value="20" selected="selected">BBB</option><option value="30">CCC</option></select>',$b->body());

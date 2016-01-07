@@ -61,4 +61,14 @@ class Action{
 		$req = new \ebi\Request();
 		return array_merge($req->ar_vars(),['object'=>new \test\model\Form(10,'ABC',999)]);
 	}
+	public function select(){
+		return [
+			'data_value'=>20,
+			'data_list'=>[
+				10=>'AAA',
+				20=>'BBB',
+				30=>'CCC',
+			]
+		];
+	}
 }

@@ -112,7 +112,8 @@ include_once('bootstrap.php');
 	'form/obj'=>['name'=>'form_obj','template'=>'form_obj.html','action'=>'test.flow.Action::form_obj'],
 	'form1/esc'=>['name'=>'form1esc','template'=>'form1ref.html','action'=>function(){
 		return ['id1'=>'A\'"<>','id2'=>'ABC'];
-	}],	
+	}],
+	'form/select'=>['name'=>'form_select','template'=>'form_select.html','action'=>'test.flow.Action::select'],
 		
 	'abc'=>['name'=>'abc','action'=>'test.db.Abc::create'],
 	

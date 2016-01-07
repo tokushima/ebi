@@ -515,7 +515,7 @@ class Template{
 							case 'file':
 								$obj->attr('enctype','multipart/form-data');
 								$obj->attr('method','post');
-								break;
+								break;								
 							default:
 								$tag->attr('rt:ref','true');
 								$obj->value(str_replace($tag->plain(),$tag->get(),$obj->value()));
@@ -528,16 +528,13 @@ class Template{
 		return $this->html_input($src);
 	}
 	
-	
-	
-	
 	private function html_input($src){
 		foreach(\ebi\Xml::anonymous($src)->find('input|textarea|select') as $obj){
 			if('' != ($originalName = $obj->in_attr('name',$obj->in_attr('id','')))){
 				$obj->escape(false);
 				$type = strtolower($obj->in_attr('type','text'));
 				$name = $this->parse_plain_variable($this->form_variable_name($originalName));
-				$lname = strtolower($obj->name());
+				$tagname = strtolower($obj->name());
 				$change = false;
 				$uid = uniqid();
 
@@ -557,7 +554,7 @@ class Template{
 					$change = true;
 				}
 				if($obj->is_attr('rt:param')){
-					switch($lname){
+					switch($tagname){
 						case 'select':
 							$value = sprintf('<rt:loop param="%s" var="%s" key="%s">'
 											.'<option value="{$%s}">{$%s}</option>'
@@ -566,76 +563,63 @@ class Template{
 											,$obj->in_attr('rt:key','loop_key'.$uid),$obj->in_attr('rt:var','loop_var'.$uid)
 							);
 							$obj->value($this->rtloop($value));
-							if($obj->is_attr('rt:null')) $obj->value('<option value="">'.$obj->in_attr('rt:null').'</option>'.$obj->value());
+							if($obj->is_attr('rt:null')){
+								$obj->value('<option value="">'.$obj->in_attr('rt:null').'</option>'.$obj->value());
+							}
 					}
 					$obj->rm_attr('rt:param','rt:key','rt:var');
 					$change = true;
 				}
-				if($obj->is_attr('rt:ref')){
+								
+				if($tagname == 'input'){
 					if($this->is_reference($obj)){
-						switch($lname){
-							case 'textarea':
-								$obj->value($this->no_exception_str(
-									sprintf('{$_t_.htmlencode(%s)}',((preg_match("/^{\$(.+)}$/",$originalName,$match)) ? 
-										'{$$'.$match[1].'}' : 
-										'{$'.$originalName.'}')
-									)
-								));
-								break;
-							case 'select':
-								$select = $obj->value();
-								foreach($obj->find('option') as $option){
-									$option->escape(false);
-									$value = $this->parse_plain_variable($option->in_attr('value'));
-									if(empty($value) || $value[0] != '$') $value = sprintf("'%s'",$value);
-									$option->rm_attr('selected');
-									$option->plain_attr($this->check_selected($name,$value,'selected'));
-									$select = str_replace($option->plain(),$option->get(),$select);
-								}
-								$obj->value($select);
-								break;
-							case 'input':
-								switch($type){
-									case 'checkbox':
-									case 'radio':
-										$value = $this->parse_plain_variable($obj->in_attr('value','true'));
-										$value = (substr($value,0,1) != '$') ? sprintf("'%s'",$value) : $value;
-										$obj->rm_attr('checked');
-										$obj->plain_attr($this->check_selected($name,$value,'checked'));
-										break;
-									case 'text':
-									case 'hidden':
-									case 'password':
-									case 'search':
-									case 'url':
-									case 'email':
-									case 'tel':
-									case 'datetime':
-									case 'date':
-									case 'month':
-									case 'week':
-									case 'time':
-									case 'datetime-local':
-									case 'number':
-									case 'range':
-									case 'color':
-										$obj->attr('value',$this->no_exception_str(sprintf('{$_t_.htmlencode(%s)}',
-																	((preg_match("/^\{\$(.+)\}$/",$originalName,$match)) ?
-																		'{$$'.$match[1].'}' :
-																		'{$'.$originalName.'}'))));
-										break;
-								}
-								break;
+						if($type == 'checkbox' || $type == 'radio'){
+							$value = $this->parse_plain_variable($obj->in_attr('value','true'));
+							$value = (substr($value,0,1) != '$') ? sprintf("'%s'",$value) : $value;
+							$obj->rm_attr('checked');
+							$obj->plain_attr($this->check_selected($name,$value,'checked'));
+						}else{
+							$obj->attr('value',$this->no_exception_str(sprintf('{$_t_.htmlencode(%s)}',
+									((preg_match("/^\{\$(.+)\}$/",$originalName,$match)) ?
+											'{$$'.$match[1].'}' :
+											'{$'.$originalName.'}'))));
 						}
+						$change = true;
 					}
-					$change = true;
+				}else if($tagname == 'textarea'){
+					if($this->is_reference($obj)){
+						$obj->value($this->no_exception_str(
+							sprintf('{$_t_.htmlencode(%s)}',((preg_match("/^{\$(.+)}$/",$originalName,$match)) ? 
+								'{$$'.$match[1].'}' : 
+								'{$'.$originalName.'}')
+							)
+						));
+						$obj->close_empty(false);
+						$change = true;
+					}
+				}else if($tagname == 'select'){
+					if($this->is_reference($obj) || $obj->is_attr('value')){
+						$select = $obj->value();
+						$name = $this->parse_plain_variable($obj->in_attr('value',$name));
+						$obj->rm_attr('value');
+							
+						foreach($obj->find('option') as $option){
+							$option->escape(false);
+							$value = $this->parse_plain_variable($option->in_attr('value'));
+					
+							if(empty($value) || $value[0] != '$'){
+								$value = sprintf("'%s'",$value);
+							}
+							$option->rm_attr('selected');
+							$option->plain_attr($this->check_selected($name,$value,'selected'));
+							$select = str_replace($option->plain(),$option->get(),$select);
+						}
+						$obj->value($select);
+						$obj->close_empty(false);
+						$change = true;
+					}
 				}
 				if($change){
-					switch($lname){
-						case 'textarea':
-						case 'select':
-							$obj->close_empty(false);
-					}
 					$src = str_replace($obj->plain(),$obj->get(),$src);
 				}
 			}
