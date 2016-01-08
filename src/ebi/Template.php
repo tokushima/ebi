@@ -489,7 +489,7 @@ class Template{
 					$tag = $this->php_exception_catch(sprintf(
 							'<?php '
 							.'%s=%s; '
-							.'if( isset(%s) && ( is_array(%s) || (is_object(%s) && %s instanceof \Traversable) ) ){'
+							.'if( ( is_array(%s) || (is_object(%s) && %s instanceof \Traversable) ) ){'
 							.' foreach(%s as %s => %s){'
 							.'  if(preg_match(\'/^[a-zA-Z0-9_]+$/\',%s) && !isset($%s)){'
 							.'   $%s = %s;'
@@ -498,7 +498,7 @@ class Template{
 							.'}'
 							.' ?>'
 							,$var,$param
-							,$var,$var,$var,$var
+							,$var,$var,$var
 							,$var,$k,$v
 							,$k,$k,
 							$k,$v
@@ -540,7 +540,9 @@ class Template{
 
 				if(substr($originalName,-2) !== '[]'){
 					if($type == 'checkbox'){
-						if($obj->in_attr('rt:multiple','true') === 'true') $obj->attr('name',$originalName.'[]');
+						if($obj->in_attr('rt:multiple','true') === 'true'){
+							$obj->attr('name',$originalName.'[]');
+						}
 						$obj->rm_attr('rt:multiple');
 						$change = true;
 					}else if($obj->is_attr('multiple') || $obj->in_attr('multiple') === 'multiple'){
@@ -629,13 +631,14 @@ class Template{
 	}
 	private function check_selected($name,$value,$selected){
 		return sprintf('<?php if('
-					.'isset(%s) && (%s === %s '
+					.((strpos($name,'->') === false) ? 'isset('.$name.') && ' : '')
+					.'(%s === %s '
 										.' || (!is_array(%s) && ctype_digit((string)%s) && (string)%s === (string)%s)'
 										.' || ((%s === "true" || %s === "false") ? (%s === (%s == "true")) : false)'
 										.' || in_array(%s,((is_array(%s)) ? %s : (is_null(%s) ? [] : [%s])),true) '
 									.') '
 					.'){ print(" %s=\"%s\""); } ?>' // no escape
-					,$name,$name,$value
+					,$name,$value
 					,$name,$name,$name,$value
 					,$value,$value,$name,$value
 					,$value,$name,$name,$name,$name
