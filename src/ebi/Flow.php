@@ -421,6 +421,11 @@ class Flow{
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
 					}else if(
 						array_key_exists('@',$pattern)
+						&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name']).'.html')
+					){
+						self::template($result_vars,$pattern,$ins,$t);					
+					}else if(
+						array_key_exists('@',$pattern)
 						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 					){
 						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
