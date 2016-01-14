@@ -21,15 +21,31 @@ class Flow{
 	
 	private static $template;
 	
+	/**
+	 * アプリケーションのURL
+	 * @return string
+	 */
 	public static function app_url(){
 		return self::$app_url;
 	}
+	/**
+	 * メディアファイルのベースURL
+	 * @return string
+	 */
 	public static function media_url(){
 		return self::$media_url;
 	}
+	/**
+	 * 定義されたURLパターン
+	 * @return string{}
+	 */
 	public static function url_pattern(){
 		return self::$url_pattern;
 	}
+	/**
+	 * 選択されたマップと同じクラスを持つURLパターン
+	 * @return string{}
+	 */
 	public static function selected_class_pattern(){
 		return self::$selected_class_pattern;
 	}
@@ -136,12 +152,12 @@ class Flow{
 				$entry_file = basename($d['file']);
 				break;
 			}
-		}		
+		}
 		
 		/**
 		 * アプリケーションURL 
 		 * 最後尾に「*」で実行エントリに自動変換
-		 * http://localhost:8000/ * => http://localhost:8000/api
+		 * http://localhost:8000/* => http://localhost:8000/api
 		 * 
 		 * 「**」でエントリファイル名(.php付き)に変換される
 		 * http://localhost:8000/** => http://localhost:8000/api.php
