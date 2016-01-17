@@ -21,15 +21,31 @@ class Flow{
 	
 	private static $template;
 	
+	/**
+	 * アプリケーションのURL
+	 * @return string
+	 */
 	public static function app_url(){
 		return self::$app_url;
 	}
+	/**
+	 * メディアファイルのベースURL
+	 * @return string
+	 */
 	public static function media_url(){
 		return self::$media_url;
 	}
+	/**
+	 * 定義されたURLパターン
+	 * @return string{}
+	 */
 	public static function url_pattern(){
 		return self::$url_pattern;
 	}
+	/**
+	 * 選択されたマップと同じクラスを持つURLパターン
+	 * @return string{}
+	 */
 	public static function selected_class_pattern(){
 		return self::$selected_class_pattern;
 	}
@@ -136,12 +152,12 @@ class Flow{
 				$entry_file = basename($d['file']);
 				break;
 			}
-		}		
+		}
 		
 		/**
 		 * アプリケーションURL 
 		 * 最後尾に「*」で実行エントリに自動変換
-		 * http://localhost:8000/ * => http://localhost:8000/api
+		 * http://localhost:8000/* => http://localhost:8000/api
 		 * 
 		 * 「**」でエントリファイル名(.php付き)に変換される
 		 * http://localhost:8000/** => http://localhost:8000/api.php
@@ -421,6 +437,11 @@ class Flow{
 						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
 					}else if(
 						array_key_exists('@',$pattern)
+						&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name']).'.html')
+					){
+						self::template($result_vars,$pattern,$ins,$t);					
+					}else if(
+						array_key_exists('@',$pattern)
 						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 					){
 						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
@@ -455,8 +476,6 @@ class Flow{
 							}
 							return $value;
 						};
-						\ebi\Log::disable_display();
-							
 						\ebi\HttpHeader::send('Content-Type','application/json');
 						print(\ebi\Json::encode(['result'=>$to_array($result_vars)]));
 						return self::terminate();
@@ -464,7 +483,7 @@ class Flow{
 				}catch(\Exception $e){
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
-					\ebi\Log::warn($e);
+					\ebi\Log::warning($e);
 					
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
@@ -514,8 +533,6 @@ class Flow{
 						}
 						$message[] = $em;
 					}
-					\ebi\Log::disable_display();
-					
 					\ebi\HttpHeader::send_status(500);
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));

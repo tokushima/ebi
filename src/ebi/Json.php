@@ -6,6 +6,38 @@ namespace ebi;
  *
  */
 class Json{
+	private $arr = [];
+	
+	/**
+	 * JSONからオブジェクトを生成する
+	 * @param string $json
+	 * @return \ebi\Json
+	 */
+	public function __construct($json){
+		$this->arr = self::decode($json);
+	}
+	/**
+	 * パスから値を取得する
+	 * @param string $name
+	 * @return mixed
+	 */
+	public function find($name=null){
+		if(empty($name)){
+			return $this->arr;
+		}
+		$names = explode('/',$name);
+		$arr = $this->arr;
+		
+		foreach($names as $key){
+			if(is_array($arr) && array_key_exists($key,$arr)){
+				$arr = $arr[$key];
+			}else{
+				return null;
+			}
+		}
+		return $arr;
+	}
+	
 	/**
 	 * 値を JSON 形式にして返す
 	 * @param mixed $val
@@ -36,6 +68,9 @@ class Json{
 	 * @return mixed
 	 */
 	public static function decode($json){
+		if(is_null($json) || $json === ''){
+			return null;
+		}
 		$val = json_decode($json,true);
 		
 		if(json_last_error() != JSON_ERROR_NONE){

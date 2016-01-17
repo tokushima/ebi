@@ -6,7 +6,7 @@ class Form extends \ebi\Object{
 	protected $value;
 	protected $category_id;
 	
-	public function __construct($id,$value,$category_id){
+	public function __construct($id,$value,$category_id=0){
 		$this->id = $id;
 		$this->value = $value;
 		$this->category_id = $category_id;

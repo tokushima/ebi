@@ -52,7 +52,7 @@ class Action{
 	}
 	public function log(){
 		\ebi\Log::error('ERROR');
-		\ebi\Log::warn('WARN');
+		\ebi\Log::warning('WARN');
 		\ebi\Log::info('INFO');
 		\ebi\Log::debug('DEBUG');
 		\ebi\Log::trace('TRACE');
@@ -60,5 +60,25 @@ class Action{
 	public function form_obj(){
 		$req = new \ebi\Request();
 		return array_merge($req->ar_vars(),['object'=>new \test\model\Form(10,'ABC',999)]);
+	}
+	public function select(){
+		return [
+			'data_value'=>20,
+			'data_list'=>[
+				10=>'AAA',
+				20=>'BBB',
+				30=>'CCC',
+			]
+		];
+	}
+	public function select_obj(){
+		return [
+				'data_value'=>20,
+				'data_list'=>[
+					new \test\model\Form(10,'AAA'),
+					new \test\model\Form(20,'BBB'),
+					new \test\model\Form(30,'CCC'),
+				]
+		];
 	}
 }

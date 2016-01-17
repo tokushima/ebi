@@ -8,32 +8,48 @@ namespace ebi;
  * @var timestamp $time 発生時間
  * @var string $file 発生したファイル名
  * @var integer $line 発生した行
- * @var mixed $value 内容
+ * @var mixed $message 内容
  */
 class Log{
 	use \ebi\Plugin;
 	
-	private static $level_strs = ['none','error','warn','info','debug'];
+	private static $level_strs = ['emergency','alert','critical','error','warning','notice','info','debug'];
 	private static $current_level;
-	private static $stdout;
 	private static $fpout;
 
 	private $level;
 	private $time;
 	private $file;
 	private $line;
-	private $value;
+	private $message;
 		
 	private static function cur_level(){
 		if(self::$current_level === null){
 			/**
-			 * エラーレベル (none,error,warn,info,debug)
+			 * エラーレベル ('emergency','alert','critical','error','warning','notice','info','debug')
 			 */
-			self::$current_level = array_search(\ebi\Conf::get('level','none'),self::$level_strs);
+			self::$current_level = array_search(\ebi\Conf::get('level','critical'),self::$level_strs);
 		}
 		return self::$current_level;
 	}
-	public function __construct($level,$value,$file=null,$line=null,$time=null){
+	public function __construct($level,$message,$file=null,$line=null,$time=null){
+		if(!isset(self::$fpout)){
+			/**
+			 * ログを出力するファイルを指定する
+			 */
+			self::$fpout = \ebi\Conf::get('file','');
+		
+			if(!empty(self::$fpout)){
+				if(!is_dir($dir = dirname(self::$fpout))){
+					@mkdir($dir,0777,true);
+				}
+				@file_put_contents(self::$fpout,'',FILE_APPEND);
+		
+				if(!is_file(self::$fpout)){
+					throw new \ebi\exception\InvalidArgumentException('Write failure: '.self::$fpout);
+				}
+			}
+		}
 		if($file === null){
 			$db = debug_backtrace(false);
 			array_shift($db);
@@ -50,20 +66,32 @@ class Log{
 		$this->file = $file;
 		$this->line = intval($line);
 		$this->time = ($time === null) ? time() : $time;
-		$this->value = (is_object($value)) ? 
-							(($value instanceof \Exception) ? 
-								(string)$value
-								: clone($value)
-							)
-							: $value;
+		$this->message = (is_object($message)) ? 
+		(
+			($message instanceof \Exception) ? 
+			(string)$message : clone($message)
+		) : $message;
+		
+		if(!empty(self::$fpout)){
+			file_put_contents(
+				self::$fpout,
+				((string)$this).PHP_EOL,
+				FILE_APPEND
+			);
+		}
+		/**
+		 * ログ出力
+		 * @param \ebi\Log $arg1
+		 */
+		static::call_class_plugin_funcs('log_output',$this);
 	}
-	public function fm_value(){
-		if(!is_string($this->value)){
+	public function fm_message(){
+		if(!is_string($this->message)){
 			ob_start();
-				var_dump($this->value);
+				var_dump($this->message);
 			return trim(ob_get_clean());
 		}
-		return $this->value;
+		return $this->message;
 	}
 	public function fm_level(){
 		return ($this->level >= 0) ? self::$level_strs[$this->level] : 'trace';
@@ -83,126 +111,111 @@ class Log{
 	public function line(){
 		return $this->line;
 	}
-	public function value(){
-		return $this->value;
+	public function message(){
+		return $this->message;
 	}
 	public function __toString(){
-		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_value();
+		return '['.$this->time().']'.'['.$this->fm_level().']'.':['.$this->file_relative().':'.$this->line().']'.' '.$this->fm_message();
 	}
 	
 	/**
-	 * 格納されたログを出力する
+	 * System is unusable.
+	 * @param mixed $message
 	 */
-	private static function flush(self $log){
-		if(!isset(self::$stdout)){
-			/**
-			 * boolean 標準出力に表示してもいいか
-			 */
-			self::$stdout = \ebi\Conf::get('stdout',false);
-			/**
-			 * ログを出力するファイルを指定する
-			*/
-			self::$fpout = \ebi\Conf::get('file');
-			
-			if(!empty(self::$fpout)){
-				if(!is_dir($dir = dirname(self::$fpout))){
-					@mkdir($dir,0777,true);
-				}
-				@file_put_contents(self::$fpout,'',FILE_APPEND);
-				
-				if(!is_file(self::$fpout)){
-					throw new \ebi\exception\InvalidArgumentException('Write failure: '.self::$fpout);
-				}
+	public static function emergency(){
+		if(self::cur_level() >= 0){
+			foreach(func_get_args() as $message){
+				new self(0,$message);
 			}
 		}
-		if(empty(self::$fpout)){
-			@file_put_contents('php://stdout',(string)$log.PHP_EOL);
-		}else{
-			/**
-			 * 出力に改行を含むかの真偽値
-			 */
-			$nl2str = (\ebi\Conf::get('nl2str') !== null);
-			
-			file_put_contents(
-				self::$fpout,
-				($nl2str ? 
-					str_replace(["\r\n","\r","\n"],\ebi\Conf::get('nl2str'),((string)$log)) :
-					(string)$log
-				).PHP_EOL,
-				FILE_APPEND
-			);
+	}
+	/**
+	 * Action must be taken immediately.
+	 * @param mixed $message
+	 */
+	public static function alert(){
+		if(self::cur_level() >= 1){
+			foreach(func_get_args() as $message){
+				new self(1,$message);
+			}
 		}
-		/**
-		 * ログ出力
-		 * @param \ebi\Log $log
-		 */
-		static::call_class_plugin_funcs('log_output',$log);
 	}
 	/**
-	 * 標準出力へのログを許可しているか
-	 * @return boolean
+	 * Critical conditions.
+	 * @param mixed $message
 	 */
-	public static function is_stdout(){
-		return self::$stdout;
+	public static function critical(){
+		if(self::cur_level() >= 2){
+			foreach(func_get_args() as $message){
+				new self(2,$message);
+			}
+		}
 	}
+	
 	/**
-	 * 標準出力へのログ出力を無効にする
-	 */
-	public static function disable_display(){
-		self::$stdout = false;
-	}
-	/**
-	 * errorを生成
-	 * @param mixed $value 内容
+	 * Runtime errors that do not require immediate action but should typically
+	 * @param mixed $message
 	 */
 	public static function error(){
-		if(self::cur_level() >= 1){
-			foreach(func_get_args() as $value){
-				self::flush(new self(1,$value));
-			}
-		}
-	}
-	/**
-	 * warnを生成
-	 * @param mixed $value 内容
-	 */
-	public static function warn($value){
-		if(self::cur_level() >= 2){
-			foreach(func_get_args() as $value){
-				self::flush(new self(2,$value));
-			}
-		}
-	}
-	/**
-	 * infoを生成
-	 * @param mixed $value 内容
-	 */
-	public static function info($value){
 		if(self::cur_level() >= 3){
-			foreach(func_get_args() as $value){
-				self::flush(new self(3,$value));
+			foreach(func_get_args() as $message){
+				new self(3,$message);
 			}
 		}
 	}
 	/**
-	 * debugを生成
-	 * @param mixed $value 内容
+	 * Exceptional occurrences that are not errors.
+	 * @param mixed $message
 	 */
-	public static function debug($value){
+	public static function warning($message){
 		if(self::cur_level() >= 4){
-			foreach(func_get_args() as $value){
-				self::flush(new self(4,$value));
+			foreach(func_get_args() as $message){
+				new self(4,$message);
 			}
 		}
 	}
+	/**
+	 * Normal but significant events.
+	 * @param mixed $message
+	 */
+	public static function notice($message){
+		if(self::cur_level() >= 5){
+			foreach(func_get_args() as $message){
+				new self(5,$message);
+			}
+		}
+	}
+	/**
+	 * Interesting events.
+	 * @param mixed $message
+	 */
+	public static function info($message){
+		if(self::cur_level() >= 6){
+			foreach(func_get_args() as $message){
+				new self(6,$message);
+			}
+		}
+	}
+	/**
+	 * Detailed debug information.
+	 * @param mixed $message
+	 */
+	public static function debug($message){
+		if(self::cur_level() >= 7){
+			foreach(func_get_args() as $message){
+				new self(7,$message);
+			}
+		}
+	}
+	
 	/**
 	 * traceを生成
-	 * @param mixed $value 内容
+	 * @param mixed $message 内容
 	 */
-	public static function trace($value){
+	public static function trace($message){
 		if(self::cur_level() >= -1){
-			foreach(func_get_args() as $value){
-				self::flush(new self(-1,$value));
+			foreach(func_get_args() as $message){
+				new self(-1,$message);
 			}
 		}
 	}
