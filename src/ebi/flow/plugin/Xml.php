@@ -31,7 +31,10 @@ class Xml{
 		foreach($exception as $g => $e){
 			$class_name = get_class($e);
 			$message = new \ebi\Xml('message',$e->getMessage());
-			$message->add('group',$g);
+			
+			if(!empty($g)){
+				$message->add('group',$g);
+			}
 			$message->add('type',basename(str_replace("\\",'/',$class_name)));
 			$xml->add($message);
 		}
