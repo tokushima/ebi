@@ -547,6 +547,7 @@ class DbConnector{
 				case 'integer':
 					return $quote($name).' INTEGER';
 				case 'email':
+					return $quote($name).' TEXT';
 				default:
 					throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 			}
