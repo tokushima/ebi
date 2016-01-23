@@ -13,3 +13,12 @@ try{
 
 }
 
+
+eq('2016/10/03 00:00:00',date('Y/m/d H:i:s',\ebi\Util::add_date('yesterday','2016/10/04 12:34:56')));
+eq('2016/10/04 00:00:00',date('Y/m/d H:i:s',\ebi\Util::add_date('today','2016/10/04 12:34:56')));
+eq('2016/10/05 00:00:00',date('Y/m/d H:i:s',\ebi\Util::add_date('tomorrow','2016/10/04 12:34:56')));
+eq('2016/10/01 00:00:00',date('Y/m/d H:i:s',\ebi\Util::add_date('first','2016/10/04 12:34:56')));
+eq('2016/10/31 23:59:59',date('Y/m/d H:i:s',\ebi\Util::add_date('last','2016/10/04 12:34:56')));
+
+
+
