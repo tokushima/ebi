@@ -1,6 +1,5 @@
 <?php
 namespace test\db;
-use ebi\Q;
 /**
  * @var serial $id @['hash'=>false]
  * @var string $value
@@ -10,10 +9,6 @@ class Abc extends \ebi\Dao{
 	protected $id;
 	protected $value;
 	
-	/**
-	 * @http_method post
-	 * @return multitype:NULL
-	 */
 	public function create(){
 		$req = new \ebi\Request();
 		$this->value($req->in_vars('value'));

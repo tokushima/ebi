@@ -360,13 +360,6 @@ class Flow{
 						}
 					}
 					if(isset($funcs)){
-						if(isset($class)){
-							$http_method = \ebi\Annotation::get_method(get_class($funcs[0]), $method, 'http_method');
-							
-							if(!empty($http_method) && strtoupper($http_method['value']) != \ebi\Request::method()){
-								throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
-							}
-						}
 						try{
 							$action_result_vars = call_user_func_array($funcs,$param_arr);
 							

@@ -281,9 +281,11 @@ class Util{
 	}
 	/**
 	 * 日付に加減する
-	 * @param string $time +2 month, -7 day
+	 * 
+	 * @param string $time +2 month, -7 day, yesterday, today, tomorrow, first, last
 	 * @param mixed $date
 	 * @return number
+	 * @see http://jp2.php.net/manual/ja/datetime.formats.relative.php
 	 */
 	public static function add_date($time,$date=null){
 		if(!isset($date)){
@@ -293,12 +295,19 @@ class Util{
 		}else{
 			$t = strtotime($date);
 		}
+		if($time == 'first'){
+			$time = 'first day of 00:00:00';
+		}else if($time == 'last'){
+			$time = 'last day of 23:59:59';
+		}
+		
 		$rtn = strtotime($time,$t);
 		if($rtn === false){
 			throw new \InvalidArgumentException(sprintf('invalid date and time formats `%s`',$time));
 		}
 		return $rtn;
 	}
+	
 	/**
 	 * 文字列を丸める
 	 * @param string $str 対象の文字列
