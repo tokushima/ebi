@@ -96,7 +96,7 @@ class Object implements \IteratorAggregate{
 	protected function set_prop($name,$type,$value){
 		try{
 			$c = get_class($this);
-			return \ebi\Validation::set($type,$value,isset(self::$_m[$c][$name]) ? self::$_m[$c][$name] : []);
+			return \ebi\Validator::type($type,$value,isset(self::$_m[$c][$name]) ? self::$_m[$c][$name] : []);
 		}catch(\InvalidArgumentException $e){
 			throw new \InvalidArgumentException($this->_.' must be an '.$type);
 		}

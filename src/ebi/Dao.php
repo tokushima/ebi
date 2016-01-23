@@ -518,35 +518,14 @@ abstract class Dao extends \ebi\Object{
 		foreach($this->columns(true) as $name => $column){
 			if(!\ebi\Exceptions::has($name)){
 				$value = $this->{$name}();
-				$e_require = false;
-	
-				if($this->prop_anon($name,'require') === true && ($value === '' || $value === null)){
-					\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.' required'),$name);
-					$e_require = true;
-				}
-				if(!$e_require && $value !== null){
-					switch($this->prop_anon($name,'type')){
-						case 'number':
-						case 'integer':
-							if($this->prop_anon($name,'min') !== null && (float)$this->prop_anon($name,'min') > $value){
-								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
-							}
-							if($this->prop_anon($name,'max') !== null && (float)$this->prop_anon($name,'max') < $value){
-								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
-							}
-							break;
-						case 'text':
-						case 'string':
-						case 'alnum':
-							if($this->prop_anon($name,'min') !== null && (int)$this->prop_anon($name,'min') > mb_strlen($value)){
-								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
-							}
-							if($this->prop_anon($name,'max') !== null && (int)$this->prop_anon($name,'max') < mb_strlen($value)){
-								\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' exceeds maximum'),$name);
-							}
-							break;
-					}
-				}
+				
+				\ebi\Validator::value($name, $value, [
+					'type'=>$this->prop_anon($name,'type'),
+					'min'=>$this->prop_anon($name,'min'),
+					'max'=>$this->prop_anon($name,'max'),
+					'require'=>$this->prop_anon($name,'require'),
+				]);
+				
 				$unique_together = $this->prop_anon($name,'unique_together');
 				if($value !== '' && $value !== null && ($this->prop_anon($name,'unique') === true || !empty($unique_together))){
 					$uvalue = $value;

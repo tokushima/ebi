@@ -122,7 +122,11 @@ include_once('bootstrap.php');
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.Action::file_upload'],
 		
 	'get_method'=>['name'=>'ge_method','action'=>'test.flow.Action::get_method'],
-		
+	
+	'flow/request/require/vars'=>['name'=>'require_vars','action'=>'test.flow.RequestFlow::require_vars'],
+	'flow/request/require/post'=>['name'=>'require_post','action'=>'test.flow.RequestFlow::require_post'],
+	'flow/request/require/get'=>['name'=>'require_get','action'=>'test.flow.RequestFlow::require_get'],
+	
 	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],
 	'dt'=>['action'=>'ebi.Dt']
 ]);

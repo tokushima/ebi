@@ -219,6 +219,19 @@ class Request{
 		return $this->sess->is_vars($n);
 	}
 	public function before(){
+		list(,$method) = explode('::',$this->get_selected_pattern()['action']);
+		$annon = \ebi\Annotation::get_method(get_class($this), $method,['http_method','request']);
+			
+		if(isset($annon['http_method']['value']) && strtoupper($annon['http_method']['value']) != \ebi\Request::method()){
+			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
+		}
+		if(isset($annon['request'])){
+			foreach($annon['request'] as $k => $an){
+				\ebi\Validator::value($k, $this->in_vars($k), $an);
+			}
+		}
+		\ebi\Exceptions::throw_over();
+		
 		if(method_exists($this,'__before__')){
 			$this->__before__();
 		}
