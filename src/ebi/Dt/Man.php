@@ -173,7 +173,7 @@ class Man{
 	public static function method_info($class,$method,$deep=false){
 		$ref = new \ReflectionMethod(str_replace(['.','/'],['\\','\\'],$class),$method);
 		$params = $return = $plugins = $see_class = $see_method = $see_url = $request = $context = $args = $throws = [];
-		$document = $src = null;
+		$document = $src = $http_method = null;
 		$deprecated = false;
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
 		
@@ -183,6 +183,15 @@ class Man{
 			$deprecated = (strpos($ref->getDocComment(),'@deprecated') !== false);
 			$use_method_list = ($deep) ? self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) :
 											[$ref->getDeclaringClass().'::'.$method];
+			
+			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
+				$http_method = strtoupper(trim($match[1]));
+			}else{
+				$http_method = (
+					(strpos($src,'$this->is_post()') !== false) && 
+					(strpos($src,'!$this->is_post()') === false)
+				) ? ' POST' : null;
+			}
 			
 			if(preg_match("/@return\s+([^\s]+)(.*)/",$document,$match)){
 				// type, summary
@@ -209,51 +218,19 @@ class Man{
 			if(preg_match_all('/->in_vars\((["\'])(.+?)\\1/',$src,$match)){
 				foreach($match[2] as $n){
 					$request[$n] = ['mixed',null];
-					
-					if($is_request_flow){
-						$context[$n] = $request[$n];
-					}
 				}
 			}
-			if(preg_match_all('/->in_files\((["\'])(.+?)\\1/',$src,$match)){
-				foreach($match[2] as $n){
-					$request[$n] = ['file',null];
-				}
-			}
-			if(preg_match_all('/->move_file\((["\'])(.+?)\\1/',$src,$match)){
-				foreach($match[2] as $n){
-					$request[$n] = ['file',null];
-				}
-			}
-			if(preg_match_all('/->file_path\((["\'])(.+?)\\1/',$src,$match)){
-				foreach($match[2] as $n){
-					$request[$n] = ['file',null];
-				}
-			}
-			if($is_request_flow && preg_match_all('/\$this->rm_vars\((["\'])(.+?)\\1/',$src,$match)){
-				foreach($match[2] as $n){
-					if(isset($context[$n])){
-						unset($context[$n]);
-					}
-				}
-			}
-			if($is_request_flow && strpos($src,'$this->rm_vars()') !== false){
-				$context = [];
-			}
-			if(preg_match_all('/\$this->vars\((["\'])(.+?)\\1/',$src,$match)){				
-				foreach($match[2] as $n){
-					$context[$n] = ['mixed',null];
-				}
-			}
+			
 			if(preg_match_all("/@request\s+([^\s]+)\s+\\$(\w+)(.*)/",$document,$match)){
 				foreach($match[0] as $k => $v){
-					if(isset($request[$match[2][$k]])){
-						$request[$match[2][$k]][0] = self::type($match[1][$k],$class);
-						$request[$match[2][$k]][1] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
-					}
-					if($is_request_flow && isset($context[$match[2][$k]])){
-						$context[$match[2][$k]][0] = self::type($match[1][$k],$class);
-						$context[$match[2][$k]][1] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
+					$request[$match[2][$k]][0] = self::type($match[1][$k],$class);
+					$request[$match[2][$k]][1] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
+					$request[$match[2][$k]][2] = false; // require
+					
+					if(strpos($request[$match[2][$k]][1],'@[') !== false){
+						list($request[$match[2][$k]][1],$anon) = explode('@[',$request[$match[2][$k]][1],2);
+						$a = \ebi\Annotation::activation('@['.$anon);
+						$request[$match[2][$k]][2] = isset($a['require']) ? $a['require'] : false;
 					}
 				}
 			}
@@ -263,16 +240,9 @@ class Man{
 					$context[$match[2][$k]][1] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
 				}
 			}
-			if(preg_match_all('/\$this->(map_arg)\((["\'])(.+?)\\2/',$src,$match)){
-				foreach($match[3] as $n){
-					$args[$n] = '';
-				}
-			}
 			if(preg_match_all("/@arg\s+([^\s]+)\s+\\$(\w+)(.*)/",$document,$match)){
 				foreach($match[0] as $k => $v){
-					if(isset($args[$match[2][$k]])){
-						$args[$match[2][$k]] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
-					}
+					$args[$match[2][$k]] = (isset($match[3][$k]) ? $match[3][$k] : 'null');
 				}
 			}
 			foreach($use_method_list as $class_method){
@@ -337,17 +307,23 @@ class Man{
 			}
 		}
 		$description = trim(preg_replace('/@.+/','',$document));
+		
 		return [
 			'package'=>$class,'method_name'=>$method,'params'=>$params,'request'=>$request,'context'=>$context
 			,'args'=>$args,'return'=>$return,'description'=>$description,'throws'=>$throws
-			,'is_post'=>((strpos($src,'$this->is_post()') !== false) && (strpos($src,'!$this->is_post()') === false))
+			,'http_method'=>$http_method
 			,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
 		];
 	}
 	private static function type($type,$class){
-		if($type == 'self' || $type == '$this') $type = $class;
+		if($type == 'self' || $type == '$this'){
+			$type = $class;
+		}
 		$type = str_replace('\\','.',$type);
-		if(substr($type,0,1) == '.') $type = substr($type,1);
+		
+		if(substr($type,0,1) == '.'){
+			$type = substr($type,1);
+		}
 		return $type;
 	}
 	private static function	get_desc(&$arr,$match,$k,$name,$src,$class){

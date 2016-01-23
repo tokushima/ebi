@@ -9,8 +9,8 @@
 	::
 	{$method_name}
 
-	<rt:if param="{$is_post}">
-		<span class="label important">POST</span>
+	<rt:if param="{$http_method}">
+		<span style="color:#ffffff; font-weight: bold; background-color: #ff6666; padding: 3px;">{$http_method}</span>
 	</rt:if>
 </h2>
 
@@ -108,6 +108,7 @@
 			<th style="width:200px">name</th>
 			<th style="width:100px">type</th>
 			<th>summary</th>
+			<th style="width:30px"></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -121,6 +122,11 @@
 				</rt:if>
 			</td>
 			<td>{$t.html($arg[1])}</td>
+			<td>
+				<rt:if param="{$arg[2]}">
+					<span class="glyphicon glyphicon-asterisk" style="color:#ff6666;"></span>
+				</rt:if>
+			</td>
 		</tr>
 	</tbody>
 	</table>
