@@ -17,14 +17,19 @@ class Validator{
 			return null;
 		}
 		switch($t){
-			case null: return $v;
+			case null: 
+				return $v;
 			case 'string':
 			case 'text':
-				if(is_array($v)) throw new \InvalidArgumentException();
+				if(is_array($v)){
+					throw new \InvalidArgumentException();
+				}
 				$v = is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
 				return ($t == 'text') ? $v : str_replace(["\r\n","\r","\n"],'',$v);
 			default:
-				if($v === '') return null;
+				if($v === ''){
+					return null;
+				}
 				switch($t){
 					case 'number':
 						if(!is_numeric($v)){
