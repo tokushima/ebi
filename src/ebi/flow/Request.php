@@ -30,13 +30,6 @@ class Request{
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
 	}
 	/**
-	 * セットされた変数をFlowに渡す
-	 * @return mixid{}
-	 */
-	final public function get_after_vars(){
-		return $this->req->ar_vars();
-	}
-	/**
 	 * GET
 	 * @return boolean
 	 */
@@ -227,6 +220,11 @@ class Request{
 		}
 		if(isset($annon['request'])){
 			foreach($annon['request'] as $k => $an){
+				try{
+					\ebi\Validator::type($an['type'],$this->in_vars($k));
+				}catch(\InvalidArgumentException $e){
+					\ebi\Exceptions::add($e,$k);
+				}
 				\ebi\Validator::value($k, $this->in_vars($k), $an);
 			}
 		}
@@ -364,6 +362,7 @@ class Request{
 				throw new \ebi\exception\UnauthorizedException();
 			}
 		}
+		return ['login'=>$this->is_login()];
 	}
 	/**
 	 * ログアウト
@@ -378,7 +377,7 @@ class Request{
 		if($this->map_arg('logout_redirect') != null){
 			$this->set_after_redirect($this->map_arg('logout_redirect'));
 		}
-		$this->vars('login',$this->is_login());
+		return ['login'=>$this->is_login()];
 	}
 	public function noop(){
 		return $this->ar_vars();
