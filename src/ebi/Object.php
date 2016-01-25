@@ -16,10 +16,14 @@ class Object implements \IteratorAggregate{
 	 * @parama boolean $f 値をデフォルト値で上書きするか
 	 * @return mixed
 	 */
-	public function prop_anon($p,$n,$d=null,$f=false){
-		if($f) self::$_m[get_class($this)][$p][$n] = $d;
-		$v = (isset(self::$_m[get_class($this)][$p][$n])) ? self::$_m[get_class($this)][$p][$n] : $d;
-		return $v;
+	public function prop_anon($p,$n=null,$d=null,$f=false){
+		if($f){
+			self::$_m[get_class($this)][$p][$n] = $d;
+		}
+		if($n === null){
+			return (isset(self::$_m[get_class($this)][$p])) ? self::$_m[get_class($this)][$p] : [];
+		}
+		return (isset(self::$_m[get_class($this)][$p][$n])) ? self::$_m[get_class($this)][$p][$n] : $d;
 	}
 	/**
 	 * プロパティの一覧を取得する、アノテーション hash=false のものは含まない
@@ -86,21 +90,6 @@ class Object implements \IteratorAggregate{
 		}
 		return $r;
 	}
-	/**
-	 * プロパティに値をセットする
-	 * @param string $name
-	 * @param string $type
-	 * @param mixed $value
-	 * @throws \InvalidArgumentException
-	 */
-	protected function set_prop($name,$type,$value){
-		try{
-			$c = get_class($this);
-			return \ebi\Validator::type($type,$value,isset(self::$_m[$c][$name]) ? self::$_m[$c][$name] : []);
-		}catch(\InvalidArgumentException $e){
-			throw new \InvalidArgumentException($this->_.' must be an '.$type);
-		}
-	}
 	private function ___get___(){
 		if($this->prop_anon($this->_,'get') === false){
 			throw new \InvalidArgumentException('not permitted');
@@ -114,22 +103,22 @@ class Object implements \IteratorAggregate{
 		if($this->prop_anon($this->_,'set') === false){
 			throw new \InvalidArgumentException('not permitted');
 		}
-		$t = $this->prop_anon($this->_,'type');
+		$anon = $this->prop_anon($this->_);
 		switch($this->prop_anon($this->_,'attr')){
 			case 'a':
 				$v = (func_num_args() > 1) ? func_get_args() : (is_array($v) ? $v : [$v]);
 				foreach($v as $a){
-					$this->{$this->_}[] = $this->set_prop($this->_,$t,$a);
+					$this->{$this->_}[] = \ebi\Validator::type($this->_,$a,$anon);
 				}
 				break;
 			case 'h':
 				$v = (func_num_args() === 2) ? [func_get_arg(0)=>func_get_arg(1)] : (is_array($v) ? $v : [(string)$v=>$v]);
 				foreach($v as $k => $a){
-					$this->{$this->_}[$k] = $this->set_prop($this->_,$t,$a);
+					$this->{$this->_}[$k] = \ebi\Validator::type($this->_,$a,$anon);
 				}
 				break;
 			default:
-				$this->{$this->_} = $this->set_prop($this->_,$t,$v);
+				$this->{$this->_} = \ebi\Validator::type($this->_,$v,$anon);
 		}
 		return $this;
 	}
