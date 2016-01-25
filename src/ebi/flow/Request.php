@@ -220,12 +220,14 @@ class Request{
 		}
 		if(isset($annon['request'])){
 			foreach($annon['request'] as $k => $an){
-				try{
-					\ebi\Validator::type($an['type'],$this->in_vars($k));
-				}catch(\InvalidArgumentException $e){
-					\ebi\Exceptions::add($e,$k);
+				if(isset($an['type'])){
+					try{
+						\ebi\Validator::type($k,$this->in_vars($k),$an);
+					}catch(\InvalidArgumentException $e){
+						\ebi\Exceptions::add($e,$k);
+					}
+					\ebi\Validator::value($k, $this->in_vars($k), $an);
 				}
-				\ebi\Validator::value($k, $this->in_vars($k), $an);
 			}
 		}
 		\ebi\Exceptions::throw_over();
