@@ -112,6 +112,9 @@ class Q{
 	public function paginator(){
 		return $this->paginator;
 	}
+	public function ar_date_format(){
+		return $this->ar_value($this->date_format);
+	}	
 	/**
 	 * ソート順がランダムか
 	 * @return boolean
@@ -125,6 +128,7 @@ class Q{
 	}
 	/**
 	 * クエリを追加する
+	 * @return \ebi\Q
 	 * @throws \BadMethodCallException
 	 */
 	public function add(){
@@ -202,6 +206,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function eq($column_str,$value,$param=null){
 		return new self(self::EQ,$column_str,$value,$param);
@@ -211,6 +216,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function neq($column_str,$value,$param=null){
 		return new self(self::NEQ,$column_str,$value,$param);
@@ -220,6 +226,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function gt($column_str,$value,$param=null){
 		return new self(self::GT,$column_str,$value,$param);
@@ -229,6 +236,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function lt($column_str,$value,$param=null){
 		return new self(self::LT,$column_str,$value,$param);
@@ -238,6 +246,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function gte($column_str,$value,$param=null){
 		return new self(self::GTE,$column_str,$value,$param);
@@ -247,6 +256,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $value
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function lte($column_str,$value,$param=null){
 		return new self(self::LTE,$column_str,$value,$param);
@@ -256,6 +266,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $words
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function startswith($column_str,$words,$param=null){
 		try{
@@ -269,6 +280,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $words
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function endswith($column_str,$words,$param=null){
 		try{
@@ -282,6 +294,7 @@ class Q{
 	 * @param string $column_str
 	 * @param string $words
 	 * @param integer $param
+	 * @return \ebi\Q
 	 */
 	public static function contains($column_str,$words,$param=null){
 		try{
@@ -295,6 +308,7 @@ class Q{
 	 * @param string $column_str 指定のプロパティ名
 	 * @param string[] $words 絞り込み文字列
 	 * @param integer $param 
+	 * @return \ebi\Q
 	 */
 	public static function in($column_str,$words,$param=null){
 		try{
@@ -340,12 +354,14 @@ class Q{
 	/**
 	 * ソート順を指定する
 	 * @param string $column_str 指定のプロパティ名
+	 * @return \ebi\Q
 	 */
 	public static function order($column_str){
 		return new self(self::ORDER,$column_str);
 	}
 	/**
 	 * ソート順をランダムにする
+	 * @return \ebi\Q
 	 */
 	public static function random_order(){
 		return new self(self::ORDER_RAND);
@@ -354,6 +370,7 @@ class Q{
 	 * 指定の文字列と前回指定の文字列を比較しソート順を指定する
 	 * @param string $column_str 指定のプロパティ名
 	 * @param string $pre_column_str 前回指定したプロパティ名
+	 * @return \ebi\Q
 	 */
 	public static function select_order(&$column_str,$pre_column_str){
 		if($column_str == $pre_column_str){
@@ -365,15 +382,20 @@ class Q{
 	 * 検索文字列による検索条件
 	 * @param string $dict 検索文字列 スペース区切り
 	 * @param string[] $param 対象のカラム
+	 * @return \ebi\Q
 	 */
 	public static function match($dict,$columns=[]){
 		if(!empty($columns) && !is_array($columns)){
-			$columns = [$columns];
+			$columns = explode(',',$columns);
+		}
+		if(sizeof($columns) == 1){
+			return self::contains(implode('',$columns),explode(' ',str_replace('　',' ',trim($dict))));
 		}
 		return new self(self::MATCH,str_replace(['　',' '],',',trim($dict)),$columns);
 	}
 	/**
 	 * OR条件ブロック
+	 * @return \ebi\Q
 	 */
 	public static function ob(){
 		$args = func_get_args();
@@ -381,6 +403,7 @@ class Q{
 	}
 	/**
 	 * 条件ブロック
+	 * @return \ebi\Q
 	 */
 	public static function b(){
 		$args = func_get_args();
@@ -396,8 +419,5 @@ class Q{
 	 */	
 	public static function date_format($column_str,$require){
 		return new self(self::DATE_FORMAT,$column_str,$require);
-	}
-	public function ar_date_format(){
-		return $this->ar_value($this->date_format);
 	}
 }

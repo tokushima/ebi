@@ -1,16 +1,12 @@
 <?php
 use \ebi\Q;
 
-$ref = function($o){
-	return $o;
-};
-
 \test\db\Calc::create_table();
-
 \test\db\Calc::find_delete();
-$ref(new \test\db\Calc())->float(1.5)->type('A')->save();
-$ref(new \test\db\Calc())->float(1.3)->type('A')->save();
-$ref(new \test\db\Calc())->float(1.1)->type('B')->save();
+
+(new \test\db\Calc())->float(1.5)->type('A')->save();
+(new \test\db\Calc())->float(1.3)->type('A')->save();
+(new \test\db\Calc())->float(1.1)->type('B')->save();
 
 
 eq(1.3,\test\db\Calc::find_avg('float'));
@@ -23,9 +19,9 @@ eq(array('A'=>1.4),\test\db\Calc::find_avg_by('float','type',Q::eq('type','A')))
 
 
 \test\db\Calc::find_delete();
-$ref(new \test\db\Calc())->price(1)->type('A')->save();
-$ref(new \test\db\Calc())->price(2)->type('A')->save();
-$ref(new \test\db\Calc())->price(3)->type('B')->save();
+(new \test\db\Calc())->price(1)->type('A')->save();
+(new \test\db\Calc())->price(2)->type('A')->save();
+(new \test\db\Calc())->price(3)->type('B')->save();
 
 
 eq(2,\test\db\Calc::find_avg('price'));
