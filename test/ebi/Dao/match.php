@@ -18,7 +18,4 @@ eq(2,\test\db\Match::find_count(Q::match('EE II')));
 eq(1,\test\db\Match::find_count(Q::match(30)));
 eq(1,\test\db\Match::find_count(Q::match('BB　CC'))); // 全角スペース
 
-\ebi\Dao::start_record();
 eq(1,\test\db\Match::find_count(Q::match('BBB CCC',['data3'])));
-
-\ebi\Log::trace(\ebi\Dao::stop_record());
