@@ -297,7 +297,9 @@ class Request implements \IteratorAggregate{
 		if(func_num_args() === 0){
 			$this->vars = [];
 		}else{
-			foreach(func_get_args() as $n) unset($this->vars[$n]);
+			foreach(func_get_args() as $n){
+				unset($this->vars[$n]);
+			}
 		}
 	}
 	/**
