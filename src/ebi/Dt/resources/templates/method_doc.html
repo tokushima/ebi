@@ -77,8 +77,8 @@
 	<tr>
 		<th style="width:200px">name</th>
 		<th style="width:100px">type</th>
-		<th style="width:100px">default</th>
 		<th>summary</th>
+		<th style="width:100px">default</th>
 	</tr>
 </thead>
 <tbody>
@@ -94,8 +94,8 @@
 				{$param[0]}
 			</rt:if>
 		</td>
-		<td>{$param[3]}</td>
 		<td>{$t.html($param[4])}</td>
+		<td>{$param[3]}</td>
 	</tr>
 </tbody>
 </table>
@@ -188,13 +188,13 @@
 <tbody>
 	<tr>
 		<td>
-			<rt:if param="{$f.type($r)}">
-				<a href="{$t.package_method_url('class_doc',$f.type($r))}">{$r}</a>
+			<rt:if param="{$f.type($r[0])}">
+				<a href="{$t.package_method_url('class_doc',$f.type($r[0]))}">{$r[0]}</a>
 			<rt:else />
-				{$r}
+				{$r[0]}
 			</rt:if>
 		</td>
-		<td>{$t.html($r)}</td>
+		<td>{$t.html($r[1])}</td>
 	</tr>
 </tbody>
 </table>
