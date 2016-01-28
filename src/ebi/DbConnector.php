@@ -412,6 +412,7 @@ class DbConnector{
 			
 			return $this->where_sql($dao,$from,$query,$self_columns,null,$alias);
 		}
+		
 		$and = $vars = [];
 		foreach($q->ar_arg2() as $base_value){
 			$or = [];
@@ -583,12 +584,23 @@ class DbConnector{
 		return $sql;
 	}
 	protected function column_value(\ebi\Dao $dao,$name,$value){
-		if($value === null) return null;
+		if($value === null){
+			return null;
+		}
 		try{
 			switch($dao->prop_anon($name,'type')){
-				case 'timestamp': return date('Y/m/d H:i:s',$value);
-				case 'date': return date('Y/m/d',$value);
-				case 'boolean': return (int)$value;
+				case 'timestamp':
+					if(!ctype_digit($value)){
+						$value = strtotime($value);
+					}
+					return date('Y/m/d H:i:s',$value);
+				case 'date':
+					if(!ctype_digit($value)){
+						$value = strtotime($value);
+					}					
+					return date('Y/m/d',$value);
+				case 'boolean':
+					return (int)$value;
 			}
 		}catch(\Exception $e){
 		}

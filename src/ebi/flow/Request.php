@@ -5,16 +5,16 @@ namespace ebi\flow;
  * @author tokushima
  *
  */
-class Request{
+class Request extends \ebi\Request{
 	use \ebi\Plugin, \ebi\FlowPlugin;
 	
 	private $sess;
-	private $req;
 	private $login_id;
 	private $login_anon;
 	
 	public function __construct(){
-		$this->req = new \ebi\Request();
+		parent::__construct();
+		
 		/**
 		 * セッショングループ名
 		 */
@@ -28,156 +28,7 @@ class Request{
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
-	}
-	/**
-	 * GET
-	 * @return boolean
-	 */
-	public function is_get(){
-		return $this->req->is_get();
-	}
-	/**
-	 * POST
-	 * @return boolean
-	 */
-	public function is_post(){
-		return $this->req->is_post();
-	}
-	/**
-	 * PUT
-	 * @return boolean
-	 */
-	public function is_put(){
-		return $this->req->is_put();
-	}
-	/**
-	 * DELETE
-	 * @return boolean
-	 */
-	public function is_delete(){
-		return $this->req->is_delete();
-	}
-	/**
-	 * 変数の一覧を返す
-	 * @return array
-	 */
-	public function ar_files(){
-		return $this->req->ar_files();
-	}
-	/**
-	 * 添付ファイル情報の取得
-	 * @param string $n
-	 * @return array
-	 */
-	public function in_files($n){
-		return $this->req->in_files($n);
-	}
-	/**
-	 * 添付されたファイルがあるか
-	 * @param array $file_info
-	 * @return boolean
-	 */
-	public function has_file($file_info){
-		return $this->req->has_file($file_info);
-	}
-	/**
-	 * 添付ファイルのオリジナルファイル名の取得
-	 * @param array $file_info
-	 * @return string
-	 */
-	public function file_original_name($file_info){
-		return $this->req->file_original_name($file_info);
-	}
-	/**
-	 * 添付ファイルのファイルパスの取得
-	 * @param array $file_info
-	 * @return string
-	 */
-	public function file_path($file_info){
-		return $this->req->file_path($file_info);
-	}
-	/**
-	 * 添付ファイルを移動します
-	 * @param array $file_info
-	 * @param string $newname
-	 */
-	public function move_file($file_info,$newname){
-		$this->req->move_file($file_info,$newname);
-	}
-	/**
-	 * クッキーへの書き出し
-	 * @param string $name 書き込む変数名
-	 * @param int $expire 有効期限 (+ time)
-	 * @param string $path パスの有効範囲
-	 * @param boolean $subdomain サブドメインでも有効とするか
-	 * @param boolean $secure httpsの場合のみ書き出しを行うか
-	 */
-	protected function write_cookie($name,$expire=null,$path=null,$subdomain=false,$secure=false){
-		$this->req->write_cookie($name,$expire,$path,$subdomain,$secure);
-	}
-	/**
-	 * クッキーから削除
-	 * 登録時と同条件のものが削除される
-	 * @param string $name クッキー名
-	 */
-	protected function delete_cookie($name,$path=null,$subdomain=false,$secure=false){
-		$this->req->delete_cookie($name,$path,$subdomain,$secure);
-	}
-	/**
-	 * クッキーから呼び出された値か
-	 * @param string $name
-	 * @return boolean
-	 */
-	protected function is_cookie($name){
-		return $this->req->is_cookie($name);
-	}
-	/**
-	 * pathinfo または argv
-	 * @return string
-	 */
-	protected function args(){
-		return $this->req->args();
-	}
-	/**
-	 * 値をセットする
-	 * @param string $key
-	 * @param mixed $val
-	 */
-	public function vars($key,$val){
-		$this->req->vars($key,$val);
-	}
-	/**
-	 * 定義済みの値から一つ取得する
-	 * @param string $n 取得する定義名
-	 * @param mixed $d 値が存在しない場合の代理値
-	 * @return mixed
-	 */
-	public function in_vars($n,$d=null){
-		return $this->req->in_vars($n,$d);
-	}
-	/**
-	 * 値を削除する
-	 * @param string $n 削除する定義名
-	 */
-	public function rm_vars($name=null){
-		call_user_func_array([$this->req,'rm_vars'],func_get_args());
-	}
-	/**
-	 * 指定のキーが存在するか
-	 * @param string $n
-	 * @return boolean
-	 */
-	public function is_vars($n){
-		return $this->req->is_vars($n);
-	}
-	/**
-	 * 定義済みの一覧を返す
-	 * @return array
-	 */
-	public function ar_vars(){
-		return $this->req->ar_vars();
-	}
-	
+	}	
 	
 	/**
 	 * セッションにセットする
@@ -346,15 +197,21 @@ class Request{
 				session_regenerate_id(true);
 				$this->call_object_plugin_funcs('after_login',$this);
 			}
-		}		
+		}
+		
+		$rtn_vars = ['login'=>$this->is_login()];
+		
 		if($this->is_login()){
 			$redirect_to = $this->in_sessions('logined_redirect_to');
 			$this->rm_sessions('logined_redirect_to');
 
-			$this->call_object_plugin_funcs('after_do_login',$this);
-			
+			$vars = $this->call_object_plugin_funcs('after_do_login',$this);
+
 			if(!empty($redirect_to)){
 				$this->set_after_redirect($redirect_to);
+			}
+			if(!empty($vars) && is_array($vars)){
+				$rtn_vars = array_merge($rtn_vars,$vars);
 			}
 		}else{
 			\ebi\HttpHeader::send_status(401);
@@ -364,7 +221,7 @@ class Request{
 				throw new \ebi\exception\UnauthorizedException();
 			}
 		}
-		return ['login'=>$this->is_login()];
+		return $rtn_vars;
 	}
 	/**
 	 * ログアウト

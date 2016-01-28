@@ -1,17 +1,14 @@
 <?php
 use \ebi\Q;
 
-$ref = function($o){
-	return $o;
-};
 \test\db\Calc::create_table();
 \test\db\Calc::find_delete();
 
 
-$ref(new \test\db\Calc())->price(30)->type('B')->name('AAA')->save();
-$ref(new \test\db\Calc())->price(20)->type('B')->name('ccc')->save();
-$ref(new \test\db\Calc())->price(20)->type('A')->name('AAA')->save();
-$ref(new \test\db\Calc())->price(10)->type('A')->name('BBB')->save();
+(new \test\db\Calc())->price(30)->type('B')->name('AAA')->save();
+(new \test\db\Calc())->price(20)->type('B')->name('ccc')->save();
+(new \test\db\Calc())->price(20)->type('A')->name('AAA')->save();
+(new \test\db\Calc())->price(10)->type('A')->name('BBB')->save();
 
 eq(80,\test\db\Calc::find_sum('price'));
 eq(30,\test\db\Calc::find_sum('price',Q::eq('type','A')));

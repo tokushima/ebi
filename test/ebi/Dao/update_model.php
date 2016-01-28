@@ -1,17 +1,14 @@
 <?php
 use \ebi\Q;
 
-$ref = function($o){
-	return $o;
-};
 \test\db\UpdateModel::create_table();
 \test\db\UpdateModel::find_delete();
 
-$ref(new \test\db\UpdateModel())->value('abc')->save();
-$ref(new \test\db\UpdateModel())->value('def')->save();
-$ref(new \test\db\UpdateModel())->value('def')->save();
-$ref(new \test\db\UpdateModel())->value('def')->save();
-$ref(new \test\db\UpdateModel())->value('ghi')->save();
+(new \test\db\UpdateModel())->value('abc')->save();
+(new \test\db\UpdateModel())->value('def')->save();
+(new \test\db\UpdateModel())->value('def')->save();
+(new \test\db\UpdateModel())->value('def')->save();
+(new \test\db\UpdateModel())->value('ghi')->save();
 
 eq(5,\test\db\UpdateModel::find_count());
 \test\db\UpdateModel::find_delete(Q::eq('value','def'));
@@ -19,9 +16,9 @@ eq(2,\test\db\UpdateModel::find_count());
 
 
 \test\db\UpdateModel::find_delete();
-$d1 = $ref(new \test\db\UpdateModel())->value('abc')->save();
-$d2 = $ref(new \test\db\UpdateModel())->value('def')->save();
-$d3 = $ref(new \test\db\UpdateModel())->value('ghi')->save();
+$d1 = (new \test\db\UpdateModel())->value('abc')->save();
+$d2 = (new \test\db\UpdateModel())->value('def')->save();
+$d3 = (new \test\db\UpdateModel())->value('ghi')->save();
 
 eq(3,\test\db\UpdateModel::find_count());
 $obj = new \test\db\UpdateModel();
@@ -34,9 +31,9 @@ eq('def',\test\db\UpdateModel::find_get()->value());
 
 
 \test\db\UpdateModel::find_delete();
-$s1 = $ref(new \test\db\UpdateModel())->value('abc')->save();
-$s2 = $ref(new \test\db\UpdateModel())->value('def')->save();
-$s3 = $ref(new \test\db\UpdateModel())->value('ghi')->save();
+$s1 = (new \test\db\UpdateModel())->value('abc')->save();
+$s2 = (new \test\db\UpdateModel())->value('def')->save();
+$s3 = (new \test\db\UpdateModel())->value('ghi')->save();
 
 eq(3,\test\db\UpdateModel::find_count());
 $obj = new \test\db\UpdateModel();
@@ -51,8 +48,8 @@ eq('hoge',$obj->value());
 
 
 \test\db\UpdateModel::find_delete();
-$s1 = $ref(new \test\db\UpdateModel())->value('abc')->save();
-$s2 = $ref(new \test\db\UpdateModel())->value('def')->save();
+$s1 = (new \test\db\UpdateModel())->value('abc')->save();
+$s2 = (new \test\db\UpdateModel())->value('def')->save();
 
 eq(2,\test\db\UpdateModel::find_count());
 $obj = new \test\db\UpdateModel();

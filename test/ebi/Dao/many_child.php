@@ -1,7 +1,4 @@
 <?php
-$ref = function($o){
-	return $o;
-};
 \test\db\ManyParent::create_table();
 \test\db\ManyParent::find_delete();
 
@@ -9,14 +6,14 @@ $ref = function($o){
 \test\db\ManyChild::find_delete();
 
 
-$p1 = $ref(new \test\db\ManyParent())->value('parent1')->save();
-$p2 = $ref(new \test\db\ManyParent())->value('parent2')->save();
+$p1 = (new \test\db\ManyParent())->value('parent1')->save();
+$p2 = (new \test\db\ManyParent())->value('parent2')->save();
 
-$c1 = $ref(new \test\db\ManyChild())->parent_id($p1->id())->value('child1-1')->save();
-$c2 = $ref(new \test\db\ManyChild())->parent_id($p1->id())->value('child1-2')->save();
-$c3 = $ref(new \test\db\ManyChild())->parent_id($p1->id())->value('child1-3')->save();
-$c4 = $ref(new \test\db\ManyChild())->parent_id($p2->id())->value('child2-1')->save();
-$c5 = $ref(new \test\db\ManyChild())->parent_id($p2->id())->value('child2-2')->save();
+$c1 = (new \test\db\ManyChild())->parent_id($p1->id())->value('child1-1')->save();
+$c2 = (new \test\db\ManyChild())->parent_id($p1->id())->value('child1-2')->save();
+$c3 = (new \test\db\ManyChild())->parent_id($p1->id())->value('child1-3')->save();
+$c4 = (new \test\db\ManyChild())->parent_id($p2->id())->value('child2-1')->save();
+$c5 = (new \test\db\ManyChild())->parent_id($p2->id())->value('child2-2')->save();
 
 $size = array(3,2);
 $i = 0;

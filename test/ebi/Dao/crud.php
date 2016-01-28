@@ -1,17 +1,13 @@
 <?php
 use \ebi\Q;
 
-$ref = function($o){
-	return $o;
-};
-
 \test\db\Crud::create_table();
 \test\db\Crud::find_delete();
 
 $start = microtime(true);
 eq(0,\test\db\Crud::find_count());
 for($i=1;$i<=10;$i++){
-	$ref(new \test\db\Crud())->value($i)->save();
+	(new \test\db\Crud())->value($i)->save();
 }
 
 eq(0,\test\db\Crud::find_count(Q::eq('value',-1)));
