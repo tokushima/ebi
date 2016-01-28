@@ -195,7 +195,7 @@ class Man{
 			
 			if(preg_match("/@return\s+([^\s]+)(.*)/",$document,$match)){
 				// type, summary
-				$return = [self::type(trim($match[1]),$class),trim($match[2])];
+				$return[] = [self::type(trim($match[1]),$class),trim($match[2])];
 			}
 			foreach($ref->getParameters() as $p){
 				$params[$p->getName()] = [

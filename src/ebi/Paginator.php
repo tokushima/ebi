@@ -185,13 +185,19 @@ class Paginator implements \IteratorAggregate{
 	/**
 	 * RequestのPaginator
 	 * @param \ebi\Request $req
-	 * @param number $paginate_by
+	 * @param integer $default_paginate_by
+	 * @param integer $max_paginate_by
 	 * @return \ebi\Paginator
 	 */
-	public static function request(\ebi\Request $req,$paginate_by=20){
+	public static function request(\ebi\Request $req,$default_paginate_by=20,$max_paginate_by=100){
+		$paginate_by = $req->in_vars('paginate_by',$default_paginate_by);
+	
+		if($paginate_by > $max_paginate_by){
+			$paginate_by = $max_paginate_by;
+		}
 		$self = new self($paginate_by,$req->in_vars('page',1));
 		$self->cp($req->ar_vars());
-		
+	
 		return $self;
 	}
 	

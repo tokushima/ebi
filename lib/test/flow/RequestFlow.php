@@ -25,4 +25,11 @@ class RequestFlow extends \ebi\flow\Request{
 	public function require_get(){
 	
 	}
+	
+	/**
+	 * @request email $email
+	 */
+	public function require_var_type(){
+	
+	}
 }

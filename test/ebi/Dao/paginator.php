@@ -55,3 +55,14 @@ foreach(test\db\Paginator::find($paginator,\ebi\Q::order('id')) as $o){
 }
 eq(0,$i);
 
+
+
+$i = 0;
+$req = new \ebi\Request();
+$req->vars('paginate_by',30); // 30を指定してもmax25なので25まで
+$paginator = \ebi\Paginator::request($req,20,25);
+foreach(test\db\Paginator::find($paginator,\ebi\Q::order('id')) as $o){
+	$i++;
+}
+eq(25,$i);
+
