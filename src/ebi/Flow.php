@@ -390,9 +390,8 @@ class Flow{
 					if(self::has_class_plugin('after_flow_action')){
 						/**
 						 * 後処理
-						 * @return mixed{} actionの結果変数に上書きマージする
 						 */
-						$result_vars = array_merge($result_vars,self::call_class_plugin_funcs('after_flow_action'));
+						self::call_class_plugin_funcs('after_flow_action');
 					}
 					if(isset($exception)){
 						throw $exception;

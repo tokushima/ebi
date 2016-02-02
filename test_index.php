@@ -127,6 +127,20 @@ include_once('bootstrap.php');
 	'flow/request/require/post'=>['name'=>'require_post','action'=>'test.flow.RequestFlow::require_post'],
 	'flow/request/require/get'=>['name'=>'require_get','action'=>'test.flow.RequestFlow::require_get'],
 	'flow/request/type/email'=>['name'=>'require_type_email','action'=>'test.flow.RequestFlow::require_var_type'],
+	'flow/request/vars'=>[
+		'name'=>'requestflow_vars',
+		'action'=>'test.flow.RequestFlow::get_vars',
+	],
+	'flow/request/vars/callback'=>[
+		'name'=>'requestflow_vars_callback',
+		'action'=>'test.flow.RequestFlow::get_vars',
+		'plugins'=>['test.flow.plugin.Callback'],
+	],
+	'flow/request/vars/callback_addvars'=>[
+		'name'=>'requestflow_vars_callback_addvars',
+		'action'=>'test.flow.RequestFlow::get_vars',
+		'plugins'=>['test.flow.plugin.Callback','test.flow.plugin.AddVars'],
+	],
 	
 	
 	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],

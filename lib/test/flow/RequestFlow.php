@@ -32,4 +32,8 @@ class RequestFlow extends \ebi\flow\Request{
 	public function require_var_type(){
 	
 	}
+	
+	public function get_vars(){
+		return ['abc'=>123,'def'=>456];
+	}
 }
