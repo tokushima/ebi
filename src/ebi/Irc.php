@@ -79,6 +79,10 @@ class Irc{
 						$this->channel = $ch;
 						
 						if($this->has_object_plugin('privmsg')){
+							/**
+							 * PRIVMSG
+							 * @param \ebi\Irc $arg1
+							 */
 							$this->call_object_plugin_funcs('privmsg',$this);
 						}else{
 							print(sprintf('%s: %s',$this->nickname,$this->message));

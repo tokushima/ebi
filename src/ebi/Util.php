@@ -344,4 +344,11 @@ class Util{
 		$r = new \ReflectionClass($package);
 		return $r->newInstance();
 	}
+	/**
+	 * 対象がtrue / 1 / 'true' ならtrue
+	 * @param mixed $bool
+	 */
+	public static function is_true($bool){
+		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? 1 : 0;		
+	}
 }

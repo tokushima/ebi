@@ -11,6 +11,7 @@ class Request extends \ebi\Request{
 	private $sess;
 	private $login_id;
 	private $login_anon;
+	private $after_vars = [];
 	
 	public function __construct(){
 		parent::__construct();
@@ -28,7 +29,7 @@ class Request extends \ebi\Request{
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
-	}	
+	}
 	
 	/**
 	 * セッションにセットする
@@ -86,7 +87,11 @@ class Request extends \ebi\Request{
 		if(method_exists($this,'__before__')){
 			$this->__before__();
 		}
-		if($this->has_object_plugin('before_flow_action_request')) {
+		if($this->has_object_plugin('before_flow_action_request')){
+			/**
+			 * 前処理
+			 * @param \ebi\flow\Request $arg1
+			 */
 			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
 		if(
@@ -100,9 +105,34 @@ class Request extends \ebi\Request{
 		if(method_exists($this,'__after__')){
 			$this->__after__();
 		}
-		if($this->has_object_plugin('after_flow_action_request')) {
+		if($this->has_object_plugin('after_flow_action_request')){
+			/**
+			 * 後処理
+			 * @param \ebi\flow\Request $arg1
+			 */
 			$this->call_object_plugin_funcs('after_flow_action_request',$this);
 		}
+		if($this->has_object_plugin('get_after_vars_request')){
+			/**
+			 * Flowの結果に返却値を追加する
+			 * @return mixed{} 
+			 */
+			foreach($this->get_object_plugin_funcs('get_after_vars_request') as $o){
+				$rtn = self::call_func($o);
+				
+				if(is_array($rtn)){
+					$this->after_vars = array_merge($this->after_vars,$rtn);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Flowの結果に返却値を追加する
+	 * @return mixed{}
+	 */
+	public function get_after_vars(){
+		return $this->after_vars;
 	}
 	/**
 	 * ログインしていない場合にログイン処理を実行する
@@ -115,7 +145,11 @@ class Request extends \ebi\Request{
 			&& array_key_exists('action',$selected_pattern)
 			&& strpos($selected_pattern['action'],'::do_login') === false
 		){
-			if($this->has_object_plugin('before_login_required')) {
+			if($this->has_object_plugin('before_login_required')){
+				/**
+				 * ログイン処理の前処理
+				 * @param \ebi\flow\Request $arg1
+				 */
 				$this->call_object_plugin_funcs('before_login_required',$this);
 			}
 			if(strpos($selected_pattern['action'],'::do_logout') === false){
@@ -195,6 +229,10 @@ class Request extends \ebi\Request{
 			}else{
 				$this->sessions($this->login_id,$this->login_id);
 				session_regenerate_id(true);
+				/**
+				 * ログイン後処理
+				 * @param \ebi\flow\Request $arg1
+				 */
 				$this->call_object_plugin_funcs('after_login',$this);
 			}
 		}
@@ -204,7 +242,10 @@ class Request extends \ebi\Request{
 		if($this->is_login()){
 			$redirect_to = $this->in_sessions('logined_redirect_to');
 			$this->rm_sessions('logined_redirect_to');
-
+			/**
+			 * ログイン処理の後処理
+			 * @param \ebi\flow\Request $arg1
+			 */
 			$vars = $this->call_object_plugin_funcs('after_do_login',$this);
 
 			if(!empty($redirect_to)){
