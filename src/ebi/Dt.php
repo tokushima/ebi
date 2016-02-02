@@ -554,10 +554,12 @@ class Dt{
 	 */
 	public static function classes($parent_class=null){
 		$result = [];
-		
 		$include_path = [];
-		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
-			$include_path[] = realpath(getcwd().DIRECTORY_SEPARATOR.'lib');
+		
+		foreach(explode(PATH_SEPARATOR,get_include_path()) as $p){
+			if($p != '.' && is_dir($p)){
+				$include_path[] = realpath($p);
+			}
 		}
 		if(class_exists('Composer\Autoload\ClassLoader')){
 			$r = new \ReflectionClass('Composer\Autoload\ClassLoader');
