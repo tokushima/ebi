@@ -556,18 +556,19 @@ class DbConnector{
 		$columndef = $primary = [];
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
 		
-		foreach(array_keys($dao->columns(true)) as $prop_name){
+		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$prop_name).' null ';
+				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' null ';
 				$columndef[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
-					$primary[] = $quote($prop_name);
+					$primary[] = $quote($column->column());
 				}
 			}
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
 		$sql .= ' );'.PHP_EOL;
+
 		return $sql;
 	}
 	public function exists_table_sql(\ebi\Dao $dao){

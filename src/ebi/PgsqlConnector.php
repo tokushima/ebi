@@ -48,7 +48,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 		return new \ebi\Daq('select lastval() as last_insert_id');
 	}
 	public function exists_table_sql(\ebi\Dao $dao){
-		$dbc = \ebi\Dao ::connection(get_class($dao));
+		$dbc = \ebi\Dao::connection(get_class($dao));
 		return sprintf('select * from pg_tables where not tablename like \'%s\'',$dao->table());
 	}	
 	
@@ -90,18 +90,23 @@ class PgsqlConnector extends \ebi\DbConnector{
 		};
 		$columndef = $primary = [];
 		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
-		foreach(array_keys($dao->props()) as $prop_name){
+		
+		foreach($dao->columns(true) as $prop_name => $column){
 			$type = $dao->prop_anon($prop_name,'type');
+			
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$to_column_type($dao,$type,$prop_name).($type != 'serial' ? ' null ' : '');
+				$column_str = '  '.$to_column_type($dao,$type,$column->column()).($type != 'serial' ? ' null ' : '');
 				$columndef[] = $column_str;
+				
 				if($dao->prop_anon($prop_name,'primary') === true || $type != 'serial'){
-					$primary[] = $quote($prop_name);
+					$primary[] = $quote($column->column());
 				}
 			}
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
-		if(!empty($primary)) $sql .= ' ,primary key ( '.implode(',',$primary).' ) '.PHP_EOL;
+		if(!empty($primary)){
+			$sql .= ' ,primary key ( '.implode(',',$primary).' ) '.PHP_EOL;
+		}
 		$sql .= ' );'.PHP_EOL;
 		return $sql;
 	}
