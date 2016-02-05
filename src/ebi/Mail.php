@@ -353,7 +353,7 @@ class Mail{
 			
 			try{
 				$html = $xml->find_get('html');
-				$html_path = \ebi\Util::path_absolute($resource_path,$html->in_attr('src'));
+				$html_path = \ebi\Util::path_absolute($resource_path,$html->in_attr('src',preg_replace('/^(.+)\.\w+$/','\\1',$template_path).'.html'));
 				
 				foreach($html->find('media') as $media){
 					$file = \ebi\Util::path_absolute($resource_path,$media->in_attr('src'));
