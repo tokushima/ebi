@@ -607,29 +607,29 @@ class Flow{
 				if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
 					$suffix = '';
 					$auto_anon = \ebi\Annotation::get_method($r->getName(),$m->getName(),'automap');
-					$base_name = $m->getName();
 					
-					if(isset($auto_anon['suffix'])){
-						$suffix = $auto_anon['suffix'];
-						unset($auto_anon['suffix']);
-					}
-					if(isset($auto_anon['name'])){
-						$base_name = $auto_anon['name'];
-						unset($auto_anon['name']);
-					}
-					$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
-
-					for($i=0;$i<=$m->getNumberOfParameters()-$m->getNumberOfRequiredParameters();$i++){
+					if(is_array($auto_anon)){
+						$base_name = $m->getName();
+	
+						if(isset($auto_anon['suffix'])){
+							$suffix = $auto_anon['suffix'];
+							unset($auto_anon['suffix']);
+						}
+						if(isset($auto_anon['name'])){
+							$base_name = $auto_anon['name'];
+							unset($auto_anon['name']);
+						}
+						$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
+						
 						$result[$murl.$suffix] = [
-								'name'=>$name.'/'.$base_name
-								,'action'=>$class.'::'.$m->getName()
-								,'@'=>$d
-								,'idx'=>$idx
+							'name'=>$name.'/'.$base_name,
+							'action'=>$class.'::'.$m->getName(),
+							'@'=>$d,
+							'idx'=>$idx,
 						];
 						if(!empty($auto_anon)){
 							$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
 						}
-						$murl .= '/(.+)';
 					}
 				}
 			}
