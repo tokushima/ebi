@@ -620,18 +620,15 @@ class Flow{
 							unset($auto_anon['name']);
 						}
 						$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
-	
-						for($i=0;$i<=$m->getNumberOfParameters()-$m->getNumberOfRequiredParameters();$i++){
-							$result[$murl.$suffix] = [
-								'name'=>$name.'/'.$base_name,
-								'action'=>$class.'::'.$m->getName(),
-								'@'=>$d,
-								'idx'=>$idx,
-							];
-							if(!empty($auto_anon)){
-								$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
-							}
-							$murl .= '/(.+)';
+						
+						$result[$murl.$suffix] = [
+							'name'=>$name.'/'.$base_name,
+							'action'=>$class.'::'.$m->getName(),
+							'@'=>$d,
+							'idx'=>$idx,
+						];
+						if(!empty($auto_anon)){
+							$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
 						}
 					}
 				}
