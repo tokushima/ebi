@@ -166,6 +166,8 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * XML文字列を返す
 	 * @param string $encoding
+	 * @param boolean $format
+	 * @param string $indent_str
 	 */
 	public function get($encoding=null,$format=false,$indent_str="\t"){
 		if($this->name === null){
