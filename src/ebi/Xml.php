@@ -392,7 +392,7 @@ class Xml implements \IteratorAggregate{
 			}else if($lc == 0){
 				$indent = 2;
 			}
-			$rtn .= (($indent != 2) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
+			$rtn .= (($indent != 2 && ($i+$depth) > 0) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
 		
 			if($indent == 1){
 				$i++;
