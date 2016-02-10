@@ -41,16 +41,20 @@ class Json{
 	/**
 	 * 値を JSON 形式にして返す
 	 * @param mixed $val
-	 * @return multitype:Ambigous <string, multitype:string > |string
+	 * @param boolean $format
+	 * @return string
 	 */
-	public static function encode($val){
-		$json = json_encode(self::encode_object($val));
+	public static function encode($val,$format=false){
+		$json = ($format) ?
+			json_encode(self::encode_object($val),JSON_PRETTY_PRINT) :
+			json_encode(self::encode_object($val));
 		
 		if(json_last_error() != JSON_ERROR_NONE){
 			throw new \ebi\exception\InvalidArgumentException(json_last_error_msg());
-		}		
+		}
 		return $json;
 	}
+	
 	private static function encode_object($val){
 		if(is_object($val) || is_array($val)){
 			$rtn = [];

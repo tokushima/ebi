@@ -166,6 +166,8 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * XML文字列を返す
 	 * @param string $encoding
+	 * @param boolean $format
+	 * @param string $indent_str
 	 */
 	public function get($encoding=null,$format=false,$indent_str="\t"){
 		if($this->name === null){
@@ -392,7 +394,7 @@ class Xml implements \IteratorAggregate{
 			}else if($lc == 0){
 				$indent = 2;
 			}
-			$rtn .= (($indent != 2) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
+			$rtn .= (($indent != 2 && ($i+$depth) > 0) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
 		
 			if($indent == 1){
 				$i++;
