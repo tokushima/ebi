@@ -129,9 +129,12 @@ foreach(\test\db\Find::find() as $obj){
 	eq($list[$i],$obj->value1());
 	$i++;
 }
+$b = false;
 foreach(\test\db\Find::find(Q::eq('value1','AbC',Q::IGNORE)) as $obj){
 	eq('abc',$obj->value1());
+	$b = true;
 }
+eq(true,$b);
 foreach(\test\db\Find::find(Q::neq('value1','abc')) as $obj){
 	neq('abc',$obj->value1());
 }
