@@ -70,8 +70,12 @@ class Code{
 	 * @return string
 	 */
 	public static function rand($codebase,$length){
+		if(empty($codebase)){
+			throw new \InvalidArgumentException('codebase is empty');
+		}
 		$cl = strlen($codebase) - 1;
 		$r = $codebase[mt_rand(1,$cl)];
+		
 		for($i=1;$i<$length;$i++){
 			$r = $r.$codebase[mt_rand(0,$cl)];
 		}
