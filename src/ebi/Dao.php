@@ -891,24 +891,21 @@ abstract class Dao extends \ebi\Object{
 	public function set_unique_code($prop_name,$size=null){
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$base = $this->prop_anon($prop_name,'base');
+		
 		if(empty($base)){
-			$ctype = $this->prop_anon($prop_name,'ctype');
+			$ctype = $this->prop_anon($prop_name,'ctype','0a');
 			
-			if(!empty($ctype) && $ctype != 'alnum' && $ctype != 'alpha' && $ctype != 'digit'){
-				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
-			}			
-			if(empty($ctype) || $ctype == 'alnum' || $ctype == 'digit'){
+			if(strpos($ctype,'A') !== false){
+				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';
+			}
+			if(strpos($ctype,'a') !== false){
+				$base .= 'abcdefghjkmnprstuvwxy';
+			}
+			if(strpos($ctype,'0') !== false){
 				$base .= '0123456789';
 			}
-			if(empty($ctype)){
-				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';			
-			}else if($ctype != 'digit'){
-				if($this->prop_anon($prop_name,'upper',false) === true){
-					$base .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-				}
-				if($this->prop_anon($prop_name,'lower',true) === true){
-					$base .= 'abcdefghijklmnopqrstuvwxyz';
-				}
+			if(empty($base)){
+				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
 			}
 		}
 		$code = '';
