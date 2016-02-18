@@ -890,10 +890,10 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public function set_unique_code($prop_name,$size=null){
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
-		$base = $this->prop_anon($prop_name,'base');
+		$base = $this->prop_anon($prop_name,'base',\ebi\Conf::get('unique_code_base'));
 		
 		if(empty($base)){
-			$ctype = $this->prop_anon($prop_name,'ctype','0a');
+			$ctype = $this->prop_anon($prop_name,'ctype',\ebi\Conf::get('unique_code_ctype','0a'));
 			
 			if(strpos($ctype,'A') !== false){
 				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';
@@ -910,7 +910,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		$code = '';
 		$challenge = 0;
-		$challenge_max = \ebi\Conf::get('generate_code_challenge',10);
+		$challenge_max = 10;
 		$bool = true;
 		
 		while($code == ''){
@@ -933,7 +933,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			$code = '';
 			$this->{$prop_name}($code);
-			usleep(\ebi\Conf::get('generate_code_retry_wait',1000)); // 1ms
+			usleep(1000); // 1ms
 		}
 		return $code;
 	}
