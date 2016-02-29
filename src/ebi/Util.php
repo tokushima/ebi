@@ -351,4 +351,27 @@ class Util{
 	public static function is_true($bool){
 		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? 1 : 0;		
 	}
+	/**
+	 * 値をプリミティブ型で返す
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	public static function to_primitive($value){
+		switch(gettype($value)){
+			case 'array':
+				$list = [];
+				foreach($value as $k => $v){
+					$list[$k] = self::to_primitive($v);
+				}
+				return $list;
+			case 'object':
+				$list = [];
+				foreach((($value instanceof \Traversable) ? $value : get_object_vars($value)) as $k => $v){
+					$list[$k] = $to_array($v);
+				}
+				return $list;
+			default:
+		}
+		return $value;
+	}
 }

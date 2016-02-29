@@ -450,26 +450,8 @@ class Flow{
 						self::call_class_plugin_funcs('flow_output',$result_vars);
 						return self::terminate();
 					}else{
-						$to_array = function($value) use(&$to_array){
-							switch(gettype($value)){
-								case 'array':
-									$list = [];
-									foreach($value as $k => $v){
-										$list[$k] = $to_array($v);
-									}
-									return $list;
-								case 'object':
-									$list = [];
-									foreach((($value instanceof \Traversable) ? $value : get_object_vars($value)) as $k => $v){
-										$list[$k] = $to_array($v);
-									}
-									return $list;
-								default:
-							}
-							return $value;
-						};
 						\ebi\HttpHeader::send('Content-Type','application/json');
-						print(\ebi\Json::encode(['result'=>$to_array($result_vars)]));
+						print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
 						return self::terminate();
 					}
 				}catch(\Exception $e){
