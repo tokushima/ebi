@@ -9,36 +9,61 @@ class Xml{
 	 * @plugin ebi.Flow
 	 */
 	public function flow_output($array){
-		$xml = new \ebi\Xml('result');
-		$xml->add($array);
-		
-		\ebi\HttpHeader::send('Content-Type','application/xml');
-		/**
-		 * XMLのencodingに指定するエンコード名
-		 */
-		print($xml->get(\ebi\Conf::get('encoding')));
+		if(strtolower((new \ebi\Env())->get('HTTP_RESPONSE_CONTENT_TYPE')) === 'application/json'){
+			\ebi\HttpHeader::send('Content-Type','application/json');
+			print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($array)]));
+		}else{
+			$xml = new \ebi\Xml('result');
+			$xml->add($array);
+			
+			\ebi\HttpHeader::send('Content-Type','application/xml');
+			/**
+			 * XMLのencodingに指定するエンコード名
+			 */
+			print($xml->get(\ebi\Conf::get('encoding')));
+		}
 	}
 	/**
 	 * @plugin ebi.Flow
 	 * @param \Exception $exception
 	 */
 	public function flow_exception(\Exception $exception){
-		$xml = new \ebi\Xml('error');
+		\ebi\HttpHeader::send_status(500);
 		
 		if(!($exception instanceof \ebi\Exceptions)){
 			$exception = [''=>$exception];
 		}
-		foreach($exception as $g => $e){
-			$class_name = get_class($e);
-			$message = new \ebi\Xml('message',$e->getMessage());
-			
-			if(!empty($g)){
-				$message->add('group',$g);
+		if(strtolower((new \ebi\Env())->get('HTTP_RESPONSE_CONTENT_TYPE')) === 'application/json'){
+			$message = [];
+				
+			foreach($exception as $g => $e){
+				$em = [
+					'message'=>$e->getMessage(),
+					'type'=>basename(str_replace("\\",'/',get_class($e)))
+				];
+				if(!empty($g)){
+					$em['group'] = $g;
+				}
+				$message[] = $em;
 			}
-			$message->add('type',basename(str_replace("\\",'/',$class_name)));
-			$xml->add($message);
+			\ebi\HttpHeader::send('Content-Type','application/json');
+			print(json_encode(['error'=>$message]));
+				
+		}else{
+			$xml = new \ebi\Xml('error');
+			
+			foreach($exception as $g => $e){
+				$class_name = get_class($e);
+				$message = new \ebi\Xml('message',$e->getMessage());
+				
+				if(!empty($g)){
+					$message->add('group',$g);
+				}
+				$message->add('type',basename(str_replace("\\",'/',$class_name)));
+				$xml->add($message);
+			}
+			\ebi\HttpHeader::send('Content-Type','application/xml');
+			print($xml->get(\ebi\Conf::get('encoding')));
 		}
-		\ebi\HttpHeader::send('Content-Type','application/xml');
-		print($xml->get(\ebi\Conf::get('encoding')));
 	}
 }

@@ -11,9 +11,11 @@ class Env{
 	 */
 	public function get($name,$default=null){
 		return (isset($_ENV[$name]) && $_ENV[$name] != '') ? $_ENV[$name] : (
-				(isset($_SERVER[$name]) && $_SERVER[$name]  != '') ? $_SERVER[$name] : (
-						(getenv($name) !== false && getenv($name) != '') ? getenv($name) : (
-								$default
-						)));
+			(isset($_SERVER[$name]) && $_SERVER[$name]  != '') ? $_SERVER[$name] : (
+				(getenv($name) !== false && getenv($name) != '') ? getenv($name) : (
+					$default
+				)
+			)
+		);
 	}
 }
