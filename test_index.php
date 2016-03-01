@@ -29,6 +29,7 @@ include_once('bootstrap.php');
 		'patterns'=>[
 			'aaa'=>['name'=>'group_aaa_xml','action'=>'test.flow.Action::abc'],
 			'bbb'=>['name'=>'group_bbb_xml','action'=>'test.flow.Action::abc'],
+			'eee'=>['name'=>'group_eee_xml','action'=>'test.flow.Action::raise'],			
 		],
 		'plugins'=>['ebi.flow.plugin.Xml'],
 	],
