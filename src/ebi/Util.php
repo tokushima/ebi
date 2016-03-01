@@ -367,7 +367,7 @@ class Util{
 			case 'object':
 				$list = [];
 				foreach((($value instanceof \Traversable) ? $value : get_object_vars($value)) as $k => $v){
-					$list[$k] = $to_array($v);
+					$list[$k] = self::to_primitive($v);
 				}
 				return $list;
 			default:

@@ -9,7 +9,7 @@ class Xml{
 	 * @plugin ebi.Flow
 	 */
 	public function flow_output($array){
-		if(strtolower((new \ebi\Env())->get('HTTP_RESPONSE_CONTENT_TYPE')) === 'application/json'){
+		if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') !== false){
 			\ebi\HttpHeader::send('Content-Type','application/json');
 			print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($array)]));
 		}else{
@@ -33,7 +33,7 @@ class Xml{
 		if(!($exception instanceof \ebi\Exceptions)){
 			$exception = [''=>$exception];
 		}
-		if(strtolower((new \ebi\Env())->get('HTTP_RESPONSE_CONTENT_TYPE')) === 'application/json'){
+		if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') !== false){
 			$message = [];
 				
 			foreach($exception as $g => $e){
@@ -47,8 +47,7 @@ class Xml{
 				$message[] = $em;
 			}
 			\ebi\HttpHeader::send('Content-Type','application/json');
-			print(json_encode(['error'=>$message]));
-				
+			print(\ebi\Json::encode(['error'=>$message]));
 		}else{
 			$xml = new \ebi\Xml('error');
 			
