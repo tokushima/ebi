@@ -52,13 +52,14 @@ class Xml{
 			$xml = new \ebi\Xml('error');
 			
 			foreach($exception as $g => $e){
-				$class_name = get_class($e);
-				$message = new \ebi\Xml('message',$e->getMessage());
+				$message = new \ebi\Xml('message');
+				$type = basename(str_replace("\\",'/',get_class($e)));
 				
 				if(!empty($g)){
-					$message->add('group',$g);
+					$message->add(new \ebi\Xml('group',$g));
 				}
-				$message->add('type',basename(str_replace("\\",'/',$class_name)));
+				$message->add(new \ebi\Xml('type',$type));
+				$message->add(new \ebi\Xml('value',$e->getMessage()));
 				$xml->add($message);
 			}
 			\ebi\HttpHeader::send('Content-Type','application/xml');
