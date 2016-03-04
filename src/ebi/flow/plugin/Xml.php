@@ -58,7 +58,7 @@ class Xml{
 				if(!empty($g)){
 					$message->add('group',$g);
 				}
-				$message->add('type',basename(str_replace("\\",'/',$class_name)));
+				$message->add('type',$type);
 				$xml->add($message);
 			}
 			\ebi\HttpHeader::send('Content-Type','application/xml');
