@@ -277,7 +277,6 @@ class Request extends \ebi\Request{
 		if($this->map_arg('logout_redirect') != null){
 			$this->set_after_redirect($this->map_arg('logout_redirect'));
 		}
-		return ['login'=>$this->is_login()];
 	}
 	public function noop(){
 		return $this->ar_vars();
