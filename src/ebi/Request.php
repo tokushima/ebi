@@ -220,27 +220,41 @@ class Request implements \IteratorAggregate{
 	 * クッキーへの書き出し
 	 * @param string $name 書き込む変数名
 	 * @param int $expire 有効期限(秒) (+ time)
-	 * @param string $path パスの有効範囲
-	 * @param boolean $subdomain サブドメインでも有効とするか
-	 * @param boolean $secure httpsの場合のみ書き出しを行うか
 	 */
-	public function write_cookie($name,$expire=null,$path=null,$subdomain=false,$secure=false){
-		if($expire === null) $expire = 1209600;
-		$domain = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
-		if($subdomain && substr_count($domain,'.') >= 2) $domain = preg_replace("/.+(\.[^\.]+\.[^\.]+)$/","\\1",$domain);
-		if(empty($path)) $path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-		setcookie($name,$this->in_vars($name),time() + $expire,$path,$domain,$secure);
+	public function write_cookie($name,$expire=null){
+		$cookie_params = \ebi\Conf::cookie_params();
+		
+		if($expire === null){
+			$expire = $cookie_params['cookie_lifetime'];
+			
+			if($expire > 0){
+				$expire = $expire + time();
+			}
+		}
+		setcookie(
+			$name,
+			$this->in_vars($name),
+			(time() + $expire),
+			$cookie_params['cookie_path'],
+			$cookie_params['cookie_domain'],
+			$cookie_params['cookie_secure']
+		);
 	}
 	/**
 	 * クッキーから削除
 	 * 登録時と同条件のものが削除される
 	 * @param string $name クッキー名
 	 */
-	public function delete_cookie($name,$path=null,$subdomain=false,$secure=false){
-		$domain = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
-		if($subdomain && substr_count($domain,'.') >= 2) $domain = preg_replace("/.+(\.[^\.]+\.[^\.]+)$/","\\1",$domain);
-		if(empty($path)) $path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-		setcookie($name,null,time() - 1209600,$path,$domain,$secure);
+	public function delete_cookie($name){
+		setcookie(
+			$name,
+			null,
+			(time() - 1209600),
+			$cookie_params['cookie_path'],
+			$cookie_params['cookie_domain'],
+			$cookie_params['cookie_secure']
+		);
+
 		$this->rm_vars($name);
 	}
 	/**

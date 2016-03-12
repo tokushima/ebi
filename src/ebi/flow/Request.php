@@ -24,6 +24,7 @@ class Request extends \ebi\Request{
 		$d = debug_backtrace(false);
 		$d = array_pop($d);
 		$entry = basename($d['file'],'.php');
+		// entry group的な何かをconfで
 		$sess_name = md5((isset($session_group[$entry])) ? $session_group[$entry] : $d['file']);
 		
 		$this->sess = new \ebi\Session($sess_name);
