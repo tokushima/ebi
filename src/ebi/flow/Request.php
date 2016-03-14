@@ -15,7 +15,7 @@ class Request extends \ebi\Request{
 	
 	public function __construct(){
 		parent::__construct();
-		$sess_name = md5(\ebi\Flow::entry_file());
+		$sess_name = md5(\ebi\Flow::workgroup());
 		
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';

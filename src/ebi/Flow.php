@@ -15,7 +15,7 @@ class Flow{
 	
 	private static $url_pattern = [];
 	private static $selected_class_pattern = [];
-	private static $entry_file;
+	private static $workgroup;
 	
 	private static $is_get_map = false;
 	private static $map = [];
@@ -51,11 +51,11 @@ class Flow{
 		return self::$selected_class_pattern;
 	}
 	/**
-	 * 現在のエントリファイル
+	 * 現在のワークグループ
 	 * @return string
 	 */
-	public static function entry_file(){
-		return self::$entry_file;
+	public static function workgroup(){
+		return self::$workgroup;
 	}
 	/**
 	 * mapsを取得する
@@ -154,10 +154,10 @@ class Flow{
 			throw new \ebi\exception\InvalidArgumentException('patterns not found');
 		}
 		
-		self::$entry_file = null;
+		$entry_file = null;
 		foreach(debug_backtrace(false) as $d){
 			if($d['file'] !== __FILE__){
-				self::$entry_file = basename($d['file']);
+				$entry_file = basename($d['file']);
 				break;
 			}
 		}
@@ -174,8 +174,8 @@ class Flow{
 		$app_url = \ebi\Conf::get('app_url');
 		
 		if(is_array($app_url)){
-			if(isset($app_url[self::$entry_file])){
-				$app_url = $app_url[self::$entry_file];
+			if(isset($app_url[$entry_file])){
+				$app_url = $app_url[$entry_file];
 			}else if(isset($app_url['*'])){
 				$app_url = $app_url['*'];
 			}else{
@@ -192,12 +192,12 @@ class Flow{
 		
 		if(empty(self::$app_url)){
 			$host = \ebi\Request::host();
-			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').self::$entry_file;
+			self::$app_url = (empty($host) ? 'http://localhost:8000/' : $host.'/').$entry_file;
 		}else if(substr(self::$app_url,-1) == '*'){
 			self::$app_url = substr(self::$app_url,0,-1);
 			self::$app_url = (substr(self::$app_url,-1) == '*') ? 
-				substr(self::$app_url,0,-1).self::$entry_file :
-				self::$app_url.substr(self::$entry_file,0,-4);
+				substr(self::$app_url,0,-1).$entry_file :
+				self::$app_url.substr($entry_file,0,-4);
 		}
 		self::$app_url = \ebi\Util::path_slash(str_replace('https://','http://',self::$app_url),null,true);
 		
@@ -214,7 +214,8 @@ class Flow{
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
-		self::$map = array_merge(self::$map,$map);		
+		self::$map = array_merge(self::$map,$map);
+		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
 		
 		$http = self::$app_url;
 		$https = str_replace('http://','https://',self::$app_url);
