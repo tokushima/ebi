@@ -114,5 +114,14 @@ class HttpHeader{
 	public static function rawdata(){
 		return file_get_contents('php://input');
 	}
-	
+	/**
+	 * Ajaxでクロスドメインでアクセスする場合に設定する
+	 * @param array $urls 許可するURL
+	 */
+	public static function cors_origin(array $urls=[]){
+		if(empty($urls)){
+			$urls[] = '*';
+		}
+		self::send('Access-Control-Allow-Origin',implode(' ',$urls));
+	}
 }
