@@ -118,7 +118,7 @@ class HttpHeader{
 	 * Ajaxでクロスドメインでアクセスする場合に設定する
 	 * @param array $urls 許可するURL
 	 */
-	public static function cors_origin(array $urls=[]){
+	public static function cors_origin(array $urls){
 		if(empty($urls)){
 			$urls[] = '*';
 		}
