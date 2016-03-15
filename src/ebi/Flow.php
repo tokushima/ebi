@@ -15,7 +15,8 @@ class Flow{
 	
 	private static $url_pattern = [];
 	private static $selected_class_pattern = [];
-		
+	private static $workgroup;
+	
 	private static $is_get_map = false;
 	private static $map = [];
 	
@@ -48,6 +49,13 @@ class Flow{
 	 */
 	public static function selected_class_pattern(){
 		return self::$selected_class_pattern;
+	}
+	/**
+	 * 現在のワークグループ
+	 * @return string
+	 */
+	public static function workgroup(){
+		return self::$workgroup;
 	}
 	/**
 	 * mapsを取得する
@@ -206,7 +214,8 @@ class Flow{
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
 		unset($map['patterns']);
-		self::$map = array_merge(self::$map,$map);		
+		self::$map = array_merge(self::$map,$map);
+		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
 		
 		$http = self::$app_url;
 		$https = str_replace('http://','https://',self::$app_url);

@@ -30,7 +30,7 @@ meq('{"result":{"abc":123}}',$b->body());
 $b->do_post(url('test_login_html::logout'));
 eq(200,$b->status());
 eq(url('test_login_html::logout'),$b->url());
-eq('{"result":{"login":false}}',$b->body());
+eq([],$b->json('result'));
 
 $b->do_get(url('test_login_html::aaa'));
 eq(401,$b->status());

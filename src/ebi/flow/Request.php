@@ -15,16 +15,7 @@ class Request extends \ebi\Request{
 	
 	public function __construct(){
 		parent::__construct();
-		
-		/**
-		 * セッショングループ名
-		 */
-		$session_group = \ebi\Conf::get('session_group');
-		
-		$d = debug_backtrace(false);
-		$d = array_pop($d);
-		$entry = basename($d['file'],'.php');
-		$sess_name = md5((isset($session_group[$entry])) ? $session_group[$entry] : $d['file']);
+		$sess_name = md5(\ebi\Flow::workgroup());
 		
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';

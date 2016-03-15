@@ -18,7 +18,7 @@ eq('{"result":{"abc":123}}',$b->body());
 $b->do_post(url('test_login2::automap/do_logout'));
 eq(200,$b->status());
 eq(url('test_login2::automap/do_logout'),$b->url());
-eq('{"result":{"login":false}}',$b->body());
+eq([],$b->json('result'));
 
 $b->do_get(url('test_login2::automap/aaa'));
 eq(401,$b->status());

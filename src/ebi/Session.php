@@ -19,25 +19,28 @@ class Session{
 	 */
 	public function __construct($name='sess'){
 		$this->ses_n = $name;
+		
 		if('' === session_id()){
-			/**
-			 * セッション名
-			 */
-			$session_name = \ebi\Conf::get('session_name','SID');
+			$cookie_params = \ebi\Conf::cookie_params();
 			
-			if(!ctype_alpha($session_name)){
-				throw new \InvalidArgumentException('session name is not a alpha value');
-			}
-			/**
-			 * キャッシュリミッタの名前
-			 */
-			session_cache_limiter(\ebi\Conf::get('session_limiter','nocache'));
-			/**
-			 * キャッシュの有効期限 (秒)、ただし設定は分に変換される
-			 */
-			session_cache_expire((int)(\ebi\Conf::get('session_expire',10800)/60));
-			session_name();
+			session_name($cookie_params['session_name']);
+			session_cache_expire($cookie_params['session_expire']);
+			session_cache_limiter($cookie_params['session_limiter']);
 
+			if(
+				$cookie_params['cookie_lifetime'] > 0 || 
+				$cookie_params['cookie_path'] != '/' ||
+				!empty($cookie_params['cookie_domain']) ||
+				$cookie_params['cookie_secure'] !== false
+			){
+				session_set_cookie_params(
+					$cookie_params['cookie_lifetime'],
+					$cookie_params['cookie_path'],
+					$cookie_params['cookie_domain'],
+					$cookie_params['cookie_secure']
+				);
+			}			
+			
 			if(static::has_class_plugin('session_read')){
 				ini_set('session.save_handler','user');
 				
@@ -49,7 +52,7 @@ class Session{
 					[$this,'destroy'],
 					[$this,'gc']
 				);
-				if(isset($this->vars[$session_name])){
+				if(isset($this->vars[session_name()])){
 					session_regenerate_id(true);
 				}
 			}

@@ -150,6 +150,64 @@ class Conf{
 		}
 		return $dir.$path;
 	}
+	
+	/**
+	 * セッション・クッキーの定義
+	 * @return mixed{}
+	 */
+	public static function cookie_params(){
+		/**
+		 * ブラウザに送信するクッキーの有効期間(秒)
+		 * @param integer $val
+		 */
+		$cookie_lifetime = \ebi\Conf::get('cookie_lifetime',0);
+		
+		/**
+		 * クッキーで設定するパス
+		 * @param string $val
+		 */
+		$cookie_path = \ebi\Conf::get('cookie_path','/');
+		
+		/**
+		 * クッキーで指定するドメイン
+		 * @param string $val
+		 */
+		$cookie_domain = \ebi\Conf::get('cookie_domain');
+		
+		/**
+		 *  セキュアな接続を通じてのみCookieを送信できるか
+		 * @param boolean $val
+		 */
+		$cookie_secure = \ebi\Conf::get('cookie_secure',false);
+		
+		/**
+		 * セッション名
+		 * @param string $val
+		 */
+		$session_name = \ebi\Conf::get('session_name','SID');
+		
+		/**
+		 * キャッシュの有効期限 (分)
+		 * @param integer $val
+		 */
+		$session_expire = \ebi\Conf::get('session_expire',180);
+		/**
+		 * キャッシュリミッタの名前 public / private_no_expire / private / nocache
+		 * @param string $val
+		 * @see http://jp2.php.net/manual/ja/function.session-cache-limiter.php
+		 */
+		$session_limiter = \ebi\Conf::get('session_limiter','nocache');
+		
+		return [
+			'session_name'=>$session_name,
+			'session_expire'=>$session_expire,
+			'session_limiter'=>$session_limiter,
+			'cookie_lifetime'=>$cookie_lifetime,
+			'cookie_path'=>$cookie_path,
+			'cookie_domain'=>$cookie_domain,
+			'cookie_secure'=>$cookie_secure,
+		];
+	}
 	/**
 	 * Pluginに遅延セットする
 	 * @param string $class

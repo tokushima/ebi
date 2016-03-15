@@ -49,10 +49,10 @@ class Csrf{
 			if($xml->in_attr('action') == '' || strpos($xml->in_attr('action'),'$t.map_url') !== false){
 				$xml->escape(false);
 				$xml->value(
-						sprintf('<input type="hidden" name="csrftoken" value="%s" %s/>',
-								$this->token,
-								(($xml->in_attr('rt:ref') === 'true' || $xml->in_attr('rt:aref') === 'true') ? 'rt:ref="false"' : '')
-						).$xml->value());
+					sprintf('<input type="hidden" name="csrftoken" value="%s" %s/>',
+						$this->token,
+						(($xml->in_attr('rt:ref') === 'true' || $xml->in_attr('rt:aref') === 'true') ? 'rt:ref="false"' : '')
+					).$xml->value());
 				return $xml;
 			}
 		});
