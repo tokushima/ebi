@@ -81,9 +81,9 @@ class DbConnector{
 			$vars[] = $this->update_value($dao,$column->name());
 		}
 		return new \ebi\Daq(
-				'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
-				,$vars
-				,$autoid
+			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
+			,$vars
+			,$autoid
 		);
 	}
 	/**
@@ -173,7 +173,7 @@ class DbConnector{
 					$column_map = $this->date_format($column_map,$date_format[$column->name()]);
 				}
 				$select[] = $column_map.' '.$column->column_alias();
-				$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
+				$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
 				
 				if($break){
 					break;
@@ -311,7 +311,7 @@ class DbConnector{
 			$select[] = $column_map.' key_column';			
 		}
 		foreach($dao->columns() as $column){
-			$from[$column->table_alias()] = $column->table().' '.$column->table_alias();
+			$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
 		}
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		
@@ -524,45 +524,42 @@ class DbConnector{
 	protected function quotation($name){
 		return $this->quotation.$name.$this->quotation;
 	}
+	private function to_column_type($dao,$type,$name){
+		switch($type){
+			case '':
+			case 'mixed':
+			case 'string':
+			case 'alnum':
+			case 'text':
+				return $this->quotation($name).' TEXT';
+			case 'number':
+				return $this->quotation($name).' REAL';
+			case 'serial':
+				return $this->quotation($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
+			case 'boolean':
+			case 'timestamp':
+			case 'date':
+			case 'time':
+			case 'intdate':
+			case 'integer':
+				return $this->quotation($name).' INTEGER';
+			case 'email':
+				return $this->quotation($name).' TEXT';
+			default:
+				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
+		}
+	}
 	public function create_table_sql(\ebi\Dao $dao){
-		$quote = function($name){
-			return '`'.$name.'`';
-		};
-		$to_column_type = function($dao,$type,$name) use($quote){
-			switch($type){
-				case '':
-				case 'mixed':
-				case 'string':
-				case 'alnum':
-				case 'text':
-					return $quote($name).' TEXT';
-				case 'number':
-					return $quote($name).' REAL';
-				case 'serial': 
-					return $quote($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
-				case 'boolean':
-				case 'timestamp':
-				case 'date':
-				case 'time':
-				case 'intdate':
-				case 'integer':
-					return $quote($name).' INTEGER';
-				case 'email':
-					return $quote($name).' TEXT';
-				default:
-					throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
-			}
-		};
 		$columndef = $primary = [];
-		$sql = 'create table '.$quote($dao->table()).'('.PHP_EOL;
+		$sql = 'create table '.$this->quotation($dao->table()).'('.PHP_EOL;
 		
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' null ';
+				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' null ';
 				$columndef[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
-					$primary[] = $quote($column->column());
+					$primary[] = $this->quotation($column->column());
 				}
 			}
 		}
