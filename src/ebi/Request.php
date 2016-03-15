@@ -55,7 +55,7 @@ class Request implements \IteratorAggregate{
 			}
 			if(isset($_COOKIE) && is_array($_COOKIE)){
 				foreach($_COOKIE as $k => $v){
-					if(ctype_alpha($k[0]) && $k != session_name()){
+					if(ctype_alpha($k[0]) && $k != \ebi\Conf::session_name()){
 						$this->vars[$k] = $v;
 					}
 				}
@@ -69,8 +69,8 @@ class Request implements \IteratorAggregate{
 			if(
 				($this->_method == 'POST' || $this->_method == 'PUT' || $this->_method == 'DELETE') &&
 				(
-						(array_key_exists('HTTP_CONTENT_TYPE',$_SERVER) && strpos($_SERVER['HTTP_CONTENT_TYPE'],'application/json') === 0) ||
-						(array_key_exists('CONTENT_TYPE',$_SERVER) && strpos($_SERVER['CONTENT_TYPE'],'application/json') === 0)
+					(array_key_exists('HTTP_CONTENT_TYPE',$_SERVER) && strpos($_SERVER['HTTP_CONTENT_TYPE'],'application/json') === 0) ||
+					(array_key_exists('CONTENT_TYPE',$_SERVER) && strpos($_SERVER['CONTENT_TYPE'],'application/json') === 0)
 				)
 			){
 				$json = json_decode(file_get_contents('php://input'),true);

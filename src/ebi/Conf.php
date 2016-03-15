@@ -209,6 +209,13 @@ class Conf{
 		];
 	}
 	/**
+	 * セッション名の定義
+	 * @return string
+	 */
+	public static function session_name(){
+		return \ebi\Conf::get('session_name','SID');
+	}
+	/**
 	 * Pluginに遅延セットする
 	 * @param string $class
 	 * @param string $obj
