@@ -452,13 +452,6 @@ abstract class Dao extends \ebi\Object{
 		return self::$record_query;	
 	}
 	/**
-	 * 記録したSQLを取得する
-	 * @return array
-	 */
-	public static function recorded_query(){
-		return self::$record_query;
-	}
-	/**
 	 * クエリを実行する
 	 * @param Daq $daq
 	 * @throws RuntimeException
@@ -570,7 +563,7 @@ abstract class Dao extends \ebi\Object{
 		}
 		\ebi\Exceptions::throw_over();
 	}
-	protected function which_aggregator($exe,array $args,$is_list=false){
+	private function which_aggregator($exe,array $args,$is_list=false){
 		$target_name = $gorup_name = [];
 		if(isset($args[0]) && is_string($args[0])){
 			$target_name = array_shift($args);
@@ -607,6 +600,7 @@ abstract class Dao extends \ebi\Object{
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
 		$results = [];
+		
 		foreach($dao->which_aggregator($exec,$args,true) as $value){
 			$dao->{$gorup_name}($value['key_column']);
 			$results[$dao->{$gorup_name}()] = static::exec_aggregator_result_cast($dao,$target_name,$value['target_column'],$cast);
