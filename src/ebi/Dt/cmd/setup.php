@@ -39,7 +39,7 @@ __SRC__
 	\cmdman\Std::println_success('Written: '.realpath($settings_file));	
 	\cmdman\Std::println_info('Application mode changed.');
 	\cmdman\Std::println_danger('Not complete setup - please try again.');
-	exit;
+	return;
 }else{
 	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
