@@ -284,7 +284,7 @@ class Dt{
 						$model_list[$package]['con'] = false;
 					}catch(\Exception $e){
 						$model_list[$package]['error'] = $e->getMessage();
-						$model_list[$package]['error_query'] = print_r(\ebi\Dao::recorded_query(),true);
+						$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
 					}
 				}
 			}
