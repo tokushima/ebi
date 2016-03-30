@@ -231,5 +231,7 @@ class Helper{
 		$value = preg_replace('/\[\d+\]/','&nbsp;&nbsp;\\0',$value);
 		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
 	}
-
+	public function has_conf($package,$key){
+		return \ebi\Conf::exists($package, $key);
+	}
 }
