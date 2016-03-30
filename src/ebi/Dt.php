@@ -164,19 +164,6 @@ class Dt{
 		return $info;
 	}
 	/**
-	 * クラスのソース表示
-	 * @param string $class
-	 * @automap
-	 */
-	public function class_src($class){
-		$info = \ebi\Dt\Man::class_info($class);
-		$src = file_get_contents($info['filename']);
-		return [
-			'name'=>$class,
-			'src_list'=>explode(PHP_EOL,str_replace(["\r\n","\r","\n","\t"],[PHP_EOL,PHP_EOL,PHP_EOL,'  '],$src)),
-		];
-	}
-	/**
 	 * クラスドメソッドのキュメント
 	 * @param string $class
 	 * @param string $method

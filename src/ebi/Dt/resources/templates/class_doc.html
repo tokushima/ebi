@@ -5,7 +5,7 @@
 
 <rt:block name="content">
 <h2>
-	<a href="{$t.package_method_url('class_src',$package)}">{$f.package_name($package)}</a>
+	{$f.package_name($package)}
 	<rt:if param="{$abstract}"> (Abstract) </rt:if>
 </h2>
 <rt:if param="{$extends}">
