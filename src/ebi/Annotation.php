@@ -32,10 +32,11 @@ class Annotation{
 				break;
 			}
 		}
+
 		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
 		
 		foreach(is_array($names) ? $names : [$names] as $name){
-			$return[$name] = self::decode($d, $name);
+			$return[$name] = self::decode($d, $name, $doc_name);
 		}
 		return is_array($names) ? $return : $return[$names];
 	}
@@ -54,12 +55,12 @@ class Annotation{
 		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
 		
 		foreach(is_array($names) ? $names : [$names] as $name){
-			$return[$name] = self::decode($d, $name);
+			$return[$name] = self::decode($d, $name, $doc_name);
 		}
 		return is_array($names) ? $return : $return[$names];
 	}
 	
-	private static function decode($d,$name){
+	private static function decode($d,$name,$doc_name=null){
 		$result = null;
 		
 		if(preg_match_all("/@".$name."(.*)/",$d,$mtc)){
