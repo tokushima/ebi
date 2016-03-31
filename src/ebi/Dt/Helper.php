@@ -234,4 +234,11 @@ class Helper{
 	public function has_conf($package,$key){
 		return \ebi\Conf::exists($package, $key);
 	}
+	
+	public function is_subclass_of($package,$class){
+		$package = '\\'.str_replace('.','\\',$package);
+		$class = '\\'.str_replace('.','\\',$class);
+		
+		return is_subclass_of($package,$class);
+	}
 }

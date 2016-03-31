@@ -1,9 +1,9 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2>Classes</h2>
 
-<table rt:param="{$class_list}" rt:var="summary" rt:key="package">
+<h2>Classes</h2>
+<table>
 <thead>
 	<tr>
 		<th class="span3">package</th>
@@ -11,10 +11,35 @@
 	</tr>
 </thead>
 <tbody>
+	<rt:loop param="{$class_list}" var="summary" key="package">
+	<rt:notif param="{$f.is_subclass_of($package,'Exception')}">
 	<tr>
 		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
 		<td style="width: 70%;">{$summary}</td>
 	</tr>
+	</rt:notif>
+	</rt:loop>
+</tbody>
+</table>
+
+
+<h2>Exceptions</h2>
+<table>
+<thead>
+	<tr>
+		<th class="span3">package</th>
+		<th>summary</th>
+	</tr>
+</thead>
+<tbody>
+	<rt:loop param="{$class_list}" var="summary" key="package">
+	<rt:if param="{$f.is_subclass_of($package,'Exception')}">
+	<tr>
+		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
+		<td style="width: 70%;">{$summary}</td>
+	</tr>
+	</rt:if>
+	</rt:loop>
 </tbody>
 </table>
 </rt:block>
