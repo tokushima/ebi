@@ -177,7 +177,8 @@
 </rt:if>
 
 
-<h3>Return</h3>		
+<rt:if param="{$return}">
+<h3>Return</h3>
 <table rt:param="{$return}" rt:var="r">
 <thead>
 	<tr>
@@ -198,9 +199,11 @@
 	</tr>
 </tbody>
 </table>
+</rt:if>
 
 
-<h3>Throws</h3>		
+<rt:if param="{$throws}">
+<h3>Throws</h3>
 <table rt:param="{$throws}" rt:var="e">
 <thead>
 	<tr>
@@ -210,11 +213,12 @@
 </thead>
 <tbody>
 	<tr>
-		<td><a href="{$t.package_method_url('class_doc',$f.type($e[0]))}">{$f.type($e[0])}</a></td>
-		<td>{$t.html($e[1])}</td>
+		<td style="color:#888888;">{$f.type($e[0])}</td>
+		<td style="color:#aaaaaa;">{$t.html($e[1])}</td>
 	</tr>
 </tbody>
-</table>	
+</table>
+</rt:if>
 
 
 <rt:if param="{$modules}">
