@@ -15,7 +15,7 @@
 	<rt:notif param="{$f.is_subclass_of($package,'Exception')}">
 	<tr>
 		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
-		<td style="width: 70%;">{$summary}</td>
+		<td style="width: 70%; color: #aaaaaa;">{$summary}</td>
 	</tr>
 	</rt:notif>
 	</rt:loop>
@@ -35,8 +35,8 @@
 	<rt:loop param="{$class_list}" var="summary" key="package">
 	<rt:if param="{$f.is_subclass_of($package,'Exception')}">
 	<tr>
-		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
-		<td style="width: 70%;">{$summary}</td>
+		<td style="width: 30%; color: #888888;">{$package}</td>
+		<td style="width: 70%; color: #aaaaaa;">{$summary}</td>
 	</tr>
 	</rt:if>
 	</rt:loop>

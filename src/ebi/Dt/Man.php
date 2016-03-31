@@ -250,33 +250,34 @@ class Man{
 				try{
 					$ref = new \ReflectionMethod($uclass,$umethod);
 					$use_method_src = self::method_src($ref);
-					$use_method_doc = self::method_doc($ref);		
+					$use_method_doc = self::method_doc($ref);
 			
 					if(preg_match_all("/throw\s+new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
-							if(preg_match("/([\"\'])(.+)\\1/",$match[2][$k],$m)){
-								$match[2][$k] = $m[2];
-							}
-							$throws[$n] = [$n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k]))];
+							$throws[$n] = [$n];
 						}
 					}
 					if(preg_match_all("/\\\\ebi\\\\Exceptions::add\(\s*new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
-							if(preg_match("/([\"\'])(.+)\\1/",$match[2][$k],$m)){
-								$match[2][$k] = $m[2];
-							}
-							$throws[$n] = [$n,trim((strpos($match[2][$k],'$') ? '#variable message' : $match[2][$k]))];
+							$throws[$n] = [$n];
 						}
 					}
 					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$match)){
 						foreach($match[1] as $k => $n){
-							$throws[$n] = [$n,trim($match[2][$k])];
+							$throws[$n] = [$n];
 						}
 					}
 				}catch(\ReflectionException $e){
 				}
 			}
+			foreach($throws as $k => $info){
+				$ref = new \ReflectionClass($info[0]);
+				// TODO
+				$throws[$k][1] = trim(preg_replace('/@.+/','',trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())))));
+			}
 			ksort($throws);
+			
+
 			
 			if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$document,$match)){
 				foreach($match[1] as $v){
