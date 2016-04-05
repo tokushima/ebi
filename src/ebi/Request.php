@@ -118,7 +118,7 @@ class Request implements \IteratorAggregate{
 		return null;
 	}
 	/**
-	 * (non-PHPdoc)
+	 * varsを返す
 	 * @see IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){

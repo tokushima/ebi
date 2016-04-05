@@ -254,16 +254,19 @@ class Man{
 			
 					if(preg_match_all("/throw\s+new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
+							$n = trim($n);
 							$throws[$n] = [$n];
 						}
 					}
 					if(preg_match_all("/\\\\ebi\\\\Exceptions::add\(\s*new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
+							$n = trim($n);
 							$throws[$n] = [$n];
 						}
 					}
 					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$match)){
 						foreach($match[1] as $k => $n){
+							$n = trim($n);
 							$throws[$n] = [$n];
 						}
 					}
@@ -271,13 +274,13 @@ class Man{
 				}
 			}
 			foreach($throws as $k => $info){
-				$ref = new \ReflectionClass($info[0]);
-				// TODO
-				$throws[$k][1] = trim(preg_replace('/@.+/','',trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())))));
+				try{
+					$ref = new \ReflectionClass($info[0]);
+					$throws[$k][1] = trim(preg_replace('/@.+/','',trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())))));
+				}catch(\ReflectionException $e){
+				}
 			}
 			ksort($throws);
-			
-
 			
 			if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$document,$match)){
 				foreach($match[1] as $v){

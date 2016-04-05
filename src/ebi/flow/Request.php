@@ -54,6 +54,10 @@ class Request extends \ebi\Request{
 	public function is_sessions($n){
 		return $this->sess->is_vars($n);
 	}
+	/**
+	 * 前処理、入力値のバリデーションやログイン処理を行う
+	 * __before__メソッドを定義することで拡張する
+	 */
 	public function before(){
 		list(,$method) = explode('::',$this->get_selected_pattern()['action']);
 		$annon = \ebi\Annotation::get_method(get_class($this), $method,['http_method','request']);
@@ -92,6 +96,10 @@ class Request extends \ebi\Request{
 			$this->login_required();
 		}
 	}
+	/**
+	 * 後処理
+	 * __after__メソッドを定義することで拡張する
+	 */
 	public function after(){
 		if(method_exists($this,'__after__')){
 			$this->__after__();
@@ -269,6 +277,9 @@ class Request extends \ebi\Request{
 			$this->set_after_redirect($this->map_arg('logout_redirect'));
 		}
 	}
+	/**
+	 * 何も処理をせずに、varsを返す
+	 */
 	public function noop(){
 		return $this->ar_vars();
 	}
