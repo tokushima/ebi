@@ -74,15 +74,24 @@ class Archive{
 		return $this;		
 	}
 	private function tar_head($type,$filename,$filesize=0,$fileperms=0777,$uid=0,$gid=0,$update_date=null){
-		if(strlen($filename) > 99) throw new \InvalidArgumentException('invalid filename (max length 100) `'.$filename.'`');
-		if($update_date === null) $update_date = time();
+		if(strlen($filename) > 99){
+			throw new \ebi\exception\InvalidArgumentException('invalid filename (max length 100) `'.$filename.'`');
+		}
+		if($update_date === null){
+			$update_date = time();
+		}
 		$checksum = 256;
 		$first = pack('a100a8a8a8a12A12',$filename,
 						sprintf('%06s ',decoct($fileperms)),sprintf('%06s ',decoct($uid)),sprintf('%06s ',decoct($gid)),
 						sprintf('%011s ',decoct(($type === 0) ? $filesize : 0)),sprintf('%11s',decoct($update_date)));
 		$last = pack('a1a100a6a2a32a32a8a8a155a12',$type,null,null,null,null,null,null,null,null,null);
-		for($i=0;$i<strlen($first);$i++) $checksum += ord($first[$i]);
-		for($i=0;$i<strlen($last);$i++) $checksum += ord($last[$i]);
+		
+		for($i=0;$i<strlen($first);$i++){
+			$checksum += ord($first[$i]);
+		}
+		for($i=0;$i<strlen($last);$i++){
+			$checksum += ord($last[$i]);
+		}
 		return $first.pack('a8',sprintf('%6s ',decoct($checksum))).$last;
 	}
 	/**
@@ -219,7 +228,6 @@ class Archive{
 	 * zipを解凍してファイル書き出しを行う
 	 * @param string $zipfile 解凍するZIPファイル
 	 * @param string $outpath 解凍先のファイルパス
-	 * @throws \ebi\exception\InvalidArgumentException
 	 */
 	public static function unzip($zipfile,$outpath){
 		$zip = new \ZipArchive();

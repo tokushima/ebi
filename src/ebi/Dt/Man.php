@@ -28,7 +28,7 @@ class Man{
 		$r = new \ReflectionClass(str_replace(['.','/'],['\\','\\'],$class));
 		
 		if($r->getFilename() === false || !is_file($r->getFileName())){
-			throw new \InvalidArgumentException('`'.$class.'` file not found.');
+			throw new \ebi\exception\InvalidArgumentException('`'.$class.'` file not found.');
 		}
 		$traits = [];
 		$parent = new \ReflectionClass($r->getName());
@@ -267,17 +267,19 @@ class Man{
 					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$match)){
 						foreach($match[1] as $k => $n){
 							$n = trim($n);
-							$throws[$n] = [$n];
+							$throws[$n] = [$n,trim($match[2][$k])];
 						}
 					}
 				}catch(\ReflectionException $e){
 				}
 			}
 			foreach($throws as $k => $info){
-				try{
-					$ref = new \ReflectionClass($info[0]);
-					$throws[$k][1] = trim(preg_replace('/@.+/','',trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())))));
-				}catch(\ReflectionException $e){
+				if(empty($throws[$k][1])){
+					try{
+						$ref = new \ReflectionClass($info[0]);
+						$throws[$k][1] = trim(preg_replace('/@.+/','',trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())))));
+					}catch(\ReflectionException $e){
+					}
 				}
 			}
 			ksort($throws);

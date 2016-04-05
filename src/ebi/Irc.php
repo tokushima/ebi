@@ -21,7 +21,7 @@ class Irc{
 	public function __construct($address,$port,$channel,$nick){
 		$this->fp = fsockopen($address,$port,$errno,$errstr,1);	
 		if(!empty($errno)){
-			throw new \RuntimeException($errstr);
+			throw new \ebi\exception\ConnectionException($errstr);
 		}
 		$this->nick = $nick;
 		$this->ch = '#'.$channel;
@@ -37,7 +37,7 @@ class Irc{
 			if($st === '004'){
 				break;
 			}else if(substr($st,0,1) == '4'){
-				throw new \RuntimeException($msg);
+				throw new \ebi\exception\VerifyException($msg);
 			}
 		}
 	}

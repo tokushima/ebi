@@ -11,7 +11,7 @@ class Util{
 	 */
 	public static function file_read($filename){
 		if(!is_readable($filename) || !is_file($filename)){
-			throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
 		}
 		return file_get_contents($filename);
 	}
@@ -21,11 +21,18 @@ class Util{
 	 * @param string $src 内容
 	 */
 	public static function file_write($filename,$src=null,$lock=true){
-		if(empty($filename)) throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		if(empty($filename)){
+			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		}
 		$b = is_file($filename);
 		self::mkdir(dirname($filename));
-		if(false === file_put_contents($filename,(string)$src,($lock ? LOCK_EX : 0))) throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
-		if(!$b) chmod($filename,0777);
+		
+		if(false === file_put_contents($filename,(string)$src,($lock ? LOCK_EX : 0))){
+			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		}
+		if(!$b){
+			chmod($filename,0777);
+		}
 	}
 	/**
 	 * ファイルに追記する
@@ -35,7 +42,10 @@ class Util{
 	 */
 	public static function file_append($filename,$src=null,$lock=true){
 		self::mkdir(dirname($filename));
-		if(false === file_put_contents($filename,(string)$src,FILE_APPEND|(($lock) ? LOCK_EX : 0))) throw new \InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		
+		if(false === file_put_contents($filename,(string)$src,FILE_APPEND|(($lock) ? LOCK_EX : 0))){
+			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+		}
 	}
 	/**
 	 * フォルダを作成する
@@ -57,7 +67,7 @@ class Util{
 					}
 				}
 			}catch(\ErrorException $e){
-				throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
+				throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 			}
 		}
 		return $bool;
@@ -72,7 +82,7 @@ class Util{
 			self::mkdir(dirname($dest));
 			return rename($source,$dest);
 		}
-		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
+		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * 削除
@@ -106,7 +116,7 @@ class Util{
 		}else if(is_file($source) && unlink($source)){
 			return;
 		}
-		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
+		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * コピー
@@ -133,7 +143,7 @@ class Util{
 			copy($source,$dest);
 			return;
 		}
-		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$source));
+		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * ディレクトリ内のイテレータ
@@ -157,7 +167,7 @@ class Util{
 			}			
 			return $it;
 		}
-		throw new \InvalidArgumentException(sprintf('permission denied `%s`',$directory));
+		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$directory));
 	}
 	private static function parse_filename($filename){
 		$filename = preg_replace("/[\/]+/",'/',str_replace("\\",'/',trim($filename)));
@@ -303,7 +313,7 @@ class Util{
 		
 		$rtn = strtotime($time,$t);
 		if($rtn === false){
-			throw new \InvalidArgumentException(sprintf('invalid date and time formats `%s`',$time));
+			throw new \ebi\exception\InvalidArgumentException(sprintf('invalid date and time formats `%s`',$time));
 		}
 		return $rtn;
 	}

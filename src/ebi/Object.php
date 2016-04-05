@@ -57,18 +57,18 @@ class Object implements \IteratorAggregate{
 	public function __call($n,$args){
 		if($n[0] != '_'){
 			list($c,$p) = (in_array($n,array_keys(get_object_vars($this)))) ? 
-							[(empty($args) ? 'get' : 'set'),$n] : 
-							(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
-								[$m[1],$m[2]] : 
-								[null,null]
-							);
+				[(empty($args) ? 'get' : 'set'),$n] : 
+				(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
+					[$m[1],$m[2]] : 
+					[null,null]
+				);
 			
 			if(method_exists($this,$am=('___'.$c.'___'))){
 				$this->_ = $p;
 				return call_user_func_array([$this,(method_exists($this,$m=('__'.$c.'_'.$p.'__')) ? $m : $am)],$args);
 			}
 		}
-		throw new \ErrorException(get_class($this).'::'.$n.' method not found');
+		throw new \ebi\exception\BadMethodCallException(get_class($this).'::'.$n.' method not found');
 	}
 	public function __destruct(){
 		if(method_exists($this,'__del__')) $this->__del__();
@@ -92,7 +92,7 @@ class Object implements \IteratorAggregate{
 	}
 	private function ___get___(){
 		if($this->prop_anon($this->_,'get') === false){
-			throw new \InvalidArgumentException('not permitted');
+			throw new \ebi\exception\InvalidArgumentException('not permitted');
 		}
 		if($this->prop_anon($this->_,'attr') !== null){
 			return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? [] : [$this->{$this->_}]);
@@ -101,7 +101,7 @@ class Object implements \IteratorAggregate{
 	}
 	private function ___set___($v){
 		if($this->prop_anon($this->_,'set') === false){
-			throw new \InvalidArgumentException('not permitted');
+			throw new \ebi\exception\InvalidArgumentException('not permitted');
 		}
 		$anon = $this->prop_anon($this->_);
 		switch($this->prop_anon($this->_,'attr')){
@@ -123,7 +123,9 @@ class Object implements \IteratorAggregate{
 		return $this;
 	}
 	private function ___rm___(){
-		if($this->prop_anon($this->_,'set') === false) throw new \InvalidArgumentException('not permitted');
+		if($this->prop_anon($this->_,'set') === false){
+			throw new \ebi\exception\InvalidArgumentException('not permitted');
+		}
 		if($this->prop_anon($this->_,'attr') === null){
 			$this->{$this->_} = null;
 		}else{

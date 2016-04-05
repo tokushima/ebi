@@ -313,7 +313,7 @@ class Mail{
 		$resource_path = empty($this->resource_path) ? \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail')) : $this->resource_path;
 		$template_path = \ebi\Util::path_absolute($resource_path,$template_path);
 		if(!is_file($template_path)){
-			throw new \InvalidArgumentException($template_path.' not found');
+			throw new \ebi\exception\InvalidArgumentException($template_path.' not found');
 		}
 		try{
 			$xml = \ebi\Xml::extract(file_get_contents($template_path),'mail');
@@ -361,7 +361,7 @@ class Mail{
 				foreach($html->find('media') as $media){
 					$file = \ebi\Util::path_absolute($resource_path,$media->in_attr('src'));
 					if(!is_file($file)){
-						throw new \InvalidArgumentException($media->in_attr('src').' invalid media');
+						throw new \ebi\exception\InvalidArgumentException($media->in_attr('src').' invalid media');
 					}
 					$this->media($media->in_attr('src'),file_get_contents($file));
 				}
@@ -373,13 +373,13 @@ class Mail{
 			foreach($xml->find('attach') as $attach){
 				$file = \ebi\Util::path_absolute($resource_path,$attach->in_attr('src'));
 				if(!is_file($file)){
-					throw new \InvalidArgumentException($attach->in_attr('src').' invalid media');
+					throw new \ebi\exception\InvalidArgumentException($attach->in_attr('src').' invalid media');
 				}
 				$this->attach($attach->in_attr('name',$attach->in_attr('src')),file_get_contents($file));				
 			}
 			return $this;
 		}catch(\ebi\exception\NotFoundException $e){
-			throw new \InvalidArgumentException($template_path.' invalid data');
+			throw new \ebi\exception\InvalidArgumentException($template_path.' invalid data');
 		}
 	}
 	public function attach($filename,$src,$type="application/octet-stream"){

@@ -46,11 +46,11 @@ class Q{
 			$this->and_block = $arg1;
 		}else if($type === self::OR_BLOCK){
 			if(!is_array($arg1) || sizeof($arg1) < 2){
-				throw new \InvalidArgumentException('require multiple blocks');
+				throw new \ebi\exception\InvalidArgumentException('require multiple blocks');
 			}
 			foreach($arg1 as $a){
 				if(!$a->is_block()){
-					throw new \InvalidArgumentException('require multiple blocks');
+					throw new \ebi\exception\InvalidArgumentException('require multiple blocks');
 				}
 			}
 			$this->or_block = $arg1;
@@ -62,7 +62,7 @@ class Q{
 		
 		if($param !== null){
 			if(!ctype_digit((string)$param)){
-				throw new \InvalidArgumentException('`'.(string)$param.'` invalid param type');
+				throw new \ebi\exception\InvalidArgumentException('`'.(string)$param.'` invalid param type');
 			}
 			$this->param = decbin($param);
 		}
@@ -83,7 +83,7 @@ class Q{
 		}else if($this->arg1 instanceof \ebi\Column){
 			return [$this->arg1];
 		}
-		throw new \InvalidArgumentException('invalid arg1');
+		throw new \ebi\exception\InvalidArgumentException('invalid arg1');
 	}
 	public function ar_arg2(){
 		return isset($this->arg2) ? $this->ar_value($this->arg2) : [null];
@@ -167,7 +167,7 @@ class Q{
 						$this->add(self::match($arg->in_vars('query')));
 					}
 				}else{
-					throw new \BadMethodCallException('`'.(string)$arg.'` not supported');
+					throw new \ebi\exception\BadMethodCallException('`'.(string)$arg.'` not supported');
 				}
 			}
 		}

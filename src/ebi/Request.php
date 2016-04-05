@@ -401,7 +401,7 @@ class Request implements \IteratorAggregate{
 			$file_info = $this->in_files($file_info);
 		}		
 		if(!$this->has_file($file_info)){
-			throw new \LogicException('file not found ');
+			throw new \ebi\exception\NotFoundException('file not found ');
 		}
 		if(!is_dir(dirname($newname))){
 			\ebi\Util::mkdir(dirname($newname));

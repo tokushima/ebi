@@ -59,7 +59,7 @@ class Epub{
 			}
 		}
 		if(!$hasopf){
-			throw new \InvalidArgumentException('required *.opf file');
+			throw new \ebi\exception\InvalidArgumentException('required *.opf file');
 		}
 		
 		$zip = new \ZipArchive();

@@ -71,7 +71,7 @@ class Code{
 	 */
 	public static function rand($codebase,$length){
 		if(empty($codebase)){
-			throw new \InvalidArgumentException('codebase is empty');
+			throw new \ebi\exception\InvalidArgumentException('codebase is empty');
 		}
 		$cl = strlen($codebase) - 1;
 		$r = $codebase[mt_rand(1,$cl)];

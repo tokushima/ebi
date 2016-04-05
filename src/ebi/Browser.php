@@ -287,9 +287,12 @@ class Browser{
 						}
 					}
 					foreach(explode('&',http_build_query($this->request_file_vars)) as $q){
-						$s = explode('=',$q,2);						
+						$s = explode('=',$q,2);
+						
 						if(isset($s[1])){
-							if(!is_file($f=urldecode($s[1]))) throw new \RuntimeException($f.' not found');
+							if(!is_file($f=urldecode($s[1]))){
+								throw new \ebi\exception\InvalidArgumentException($f.' not found');
+							}
 							$vars[urldecode($s[0])] = (class_exists('\\CURLFile',false)) ? new \CURLFile($f) : '@'.$f;
 						}
 					}
@@ -388,8 +391,10 @@ class Browser{
 			fclose($fp);
 		}
 		if(($err_code = curl_errno($this->resource)) > 0){
-			if($err_code == 47 || $err_code == 52) return $this;
-			throw new \RuntimeException($err_code.': '.curl_error($this->resource));
+			if($err_code == 47 || $err_code == 52){
+				return $this;
+			}
+			throw new \ebi\exception\ConnectionException($err_code.': '.curl_error($this->resource));
 		}
 		$this->url = curl_getinfo($this->resource,CURLINFO_EFFECTIVE_URL);
 		$this->status = curl_getinfo($this->resource,CURLINFO_HTTP_CODE);

@@ -253,20 +253,20 @@ abstract class Dao extends \ebi\Object{
 									$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									break;
 								default:
-									throw new \LogicException('annotation error : `'.$name.'`');
+									throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
 							}
 						}
 					}
 					if($is_has_many){
 						if(empty($has_var)){
-							throw new \LogicException('annotation error : `'.$name.'`');
+							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
 						}
 						$dao = new $column_type(['_class_id_'=>$p.'___'.self::$_cnt_++]);
 						$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
 					}else{
 						if($is_has){
 							if(empty($has_var)){
-								throw new \LogicException('annotation error : `'.$name.'`');
+								throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
 							}
 							$dao = new $column_type(['_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy]);
 							$this->{$name}($dao);

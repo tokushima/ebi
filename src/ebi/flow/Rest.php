@@ -108,7 +108,7 @@ class Rest extends \ebi\flow\Request{
 			$primarys[] = $primary->name();
 		}
 		if(sizeof($primarys) != 1){
-			throw new \InvalidArgumentException();
+			throw new \ebi\exception\InvalidArgumentException();
 		}
 		return $primarys[0];
 	}

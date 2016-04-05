@@ -625,7 +625,7 @@ class Flow{
 				}
 			}
 		}catch(\ReflectionException $e){
-			throw new \InvalidArgumentException($class.' not found');
+			throw new \ebi\exception\InvalidArgumentException($class.' not found');
 		}
 		return $result;
 	}

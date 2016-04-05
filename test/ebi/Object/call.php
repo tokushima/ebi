@@ -60,31 +60,31 @@ eq("1976/10/05 00:00:00",$hoge->nextDay());
 try{
 	$hoge->eee("ABC");
 	eq(false,$hoge->eee());
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	eq(true,true);
 }
 try{
 	$hoge->eee("000/00/00 00:00:00");
 	eq(null,$hoge->eee());
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$hoge->eee("1969:12:31 17:59:59");
 	eq('-54001',$hoge->eee());
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$hoge->eee("-54001");
 	eq('-54001',$hoge->eee());
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$hoge->eee(null);
 	eq(true,true);
-}catch(InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	eq(true,false);
 }
 eq(array("BTbl","Acol"),$hoge->cn_fff());
@@ -93,7 +93,7 @@ eq("hoge",$hoge->ggg());
 try{
 	$hoge->ggg("fuga");
 	eq(true,false);
-}catch(InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	eq(true,true);
 }
 $hoge->hhh(true);
@@ -103,10 +103,10 @@ eq(false,$hoge->hhh());
 try{
 	$hoge->hhh("hoge");
 	eq(true,false);
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	eq(true,true);
 }
 try{
 	$hoge->iii();
-}catch(\ErrorException $e){
+}catch(\ebi\exception\BadMethodCallException $e){
 }

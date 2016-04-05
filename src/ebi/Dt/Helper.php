@@ -6,6 +6,11 @@ namespace ebi\Dt;
  *
  */
 class Helper{
+	/**
+	 * パッケージ名の文字列表現
+	 * @param string $p 
+	 * @return string
+	 */
 	public function package_name($p){
 		$p = str_replace(['/','\\'],['.','.'],$p);
 		if(substr($p,0,1) == '.'){
@@ -13,6 +18,10 @@ class Helper{
 		}
 		return $p;
 	}
+	/**
+	 * 型の文字列表現を返す
+	 * @param string $class
+	 */
 	public function type($class){
 		if(preg_match('/[A-Z]/',$class)){
 			switch(substr($class,-2)){
@@ -20,17 +29,26 @@ class Helper{
 				case '[]': $class = substr($class,0,-2);
 			}
 			$class = str_replace('\\','.',$class);
-			if(substr($class,0,1) == '.') $class = substr($class,1);
+			
+			if(substr($class,0,1) == '.'){
+				$class = substr($class,1);
+			}
 			return $class;
 		}
 		return null;
 	}
+	/**
+	 * 加算
+	 * @param number $i
+	 * @param number $add
+	 * @return number
+	 */
 	public function calc_add($i,$add=1){
 		return $i + $add;
 	}
 	/**
-	 * アクセサ
-	 * @param Dao $obj
+	 * プロパティへのアクセサ
+	 * @param \ebi\Dao $obj
 	 * @param string $prop_name
 	 * @param string $ac
 	 */
@@ -39,7 +57,7 @@ class Helper{
 	}
 	/**
 	 * プロパティ一覧
-	 * @param Dao $obj
+	 * @param \ebi\Dao $obj
 	 */
 	public function props(\ebi\Dao $obj){
 		$props = array_keys($obj->props());
@@ -67,6 +85,11 @@ class Helper{
 		}
 		return $rtn;
 	}
+	/**
+	 * Daoモデルからprimaryのrequest queryの文字列表現を返す
+	 * @param \ebi\Dao $obj
+	 * @return string
+	 */
 	public function primary_query(\ebi\Dao $obj){
 		$result = [];
 		foreach($this->props($obj) as $prop){
@@ -76,6 +99,11 @@ class Helper{
 		}
 		return implode("&",$result);
 	}
+	/**
+	 * DaoモデルからprimaryのHTML form(hidden)の文字列表現を返す
+	 * @param \ebi\Dao $obj
+	 * @return string
+	 */
 	public function primary_hidden(\ebi\Dao $obj){
 		$result = [];		
 		foreach(array_keys($obj->props()) as $prop){
@@ -85,6 +113,11 @@ class Helper{
 		}
 		return implode(PHP_EOL,$result);
 	}
+	/**
+	 * プロパティがprimaryアノテーションを持つか
+	 * @param object $obj
+	 * @return boolean
+	 */
 	public function has_primary($obj){
 		foreach(array_keys($obj->props()) as $prop){
 			if($obj->prop_anon($prop,'primary') === true){
@@ -216,7 +249,10 @@ class Helper{
 			}
 		}
 	}
-
+	/**
+	 * print_r
+	 * @param mixed $obj
+	 */
 	public function dump($obj){
 		$result = [];
 		foreach($obj as $k => $v){
@@ -231,10 +267,20 @@ class Helper{
 		$value = preg_replace('/\[\d+\]/','&nbsp;&nbsp;\\0',$value);
 		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
 	}
+	/**
+	 * Confが定義されているか
+	 * @param string $package
+	 * @param string $key
+	 * @return boolean
+	 */
 	public function has_conf($package,$key){
 		return \ebi\Conf::exists($package, $key);
 	}
-	
+	/**
+	 * パッケージが指定したクラスのサブクラスに属するか
+	 * @param string $package 
+	 * @param string $class 
+	 */
 	public function is_subclass_of($package,$class){
 		$package = '\\'.str_replace('.','\\',$package);
 		$class = '\\'.str_replace('.','\\',$class);

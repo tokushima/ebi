@@ -29,7 +29,7 @@ class Csrf{
 			($validtoken !== sha1($secret_key.$csrftoken))
 		){
 			\ebi\HttpHeader::send_status(403);
-			throw new \RuntimeException('CSRF verification failed');
+			throw new \ebi\exception\TokenMismatchException('CSRF verification failed');
 		}
 	}
 	/**
