@@ -183,7 +183,7 @@ class Dt{
 		$ref = \ebi\Dt\Man::class_info($class);
 		
 		if(!isset($ref['plugins'][$plugin_name])){
-			throw new \LogicException($plugin_name.' not found');
+			throw new \ebi\exception\NotFoundException($plugin_name.' not found');
 		}
 		return [
 			'package'=>$class,
@@ -203,7 +203,7 @@ class Dt{
 		$ref = \ebi\Dt\Man::class_info($class);
 	
 		if(!isset($ref['conf_list'][$conf_name])){
-			throw new \LogicException($conf_name.' not found');
+			throw new \ebi\exception\NotFoundException($conf_name.' not found');
 		}
 		return [
 			'package'=>$class,
@@ -315,7 +315,7 @@ class Dt{
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
 	
 		if(!class_exists($class)){
-			throw new \InvalidArgumentException($class.' not found');
+			throw new \ebi\exception\InvalidArgumentException($class.' not found');
 		}
 		if(empty($order)){
 			$dao = new $class();
@@ -437,18 +437,27 @@ class Dt{
 			$r = new \ReflectionClass('\\'.str_replace('.','\\',$package));
 			$package = $r->newInstance();
 		}
-		if(!is_subclass_of($package,'\ebi\Dao')) throw new \RuntimeException('not Dao class');
+		if(!is_subclass_of($package,'\ebi\Dao')){
+			throw new \ebi\exception\InvalidArgumentException($package.' must be an \ebi\Dao');
+		}
 	
 		$connections = \ebi\Dao::connections();
 		$conf = explode("\\",get_class($package));
-		while(!isset($connections[implode('.',$conf)]) && !empty($conf)) array_pop($conf);
+		
+		while(!isset($connections[implode('.',$conf)]) && !empty($conf)){
+			array_pop($conf);
+		}
 		if(empty($conf)){
-			if(!isset($connections['*'])) throw new \RuntimeException(get_class($package).' connection not found');
+			if(!isset($connections['*'])){
+				throw new \ebi\exception\ConnectionException(get_class($package).' connection not found');
+			}
 			$conf = ['*'];
 		}
 		$conf = implode('.',$conf);
 		foreach($connections as $k => $con){
-			if($k == $conf) return $con;
+			if($k == $conf){
+				return $con;
+			}
 		}
 	}
 	/**
@@ -773,7 +782,9 @@ class Dt{
 	 * @return \ebi\SmtpBlackholeDao
 	 */
 	public static function find_mail($to,$keyword=null,$late_time=60){
-		if(empty($to)) throw new \LogicException('`to` not found');
+		if(empty($to)){
+			throw new \ebi\exception\NotFoundException('`to` not found');
+		}
 	
 		$q = new Q();
 		$q->add(Q::eq('to',$to));
@@ -787,7 +798,7 @@ class Dt{
 				return $mail;
 			}
 		}
-		throw new \LogicException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
+		throw new \ebi\exception\NotFoundException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
 	}
 	
 	/**

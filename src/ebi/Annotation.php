@@ -63,7 +63,7 @@ class Annotation{
 	private static function decode($d,$name,$doc_name=null){
 		$result = null;
 		
-		if(preg_match_all("/@".$name."(.*)/",$d,$mtc)){
+		if(preg_match_all('/@'.$name.'(.*)/',$d,$mtc)){
 			$result = [];
 			
 			foreach($mtc[1] as $mc){
@@ -95,7 +95,7 @@ class Annotation{
 									$t='\\'.$t;
 								}
 								if(!class_exists($t=str_replace('.','\\',$t))){
-									throw new \InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
+									throw new \ebi\exception\InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
 								}
 								$result[$n]['type'] = (($t[0] !== '\\') ? '\\' : '').str_replace('.','\\',$t);
 							}
@@ -111,7 +111,7 @@ class Annotation{
 	/**
 	 * アノテーション文字列の有効化
 	 * @param  string $s アノテーション文字列
-	 * @throws \InvalidArgumentException 有効化に失敗した
+	 * @throws \ebi\exception\InvalidArgumentException 有効化に失敗した
 	 * @return mixed{} アノテーションの連想配列
 	 */
 	public static function activation($s){
@@ -120,7 +120,7 @@ class Annotation{
 		}
 		$d = @eval('return '.$s.';');
 		if(!is_array($d)){
-			throw new \InvalidArgumentException('annotation error : `'.$s.'`');
+			throw new \ebi\exception\InvalidArgumentException('annotation error : `'.$s.'`');
 		}
 		return $d;
 	}

@@ -19,7 +19,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_pgsql')){
-			throw new \RuntimeException('pdo_pgsql not supported');
+			throw new \ebi\exception\ConnectionException('pdo_pgsql not supported');
 		}
 		$con = null;
 		if(empty($name)){

@@ -83,7 +83,7 @@ eq("12:00.345",$obj->fm_gg());
 try{
 	$obj->gg("1:2:3:4");
 	failureuer();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 $obj->gg("20時40分50秒");
 eq("20:40:50",$obj->fm_gg());
@@ -119,18 +119,18 @@ $obj->jj(array("jkl","mno"));
 
 try{
 	$obj->kk("Abc@example.com");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	notice();
 }
 try{
 	$obj->kk(" Abc@example.com ");
 	eq("Abc@example.com",$obj->kk());
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$obj->kk("aaa.bbb.ccc@example.com");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
@@ -141,64 +141,64 @@ try{
 try{
 	$obj->kk("aaa..bbb.ccc@example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	eq("kk must be an email",$e->getMessage());
 }
 try{
 	$obj->kk("aaa.bbb.ccc.@example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("aaa.bbb.ccc@example.c");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("123@example.com");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$obj->kk("user+mailbox/department=shipping@example.com");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$obj->kk("!#$%&'*+-/=?^_`.{|}~@example.com");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	fail();
 }
 try{
 	$obj->kk("Abc.@example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc..123@example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk(".Abc@example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc@.example.com");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->kk("Abc@example.com.");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 eq(null,$obj->nn());
 try{
 	$obj->nn("1004");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 $obj->nn("123451004");
 eq(123451004,$obj->nn());
@@ -232,7 +232,7 @@ eq(true,$obj->is_mm());
 try{
 	$obj->mm("/abc");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 eq(false,$obj->is_oo());
 $obj->oo(0);
@@ -247,38 +247,38 @@ eq(-123,$obj->oo());
 try{
 	$obj->oo("123F");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.45);
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->oo("123.0");
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 	notice();
 }
 	
 try{
 	$obj->oo("123.000000001");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.000000001);
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->oo("123.0000000001");
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 try{
 	$obj->oo(123.0000000001);
 	fail();
-}catch(\InvalidArgumentException $e){
+}catch(\ebi\exception\InvalidArgumentException $e){
 }
 $obj->oo(123.0);
 

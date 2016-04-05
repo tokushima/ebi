@@ -21,7 +21,7 @@ class TemplateParts{
 			$href = \ebi\Util::path_absolute($path,$xml->in_attr('href'));
 			
 			if(!is_file($href)){
-				throw new \InvalidArgumentException($href.' not found');
+				throw new \ebi\exception\InvalidArgumentException($href.' not found');
 			}
 			return file_get_contents($href);
 		});

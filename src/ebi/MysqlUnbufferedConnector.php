@@ -17,7 +17,9 @@ class MysqlUnbufferedConnector extends \ebi\MysqlConnector{
 	 * @param boolean $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
-		if(!extension_loaded('pdo_mysql')) throw new \RuntimeException('pdo_mysql not supported');
+		if(!extension_loaded('pdo_mysql')){
+			throw new \ebi\exception\ConnectionException('pdo_mysql not supported');
+		}
 		$con = null;
 		if(empty($name)){
 			throw new \ebi\exception\InvalidArgumentException('undef connection name');

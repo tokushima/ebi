@@ -70,7 +70,7 @@ class Request extends \ebi\Request{
 				if(isset($an['type'])){
 					try{
 						\ebi\Validator::type($k,$this->in_vars($k),$an);
-					}catch(\InvalidArgumentException $e){
+					}catch(\ebi\exception\InvalidArgumentException $e){
 						\ebi\Exceptions::add($e,$k);
 					}
 					\ebi\Validator::value($k, $this->in_vars($k), $an);

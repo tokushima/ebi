@@ -79,14 +79,15 @@
 </rt:if>
 
 
+<rt:if param="{$params}">
 <h3>Params</h3>
 <table rt:param="{$params}" rt:var="param" rt:key="param_name">
 <thead>
 	<tr>
 		<th style="width:200px">name</th>
 		<th style="width:100px">type</th>
-		<th>summary</th>
 		<th style="width:100px">default</th>
+		<th>summary</th>
 	</tr>
 </thead>
 <tbody>
@@ -102,11 +103,12 @@
 				{$param[0]}
 			</rt:if>
 		</td>
-		<td>{$t.html($param[4])}</td>
 		<td>{$param[3]}</td>
+		<td>{$t.html($param[4])}</td>
 	</tr>
 </tbody>
 </table>
+</rt:if>
 
 <rt:if param="{$request}">
 	<h3>Request</h3>		
