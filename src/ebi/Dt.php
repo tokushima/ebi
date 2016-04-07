@@ -593,12 +593,24 @@ class Dt{
 				}
 			}
 		}
-		$valid = function($r,$parent_class){
+		/**
+		 * 一覧で無視するクラス名
+		 */
+		$ignore_class = \ebi\Conf::get('ignore',[]);
+		if(!is_array($ignore_class)){
+			$ignore_class = [$ignore_class];
+		}		
+		$valid = function($r,$parent_class) use($ignore_class){
 			if(!$r->isInterface() 
 				&& !$r->isAbstract() 
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
 				&& $r->getFileName() !== false
 			){
+				foreach($ignore_class as $ignore){
+					if(preg_match('/^'.$ignore.'/',$r->getName())){
+						return false;
+					}
+				}
 				return true;
 			}
 			return false;
