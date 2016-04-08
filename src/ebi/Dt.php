@@ -881,6 +881,7 @@ class Dt{
 	 */
 	public static function publish($in,$out){
 		$out = getcwd().'/publish';
+		$self = new self();
 		
 		$get_template = function($vars){
 			$template = new \ebi\Template();
@@ -892,27 +893,32 @@ class Dt{
 			return $template;
 		};
 		
-		$template = $get_template((new self())->index($in));
+		$class_doc = function($type) use(&$class_doc,$self,$get_template,$out){
+			try{
+				$class_vars = $self->class_doc($type);
+				$template = $get_template($class_vars);
+				\ebi\Util::file_write($out.'/classes/'.$class_vars['package'].'.html',$template->read(__DIR__.'/Dt/resources/publish/class_doc.html'));
+				
+				foreach($class_vars['properties'] as $prop){
+					$class_doc($prop[0]);
+				}
+			}catch(\ReflectionException $e){
+			}
+		};
+		
+		$entry_vars = $self->index($in);
+		$template = $get_template($entry_vars);
 		\ebi\Util::file_write($out.'/index.html',$template->read(__DIR__.'/Dt/resources/publish/index.html'));
 		
-		foreach(self::classes(null,false) as $info){
-			$class = str_replace("\\",'.',substr($info['class'],1));
-			$vars = (new self())->class_doc($info['class']);
-			
-			$template = $get_template($vars);
-			\ebi\Util::file_write($out.'/classes/'.$class.'.html',$template->read(__DIR__.'/Dt/resources/publish/class_doc.html'));
-			
-			foreach([
-				$vars['static_methods'],
-				$vars['methods'],
-				$vars['inherited_static_methods'],
-				$vars['inherited_methods'],
-			] as $methods){
-				foreach($methods as $method_name => $method_info){
-					$method_vars = (new self())->method_doc($info['class'],$method_name);
-					
-					$template = $get_template($method_vars);
-					\ebi\Util::file_write($out.'/classes/'.$class.'/'.$method_name.'.html',$template->read(__DIR__.'/Dt/resources/publish/method_doc.html'));
+		foreach($entry_vars['map_list'] as $info){
+			if(isset($info['class']) && isset($info['method'])){
+				$method_vars = (new self())->method_doc($info['class'],$info['method']);
+				$template = $get_template($method_vars);
+				\ebi\Util::file_write($out.'/classes/'.$info['class'].'/'.$info['method'].'.html',$template->read(__DIR__.'/Dt/resources/publish/method_doc.html'));
+				
+				foreach($method_vars['context'] as $context){
+					$type = (preg_match('/[\[\]\{\}]{2}$/',$context[0])) ? substr($context[0],0,-2) : $context[0];
+					$class_doc($type);
 				}
 			}
 		}

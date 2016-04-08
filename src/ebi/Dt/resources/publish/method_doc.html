@@ -1,13 +1,13 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
+<rt:block name="toplink">
+	<a class="navbar-brand" href="../../index.html">API Document</a>
 </rt:block>
+
 
 <rt:block name="content">
 <h2 class="title"  style="{$t.cond_switch($deprecated,'text-decoration: line-through;','')}">
-	<a href="../{$f.package_name($package)}.html">{$f.package_name($package)}</a>
-	::
-	{$method_name}
+	{$f.package_name($package)}::{$method_name}
 
 	<rt:if param="{$http_method}">
 		<rt:if param="{$http_method}" value="POST">
@@ -28,39 +28,6 @@
 	</div>
 </rt:if>
 
-<rt:if param="{$see_class}">
-	<h3>See</h3>
-	<table rt:param="{$see_class}" rt:var="class">
-	<thead>
-		<tr>
-			<th>class</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="../{$class}.html">{$f.type($class)}</a></td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
-
-<rt:if param="{$see_method}">
-	<h3>See</h3>
-	<table rt:param="{$see_method}" rt:var="class_method">
-	<thead>
-		<tr>
-			<th>class</th>
-			<th>method</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="../{$class_method[0]}.html">{$f.type($class_method[0])}</a></td>
-			<td><a href="../{$class_method[0]}/{$class_method[1]}.html">{$class_method[1]}</a></td>
-		</tr>
-	</tbody>
-	</table>	
-</rt:if>
 
 <rt:if param="{$see_url}">
 	<h3>See</h3>
@@ -157,7 +124,7 @@
 			<td>{$name}</td>
 			<td>
 				<rt:if param="{$f.type($arg[0])}">
-					<a href="../{$arg[0]}.html">{$arg[0]}</a>
+					<a href="../{$f.type($arg[0])}.html">{$arg[0]}</a>
 				<rt:else />
 					{$arg[0]}
 				</rt:if>
@@ -167,50 +134,6 @@
 	</tbody>
 	</table>
 </rt:if>
-
-<rt:if param="{$args}">
-	<h3>Arg</h3>		
-	<table rt:param="{$args}" rt:var="summary" rt:key="name">
-	<thead>
-		<tr>
-			<th style="width:200px">name</th>
-			<th>summary</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>{$name}</td>
-			<td>{$t.html($summary)}</td>
-		</tr>
-	</tbody>
-	</table>
-</rt:if>
-
-
-<rt:if param="{$return}">
-<h3>Return</h3>
-<table rt:param="{$return}" rt:var="r">
-<thead>
-	<tr>
-		<th style="width:200px">type</th>
-		<th>summary</th>
-	</tr>
-</thead>
-<tbody>
-	<tr>
-		<td>
-			<rt:if param="{$f.type($r[0])}">
-				<a href="../{$r[0]}.html">{$r[0]}</a>
-			<rt:else />
-				{$r[0]}
-			</rt:if>
-		</td>
-		<td>{$t.html($r[1])}</td>
-	</tr>
-</tbody>
-</table>
-</rt:if>
-
 
 <rt:if param="{$throws}">
 <h3>Throws</h3>
@@ -228,23 +151,6 @@
 	</tr>
 </tbody>
 </table>
-</rt:if>
-
-
-<rt:if param="{$modules}">
-	<h3>Modules</h3>
-	<table rt:param="{$modules}" rt:var="pkg">
-	<thead>
-		<tr>
-			<th style="width:200px">package</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="../{$pkg}.html">{$f.type($pkg)}</a></td>
-		</tr>
-	</tbody>
-	</table>	
 </rt:if>
 
 </rt:block>
