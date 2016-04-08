@@ -62,14 +62,13 @@ class Flow{
 	 * @param string $file
 	 * @return array
 	 */
-	public static function get_map($file=null){
-		if(!empty($file)){
-			self::$is_get_map = true;
+	public static function get_map($file){
+		self::$is_get_map = true;
 
-			ob_start();
-				include($file);
-			ob_end_clean();
-		}
+		ob_start();
+			include($file);
+		ob_end_clean();
+		
 		return self::$map;
 	}
 	private static function template(array $vars,$selected_pattern,$ins,$path,$media=null){

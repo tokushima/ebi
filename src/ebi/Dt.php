@@ -19,6 +19,10 @@ class Dt{
 		return [
 			'f'=>new \ebi\Dt\Helper(),
 			'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
+			'perm_config'=>\ebi\Conf::get('config',true),
+			'perm_phpinfo'=>\ebi\Conf::get('phpinfo',true),
+			'perm_model'=>\ebi\Conf::get('model',true),
+			'perm_data'=>\ebi\Conf::get('data',true),
 		];
 	}
 	private function filter_query($query,$value){
@@ -45,6 +49,9 @@ class Dt{
 	 * @automap
 	 */
 	public function phpinfo(){
+		if(\ebi\Conf::get('phpinfo') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		ob_start();
 			phpinfo();
 		$info = ob_get_clean();
@@ -55,25 +62,26 @@ class Dt{
 	/**
 	 * @automap
 	 */
-	public function index(){
+	public function index($entry=null){
 		$flow_output_maps = [];
 		$query = $this->get_query();
 		
 		$self_class = str_replace('\\','.',__CLASS__);
-		$entry = null;
 		$trace = debug_backtrace(false);
 		krsort($trace);
 		
-		foreach($trace as $t){
-			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
-				$entry = $t;
-				break;
+		if(empty($entry)){
+			foreach($trace as $t){
+				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+					$entry = $t['file'];
+					break;
+				}
 			}
 		}
-		$map = \ebi\Flow::get_map();
+		$map = \ebi\Flow::get_map($entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
-			
+		
 		foreach($patterns as $k => $m){
 			if(!isset($m['deprecated'])) $m['deprecated'] = false;
 			if(!isset($m['mode'])) $m['mode'] = null;
@@ -200,6 +208,10 @@ class Dt{
 	 * @automap
 	 */
 	public function conf_doc($class,$conf_name){
+		if(\ebi\Conf::get('config') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
+		
 		$ref = \ebi\Dt\Man::class_info($class);
 	
 		if(!isset($ref['conf_list'][$conf_name])){
@@ -219,6 +231,9 @@ class Dt{
 	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
+		if(\ebi\Conf::get('config') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$query = $this->get_query();
 		$conf_list = [];
 		foreach(self::classes() as $info){
@@ -239,6 +254,9 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$query = $this->get_query();
 		$model_list = [];
 		
@@ -310,6 +328,9 @@ class Dt{
 	 * @context string $model_name 検索対象のモデルの名前
 	 */
 	public function do_find($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$req = new \ebi\Request();
 		$class = '\\'.str_replace('.','\\',$package);
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
@@ -368,6 +389,9 @@ class Dt{
 	 * @automap
 	 */
 	public function do_detail($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$obj = $this->get_model($package);
 		
 		return ['object'=>$obj,
@@ -381,6 +405,12 @@ class Dt{
 	 * @automap @['post_after'=>'']
 	 */
 	public function do_drop($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
+		if(\ebi\Conf::get('data') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$req = new \ebi\Request();
 		if($req->is_post()){
 			$this->get_model($package)->delete();
@@ -392,6 +422,12 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_update($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
+		if(\ebi\Conf::get('data') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -415,6 +451,12 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_create($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
+		if(\ebi\Conf::get('data') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -433,6 +475,9 @@ class Dt{
 		return $result;
 	}
 	public static function get_dao_connection($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		if(!is_object($package)){
 			$r = new \ReflectionClass('\\'.str_replace('.','\\',$package));
 			$package = $r->newInstance();
@@ -466,6 +511,12 @@ class Dt{
 	 * @automap
 	 */
 	public function do_sql($package){
+		if(\ebi\Conf::get('model') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
+		if(\ebi\Conf::get('data') === false){
+			throw new \ebi\exception\BadMethodCallException('not permitted');
+		}
 		$req = new \ebi\Request();
 		$result_list = $keys = [];
 		$sql = $req->in_vars('sql');
@@ -548,10 +599,11 @@ class Dt{
 	 * composerの場合はcomposer.jsonで定義しているPSR-0のもののみ
 	 * @return array
 	 */
-	public static function classes($parent_class=null){
+	public static function classes($parent_class=null,$ignore=true){
 		$result = [];
-		
 		$include_path = [];
+		$ignore_class = [];
+		
 		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
 			$include_path[] = realpath(getcwd().DIRECTORY_SEPARATOR.'lib');
 		}
@@ -593,21 +645,27 @@ class Dt{
 				}
 			}
 		}
-		/**
-		 * 一覧で無視するクラス名
-		 */
-		$ignore_class = \ebi\Conf::get('ignore',[]);
-		if(!is_array($ignore_class)){
-			$ignore_class = [$ignore_class];
-		}		
+		
+		if($ignore){
+			/**
+			 * 一覧で無視する正規表現パターン
+			 */
+			$ignore_class = \ebi\Conf::get('ignore',[]);
+			if(!is_array($ignore_class)){
+				$ignore_class = [$ignore_class];
+			}
+		}
 		$valid = function($r,$parent_class) use($ignore_class){
 			if(!$r->isInterface() 
 				&& !$r->isAbstract() 
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
 				&& $r->getFileName() !== false
+				&& strpos($r->getName(),'Composer') === false
+				&& strpos($r->getName(),'cmdman') === false	
+				&& strpos($r->getName(),'testman') === false
 			){
-				foreach($ignore_class as $ignore){
-					if(preg_match('/^'.$ignore.'/',$r->getName())){
+				foreach($ignore_class as $ignore_pattern){
+					if(preg_match('/^'.$ignore_pattern.'/',$r->getName())){
 						return false;
 					}
 				}
@@ -625,24 +683,7 @@ class Dt{
 			$add = [$add];
 		}
 		foreach($add as $class){
-			$class = str_replace('.','\\',$class);
-			$inc = false;
-			
-			if(substr($class,-1) == '*'){
-				$inc = true;
-				$class = substr($class,0,-1);
-			}			
-			if(class_exists($class)){
-				$r = new \ReflectionClass($class);
-				
-				if($inc){
-					foreach(\ebi\Util::ls($r->getFileName(),true,'/\.php$/') as $file){
-						if(ctype_upper($file->getFilename()[0])){
-							include_once($file->getPathname());
-						}
-					}
-				}
-			}
+			class_exists(str_replace('.','\\',$class));
 		}
 		
 		foreach(get_declared_classes() as $class){
@@ -684,6 +725,7 @@ class Dt{
 	 * モデルからデータを全削除する
 	 */
 	public static function delete_all(){
+		
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$r = new \ReflectionClass($class_info['class']);
 	
@@ -831,5 +873,48 @@ class Dt{
 			return true;
 		}
 		return false;
+	}
+	/**
+	 * APIドキュメントの出力
+	 * @param string $in エントリファイル
+	 * @param string $out 出力フォルダ
+	 */
+	public static function publish($in,$out){
+		$out = getcwd().'/publish';
+		
+		$get_template = function($vars){
+			$template = new \ebi\Template();
+			$template->cp($vars);
+			$template->vars('f',new \ebi\Dt\Helper());
+			$template->vars('t',new \ebi\FlowHelper());
+			$template->set_class_plugin(new \ebi\flow\plugin\TwitterBootstrap3Helper());
+			
+			return $template;
+		};
+		
+		$template = $get_template((new self())->index($in));
+		\ebi\Util::file_write($out.'/index.html',$template->read(__DIR__.'/Dt/resources/publish/index.html'));
+		
+		foreach(self::classes(null,false) as $info){
+			$class = str_replace("\\",'.',substr($info['class'],1));
+			$vars = (new self())->class_doc($info['class']);
+			
+			$template = $get_template($vars);
+			\ebi\Util::file_write($out.'/classes/'.$class.'.html',$template->read(__DIR__.'/Dt/resources/publish/class_doc.html'));
+			
+			foreach([
+				$vars['static_methods'],
+				$vars['methods'],
+				$vars['inherited_static_methods'],
+				$vars['inherited_methods'],
+			] as $methods){
+				foreach($methods as $method_name => $method_info){
+					$method_vars = (new self())->method_doc($info['class'],$method_name);
+					
+					$template = $get_template($method_vars);
+					\ebi\Util::file_write($out.'/classes/'.$class.'/'.$method_name.'.html',$template->read(__DIR__.'/Dt/resources/publish/method_doc.html'));
+				}
+			}
+		}
 	}
 }

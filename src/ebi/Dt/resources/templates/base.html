@@ -42,9 +42,17 @@
 				<ul class="nav navbar-nav">
 					<li class="{$t.match_package_method_switch('index','active','inactive')}"><a href="{$t.package_method_url('index')}">Urls</a></li>
 					<li class="{$t.match_package_method_switch('class_list','active','inactive')}"><a href="{$t.package_method_url('class_list')}">Classes</a></li>
-					<li class="{$t.match_package_method_switch('model_list','active','inactive')}"><a href="{$t.package_method_url('model_list')}">Models</a></li>
-					<li class="{$t.match_package_method_switch('config','active','inactive')}"><a href="{$t.package_method_url('config')}">Config</a></li>					
-					<li class="{$t.match_package_method_switch('phpinfo','active','inactive')}"><a href="{$t.package_method_url('phpinfo')}">phpinfo</a></li>
+					
+					<rt:if param="{$perm_model}">
+						<li class="{$t.match_package_method_switch('model_list','active','inactive')}"><a href="{$t.package_method_url('model_list')}">Models</a></li>
+					</rt:if>
+					
+					<rt:if param="{$perm_config}">
+						<li class="{$t.match_package_method_switch('config','active','inactive')}"><a href="{$t.package_method_url('config')}">Config</a></li>
+					</rt:if>
+					<rt:if param="{$perm_phpinfo}">
+						<li class="{$t.match_package_method_switch('phpinfo','active','inactive')}"><a href="{$t.package_method_url('phpinfo')}">phpinfo</a></li>
+					</rt:if>
 					
 				</ul>
 				

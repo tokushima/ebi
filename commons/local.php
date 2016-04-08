@@ -19,6 +19,10 @@
 		'ignore'=>[
 			'test.*',
 		],
+//		'phpinfo'=>false,
+//		'config'=>false,
+//		'model'=>false,
+//		'data'=>false,
 	],
 ]);
 

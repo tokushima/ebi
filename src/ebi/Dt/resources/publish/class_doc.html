@@ -1,0 +1,149 @@
+<rt:extends href="base.html" />
+
+<rt:block name="list_search">
+</rt:block>
+
+<rt:block name="content">
+<h2>
+	{$f.package_name($package)}
+	<rt:if param="{$abstract}"> (Abstract) </rt:if>
+</h2>
+<rt:if param="{$extends}">
+	extends {$f.package_name($extends)}
+</rt:if>
+
+<rt:if param="{$description}">
+<div class="alert alert-info" style="margin-top: 30px;">
+	{$t.html($description)}
+</div>
+</rt:if>
+
+<rt:if param="{$static_methods}">
+	<h3>Static methods</h3>		
+	<table rt:param="{$static_methods}" rt:var="summary" rt:key="method_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><a href="./{$f.package_name($package)}/{$method_name}.html">{$method_name}</a></td>
+			<td>{$t.html($summary)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+<rt:if param="{$methods}">
+	<h3>Methods</h3>
+	<table rt:param="{$methods}" rt:var="summary" rt:key="method_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="even">
+			<td class="span3">
+				<a href="./{$f.package_name($package)}/{$method_name}.html">
+					{$method_name}
+				</a>
+			</td>
+			<td>{$t.html($summary)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+<rt:if param="{$plugin_method}">
+	<h3>Plugin methods</h3>
+	<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">class</th>
+			<th>method</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="span3">
+				<a href="./{$f.package_name($class_name)}.html">{$f.package_name($class_name)}</a>
+			</td>
+			<td>
+				<rt:loop param="method_name_list" var="method_name">
+					<div><a href="./{$f.package_name($package)}/{$method_name}.html">{$method_name}</a></div>
+				</rt:loop>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+<rt:if param="{$properties}">
+	<h3>Properties</h3>
+	<table rt:param="{$properties}" rt:var="prop" rt:key="prop_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th class="span2">type</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="{$t.cond_switch($prop[2],'hash_on','hash_off')}">
+			<td>{$prop_name}</td>
+			<td>
+				<rt:if param="{$f.type($prop[0])}">
+					<a href="./{$f.package_name($prop[0])}.html">{$prop[0]}</a>
+				<rt:else />
+					{$prop[0]}
+				</rt:if>
+			</td>
+			<td>{$prop[1]}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+
+<rt:if param="{$inherited_static_methods}">
+	<h4>Inherited Static methods</h4>
+	<table rt:param="{$inherited_static_methods}" rt:var="summary" rt:key="method_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><a href="./{$f.package_name($package)}/{$method_name}.html">{$method_name}</a></td>
+			<td>{$t.html($summary)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+<rt:if param="{$inherited_methods}">
+	<h4>Inherited Methods</h4>
+	<table rt:param="{$inherited_methods}" rt:var="summary" rt:key="method_name">
+	<thead>
+		<tr>
+			<th style="width:30%;">name</th>
+			<th>summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="even">
+			<td class="span3"><a href="./{$f.package_name($package)}/{$method_name}.html">{$method_name}</a></td>
+			<td>{$t.html($summary)}</td>
+		</tr>
+	</tbody>
+	</table>
+</rt:if>
+
+
+</rt:block>
