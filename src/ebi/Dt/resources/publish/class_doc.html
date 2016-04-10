@@ -21,23 +21,23 @@
 	<table rt:param="{$properties}" rt:var="prop" rt:key="prop_name">
 	<thead>
 		<tr>
-			<th style="width:30%;">name</th>
-			<th class="span2">type</th>
-			<th>summary</th>
+			<th style="width:10%;">name</th>
+			<th style="width:30%;">type</th>
+			<th style="width:60%;">summary</th>
 		</tr>
 	</thead>
 	<tbody>
 		<rt:if param="{$prop[2]}">
 		<tr>
-			<td>{$prop_name}</td>
-			<td>
+			<td style="width:10%;">{$prop_name}</td>
+			<td style="width:30%;">
 				<rt:if param="{$f.type($prop[0])}">
 					<a href="./{$f.package_name($prop[0])}.html">{$prop[0]}</a>
 				<rt:else />
 					{$prop[0]}
 				</rt:if>
 			</td>
-			<td>{$prop[1]}</td>
+			<td style="width:60%;">{$prop[1]}</td>
 		</tr>
 		</rt:if>
 	</tbody>

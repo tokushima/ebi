@@ -22,11 +22,9 @@
 	</rt:if>
 </h2>
 
-<rt:if param="{$description}">
-	<div class="alert alert-info">
-		{$t.html($description)}
-	</div>
-</rt:if>
+<div class="alert alert-info">
+	{$t.html($description)}
+</div>
 
 
 <rt:if param="{$see_url}">
@@ -51,10 +49,9 @@
 <table rt:param="{$params}" rt:var="param" rt:key="param_name">
 <thead>
 	<tr>
-		<th style="width:200px">name</th>
-		<th style="width:100px">type</th>
-		<th style="width:100px">default</th>
-		<th>summary</th>
+		<th style="width:10%;">name</th>
+		<th style="width:30%;">type</th>
+		<th style="width:60%;">summary</th>
 	</tr>
 </thead>
 <tbody>
@@ -70,27 +67,33 @@
 				{$param[0]}
 			</rt:if>
 		</td>
-		<td>{$param[3]}</td>
 		<td>{$t.html($param[4])}</td>
 	</tr>
 </tbody>
 </table>
 </rt:if>
 
+
+
+<h3>Request</h3>
 <rt:if param="{$request}">
-	<h3>Request</h3>		
 	<table rt:param="{$request}" rt:var="arg" rt:key="name">
 	<thead>
 		<tr>
-			<th style="width:200px">name</th>
-			<th style="width:100px">type</th>
-			<th>summary</th>
-			<th style="width:30px"></th>
+			<th style="width:10%;">name</th>
+			<th style="width:30%;">type</th>
+			<th style="width:60%;">summary</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
-			<td>{$name}</td>
+			<td>
+				<rt:if param="{$arg[2]}">
+					<span style="font-weight: bold; color: #d9534f;">{$name}</span>
+				<rt:else />
+					{$name}
+				</rt:if>			
+			</td>
 			<td>
 				<rt:if param="{$f.type($arg[0])}">
 					<a href="../{$arg[0]}.html">{$arg[0]}</a>
@@ -99,24 +102,22 @@
 				</rt:if>
 			</td>
 			<td>{$t.html($arg[1])}</td>
-			<td>
-				<rt:if param="{$arg[2]}">
-					<span class="glyphicon glyphicon-asterisk" style="color:#666666;"></span>
-				</rt:if>
-			</td>
 		</tr>
 	</tbody>
 	</table>
+<rt:else />
+	<div class="alert alert-warning" role="alert">none</div>
 </rt:if>
 
+
+<h3>Context</h3>
 <rt:if param="{$context}">
-	<h3>Context</h3>		
 	<table rt:param="{$context}" rt:var="arg" rt:key="name">
 	<thead>
 		<tr>
-			<th style="width:200px">name</th>
-			<th style="width:100px">type</th>
-			<th>summary</th>
+			<th style="width:10%;">name</th>
+			<th style="width:30%;">type</th>
+			<th style="width:60%;">summary</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -133,24 +134,29 @@
 		</tr>
 	</tbody>
 	</table>
+<rt:else />
+	<div class="alert alert-warning" role="alert">none</div>
 </rt:if>
 
-<rt:if param="{$throws}">
+
 <h3>Throws</h3>
-<table rt:param="{$throws}" rt:var="e">
-<thead>
-	<tr>
-		<th style="width:200px">name</th>
-		<th>summary</th>
-	</tr>
-</thead>
-<tbody>
-	<tr>
-		<td style="color:#888888;">{$f.type($e[0])}</td>
-		<td style="color:#aaaaaa;">{$t.html($e[1])}</td>
-	</tr>
-</tbody>
-</table>
+<rt:if param="{$throws}">
+	<table rt:param="{$throws}" rt:var="e">
+	<thead>
+		<tr>
+			<th style="width:30%;">type</th>
+			<th style="width:70%;">summary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="color:#888888;">{$f.type($e[0])}</td>
+			<td style="color:#aaaaaa;">{$t.html($e[1])}</td>
+		</tr>
+	</tbody>
+	</table>
+<rt:else />
+	<div class="alert alert-warning" role="alert">none</div>
 </rt:if>
 
 </rt:block>

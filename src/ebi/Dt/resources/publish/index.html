@@ -1,65 +1,16 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-	<h1>Urls</h1>
-
-	<script type="text/javascript">
-		function submit_linkform(datafrm,method){
-			linkform.action = datafrm.url.value;
-			linkform.method = method;
-			
-			try{
-				data = [];
-				datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
-				
-				if(datafrm.query.value){
-					data = $.parseJSON(datafrm.query.value);
-				}				
-				for(key in data){
-					$('<input />')
-						.attr('type','hidden')
-						.attr('name',key)
-						.attr('value',data[key])
-					.appendTo('#linkform');
-				}
-				linkform.submit();
-			}catch(e){
-				alert('query invalid: ' + e);
-			}
-		}
-	</script>
-
 	<table rt:param="map_list" rt:var="map" rt:key="map_name" rt:counter="count">
 	<thead>
 	<tr>
-		<th style="width:26px;"></th>
-		<th class="span4">Name</th>	
-		<th class="span4">Url</th>
-		<th>Summary</th>
-		<th style="width:26px;"></th>
+		<th style="width: 20%;">Name</th>	
+		<th style="width: 40%;">Url</th>
+		<th style="width: 40%;">Summary</th>
 	</tr>
 	</thead>
 	<tbody>
-	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
-		<td>
-			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{$map['name']}</h4>
-						</div>
-						<div class="modal-body" style="word-break: break-all; padding: 5px;">
-							{$t.html($f.dump($map))}
-						</div>
-					</div>
-				</div>
-			</div>
-		
-			<a data-toggle="modal" data-target="#info{$count}">
-				<span class="glyphicon glyphicon-info-sign"></span>
-			</a>
-		</td>
+	<tr style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 		<td nowrap>
 			<rt:if param="{$map['class']}">
 				<a href="classes/{$map['class']}/{$map['method']}.html">{$map['name']}</a>
@@ -74,33 +25,7 @@
 			<span>{$t.html($map['summary'])}</span>
 			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 		</td>
-		<td>
-			<a href="#" data-toggle="modal" data-target="#link{$count}">
-				<span class="glyphicon glyphicon-globe"></span>
-			</a>
-			<div class="modal fade" id="link{$count}">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{$map['name']}</h4>
-						</div>
-						<div class="modal-body">
-							<form name="linkdata{$count}">
-								<input type="text" name="url" value="{$map['format']}" class="form-control" />
-								<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
-							</form>
-						</div>
-						<div class="modal-footer">
-							<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata{$count},'post')">POST</button>
-							<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata{$count},'get')">GET</button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</td>
 	</tr>
 	</tbody>
-	</table>
-	
+	</table>	
 </rt:block>
