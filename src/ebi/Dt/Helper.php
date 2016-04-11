@@ -17,7 +17,7 @@ class Helper{
 			$p = substr($p,1);
 		}
 		return $p;
-	}
+	}	
 	/**
 	 * 型の文字列表現を返す
 	 * @param string $class

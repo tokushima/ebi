@@ -1,11 +1,10 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2>Config</h2>
 
-<table rt:param="{$conf_list}" rt:var="conf">
+<table rt:param="{$conf_list}" rt:var="conf" class="table table-condensed">
 <thead>
-	<tr>
+	<tr class="text-muted">
 		<th style="width:30%;">package</th>
 		<th style="width:20%;">key</th>
 		<th>description</th>

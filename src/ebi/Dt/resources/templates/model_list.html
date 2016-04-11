@@ -19,62 +19,51 @@
  .connection_setting input{ margin: 0; width: 90%; }
 </style>
 
-<h2 class="title">Models</h2>
-
-<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count">
-<thead>
-	<tr>
-		<th>&nbsp;</th>
-		<th>package</th>
-		<th>summary</th>
-	</tr>
-</thead>
-<tbody>
-	<tr>
-		<td>
-			<rt:if param="{$model['con']}">
-				<rt:if param="{$model['error']}">
-					<a class="glyphicon glyphicon-plus-sign" href="{$t.package_method_url('do_sql',$package)}?create_sql"></a>
-				<rt:else />
-					<a class="glyphicon glyphicon-list-alt" href="{$t.package_method_url('class_doc',$package)}"></a>
-				</rt:if>
-			<rt:else>
-				<a class="glyphicon glyphicon-warning-sign" onClick="conf_sample('{$package}')"></a>
-			</rt:if>
-		</td>
-		<td>
-			<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
-		</td>
-		<td style="width:90%;">
-			{$model['summary']}
-			
+<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count" class="table table-condensed">
+<tr>
+	<td style="width: 20px;">
+		<rt:if param="{$model['con']}">
 			<rt:if param="{$model['error']}">
-				<rt:if param="{$model['error_query']}">
-					<div class="modal fade" id="modal_error_query_{$count}">
-						<div class="modal-dialog">
-							<div class="modal-content">
-								<div class="modal-header">
-									<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-									<h4 class="modal-title">Error Query</h4>
-								</div>
-								<div class="modal-body">
-									<form>
-										<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$model['error_query']}</textarea>
-									</form>
-								</div>
-								<div class="modal-footer">
-								</div>
+				<a class="glyphicon glyphicon-plus-sign" href="{$t.package_method_url('do_sql',$package)}?create_sql"></a>
+			<rt:else />
+				<a class="glyphicon glyphicon-list-alt" href="{$t.package_method_url('class_doc',$package)}"></a>
+			</rt:if>
+		<rt:else>
+			<a class="glyphicon glyphicon-warning-sign" onClick="conf_sample('{$package}')"></a>
+		</rt:if>
+	</td>
+	<td style="width:25%;">
+		<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
+	</td>
+	<td style="width:75%;">
+		{$model['summary']}
+		
+		<rt:if param="{$model['error']}">
+			<rt:if param="{$model['error_query']}">
+				<div class="modal fade" id="modal_error_query_{$count}">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+								<h4 class="modal-title">Error Query</h4>
+							</div>
+							<div class="modal-body">
+								<form>
+									<textarea style="width:98%; height: 400px;" name="sample" onclick="this.select()">{$model['error_query']}</textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
 							</div>
 						</div>
 					</div>
-					<a class="glyphicon glyphicon-question-sign" data-toggle="modal" data-target="#modal_error_query_{$count}"></a>
-				</rt:if>
-
-				<span style="color:#ff0000; font-weight: bold;">{$model['error']}</span>
+				</div>
+				<a class="glyphicon glyphicon-question-sign" data-toggle="modal" data-target="#modal_error_query_{$count}"></a>
 			</rt:if>
-		</td>
-	</tr>
-</tbody>
+
+			<span style="color:#ff0000; font-weight: bold;">{$model['error']}</span>
+		</rt:if>
+	</td>
+</tr>
 </table>
 </rt:block>
 

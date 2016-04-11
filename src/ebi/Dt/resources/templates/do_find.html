@@ -6,14 +6,17 @@
 <rt:block name="content">
 
 <ul class="breadcrumb">
-  <li>
-  	<span style="font-weight: bold; font-size: medium;">
-	  	<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
-  	</span>
-  	<span class="divider"></span>
-  </li>
-  <li><a href="{$t.package_method_url('do_create',$package)}">Create</a> <span class="divider"></span></li>
-  <li><a href="{$t.package_method_url('do_sql',$package)}">SQL</a></li>
+	<li>
+		<span style="font-weight: bold; font-size: medium;">
+			<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
+		</span>
+		<span class="divider"></span>
+	</li>
+	
+	<rt:if param="{$perm_data}">
+		<li><a href="{$t.package_method_url('do_create',$package)}">Create</a> <span class="divider"></span></li>
+		<li><a href="{$t.package_method_url('do_sql',$package)}">SQL</a></li>
+	</rt:if>
 </ul>
 
 
@@ -53,23 +56,29 @@
 <table rt:param="object_list" rt:var="obj" rt:counter="counter">
 <thead>
 	<tr>
-		<th></th>
+		<rt:if param="{$perm_data}">
+			<th></th>
+		</rt:if>
 		<rt:loop param="{$f.props($model)}" var="name">
 			<th><a href="?{$paginator.query_order($name)}">{$t.trim_width($t.text($name),50,'..')}</a></th>
 		</rt:loop>
-		<th></th>
+		<rt:if param="{$perm_data}">
+			<th></th>
+		</rt:if>
 	</tr>
 </thead>
 <tbody>
 	<tr>
-		<td class="span1" style="width:1em;">
-			<rt:if param="{$f.has_primary($model)}">
-				<form method="get" action="{$t.package_method_url('do_update',$package)}" style="margin:0;" id="edit_form_{$counter}">
-					{$t.noop($f.primary_hidden($obj))}
-					 <a href="#" onclick="edit_form_{$counter}.submit()"><i class="glyphicon glyphicon-edit"></i></a>
-				</form>
-			</rt:if>
-		</td>
+		<rt:if param="{$perm_data}">
+			<td class="span1" style="width:1em;">
+				<rt:if param="{$f.has_primary($model)}">
+					<form method="get" action="{$t.package_method_url('do_update',$package)}" style="margin:0;" id="edit_form_{$counter}">
+						{$t.noop($f.primary_hidden($obj))}
+						 <a href="#" onclick="edit_form_{$counter}.submit()"><i class="glyphicon glyphicon-edit"></i></a>
+					</form>
+				</rt:if>
+			</td>
+		</rt:if>
 	
 		<rt:loop param="{$f.props($model)}" var="name">
 			<td>
@@ -77,14 +86,16 @@
 			</td>
 		</rt:loop>
 		
-		<td class="span1" style="width:1em;">
-			<rt:if param="{$f.has_primary($model)}">
-				<form method="post" action="{$t.package_method_url('do_drop',$package)}" style="margin:0;" id="delete_form_{$counter}">
-					{$t.noop($f.primary_hidden($obj))}
-					 <a href="#" onclick="delete_form_{$counter}.submit()"><i class="glyphicon glyphicon-trash glyphicon-white"></i></a>
-				</form>
-			</rt:if>
-		</td>		
+		<rt:if param="{$perm_data}">
+			<td class="span1" style="width:1em;">
+				<rt:if param="{$f.has_primary($model)}">
+					<form method="post" action="{$t.package_method_url('do_drop',$package)}" style="margin:0;" id="delete_form_{$counter}">
+						{$t.noop($f.primary_hidden($obj))}
+						 <a href="#" onclick="delete_form_{$counter}.submit()"><i class="glyphicon glyphicon-trash glyphicon-white"></i></a>
+					</form>
+				</rt:if>
+			</td>
+		</rt:if>
 	</tr>
 
 </tbody>

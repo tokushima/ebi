@@ -1,8 +1,6 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-	<h1>Urls</h1>
-
 	<script type="text/javascript">
 		function submit_linkform(datafrm,method){
 			linkform.action = datafrm.url.value;
@@ -29,12 +27,12 @@
 		}
 	</script>
 
-	<table rt:param="map_list" rt:var="map" rt:key="map_name" rt:counter="count">
+	<table rt:param="map_list" rt:var="map" rt:key="map_name" rt:counter="count" class="table table-condensed">
 	<thead>
-	<tr>
+	<tr class="text-muted">
 		<th style="width:26px;"></th>
-		<th class="span4">Name</th>	
 		<th class="span4">Url</th>
+		<th class="span4">Name</th>	
 		<th>Summary</th>
 		<th style="width:26px;"></th>
 	</tr>
@@ -60,15 +58,15 @@
 				<span class="glyphicon glyphicon-info-sign"></span>
 			</a>
 		</td>
+		<td>
+			{$map['url']}
+		</td>
 		<td nowrap>
 			<rt:if param="{$map['class']}">
 				<a href="{$t.package_method_url('method_doc',$map['class'],$map['method'])}">{$map['name']}</a>
 			<rt:else />
 				{$map['name']}
 			</rt:if>
-		</td>
-		<td>
-			{$map['url']}
 		</td>
 		<td>
 			<span>{$t.html($map['summary'])}</span>

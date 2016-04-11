@@ -60,6 +60,9 @@ include_once('bootstrap.php');
 	'exceptions/403'=>['name'=>'exceptions403','action'=>'test.flow.Action::exceptions','error_status'=>403],
 	'exceptions/405'=>['name'=>'exceptions405','action'=>'test.flow.Action::exceptions405'],
 	'exceptions/group'=>['name'=>'exceptions_group','action'=>'test.flow.Action::exceptions_group'],
+	
+		
+	'model_list'=>['name'=>'model_list','action'=>'test.flow.Sample::model_list'],
 		
 	'html_filter'=>[
 		'name'=>'html_filter',
