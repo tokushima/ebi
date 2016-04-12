@@ -200,6 +200,7 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * ログイン
+	 * ログインに必要なパラメータはPluginによる
 	 * @arg string $login_redirect ログイン後にリダイレクトされるマップ名
 	 * @automap
 	 */
