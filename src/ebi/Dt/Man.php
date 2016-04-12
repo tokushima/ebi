@@ -20,6 +20,25 @@ class Man{
 		}
 		return $conf_list;
 	}
+	public static function entry_description($entry){
+		$desc = '';
+		$src = \ebi\Util::file_read($entry);
+		
+		if(preg_match("/Flow::app\(/",$src,$match,PREG_OFFSET_CAPTURE)){
+			$src = substr($src,0,$match[0][1]);
+			
+			if(preg_match("/\/\*\*/",$src,$match,PREG_OFFSET_CAPTURE)){
+				$desc = substr($src,$match[0][1]+3);
+				$desc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace('*'.'/','',$desc)));
+				$desc = trim(preg_replace('/@.+/','',$desc));
+				
+				$lines = explode(PHP_EOL,$desc);
+				array_pop($lines);
+				$desc = trim(implode(PHP_EOL,$lines));
+			}
+		}
+		return $desc;
+	}
 	/**
 	 * クラスのドキュメント
 	 * @param string $class

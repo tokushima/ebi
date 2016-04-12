@@ -82,7 +82,7 @@ class Dt{
 				}
 			}
 		}
-		$map = \ebi\Flow::get_map($entry);
+		$map = \ebi\Flow::get_map($entry);		
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
 		
@@ -127,7 +127,11 @@ class Dt{
 				}
 			}
 		}
-		return ['map_list'=>$flow_output_maps,'q'=>implode(' ',$query)];
+		return [
+			'map_list'=>$flow_output_maps,
+			'q'=>implode(' ',$query),
+			'description'=>\ebi\Dt\Man::entry_description($entry),
+		];
 	}
 
 	private function class_list_summary($class,$query,&$libs){

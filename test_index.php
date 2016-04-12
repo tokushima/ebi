@@ -1,6 +1,8 @@
 <?php
 include_once('bootstrap.php');
-
+/**
+ * テストエントリ
+ */
 \ebi\Flow::app([
 	'ABC'=>['action'=>'test.flow.AutoAction'],
 	'DEF/(.+)/(.+)'=>['action'=>'test.flow.AutoAction::jkl'],
