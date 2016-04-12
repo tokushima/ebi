@@ -49,6 +49,10 @@ class Dt{
 	 * @automap
 	 */
 	public function phpinfo(){
+		/**
+		 * phpinfoを表示・操作するか
+		 * @param boolean $arg する: true, しない: false
+		 */
 		if(\ebi\Conf::get('phpinfo') === false){
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}
@@ -208,6 +212,10 @@ class Dt{
 	 * @automap
 	 */
 	public function conf_doc($class,$conf_name){
+		/**
+		 * Configを表示・操作するか
+		 * @param boolean $arg する: true, しない: false
+		 */
 		if(\ebi\Conf::get('config') === false){
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}
@@ -236,6 +244,7 @@ class Dt{
 		}
 		$query = $this->get_query();
 		$conf_list = [];
+		
 		foreach(self::classes() as $info){
 			$ref = new \ReflectionClass($info['class']);
 			
@@ -247,6 +256,8 @@ class Dt{
 				}
 			}
 		}
+		ksort($conf_list);
+		
 		return ['conf_list'=>$conf_list,'q'=>implode(' ',$query)];
 	}
 	
@@ -254,6 +265,10 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
+		/**
+		 * Modelを表示するか
+		 * @param boolean $arg する: true, しない: false
+		 */
 		if(\ebi\Conf::get('model') === false){
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}
@@ -454,6 +469,10 @@ class Dt{
 		if(\ebi\Conf::get('model') === false){
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}
+		/**
+		 * Modelでデータを操作するか
+		 * @param boolean $arg する: true, しない: false
+		 */		
 		if(\ebi\Conf::get('data') === false){
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}

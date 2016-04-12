@@ -1,6 +1,7 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
+
 <script type="text/javascript">
 	function conf_sample(pkg){
 		alert("\\ebi\\Conf::set([" + "\n"
@@ -15,9 +16,6 @@
 		+ "]);" + "\n");
 	}
 </script>
-<style type="text/css">
- .connection_setting input{ margin: 0; width: 90%; }
-</style>
 
 <table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count" class="table table-condensed">
 <tr>
@@ -33,10 +31,14 @@
 		</rt:if>
 	</td>
 	<td style="width:25%;">
-		<a href="{$t.package_method_url('do_find',$package)}">{$f.package_name($package)}</a>
+		<a href="{$t.package_method_url('do_find',$package)}">
+			{$f.package_name($package)}
+		</a>
 	</td>
 	<td style="width:75%;">
-		{$model['summary']}
+		<span style="color: #aaaaaa;">
+			{$t.html($model['summary'])}
+		</span>
 		
 		<rt:if param="{$model['error']}">
 			<rt:if param="{$model['error_query']}">

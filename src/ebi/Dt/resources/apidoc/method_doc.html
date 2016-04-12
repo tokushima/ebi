@@ -1,0 +1,138 @@
+<rt:extends href="base.html" />
+
+<rt:block name="toplink">
+	<a class="navbar-brand" href="../../index.html">API Document</a>
+</rt:block>
+
+
+<rt:block name="content">
+<h2 class="title" style="{$t.cond_switch($deprecated,'text-decoration: line-through;','')}">
+	{$f.package_name($package)}::{$method_name}
+
+	<rt:if param="{$http_method}">
+		<rt:if param="{$http_method}" value="POST">
+			<span class="label label-danger">POST</span>
+		<rt:else />
+			<rt:if param="{$http_method}" value="GET">
+				<span class="label label-warning">Warning</span>
+			<rt:else />
+				<span class="label label-default">{$http_method}</span>
+			</rt:if>
+		</rt:if>
+	</rt:if>
+</h2>
+
+<div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 50px;">
+	{$t.html($description)}
+	
+	<p style="height: 20px;"></p>	
+</div>
+
+
+<rt:if param="{$see_url}">
+<table rt:param="{$see_url}" rt:var="url" class="table table-condensed">
+<tr>
+	<td>
+		<a href="{$url}">
+			{$url}
+		</a>
+	</td>
+</tr>
+</table>	
+</rt:if>
+
+
+<rt:if param="{$params}">
+<h4 class="text-warning">Params</h4>
+
+<table rt:param="{$params}" rt:var="param" rt:key="param_name" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$f.type($param[0])}">
+			<a href="../{$param[0]}.html">{$param[0]}</a>
+		<rt:else />
+			{$param[0]}
+		</rt:if>
+	</td>
+
+	<td style="width:20%;">
+		<rt:if param="{$param[1]}">&</rt:if>
+		{$param_name}
+	</td>
+	<td style="width:55%;">
+		{$t.html($param[4])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+
+
+<h4 class="text-warning">Request</h4>
+<rt:if param="{$request}">
+	<table rt:param="{$request}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
+	<tr>
+		<td style="width:25%;">
+			<rt:if param="{$f.type($arg[0])}">
+				<a href="../{$arg[0]}.html">{$arg[0]}</a>
+			<rt:else />
+				{$arg[0]}
+			</rt:if>
+		</td>	
+		<td style="width:20%;">
+			<rt:if param="{$arg[2]}">
+				<span style="font-weight: bold; color: #d9534f;">{$name}</span>
+			<rt:else />
+				{$name}
+			</rt:if>			
+		</td>
+		<td style="width:55%;">
+			{$t.html($arg[1])}
+		</td>
+	</tr>
+	</table>
+<rt:else />
+	<hr style="margin-bottom: 50px;" />
+</rt:if>
+
+
+<h4 class="text-warning">Context</h4>
+<rt:if param="{$context}">
+	<table rt:param="{$context}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
+	<tr>
+		<td style="width:25%;">
+			<rt:if param="{$f.type($arg[0])}">
+				<a href="../{$f.type($arg[0])}.html">{$arg[0]}</a>
+			<rt:else />
+				{$arg[0]}
+			</rt:if>
+		</td>
+		<td style="width:20%;">
+			{$name}
+		</td>
+		<td style="width:55%;">
+			{$t.html($arg[1])}
+		</td>
+	</tr>
+	</table>
+<rt:else />
+	<hr style="margin-bottom: 50px;" />
+</rt:if>
+
+
+<rt:if param="{$throws}">
+<h4 class="text-warning">Throws</h4>
+<table rt:param="{$throws}" rt:var="e" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td style="color:#888888; width:25%;">
+		{$f.type($e[0])}
+	</td>
+	<td style="color:#aaaaaa; width:75%;">
+		{$t.html($e[1])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+</rt:block>
+

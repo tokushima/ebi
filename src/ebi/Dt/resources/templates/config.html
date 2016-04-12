@@ -12,7 +12,7 @@
 </thead>
 <tbody>
 	<tr>
-		<td>
+		<td style="width:25%">
 			<a href="{$t.package_method_url('class_doc',$conf['package'])}">
 				<rt:if param="{$f.has_conf($conf['package'],$conf['key'])}">
 					<div style="color:#aaaaaa;">
@@ -23,7 +23,7 @@
 				</rt:if>
 			</a>
 		</td>
-		<td>
+		<td style="width:15%">
 			<a href="{$t.package_method_url('conf_doc',$conf['package'],$conf['key'])}">
 				<rt:if param="{$f.has_conf($conf['package'],$conf['key'])}">
 					<div style="color:#aaaaaa;">
@@ -35,8 +35,10 @@
 
 			</a>
 		</td>
-		<td>
-			{$t.html($conf['description'],200,1)}
+		<td style="width:60%">
+			<span style="color: #aaaaaa;">
+				{$t.html($conf['description'],200,1)}
+			</span>
 		</td>
 	</tr>
 </tbody>

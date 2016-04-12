@@ -6,12 +6,19 @@
 <rt:block name="content">
 <h2>
 	{$f.package_name($package)}
-	<rt:if param="{$abstract}"> (Abstract) </rt:if>
+	
+	<rt:if param="{$abstract}">
+		<span class="label label-info">Abstract</span>
+	</rt:if>
 </h2>
 
 
 <rt:if param="{$extends}">
-	extends <a href="{$t.package_method_url('class_doc',$f.package_name($extends))}">{$f.package_name($extends)}</a>
+	extends 
+	
+	<a href="{$t.package_method_url('class_doc',$f.package_name($extends))}">
+		{$f.package_name($extends)}
+	</a>
 </rt:if>
 
 
@@ -19,6 +26,7 @@
 <rt:if param="{$description}">
 <div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 50px;">
 	{$t.html($description)}
+	
 	<p style="height: 20px;"></p>
 </div>
 </rt:if>
@@ -104,7 +112,7 @@
 
 
 <rt:if param="{$protected_static_methods}">
-<h4>Protected static methods</h4>
+<h4 class="text-warning">Protected static methods</h4>
 
 <table rt:param="{$protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
@@ -122,7 +130,7 @@
 
 
 <rt:if param="{$protected_methods}">
-<h4>Protected methods</h4>
+<h4 class="text-warning">Protected methods</h4>
 
 <table rt:param="{$protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
@@ -141,7 +149,7 @@
 
 
 <rt:if param="{$inherited_static_methods}">
-<h4>Inherited Static methods</h4>
+<h4 class="text-warning">Inherited Static methods</h4>
 
 <table rt:param="{$inherited_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
@@ -159,7 +167,7 @@
 
 
 <rt:if param="{$inherited_methods}">
-<h4>Inherited Methods</h4>
+<h4 class="text-warning">Inherited Methods</h4>
 
 <table rt:param="{$inherited_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
@@ -177,7 +185,7 @@
 
 
 <rt:if param="{$inherited_protected_static_methods}">
-<h4>Inherited Protected static methods</h4>		
+<h4 class="text-warning">Inherited Protected static methods</h4>		
 
 <table rt:param="{$inherited_protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
@@ -195,7 +203,7 @@
 
 
 <rt:if param="{$inherited_protected_methods}">
-<h4>Inherited Protected methods</h4>
+<h4 class="text-warning">Inherited Protected methods</h4>
 
 <table rt:param="{$inherited_protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>

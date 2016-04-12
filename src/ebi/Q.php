@@ -129,7 +129,6 @@ class Q{
 	/**
 	 * クエリを追加する
 	 * @return \ebi\Q
-	 * @throws \BadMethodCallException
 	 */
 	public function add(){
 		$args = func_get_args();

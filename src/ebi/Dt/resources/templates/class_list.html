@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<h3 class="text-warning">Classes</h3>
+<h4 class="text-warning">Classes</h4>
 
 <table class="table table-condensed" style="margin-bottom: 50px;">
 <rt:loop param="{$class_list}" var="summary" key="package">
@@ -16,7 +16,7 @@
 </table>
 
 
-<h3 class="text-warning">Exceptions</h3>
+<h4 class="text-warning">Exceptions</h4>
 <table class="table table-condensed" style="margin-bottom: 50px;">
 <rt:loop param="{$class_list}" var="summary" key="package">
 <rt:if param="{$f.is_subclass_of($package,'Exception')}">
