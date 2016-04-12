@@ -24,55 +24,45 @@
 
 <div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 50px;">
 	{$t.html($description)}
+	
 	<p style="height: 20px;"></p>
 </div>
 
 
 <rt:if param="{$see_class}">
-	<table rt:param="{$see_class}" rt:var="class" class="table table-condensed">
-	<thead>
-		<tr class="text-muted">
-			<th>class</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
-		</tr>
-	</tbody>
-	</table>
+<table rt:param="{$see_class}" rt:var="class" class="table table-condensed">
+<tr>
+	<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
+</tr>
+</table>
 </rt:if>
 
 <rt:if param="{$see_method}">
-	<table rt:param="{$see_method}" rt:var="class_method" class="table table-condensed">
-	<thead>
-		<tr class="text-muted">
-			<th>class</th>
-			<th>method</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">{$f.type($class_method[0])}</a></td>
-			<td><a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">{$class_method[1]}</a></td>
-		</tr>
-	</tbody>
-	</table>	
+<table rt:param="{$see_method}" rt:var="class_method" class="table table-condensed">
+<tr>
+	<td>
+		<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
+			{$f.type($class_method[0])}
+		</a>
+		::
+		<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
+			{$class_method[1]}
+		</a>
+	</td>
+</tr>
+</table>	
 </rt:if>
 
 <rt:if param="{$see_url}">
-	<table rt:param="{$see_url}" rt:var="url" class="table table-condensed">
-	<thead>
-		<tr class="text-muted">
-			<th>url</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><a href="{$url}">{$url}</a></td>
-		</tr>
-	</tbody>
-	</table>	
+<table rt:param="{$see_url}" rt:var="url" class="table table-condensed">
+<tr>
+	<td>
+		<a href="{$url}">
+			{$url}
+		</a><
+	/td>
+</tr>
+</table>	
 </rt:if>
 
 
@@ -193,8 +183,12 @@
 
 <table rt:param="{$throws}" rt:var="e" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
-	<td style="color:#888888; width: 25%;">{$f.type($e[0])}</td>
-	<td style="color:#aaaaaa; width: 75%;">{$t.html($e[1])}</td>
+	<td style="color:#888888; width: 25%;">
+		{$f.type($e[0])}
+	</td>
+	<td style="color:#aaaaaa; width: 75%;">
+		{$t.html($e[1])}
+	</td>
 </tr>
 </table>
 </rt:if>

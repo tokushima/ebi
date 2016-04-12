@@ -378,14 +378,14 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * 必須の条件を取得する
-	 * @return array [\ebi\Column,\ebi\Column]
+	 * @return \ebi\Column[]
 	 */
 	public function conds(){
 		return self::$_dao_[$this->_class_id_]->_conds_;
 	}
 	/**
 	 * join時の条件を取得する
-	 * @return array [\ebi\Column,\ebi\Column]
+	 * @return \ebi\Column[]
 	 */
 	public function join_conds($name){
 		return (isset(self::$_dao_[$this->_class_id_]->_join_conds_[$name])) ? self::$_dao_[$this->_class_id_]->_join_conds_[$name] : [];
@@ -454,7 +454,6 @@ abstract class Dao extends \ebi\Object{
 	/**
 	 * クエリを実行する
 	 * @param Daq $daq
-	 * @throws RuntimeException
 	 * @return \PDOStatement
 	 */
 	public function query(\ebi\Daq $daq){

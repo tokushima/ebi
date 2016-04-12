@@ -9,7 +9,6 @@ class Csrf{
 	
 	/**
 	 * @plugin ebi.Flow
-	 * @throws \RuntimeException
 	 */
 	public function before_flow_action(){
 		$req = new \ebi\Request();
