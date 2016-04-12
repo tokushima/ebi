@@ -22,11 +22,11 @@
 	</rt:if>
 </h2>
 
-<div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 50px;">
-	{$t.html($description)}
-	
-	<p style="height: 20px;"></p>	
-</div>
+<rt:if param="{$description}">
+	<div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 30px;">
+		{$t.html($description)}
+	</div>
+</rt:if>
 
 
 <rt:if param="{$see_url}">
