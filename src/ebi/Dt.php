@@ -657,6 +657,7 @@ class Dt{
 				) as $e){
 					if(strpos($e->getPathname(),DIRECTORY_SEPARATOR.'.') === false
 						&& strpos($e->getPathname(),DIRECTORY_SEPARATOR.'_') === false
+						&& strpos($e->getPathname(),DIRECTORY_SEPARATOR.'cmd'.DIRECTORY_SEPARATOR) === false
 						&& ctype_upper(substr($e->getFilename(),0,1))
 						&& substr($e->getFilename(),-4) == '.php'
 					){

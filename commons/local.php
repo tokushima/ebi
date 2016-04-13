@@ -17,7 +17,7 @@
 	],
 	'ebi.Dt'=>[
 		'ignore'=>[
-			'test.*',
+// 			'test.*',
 		],
 //		'phpinfo'=>false,
 //		'config'=>false,
