@@ -8,7 +8,6 @@ namespace test\db;
  * @var string $name
  * @var number $float
  * 
- * @var \test\db\Crud $crud @['extra'=>true]
  */
 class Calc extends \ebi\Dao{
 	protected $id;
@@ -16,6 +15,4 @@ class Calc extends \ebi\Dao{
 	protected $type;
 	protected $name;
 	protected $float;
-	
-	protected $crud;
 }
