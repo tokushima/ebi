@@ -10,7 +10,6 @@ class Validator{
 	 * @param string $t type
 	 * @param mixed $v value
 	 * @param mixed{} $p annotation values
-	 * @throws \InvalidArgumentException
 	 */
 	public static function type($name,$v,$p=[]){
 		if($v === null){

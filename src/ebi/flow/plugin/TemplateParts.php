@@ -8,7 +8,6 @@ class TemplateParts{
 	/**
 	 * @plugin ebi.Temaplte
 	 * @param string $src
-	 * @throws \InvalidArgumentException
 	 * @return Ambigous <string, string, mixed>|string
 	 */
 	public function init_template($src){

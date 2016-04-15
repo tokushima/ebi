@@ -93,7 +93,6 @@ class Flow{
 	 * @param string $map_name
 	 * @param  array $vars
 	 * @param array $pattern
-	 * @throws \InvalidArgumentException
 	 */
 	private static function map_redirect($map_name,$vars=[],$pattern=[]){
 		self::terminate();
@@ -139,7 +138,6 @@ class Flow{
 	/**
 	 * アプリケーションを実行する
 	 * @param mixed{} $map
-	 * @throws \ebi\exception\InvalidArgumentException
 	 */
 	public static function app($map=[]){
 		if(empty($map)){
