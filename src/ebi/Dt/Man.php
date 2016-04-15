@@ -39,6 +39,26 @@ class Man{
 		}
 		return $desc;
 	}
+	private static function get_method_document(\ReflectionMethod $method){
+		$method_document = $method->getDocComment();
+		
+		if($method_document === false){
+			$p = $method->getDeclaringClass()->getParentClass();
+				
+			while($p !== false){
+				try{
+					$method_document = $p->getMethod($method->getName())->getDocComment();
+						
+					if($method_document !== false){
+						break;
+					}
+					$p = $p->getParentClass();
+				}catch(\ReflectionException $e){
+				}
+			}
+		}
+		return self::trim_doc($method_document);
+	}
 	/**
 	 * クラスのドキュメント
 	 * @param string $class
@@ -72,11 +92,12 @@ class Man{
 			}
 		}
 		$methods = $static_methods = $protected_methods = $protected_static_methods = [[],[]];
+		$see_class = $see_method = $see_url = [];
 		$plugin_method = [];
 		
 		foreach($r->getMethods() as $method){
 			if(substr($method->getName(),0,1) != '_' && ($method->isPublic() || $method->isProtected())){
-				$method_document = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$method->getDocComment()));
+				$method_document = self::get_method_document($method);
 				list($method_description) = explode("\n",trim(preg_replace('/@.+/','',$method_document)));
 				
 				if(strpos($method_description,'non-PHPdoc') !== false){
@@ -99,19 +120,20 @@ class Man{
 						}
 					}
 				}
+				
+				
 				if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$method_document,$match)){
 					foreach($match[1] as $v){
 						$plugin_method[trim($v)][] = $method->getName();
 					}
-				}else{	
+				}else{
 					$dec = ($method->getDeclaringClass()->getFileName() == $r->getFileName()) ? 0 : 1;
+					
 					if($method->isStatic()){
-						if($method->getDeclaringClass()->getName() == $r->getName()){
-							if($method->isPublic()){
-								$static_methods[$dec][$method->getName()] = $method_description;
-							}else{
-								$protected_static_methods[$dec][$method->getName()] = $method_description;								
-							}
+						if($method->isPublic()){
+							$static_methods[$dec][$method->getName()] = $method_description;
+						}else{
+							$protected_static_methods[$dec][$method->getName()] = $method_description;								
 						}
 					}else{
 						if($method->isPublic()){
@@ -161,7 +183,28 @@ class Man{
 				}
 			}
 		}
+		
+		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$match)){
+			foreach($match[1] as $v){
+				if(strpos($v,'::') !== false){
+					$see_method[$v] = explode('::',trim($v),2);
+				}else if(substr($v,-1) != ':'){
+					$v = trim($v);
+					$see_class[$v] = $v;
+				}
+			}
+		}
+		ksort($see_class);
+		ksort($see_method);
+			
+		if(preg_match_all("/@see\s+(\w+:\/\/.+)/",$document,$match)){
+			foreach($match[1] as $v){
+				$v = trim($v);
+				$see_url[$v] = $v;
+			}
+		}
 		$description = trim(preg_replace('/@.+/','',$document));
+				
 		ksort($static_methods[0]);
 		ksort($methods[0]);
 		ksort($protected_methods[0]);
@@ -173,14 +216,28 @@ class Man{
 		ksort($plugins);
 		
 		return [
-			'filename'=>$r->getFileName(),'extends'=>$extends,'abstract'=>$r->isAbstract(),'version'=>date('Ymd',$updated)
-			,'static_methods'=>$static_methods[0],'methods'=>$methods[0],'protected_static_methods'=>$protected_static_methods[0],'protected_methods'=>$protected_methods[0]
-			,'inherited_static_methods'=>$static_methods[1],'inherited_methods'=>$methods[1],'inherited_protected_static_methods'=>$protected_static_methods[1],'inherited_protected_methods'=>$protected_methods[1]
-			,'plugin_method'=>$plugin_method
-			,'properties'=>$properties,'package'=>$class,'description'=>$description
-			,'plugins'=>$plugins
-			,'added_plugins'=>$added_plugins
-			,'conf_list'=>$conf
+			'filename'=>$r->getFileName(),
+			'extends'=>$extends,
+			'abstract'=>$r->isAbstract(),
+			'version'=>date('Ymd',$updated),
+			'static_methods'=>$static_methods[0],
+			'methods'=>$methods[0],
+			'protected_static_methods'=>$protected_static_methods[0],
+			'protected_methods'=>$protected_methods[0],
+			'inherited_static_methods'=>$static_methods[1],
+			'inherited_methods'=>$methods[1],
+			'inherited_protected_static_methods'=>$protected_static_methods[1],
+			'inherited_protected_methods'=>$protected_methods[1],
+			'plugin_method'=>$plugin_method,
+			'properties'=>$properties,
+			'package'=>$class,
+			'description'=>$description,
+			'plugins'=>$plugins,
+			'added_plugins'=>$added_plugins,
+			'conf_list'=>$conf,
+			'see_class'=>$see_class,
+			'see_method'=>$see_method,
+			'see_url'=>$see_url,				
 		];
 	}
 	/**
@@ -198,7 +255,7 @@ class Man{
 		
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			$src = self::method_src($ref);
-			$document = self::method_doc($ref);
+			$document = self::get_method_document($ref);
 			$deprecated = (strpos($ref->getDocComment(),'@deprecated') !== false);
 			$use_method_list = ($deep) ? self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) :
 											[$ref->getDeclaringClass().'::'.$method];
@@ -269,24 +326,25 @@ class Man{
 				try{
 					$ref = new \ReflectionMethod($uclass,$umethod);
 					$use_method_src = self::method_src($ref);
-					$use_method_doc = self::method_doc($ref);
-			
+					$use_method_doc = self::trim_doc($ref->getDocComment());
+					$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
+					
 					if(preg_match_all("/throw\s+new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
 							$n = trim($n);
-							$throws[$n] = [$n];
+							$throws[$n] = [$n,null,$method_fullname];
 						}
 					}
 					if(preg_match_all("/\\\\ebi\\\\Exceptions::add\(\s*new\s+([\\\\\w]+)\((.*)\)/",$use_method_src,$match)){
 						foreach($match[1] as $k => $n){
 							$n = trim($n);
-							$throws[$n] = [$n];
+							$throws[$n] = [$n,null,$method_fullname];
 						}
 					}
 					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$match)){
 						foreach($match[1] as $k => $n){
 							$n = trim($n);
-							$throws[$n] = [$n,trim($match[2][$k])];
+							$throws[$n] = [$n,trim($match[2][$k]),$method_fullname];
 						}
 					}
 				}catch(\ReflectionException $e){
@@ -315,7 +373,7 @@ class Man{
 				foreach($match[1] as $v){
 					if(strpos($v,'::') !== false){
 						$see_method[$v] = explode('::',trim($v),2);
-					}else{
+					}else if(substr($v,-1) != ':'){
 						$v = trim($v);
 						$see_class[$v] = $v;
 					}
@@ -334,10 +392,21 @@ class Man{
 		$description = trim(preg_replace('/@.+/','',$document));
 		
 		return [
-			'package'=>$class,'method_name'=>$method,'params'=>$params,'request'=>$request,'context'=>$context
-			,'args'=>$args,'return'=>$return,'description'=>$description,'throws'=>$throws
-			,'http_method'=>$http_method
-			,'deprecated'=>$deprecated,'plugins'=>$plugins,'see_class'=>$see_class,'see_method'=>$see_method,'see_url'=>$see_url
+			'package'=>$class,
+			'method_name'=>$method,
+			'params'=>$params,
+			'request'=>$request,
+			'context'=>$context,
+			'args'=>$args,
+			'return'=>$return,
+			'description'=>$description,
+			'throws'=>$throws,
+			'http_method'=>$http_method,
+			'deprecated'=>$deprecated,
+			'plugins'=>$plugins,
+			'see_class'=>$see_class,
+			'see_method'=>$see_method,
+			'see_url'=>$see_url,
 		];
 	}
 	private static function type($type,$class){
@@ -387,8 +456,8 @@ class Man{
 		}
 		return '';
 	}
-	private static function method_doc(\ReflectionMethod $ref){
-		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$ref->getDocComment())));
+	private static function trim_doc($doc){
+		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){
 		$list = [];
@@ -413,7 +482,7 @@ class Man{
 					foreach($m[1] as $k => $v){
 						try{
 							$ref = new \ReflectionMethod($m[2][$k],$m[3][$k]);
-							if(preg_match("/@return\s+([^\s]+)(.*)/",self::method_doc($ref),$r)){
+							if(preg_match("/@return\s+([^\s]+)(.*)/",self::trim_doc($ref->getDocComment()),$r)){
 								if(preg_match('/A-Z/',$r[1])){
 									$vars[$v] = $r[1];
 								}else{

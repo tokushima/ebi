@@ -720,7 +720,6 @@ class Dt{
 	 * モデルからtableを作成する
 	 * @param boolean $drop
 	 * @reutrn array 処理されたモデル
-	 * @throws \Exception
 	 */
 	public static function create_table($drop=false){
 		$model_list = [];
@@ -761,7 +760,6 @@ class Dt{
 	/**
 	 * dumpファイルを読み込む
 	 * @param string $file
-	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return Generator
 	 */
 	public static function get_dao_dump($file){
@@ -856,7 +854,6 @@ class Dt{
 	 * @param string $to
 	 * @param string $subject
 	 * @param number $late_time sec
-	 * @throws \LogicException
 	 * @return \ebi\SmtpBlackholeDao
 	 */
 	public static function find_mail($to,$keyword=null,$late_time=60){

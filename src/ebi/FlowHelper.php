@@ -381,4 +381,18 @@ class FlowHelper{
 	public function has_invalid($group=null){
 		return \ebi\FlowInvalid::has($group);
 	}
+	/**
+	 * 引数が空ではないか
+	 * 一つまたは複数の値で一つでも空でなければtrue
+	 * @param mixed $arg
+	 * @return bolean
+	 */
+	public function has($arg){
+		foreach(func_get_args() as $arg){
+			if(!empty($arg)){
+				return true;
+			}
+		}
+		return false;
+	}
 }

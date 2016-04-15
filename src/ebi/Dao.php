@@ -32,7 +32,6 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * @param string $class
-	 * @throws \ebi\exception\ConnectionException
 	 * @return \ebi\Db
 	 */
 	public static function connection($class){

@@ -29,40 +29,41 @@
 </rt:if>
 
 
-<rt:if param="{$see_class}">
-<table rt:param="{$see_class}" rt:var="class" class="table table-condensed">
-<tr>
-	<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
-</tr>
+<rt:if param="{$t.has($see_class,$see_method,$see_url)}">
+<h4 class="text-warning">See</h4>
+
+<table class="table table-condensed">
+<rt:loop param="{$see_class}" var="class">
+	<tr>
+		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
+	</tr>
+</rt:loop>
+	
+<rt:loop param="{$see_method}" var="class_method">
+	<tr>
+		<td>
+			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
+				{$f.type($class_method[0])}
+			</a>
+			::
+			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
+				{$class_method[1]}
+			</a>
+		</td>
+	</tr>
+</rt:loop>
+	
+<rt:loop param="{$see_url}" var="url">
+	<tr>
+		<td>
+			<a href="{$url}">
+				{$url}
+			</a>
+		</td>
+	</tr>
+</rt:loop>
+
 </table>
-</rt:if>
-
-<rt:if param="{$see_method}">
-<table rt:param="{$see_method}" rt:var="class_method" class="table table-condensed">
-<tr>
-	<td>
-		<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
-			{$f.type($class_method[0])}
-		</a>
-		::
-		<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
-			{$class_method[1]}
-		</a>
-	</td>
-</tr>
-</table>	
-</rt:if>
-
-<rt:if param="{$see_url}">
-<table rt:param="{$see_url}" rt:var="url" class="table table-condensed">
-<tr>
-	<td>
-		<a href="{$url}">
-			{$url}
-		</a><
-	/td>
-</tr>
-</table>	
 </rt:if>
 
 
@@ -184,7 +185,7 @@
 <table rt:param="{$throws}" rt:var="e" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="color:#888888; width: 25%;">
-		{$f.type($e[0])}
+		<div data-toggle="tooltip" data-placement="top" title="{$t.html($e[2])}">{$f.type($e[0])}</div>
 	</td>
 	<td style="color:#aaaaaa; width: 75%;">
 		{$t.html($e[1])}

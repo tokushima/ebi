@@ -135,7 +135,6 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * ログインしていない場合にログイン処理を実行する
-	 * @throws \LogicException
 	 */
 	private function login_required(){
 		$selected_pattern = $this->get_selected_pattern();
@@ -167,7 +166,6 @@ class Request extends \ebi\Request{
 
 	/**
 	 * ログインしているユーザのモデル
-	 * @throws \LogicException
 	 * @return mixed
 	 */
 	public function user(){

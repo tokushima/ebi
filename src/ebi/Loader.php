@@ -11,7 +11,6 @@ class Loader{
 	 * pharのパスを通す
 	 * @param string $path
 	 * @param string $namespace
-	 * @throws \ebi\exception\InvalidArgumentException
 	 */
 	public static function phar($path,$namespace=null){
 		/**

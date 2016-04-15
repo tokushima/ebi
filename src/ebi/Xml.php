@@ -233,7 +233,6 @@ class Xml implements \IteratorAggregate{
 	 * １件取得する
 	 * @param string $path
 	 * @param integer $offset
-	 * @throws \ebi\exception\NotFoundException
 	 * @return $this
 	 */
 	public function find_get($path,$offset=0){
@@ -287,7 +286,6 @@ class Xml implements \IteratorAggregate{
 	 * タグの検出
 	 * @param string $plain
 	 * @param string $name
-	 * @throws \ebi\exception\NotFoundException
 	 * @return self
 	 */
 	public static function extract($plain,$name=null){

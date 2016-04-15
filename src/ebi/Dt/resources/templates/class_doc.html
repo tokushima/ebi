@@ -30,6 +30,43 @@
 </rt:if>
 
 
+<rt:if param="{$t.has($see_class,$see_method,$see_url)}">
+<h4 class="text-warning">See</h4>
+
+<table class="table table-condensed">
+<rt:loop param="{$see_class}" var="class">
+	<tr>
+		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
+	</tr>
+</rt:loop>
+	
+<rt:loop param="{$see_method}" var="class_method">
+	<tr>
+		<td>
+			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
+				{$f.type($class_method[0])}
+			</a>
+			::
+			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
+				{$class_method[1]}
+			</a>
+		</td>
+	</tr>
+</rt:loop>
+	
+<rt:loop param="{$see_url}" var="url">
+	<tr>
+		<td>
+			<a href="{$url}">
+				{$url}
+			</a>
+		</td>
+	</tr>
+</rt:loop>
+
+</table>
+</rt:if>
+
 <rt:if param="{$static_methods}">
 <h4 class="text-warning">Static methods</h4>
 
