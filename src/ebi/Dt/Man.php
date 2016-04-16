@@ -54,6 +54,7 @@ class Man{
 					}
 					$p = $p->getParentClass();
 				}catch(\ReflectionException $e){
+					break;
 				}
 			}
 		}
@@ -77,8 +78,7 @@ class Man{
 			if(($parent = $parent->getParentClass()) === false){
 				break;
 			}
-		}		
-		
+		}
 		$src = self::get_reflection_source($r);
 		$document = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$r->getDocComment())));
 		$extends = ($r->getParentClass() === false) ? null : $r->getParentClass()->getName();
@@ -119,8 +119,7 @@ class Man{
 							}
 						}
 					}
-				}
-				
+				}				
 				
 				if(preg_match_all("/@plugin\s+([\w\.\\\\]+)/",$method_document,$match)){
 					foreach($match[1] as $v){
@@ -145,7 +144,6 @@ class Man{
 				}
 			}
 		}
-		
 		$plugins = [];
 		if(preg_match_all("/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
@@ -164,8 +162,15 @@ class Man{
 		}
 		$added_plugins = [];
 		if(in_array('ebi\\Plugin',$traits)){
-			$added_plugins = call_user_func([$r->getName(),'added_class_plugin_funcs']);
+			foreach(\ebi\Conf::get_class_plugin($r->getName()) as $o){
+				if(is_object($o)){
+					$added_plugins[] = get_class($o);
+				}else{
+					$added_plugins[] = $o;
+				}
+			}
 		}
+		
 		$conf = self::get_conf_list($r,$src);
 		$properties = [];
 		$anon = \ebi\Annotation::get_class(str_replace(['.','/'],['\\','\\'],$class),'var','summary');

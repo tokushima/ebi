@@ -64,7 +64,7 @@
 		<tbody>
 			<tr>
 				<rt:if param="{$perm_data}">
-					<td class="span1" style="width:1em;">
+					<td style="width:1em;">
 						<rt:if param="{$f.has_primary($model)}">
 							<form method="get" action="{$t.package_method_url('do_update',$package)}" style="margin:0;" id="edit_form_{$counter}">
 								{$t.noop($f.primary_hidden($obj))}
@@ -81,7 +81,7 @@
 				</rt:loop>
 				
 				<rt:if param="{$perm_data}">
-					<td class="span1" style="width:1em;">
+					<td style="width:1em;">
 						<rt:if param="{$f.has_primary($model)}">
 							<form method="post" action="{$t.package_method_url('do_drop',$package)}" style="margin:0;" id="delete_form_{$counter}">
 								{$t.noop($f.primary_hidden($obj))}

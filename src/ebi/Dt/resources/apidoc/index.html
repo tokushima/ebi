@@ -19,18 +19,18 @@
 </thead>
 <tbody>
 <tr style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
-	<td>
+	<td style="width: 40%;">
 		{$map['url']}
 	</td>
 
-	<td nowrap>
+	<td style="width: 20%;">
 		<rt:if param="{$map['class']}">
 			<a href="classes/{$map['class']}/{$map['method']}.html">{$map['name']}</a>
 		<rt:else />
 			{$map['name']}
 		</rt:if>
 	</td>
-	<td>
+	<td style="width: 40%;">
 		<span>{$t.html($map['summary'])}</span>
 		<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 	</td>

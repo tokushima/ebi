@@ -1,0 +1,36 @@
+<rt:extends href="base.html" />
+
+<rt:block name="toplink">
+	<a class="navbar-brand" href="../index.html">Classes Document</a>
+</rt:block>
+
+
+<rt:block name="content">
+
+<h4 class="text-warning">Classes</h4>
+
+<table class="table table-condensed" style="margin-bottom: 50px;">
+<rt:loop param="{$class_list}" var="summary" key="package">
+<rt:notif param="{$f.is_subclass_of($package,'Exception')}">
+<tr>
+	<td style="width: 30%;"><a href="classes/{$package}.html">{$package}</a></td>
+	<td style="width: 70%; color: #aaaaaa;">{$summary}</td>
+</tr>
+</rt:notif>
+</rt:loop>
+</table>
+
+
+<h4 class="text-warning">Exceptions</h4>
+<table class="table table-condensed" style="margin-bottom: 50px;">
+<rt:loop param="{$class_list}" var="summary" key="package">
+<rt:if param="{$f.is_subclass_of($package,'Exception')}">
+<tr>
+	<td style="width: 30%; color: #888888;">{$package}</td>
+	<td style="width: 70%; color: #aaaaaa;">{$summary}</td>
+</tr>
+</rt:if>
+</rt:loop>
+</table>
+</rt:block>
+

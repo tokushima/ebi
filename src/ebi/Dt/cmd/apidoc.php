@@ -6,11 +6,6 @@
  * @param string $template テンプレートフォルダ
  */
 
-if(empty($out)){
-	$out = getcwd().'/apidoc';
-}
-
-
 if(!empty($template)){
 	$path = realpath($template);
 
@@ -30,7 +25,9 @@ if(!empty($template)){
 }else{
 	$resources = dirname(dirname(__DIR__)).'/Dt/resources/apidoc/';
 }
-$self = new \ebi\Dt();
+if(empty($out)){
+	$out = getcwd().'/classdoc';
+}
 
 $get_template = function($vars){
 	$template = new \ebi\Template();
@@ -42,20 +39,27 @@ $get_template = function($vars){
 	return $template;
 };
 
-$class_doc = function($type) use(&$class_doc,$self,$get_template,$out,$resources){
+$class_doc = function($type) use(&$class_doc,$get_template,$out,$resources){
 	try{
-		$class_vars = $self->class_doc($type);
-		$template = $get_template($class_vars);
-		\ebi\Util::file_write($out.'/classes/'.$class_vars['package'].'.html',$template->read($resources.'class_doc.html'));
+		$class_vars = (new \ebi\Dt())->class_doc($type);
+		$classout = $out.'/classes/'.$class_vars['package'].'.html';
 		
-		foreach($class_vars['properties'] as $prop){
-			$class_doc($prop[0]);
+		if(!is_file($classout)){
+			\cmdman\Std::println('Written '.$class_vars['package']);
+			
+			$template = $get_template($class_vars);
+			\ebi\Util::file_write($out.'/classes/'.$class_vars['package'].'.html',$template->read($resources.'class_doc.html'));
+			
+			foreach($class_vars['properties'] as $prop){
+				$class_doc($prop[0]);
+			}
 		}
 	}catch(\ReflectionException $e){
 	}
 };
 
-$entry_vars = $self->index($in);
+\ebi\Util::rm($out,false);
+$entry_vars = (new \ebi\Dt())->index($in);
 $template = $get_template($entry_vars);
 \ebi\Util::file_write($out.'/index.html',$template->read($resources.'index.html'));
 
@@ -72,7 +76,7 @@ foreach($entry_vars['map_list'] as $info){
 	}
 }
 
-\cmdman\Std::println('Written '.realpath($out));
+\cmdman\Std::println_success('Written '.realpath($out));
 
 
 

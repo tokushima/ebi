@@ -1,7 +1,9 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
+<rt:block name="toplink">
+	<a class="navbar-brand" href="../index.html">Classes Document</a>
 </rt:block>
+
 
 <rt:block name="content">
 <h2>
@@ -16,7 +18,7 @@
 <rt:if param="{$extends}">
 	extends 
 	
-	<a href="{$t.package_method_url('class_doc',$f.package_name($extends))}">
+	<a href="{$f.package_name($extends)}.html">
 		{$f.package_name($extends)}
 	</a>
 </rt:if>
@@ -36,18 +38,18 @@
 <table class="table table-condensed">
 <rt:loop param="{$see_class}" var="class">
 	<tr>
-		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
+		<td><a href="{$f.type($class)}.html">{$f.type($class)}</a></td>
 	</tr>
 </rt:loop>
 	
 <rt:loop param="{$see_method}" var="class_method">
 	<tr>
 		<td>
-			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
+			<a href="{$f.type($class_method[0])}.html">
 				{$f.type($class_method[0])}
 			</a>
 			::
-			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
+			<a href="{$class_method[0]}/{$class_method[1]}.html">
 				{$class_method[1]}
 			</a>
 		</td>
@@ -73,7 +75,7 @@
 <table rt:param="{$static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width: 25%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -90,7 +92,7 @@
 <table rt:param="{$methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -108,13 +110,13 @@
 <table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:25%;">
-		<a href="{$t.package_method_url('class_doc',$f.package_name($class_name))}">
+		<a href="{$f.package_name($class_name)}.html">
 			{$f.package_name($class_name)}
 		</a>
 	</td>
 	<td style="width: 75%;">
 		<rt:loop param="method_name_list" var="method_name">
-			<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+			<a href="{$package}/{$method_name}.html">
 				{$method_name}
 			</a>
 		</rt:loop>
@@ -131,7 +133,7 @@
 <tr class="{$t.cond_switch($prop[2],'hash_on','hash_off')}">
 	<td style="width: 25%;">
 		<rt:if param="{$f.type($prop[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($prop[0]))}">{$prop[0]}</a>
+			<a href="{$f.type($prop[0])}.html">{$prop[0]}</a>
 		<rt:else />
 			{$prop[0]}
 		</rt:if>
@@ -153,7 +155,7 @@
 <table rt:param="{$protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -171,7 +173,7 @@
 <table rt:param="{$protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width: 20%;">
-		<a name="{$method_name}" href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a name="{$method_name}" href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -190,7 +192,7 @@
 <table rt:param="{$inherited_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width: 20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -208,7 +210,7 @@
 <table rt:param="{$inherited_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width: 20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -226,7 +228,7 @@
 <table rt:param="{$inherited_protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -244,7 +246,7 @@
 <table rt:param="{$inherited_protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:20%;">
-		<a name="{$method_name}" href="{$t.package_method_url('method_doc',$package,$method_name)}">
+		<a name="{$method_name}" href="{$package}/{$method_name}.html">
 			{$method_name}
 		</a>
 	</td>
@@ -263,28 +265,12 @@
 <table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td style="width:20%;">
-		<a href="{$t.package_method_url('plugin_doc',$package,$plugin_name)}">
+		<a href="{$package}/plugins/{$plugin_name}.html">
 			{$plugin_name}
 		</a>
 	</td>
 	<td style="width:80%;">
 		{$t.html($v[0],0,1)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-<rt:if param="{$added_plugins}">
-<h4 class="text-warning">Added Plugins</h4>
-
-<table rt:param="{$added_plugins}" rt:var="plugin_class" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td>
-		<rt:if param="{$plugin_class}" value="Closure">
-			{$plugin_class}
-		<rt:else />
-			<a href="{$t.package_method_url('class_doc',$plugin_class)}">{$plugin_class}</a>
-		</rt:if>
 	</td>
 </tr>
 </table>
@@ -298,7 +284,7 @@
 		<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name" class="table table-condensed" style="margin-bottom: 50px;">
 		<tr>
 			<td style="width:20%;">
-				<a href="{$t.package_method_url('conf_doc',$package,$conf_name)}">
+				<a href="{$package}/config/{$conf_name}.html">
 					{$conf_name}
 				</a>
 			</td>
