@@ -263,10 +263,13 @@ class Browser{
 		
 		if(isset($url_info['query'])){
 			parse_str($url_info['query'],$vars);
+			
 			foreach($vars as $k => $v){
 				if(!isset($this->request_vars[$k])) $this->request_vars[$k] = $v;
 			}
-			list($url) = explode('?',$url,2);
+			if($method == 'GET'){
+				list($url) = explode('?',$url,2);
+			}
 		}
 		switch($method){
 			case 'RAW':
