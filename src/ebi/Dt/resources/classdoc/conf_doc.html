@@ -1,0 +1,60 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+<h2>
+	<a href="../../{$package}.html">{$f.package_name($package)}</a>
+	::
+	{$conf_name}
+</h2>
+
+<rt:if param="{$description}">
+	<div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 30px;">
+		{$t.html($description)}
+	</div>
+</rt:if>
+	
+<rt:if param="{$params}">
+<h4 class="text-warning">Params</h4>
+
+<table rt:param="{$params}" rt:var="param" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td style="width: 25%;">
+		<rt:if param="{$f.type($param[1])}">
+			<a href="../../{$f.type($param[1])}.html">
+				{$param[1]}
+			</a>
+		<rt:else />
+			{$param[1]}
+		</rt:if>
+	</td>
+	<td style="width: 75%;">
+		{$t.html($param[2])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+
+<rt:if param="{$return}">
+<h4 class="text-warning">Return</h4>
+	
+<table>
+<tr>
+	<td style="width: 25%;">
+		<rt:if param="{$f.type($return[0])}">
+			<a href="../../{$f.type($return[0])}">
+				{$return[0]}
+			</a>
+		<rt:else />
+			{$return[0]}
+		</rt:if>
+	</td>
+	<td style="width: 75%;">
+		{$t.html($return[1])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+</rt:block>
+

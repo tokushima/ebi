@@ -1,11 +1,12 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
+<rt:block name="toplink">
+	<a class="navbar-brand" href="../../index.html">Classes Document</a>
 </rt:block>
 
 <rt:block name="content">
 <h2 style="{$t.cond_switch($deprecated,'text-decoration: line-through;','')}">
-	<a href="{$t.package_method_url('class_doc',$package)}">{$f.package_name($package)}</a>
+	<a href="../{$package}.html">{$f.package_name($package)}</a>
 	::
 	{$method_name}
 
@@ -35,18 +36,18 @@
 <table class="table table-condensed">
 <rt:loop param="{$see_class}" var="class">
 	<tr>
-		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
+		<td><a href="../{$f.type($class)}.html">{$f.type($class)}</a></td>
 	</tr>
 </rt:loop>
 	
 <rt:loop param="{$see_method}" var="class_method">
 	<tr>
 		<td>
-			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
+			<a href="../{$f.type($class_method[0])}.html">
 				{$f.type($class_method[0])}
 			</a>
 			::
-			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
+			<a href="../{$class_method[0]}/{$class_method[1]}.html">
 				{$class_method[1]}
 			</a>
 		</td>
@@ -74,7 +75,7 @@
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$f.type($param[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($param[0]))}">{$param[0]}</a>
+			<a href="../{$f.type($param[0])}.html">{$param[0]}</a>
 		<rt:else />
 			{$param[0]}
 		</rt:if>
@@ -101,7 +102,7 @@
 <tr>
 	<td style="width: 25%;">
 		<rt:if param="{$f.type($arg[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
+			<a href="../{$f.type($arg[0])}.html">{$arg[0]}</a>
 		<rt:else />
 			{$arg[0]}
 		</rt:if>
@@ -127,7 +128,7 @@
 <tr>
 	<td style="width: 25%;">
 		<rt:if param="{$f.type($arg[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
+			<a href="../{$f.type($arg[0])}.html">{$arg[0]}</a>
 		<rt:else />
 			{$arg[0]}
 		</rt:if>
@@ -166,7 +167,7 @@
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$f.type($r[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($r[0]))}">{$r[0]}</a>
+			<a href="../{$f.type($r[0])}">{$r[0]}</a>
 		<rt:else />
 			{$r[0]}
 		</rt:if>
@@ -200,7 +201,7 @@
 
 <table rt:param="{$modules}" rt:var="pkg" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
-	<td><a href="{$t.package_method_url('class_doc',$f.type($pkg))}">{$f.type($pkg)}</a></td>
+	<td><a href="../{$f.type($pkg)}.html">{$f.type($pkg)}</a></td>
 </tr>
 </table>	
 </rt:if>

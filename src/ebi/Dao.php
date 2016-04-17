@@ -20,7 +20,7 @@ abstract class Dao extends \ebi\Object{
 	private static $record_query = [];
 
 	/**
-	 * コネクション一覧
+	 * 接続情報一覧
 	 * @return \ebi\Db[]
 	 */
 	public static function connections(){
@@ -31,6 +31,7 @@ abstract class Dao extends \ebi\Object{
 		return $connections;
 	}
 	/**
+	 * 接続情報
 	 * @param string $class
 	 * @return \ebi\Db
 	 */

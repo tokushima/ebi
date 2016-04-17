@@ -249,8 +249,9 @@ class Conf{
 	 * @return array
 	 */
 	public static function get_class_plugin($class){
-		$class = str_replace('\\','.',$class);
 		$rtn = [];
+		$class = str_replace('\\','.',$class);
+		
 		if(isset(self::$plugins[$class])){
 			$rtn = self::$plugins[$class];
 			unset(self::$plugins[$class]);
