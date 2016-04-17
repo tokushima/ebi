@@ -3,31 +3,11 @@
  * publish API Document
  * @param string $in 対象のエントリファイル @['require'=>true]
  * @param string $out 出力フォルダ
- * @param string $template テンプレートフォルダ
  */
-
-if(!empty($template)){
-	$path = realpath($template);
-
-	if($path === false){
-		throw new \InvalidArgumentException($template.' not found');
-	}
-	if(!is_file($f=\ebi\Util::path_absolute($path,'index.html'))){
-		throw new \InvalidArgumentException($f.' not found');
-	}
-	if(!is_file($f=\ebi\Util::path_absolute($path,'class_doc.html'))){
-		throw new \InvalidArgumentException($f.' not found');
-	}
-	if(!is_file($f=\ebi\Util::path_absolute($path,'method_doc.html'))){
-		throw new \InvalidArgumentException($f.' not found');
-	}
-	$resources = \ebi\Util::path_slash($path,null,true);
-}else{
-	$resources = dirname(dirname(__DIR__)).'/Dt/resources/apidoc/';
-}
 if(empty($out)){
 	$out = getcwd().'/classdoc';
 }
+$resources = dirname(dirname(__DIR__)).'/Dt/resources/apidoc/';
 
 $get_template = function($vars){
 	$template = new \ebi\Template();
