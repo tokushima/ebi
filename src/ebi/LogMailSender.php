@@ -11,6 +11,10 @@ namespace ebi;
 class LogMailSender{
 	private $template_base;
 
+	/**
+	 * @plugin \ebi\Log
+	 * @param \ebi\Log $log
+	 */
 	public function log_output(\ebi\Log $log){
 		if(empty($this->template_base)){
 			/**
