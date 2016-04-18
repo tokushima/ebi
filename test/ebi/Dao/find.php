@@ -1,5 +1,6 @@
 <?php
 use \ebi\Q;
+\test\db\Find::find_delete();
 
 $abc = (new \test\db\Find())->order(4)->value1('abc')->value2('ABC')->save();
 $def = (new \test\db\Find())->order(3)->value1('def')->value2('DEF')->save();
@@ -10,6 +11,7 @@ $bbb = (new \test\db\Find())->order(2)->value1('bbb')->value2('Aaa')->save();
 $ccc = (new \test\db\Find())->order(2)->value1('ccc')->value2('aaa')->save();
 $mno = (new \test\db\Find())->order(2)->value1('mno')->value2(null)->save();
 
+eq(8,\test\db\Find::find_count());
 eq(8,sizeof(\test\db\Find::find_all()));
 eq(5,sizeof(\test\db\Find::find_all(Q::eq('order',2))));
 
@@ -24,18 +26,22 @@ $sub4 = (new \test\db\SubFind())->value('jkl')->order(2)->save();
 
 eq(4,sizeof(
 		\test\db\Find::find_all(
-				Q::in('value1',\test\db\SubFind::find_sub('value'))
+			Q::in('value1',\test\db\SubFind::find_sub('value'))
 		)
 	)
 );
 
 eq(3,sizeof(
 		\test\db\Find::find_all(
-				Q::in('value1',\test\db\SubFind::find_sub('value',Q::gte('order',2)))
+			Q::in('value1',\test\db\SubFind::find_sub('value',Q::gte('order',2)))
 		)
 	)
 );
 
+
+
+// -- 
+\test\db\RefFind::find_delete();
 $ref1 = (new \test\db\RefFind())->parent_id($abc->id())->save();
 $ref2 = (new \test\db\RefFind())->parent_id($def->id())->save();
 $ref3 = (new \test\db\RefFind())->parent_id($ghi->id())->save();
@@ -54,6 +60,7 @@ if(eq(true,($has1->parent() instanceof \test\db\Find))){
 	eq('ghi',$has1->parent()->value1());
 }
 
+\test\db\RefRefFind::find_delete();
 $refref1 = (new \test\db\RefRefFind())->parent_id($ref1->id())->save();
 $refref2 = (new \test\db\RefRefFind())->parent_id($ref2->id())->save();
 $refref3 = (new \test\db\RefRefFind())->parent_id($ref3->id())->save();

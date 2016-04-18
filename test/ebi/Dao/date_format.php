@@ -2,7 +2,7 @@
 use \ebi\Q;
 
 \test\db\DateFormat::create_table();
-\test\db\DateTime::find_delete();
+\test\db\DateFormat::find_delete();
 
 $date = strtotime('2015/07/04 12:34:56');
 $obj = new \test\db\DateFormat();
