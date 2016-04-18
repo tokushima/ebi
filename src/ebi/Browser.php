@@ -373,14 +373,7 @@ class Browser{
 		}
 		if(!isset($this->request_header['Accept-Charset']) && isset($_SERVER['HTTP_ACCEPT_CHARSET'])){
 			$this->request_header['Accept-Charset'] = $_SERVER['HTTP_ACCEPT_CHARSET'];
-		}		
-\ebi\Log::trace(			array_map(
-				function($k,$v){
-					return $k.': '.$v;
-				},
-				array_keys($this->request_header),
-				$this->request_header
-));
+		}
 		curl_setopt($this->resource,CURLOPT_HTTPHEADER,
 			array_map(
 				function($k,$v){
