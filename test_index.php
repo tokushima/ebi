@@ -148,6 +148,16 @@ include_once('autoload.php');
 		'plugins'=>['test.flow.plugin.Callback','test.flow.plugin.AddVars'],
 	],
 	
+	'http/method/vars'=>[
+		'name'=>'http_method_vars',
+		'action'=>function(){
+			return [
+				'post'=>(isset($_POST) ? $_POST : []),
+				'get'=>(isset($_GET) ? $_GET : []),
+				'raw'=>file_get_contents('php://input'),
+			];
+		},
+	],
 	
 	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],
 	'dt'=>['action'=>'ebi.Dt']
