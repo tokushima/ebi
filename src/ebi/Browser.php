@@ -88,9 +88,14 @@ class Browser{
 	 * @return $this
 	 */
 	public function vars($key,$value=null){
-		if(is_bool($value)) $value = ($value) ? 'true' : 'false'; 
+		if(is_bool($value)){
+			$value = ($value) ? 'true' : 'false'; 
+		}
 		$this->request_vars[$key] = $value;
-		if(isset($this->request_file_vars[$key])) unset($this->request_file_vars[$key]);
+		
+		if(isset($this->request_file_vars[$key])){
+			unset($this->request_file_vars[$key]);
+		}
 		return $this;
 	}
 	/**
@@ -101,7 +106,10 @@ class Browser{
 	 */
 	public function file_vars($key,$filename){
 		$this->request_file_vars[$key] = $filename;
-		if(isset($this->request_vars[$key])) unset($this->request_vars[$key]);
+		
+		if(isset($this->request_vars[$key])){
+			unset($this->request_vars[$key]);
+		}
 		return $this;
 	}
 	/**
@@ -119,7 +127,9 @@ class Browser{
 	 * @return $this
 	 */
 	public function setopt($key,$value){
-		if(!isset($this->resource)) $this->resource = curl_init();
+		if(!isset($this->resource)){
+			$this->resource = curl_init();
+		}
 		curl_setopt($this->resource,$key,$value);
 		return $this;
 	}
@@ -257,21 +267,26 @@ class Browser{
 		return strlen($data);
 	}
 	private function request($method,$url,$download_path=null){
-		if(!isset($this->resource)) $this->resource = curl_init();
+		if(!isset($this->resource)){
+			$this->resource = curl_init();
+		}
 		$url_info = parse_url($url);
 		$cookie_base_domain = (isset($url_info['host']) ? $url_info['host'] : '').(isset($url_info['path']) ? $url_info['path'] : '');
 		
-		if(isset($url_info['query'])){
-			parse_str($url_info['query'],$vars);
-			foreach($vars as $k => $v){
-				if(!isset($this->request_vars[$k])) $this->request_vars[$k] = $v;
-			}
-			list($url) = explode('?',$url,2);
-		}
 		switch($method){
 			case 'RAW':
 			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
-			case 'GET': curl_setopt($this->resource,CURLOPT_HTTPGET,true); break;
+			case 'GET':				
+				if(isset($url_info['query'])){
+					parse_str($url_info['query'],$vars);
+				
+					foreach($vars as $k => $v){
+						if(!isset($this->request_vars[$k])) $this->request_vars[$k] = $v;
+					}
+					list($url) = explode('?',$url,2);
+				}				
+				curl_setopt($this->resource,CURLOPT_HTTPGET,true);
+				break;
 			case 'HEAD': curl_setopt($this->resource,CURLOPT_NOBODY,true); break;
 			case 'PUT': curl_setopt($this->resource,CURLOPT_PUT,true); break;
 			case 'DELETE': curl_setopt($this->resource,CURLOPT_CUSTOMREQUEST,'DELETE'); break;
@@ -302,7 +317,9 @@ class Browser{
 				}
 				break;
 			case 'RAW':
-				$this->request_header['Content-Type'] = 'text/plain';
+				if(!isset($this->request_header['Content-Type'])){
+					$this->request_header['Content-Type'] = 'text/plain';
+				}
 				curl_setopt($this->resource,CURLOPT_POSTFIELDS,$this->raw);
 				break;				
 			case 'GET':
@@ -328,9 +345,6 @@ class Browser{
 		}
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
-		}		
-		if(!isset($this->request_header['Expect'])){
-			$this->request_header['Expect'] = null;
 		}
 		if(!isset($this->request_header['Cookie'])){
 			$cookies = '';
@@ -345,10 +359,10 @@ class Browser{
 		}
 		if(!isset($this->request_header['User-Agent'])){
 			curl_setopt($this->resource,CURLOPT_USERAGENT,
-					(empty($this->agent) ?
-							(isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : null) :
-							$this->agent
-					)
+				(empty($this->agent) ?
+					(isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : null) :
+					$this->agent
+				)
 			);
 		}
 		if(!isset($this->request_header['Accept']) && isset($_SERVER['HTTP_ACCEPT'])){
@@ -360,13 +374,13 @@ class Browser{
 		if(!isset($this->request_header['Accept-Charset']) && isset($_SERVER['HTTP_ACCEPT_CHARSET'])){
 			$this->request_header['Accept-Charset'] = $_SERVER['HTTP_ACCEPT_CHARSET'];
 		}
-		
 		curl_setopt($this->resource,CURLOPT_HTTPHEADER,
-			array_map(function($k,$v){
+			array_map(
+				function($k,$v){
 					return $k.': '.$v;
-				}
-				,array_keys($this->request_header)
-				,$this->request_header
+				},
+				array_keys($this->request_header),
+				$this->request_header
 			)
 		);
 		curl_setopt($this->resource,CURLOPT_HEADERFUNCTION,[$this,'callback_head']);
@@ -453,7 +467,9 @@ class Browser{
 		return $this;
 	}
 	public function __destruct(){
-		if(isset($this->resource)) curl_close($this->resource);
+		if(isset($this->resource)){
+			curl_close($this->resource);
+		}
 	}
 	/**
 	 * bodyを解析しXMLオブジェクトとして返す
