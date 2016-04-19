@@ -266,6 +266,31 @@ class Browser{
 		$this->body .= $data;
 		return strlen($data);
 	}
+	private function complete_http_build_query($vars){
+		if(empty($vars)){
+			return '';
+		}
+		$qs = http_build_query($vars);
+	
+		$empty_query_keys = function($vars,$prefix=null,$empty_keys=[]) use(&$empty_query_keys){
+			foreach($vars as $k => $v){
+				if(is_array($v)){
+					$prefix = $prefix.(empty($prefix) ? urlencode($k) : '%5B'.$k.'%5D');
+	
+					if(empty($v)){
+						$empty_keys[] = $prefix.'=';
+					}else{
+						$empty_keys = array_merge($empty_keys,$empty_query_keys($v,$prefix,$empty_keys));
+					}
+				}
+			}
+			return $empty_keys;
+		};
+	
+		$empty_keys = implode('&',$empty_query_keys($vars));
+	
+		return $qs.(empty($qs) ? $empty_keys : '&'.$empty_keys);
+	}
 	private function request($method,$url,$download_path=null){
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
@@ -296,6 +321,7 @@ class Browser{
 				if(!empty($this->request_file_vars)){
 					$vars = [];
 					if(!empty($this->request_vars)){
+						// TODO 
 						foreach(explode('&',http_build_query($this->request_vars)) as $q){
 							$s = explode('=',$q,2);
 							$vars[urldecode($s[0])] = isset($s[1]) ? urldecode($s[1]) : null;
@@ -313,6 +339,7 @@ class Browser{
 					}
 					curl_setopt($this->resource,CURLOPT_POSTFIELDS,$vars);
 				}else{
+					// TODO
 					curl_setopt($this->resource,CURLOPT_POSTFIELDS,http_build_query($this->request_vars));
 				}
 				break;
@@ -326,6 +353,7 @@ class Browser{
 			case 'HEAD':
 			case 'PUT':
 			case 'DELETE':
+				// TODO
 				$url = $url.(!empty($this->request_vars) ? '?'.http_build_query($this->request_vars) : '');
 		}
 		curl_setopt($this->resource,CURLOPT_URL,$url);
