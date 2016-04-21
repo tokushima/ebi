@@ -122,17 +122,19 @@ abstract class Dao extends \ebi\Object{
 		if(empty(self::$_connection_settings_)){
 			/**
 			 * DBの接続情報
-			 * ex.
+			 * 
+			 * ``````````````````````````````````````````````````````````
 			 * [
-			 *  'ebi.SessionDao'=>[ // ebi.SessionDaoモデルの接続情報となります
-			 *     'type'=>'ebi.MysqlConnector',
-			 * 	   'dbname'=>'ebitest'
-			 *  ],
-			 * '*'=>[ // *を指定した場合は他のパターンにマッチしたなかったもの全てがこの接続になります
-			 *   'type'=>'ebi.MysqlConnector',
-			 *   'dbname'=>'ebitest'
-			 *  ],
+			 * 	'ebi.SessionDao'=>[ // ebi.SessionDaoモデルの接続情報となります
+			 * 		'type'=>'ebi.MysqlConnector',
+			 * 		'dbname'=>'ebitest'
+			 * 	],
+			 * 	'*'=>[ // *を指定した場合は他のパターンにマッチしたなかったもの全てがこの接続になります
+			 * 		'type'=>'ebi.MysqlConnector',
+			 * 		'dbname'=>'ebitest'
+			 * 	],
 			 * ]
+			 * ``````````````````````````````````````````````````````````
 			 * 
 			 * @param string{} $connection 接続情報配列
 			 */
