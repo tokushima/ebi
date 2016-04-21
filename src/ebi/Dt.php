@@ -149,9 +149,12 @@ class Dt{
 		}
 	}
 	private function valid_class_list($class){
+		/**
+		 * 一覧から除外するクラス名のパターン(正規表現)
+		 * @param string[] $ignore
+		 */
 		$ignore_patterns = \ebi\Conf::get('ignore',[]);
-
-		\ebi\Log::trace($class);
+		
 		if(!empty($ignore_patterns)){
 			foreach($ignore_patterns as $p){
 				if(preg_match('/^'.$p.'/',$class)){
@@ -249,7 +252,6 @@ class Dt{
 			'conf_name'=>$conf_name,
 			'description'=>$ref['conf_list'][$conf_name][0],
 			'params'=>$ref['conf_list'][$conf_name][1],
-			'return'=>$ref['conf_list'][$conf_name][2],
 		];
 	}
 
@@ -721,7 +723,6 @@ class Dt{
 		
 		$valid_find_class = function($r,$parent_class){
 			if(!$r->isInterface()
-				&& !$r->isAbstract()
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))
 				&& $r->getFileName() !== false
 				&& strpos($r->getName(),'_') === false					

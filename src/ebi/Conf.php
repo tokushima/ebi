@@ -90,7 +90,11 @@ class Conf{
 	 */
 	public static function in_mode($mode){
 		/**
-		 * アプリケーションモードのグループ  [グループ名=>[モード,モード] ]で定義する
+		 * アプリケーションモードのグループ 
+		 * 
+		 * [
+		 *  グループ名=>[モード,モード]
+		 * ]
 		 */
 		$group = \ebi\Conf::get('appmode_group',['dev'=>['local']]);
 		$chkmode = is_array($mode) ? 
