@@ -1,6 +1,6 @@
 <?php
 /**
- * モデルからtableを作成する
+ * create table
  * @param string $model 
  * @param boolean $drop 
  */

@@ -265,6 +265,19 @@ class Man{
 			$use_method_list = ($deep) ? self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) :
 											[$ref->getDeclaringClass().'::'.$method];
 			
+			if($is_request_flow){
+				try{
+					$ref = new \ReflectionMethod(str_replace(['.','/'],['\\','\\'],$class),'__before__');
+					
+					if(preg_match_all('/@.+$/',self::get_method_document($ref),$m)){
+						foreach($m[0] as $a){
+							$document = $a.PHP_EOL.$document;
+						}
+					}
+				}catch(\ReflectionException $e){
+				}
+			}
+											
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
 				$http_method = strtoupper(trim($match[1]));
 			}else{

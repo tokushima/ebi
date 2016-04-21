@@ -1,6 +1,6 @@
 <?php
 /**
- * dao data export
+ * data export
  * @param string $file
  */
 if(empty($file)){

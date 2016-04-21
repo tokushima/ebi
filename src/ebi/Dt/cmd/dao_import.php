@@ -1,6 +1,6 @@
 <?php
 /**
- * dao data import
+ * data import
  * @param string $file
  */
 \ebi\Dt::create_table();

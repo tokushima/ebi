@@ -142,9 +142,27 @@ class Dt{
 		list($summary) = explode("\n",$document);
 		$pkg = str_replace('/','.',str_replace('\\','/',substr($class,1)));
 		
-		if($this->filter_query($query,$class.$document.$pkg)){
-			$libs[$pkg] = $summary;
+		if($this->valid_class_list($pkg)){
+			if($this->filter_query($query,$class.$document.$pkg)){
+				$libs[$pkg] = $summary;
+			}
 		}
+	}
+	private function valid_class_list($class){
+		/**
+		 * 一覧から除外するクラス名のパターン(正規表現)
+		 * @param string[] $ignore
+		 */
+		$ignore_patterns = \ebi\Conf::get('ignore',[]);
+		
+		if(!empty($ignore_patterns)){
+			foreach($ignore_patterns as $p){
+				if(preg_match('/^'.$p.'/',$class)){
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 	/**
 	 * ライブラリの一覧
@@ -234,7 +252,6 @@ class Dt{
 			'conf_name'=>$conf_name,
 			'description'=>$ref['conf_list'][$conf_name][0],
 			'params'=>$ref['conf_list'][$conf_name][1],
-			'return'=>$ref['conf_list'][$conf_name][2],
 		];
 	}
 
@@ -255,8 +272,10 @@ class Dt{
 			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
 				$p = str_replace(['\\','/'],['/','.'],$ref->getName());
 				
-				if($this->filter_query($query,$p.$c[0])){
-					$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
+				if($this->valid_class_list($p)){
+					if($this->filter_query($query,$p.$c[0])){
+						$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
+					}
 				}
 			}
 		}
@@ -286,29 +305,32 @@ class Dt{
 			if((!$r->isInterface() && !$r->isAbstract()) && is_subclass_of($class,'\ebi\Dao')){
 				$class_doc = $r->getDocComment();
 				$package = str_replace('\\','.',substr($class,1));
-				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-				list($summary) = explode("\n",$document);
 				
-				if($this->filter_query($query,$package.$document)){
-					$model_list[$package] = [
-						'label'=>$package,
-						'error'=>null,
-						'error_query'=>null,
-						'con'=>true,
-						'summary'=>$summary
-					];
-			
-					try{
-						\ebi\Dao::start_record();
-							call_user_func([$class,'find_get']);
-						\ebi\Dao::stop_record();
-					}catch(\ebi\exception\NotFoundException $e){
-					}catch(\ebi\exception\ConnectionException $e){
-						$model_list[$package]['error'] = $e->getMessage();
-						$model_list[$package]['con'] = false;
-					}catch(\Exception $e){
-						$model_list[$package]['error'] = $e->getMessage();
-						$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
+				if($this->valid_class_list($package)){
+					$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+					list($summary) = explode("\n",$document);
+					
+					if($this->filter_query($query,$package.$document)){
+						$model_list[$package] = [
+							'label'=>$package,
+							'error'=>null,
+							'error_query'=>null,
+							'con'=>true,
+							'summary'=>$summary
+						];
+				
+						try{
+							\ebi\Dao::start_record();
+								call_user_func([$class,'find_get']);
+							\ebi\Dao::stop_record();
+						}catch(\ebi\exception\NotFoundException $e){
+						}catch(\ebi\exception\ConnectionException $e){
+							$model_list[$package]['error'] = $e->getMessage();
+							$model_list[$package]['con'] = false;
+						}catch(\Exception $e){
+							$model_list[$package]['error'] = $e->getMessage();
+							$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
+						}
 					}
 				}
 			}
@@ -647,75 +669,78 @@ class Dt{
 				}
 			}
 		}
+		
+		$valid_find_class_file = function($f){
+			if(strpos($f->getPathname(),DIRECTORY_SEPARATOR.'.') === false
+				&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'_') === false
+				&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'cmd'.DIRECTORY_SEPARATOR) === false
+				&& ctype_upper(substr($f->getFilename(),0,1))
+				&& substr($f->getFilename(),-4) == '.php'
+			){
+				try{
+					include_once($f->getPathname());
+				}catch(\Exeption $e){
+				}
+			}
+		};
+		
 		foreach($include_path as $libdir){
 			if($libdir !== '.' && is_dir($libdir)){
-				foreach(new \RecursiveIteratorIterator(
-						new \RecursiveDirectoryIterator(
-							$libdir,
-							\FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS
-						),\RecursiveIteratorIterator::SELF_FIRST
-				) as $e){
-					if(strpos($e->getPathname(),DIRECTORY_SEPARATOR.'.') === false
-						&& strpos($e->getPathname(),DIRECTORY_SEPARATOR.'_') === false
-						&& strpos($e->getPathname(),DIRECTORY_SEPARATOR.'cmd'.DIRECTORY_SEPARATOR) === false
-						&& ctype_upper(substr($e->getFilename(),0,1))
-						&& substr($e->getFilename(),-4) == '.php'
-					){
-						try{
-							include_once($e->getPathname());
-						}catch(\Exeption $ex){
+				foreach(\ebi\Util::ls($libdir,true) as $f){
+					$valid_find_class_file($f);
+				}
+			}
+		}
+				
+		/**
+		 * 利用するvendorのクラス
+		 * @param string[] $vendor
+		 */
+		$use_vendor = \ebi\Conf::get('use_vendor',[]);
+		
+		if(is_array($use_vendor)){
+			foreach($use_vendor as $class){
+				$find_package = false;
+				
+				if(substr($class,-1) == '*'){
+					$class = substr($class,0,-1);
+					$find_package = true;
+				}
+				
+				$class = str_replace('.','\\',$class);
+				
+				if(class_exists($class)){
+					if($find_package){
+						$r = new \ReflectionClass($class);
+						
+						foreach(\ebi\Util::ls(dirname($r->getFileName()),true) as $f){
+							$valid_find_class_file($f);
 						}
 					}
 				}
 			}
 		}
 		
-		if($ignore){
-			/**
-			 * 一覧で無視する正規表現パターン
-			 */
-			$ignore_class = \ebi\Conf::get('ignore',[]);
-			if(!is_array($ignore_class)){
-				$ignore_class = [$ignore_class];
-			}
-		}
-		$valid = function($r,$parent_class) use($ignore_class){
-			if(!$r->isInterface() 
-				&& !$r->isAbstract() 
-				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class)) 
+		$valid_find_class = function($r,$parent_class){
+			if(!$r->isInterface()
+				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))
 				&& $r->getFileName() !== false
+				&& strpos($r->getName(),'_') === false					
 				&& strpos($r->getName(),'Composer') === false
-				&& strpos($r->getName(),'cmdman') === false	
+				&& strpos($r->getName(),'cmdman') === false
 				&& strpos($r->getName(),'testman') === false
 			){
-				foreach($ignore_class as $ignore_pattern){
-					if(preg_match('/^'.$ignore_pattern.'/',$r->getName())){
-						return false;
-					}
-				}
 				return true;
 			}
 			return false;
 		};
-		
-		/**
-		 * 利用するvendorのクラス、複数ある場合は配列
-		 */
-		$add = \ebi\Conf::get('use_vendor',[]);
-		
-		if(is_string($add)){
-			$add = [$add];
-		}
-		foreach($add as $class){
-			class_exists(str_replace('.','\\',$class));
-		}
-		
 		foreach(get_declared_classes() as $class){
-			if($valid($r=(new \ReflectionClass($class)),$parent_class)){
+			if($valid_find_class($r=(new \ReflectionClass($class)),$parent_class)){
 				yield ['filename'=>$r->getFileName(),'class'=>'\\'.$r->getName()];
 			}
 		}
 	}
+	
 	/**
 	 * モデルからtableを作成する
 	 * @param boolean $drop

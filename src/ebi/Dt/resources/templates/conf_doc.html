@@ -9,7 +9,7 @@
 
 <rt:if param="{$description}">
 	<div class="alert alert-warning" style="margin-top: 30px; margin-bottom: 30px;">
-		{$t.html($description)}
+		{$f.pre($t.html($description))}
 	</div>
 </rt:if>
 	
@@ -29,28 +29,6 @@
 	</td>
 	<td style="width: 75%;">
 		{$t.html($param[2])}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$return}">
-<h4 class="text-warning">Return</h4>
-	
-<table>
-<tr>
-	<td style="width: 25%;">
-		<rt:if param="{$f.type($return[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($return[0]))}">
-				{$return[0]}
-			</a>
-		<rt:else />
-			{$return[0]}
-		</rt:if>
-	</td>
-	<td style="width: 75%;">
-		{$t.html($return[1])}
 	</td>
 </tr>
 </table>

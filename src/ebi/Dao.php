@@ -120,6 +120,24 @@ abstract class Dao extends \ebi\Object{
 		];
 		
 		if(empty(self::$_connection_settings_)){
+			/**
+			 * DBの接続情報
+			 * 
+			 * ``````````````````````````````````````````````````````````
+			 * [
+			 * 	'ebi.SessionDao'=>[ // ebi.SessionDaoモデルの接続情報となります
+			 * 		'type'=>'ebi.MysqlConnector',
+			 * 		'dbname'=>'ebitest'
+			 * 	],
+			 * 	'*'=>[ // *を指定した場合は他のパターンにマッチしたなかったもの全てがこの接続になります
+			 * 		'type'=>'ebi.MysqlConnector',
+			 * 		'dbname'=>'ebitest'
+			 * 	],
+			 * ]
+			 * ``````````````````````````````````````````````````````````
+			 * 
+			 * @param string{} $connection 接続情報配列
+			 */
 			self::$_connection_settings_ = \ebi\Conf::get('connection');
 			
 			if(empty(self::$_connection_settings_)){
@@ -877,15 +895,32 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * 指定のプロパティにユニークコードをセットする
+	 * auto_code_addアノテーションで呼ばれる
+	 * 
 	 * @param string $prop_name
 	 * @param integer $size
 	 * @return string 生成されたユニークコード
 	 */
 	public function set_unique_code($prop_name,$size=null){
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
+		/**
+		 * ユニークコードで利用する文字
+		 * 
+		 * @param string $base ex. ABCDEFGHJKLMNPQRSTUWXY01234567890
+		 */
 		$base = $this->prop_anon($prop_name,'base',\ebi\Conf::get('unique_code_base'));
 		
 		if(empty($base)){
+			/**
+			 * ユニークコードで利用する文字パターン
+			 * unique_code_baseが未定義の場合のみ有効
+			 * 
+			 * 0: 数字 0123456789
+			 * a: 小文字 abcdefghjkmnprstuvwxy
+			 * A: 大文字 ABCDEFGHJKLMNPQRSTUWXY
+			 * 
+			 * @param string $unique_code_ctype 0aAの組み合わせ
+			 */
 			$ctype = $this->prop_anon($prop_name,'ctype',\ebi\Conf::get('unique_code_ctype','0a'));
 			
 			if(strpos($ctype,'A') !== false){
@@ -975,8 +1010,13 @@ abstract class Dao extends \ebi\Object{
 							break;
 					}
 				}else if($this->prop_anon($column->name(),'auto_future_add') === true){
-					$future = \ebi\Conf::get('future_date','2038/01/01 00:00:00');
-					$time = strtotime($future);
+					/**
+					 * auto_future_add アノテーションが定義された場合に設定される日付
+					 * 
+					 * @param string $date ex. 2038/01/01 00:00:00
+					 */
+					$time = strtotime(\ebi\Conf::get('future_date','2038/01/01 00:00:00'));
+					
 					switch($this->prop_anon($column->name(),'type')){
 						case 'timestamp':
 						case 'date':

@@ -2,7 +2,7 @@ ebi
 ====
 __2012-12-25__
 
-PHP framework (PHP 5 >= 5.5.0)
+PHP framework (PHP 5 >= 5.6.0)
 
 ![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/resources/media/ebi.png)
 
@@ -48,10 +48,12 @@ cmdmanにpharファイルを指定するとphar内で利用できるコマンド
 ```
 $ php cmdman.phar ebi.phar 
 
-cmdman 20151202.213833 (PHP 7.0.0RC4)
+cmdman 20160421.232725 (PHP 7.0.1)
 Type 'php cmdman.phar subcommand --help' for usage.
 
 Subcommands:
+  ebi.phar#ebi.Dt::apidoc           : publish API Document
+  ebi.phar#ebi.Dt::classdoc         : publish Classes Document
   ebi.phar#ebi.Dt::dao_create_table : モデルからtableを作成する
   ebi.phar#ebi.Dt::dao_export       : dao data export
   ebi.phar#ebi.Dt::dao_import       : dao data import
@@ -80,31 +82,4 @@ Written: /Users/tokushima/Documents/workspace/work/start.html
 testmanはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/testman )
 
 
-
-### サーバを起動します
-
-```
-$ ./start.sh 
-
-
-PHP 5.6.12 Development Server started at Fri Oct 16 12:11:13 2015
-Listening on http://0.0.0.0:8000
-Document root is /Users/tokushima/Documents/workspace/work
-Press Ctrl-C to quit.
-[Fri Oct 16 12:11:15 2015] 127.0.0.1:50711 [200]: /index.php
-
-```
-
-
-自動的にブラウザが開き開発者ツールが表示されます
-
-実際の運用ではstart.shやstart.htmlは当然必要ありません
-
-nginx等で適切に処理してください
-
-
-
-## Document
-
-https://github.com/tokushima/ebi/wiki
 
