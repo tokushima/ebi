@@ -289,27 +289,56 @@ class Helper{
 	}
 	
 	/**
-	 * ```〜```を<pre>表記にする
+	 * makedown
 	 * @param string $v
 	 * @return string
 	 */
-	public function pre($v){
+	public function md2html($v){
 		$lines = [];
-		$pre = false;
+		$pre = $on = false;
 		
 		foreach(explode(PHP_EOL,$v) as $line){
-			if($pre){
-				if(substr($line,-6) == '<br />'){
-					$line = str_replace("\t",'    ',substr($line,0,-6));
+			if(!empty($line)){
+				$on = false;
+				$act = html_entity_decode((substr($line,-6) == '<br />') ? substr($line,0,-6) : $line);
+				
+				if($pre){
+					$line = str_replace("\t",'    ',$act);
+				}			
+				if(!$pre){
+					if(preg_match('/^([#]+)(.+)$/',$act,$m)){
+						$hn = strlen($m[1]);
+						$line = '<h'.$hn.'>'.$m[2].'</h'.$hn.'>';
+						$on = true;
+					}else if(preg_match('/^>(.+)$/',trim($act),$m)){
+						$line = '<blockquote>'.$m[1].'</blockquote>';
+						$on = true;
+					}else if(preg_match('/^-[-]+$/',trim($act),$m)){
+						$line = '<hr />';
+						$on = true;
+					}
+					foreach(['\*\*'=>'strong','__'=>'em','~~'=>'s'] as $p => $t){
+						if(preg_match_all('/'.$p.'(.+?)'.$p.'/',$line,$m)){
+							foreach($m[1] as $k =>$v){
+								$line = str_replace($m[0][$k],'<'.$t.'>'.$v.'</'.$t.'>',$line);
+							}
+							$on = true;
+						}
+					}
+					if(substr($line,0,3) != '```' && preg_match_all('/([`]+)(.+?)\\1/',$line,$m)){
+						foreach($m[2] as $k =>$v){
+							$line = str_replace($m[0][$k],'<code>'.$v.'</code>',$line);
+						}
+					}
 				}
-			}
-			if(preg_match('/^``[`]+/',$line,$m)){
-				$line = str_replace($m[0],($pre ? '</pre>' : '<pre>'),$line);
-
-				if(substr($line,-6) == '<br />'){
-					$line = substr($line,0,-6);
+				if(!$on && preg_match('/``[`]+(.*)$/',$line,$m)){
+					$line = str_replace($m[0],($pre ? '</pre>' : '<pre>'),$line);
+	
+					if(substr($line,-6) == '<br />'){
+						$line = substr($line,0,-6);
+					}
+					$pre = !$pre;
 				}
-				$pre = !$pre;
 			}
 			$lines[] = $line;
 		}
