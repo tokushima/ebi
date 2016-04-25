@@ -146,6 +146,21 @@ class Util{
 		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
+	 * ディレクトリ名の一覧
+	 * @param string $directory 検索対象のディレクトリパス
+	 * @return string[]
+	 */
+	public static function lsd($directory){
+		if(is_dir($directory)){
+			foreach(scandir($directory) as $f){
+				if(is_dir($directory.'/'.$f) && $f != '.' && $f != '..'){
+					yield $f;
+				}
+			}
+		}
+		return [];
+	}
+	/**
 	 * ディレクトリ内のイテレータ
 	 * @param string $directory  検索対象のファイルパス
 	 * @param boolean $recursive 階層を潜って取得するか
@@ -154,6 +169,7 @@ class Util{
 	 */
 	public static function ls($directory,$recursive=false,$pattern=null){
 		$directory = self::parse_filename($directory);
+		
 		if(is_file($directory)){
 			$directory = dirname($directory);
 		}
