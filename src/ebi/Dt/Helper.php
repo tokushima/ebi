@@ -296,14 +296,12 @@ class Helper{
 	public function md2html($v){
 		$lines = [];
 		$pre = $on = false;
-		$explode_lines = explode(PHP_EOL,$v.PHP_EOL);
+		$explode_lines = explode(PHP_EOL,htmlentities($v).PHP_EOL);
 		
 		while(!empty($explode_lines)){
 			$line = array_shift($explode_lines);
 			
 			if(!empty($line)){
-				$act = html_entity_decode((substr($line,-6) == '<br />') ? substr($line,0,-6) : $line);
-				
 				foreach(['\*\*'=>'strong','__'=>'em','~~'=>'s'] as $p => $t){
 					if(preg_match_all('/'.$p.'(.+?)'.$p.'/',$line,$m)){
 						foreach($m[1] as $k =>$v){
@@ -315,25 +313,37 @@ class Helper{
 					foreach($m[2] as $k =>$v){
 						$line = str_replace($m[0][$k],'<code>'.$v.'</code>',$line);
 					}
-				}					
+				}
+				if(preg_match_all('/\!\[(.*?)\]\((.+?)\)/',$line,$m)){
+					foreach($m[1] as $k =>$v){
+						$line = str_replace($m[0][$k],sprintf('<img src="%s" alt="%s" />',$m[2][$k],$m[1][$k]),$line);
+					}
+				}
+				if(preg_match_all('/\[(.*?)\]\((.+?)\)/',$line,$m)){
+					foreach($m[1] as $k =>$v){
+						$line = str_replace($m[0][$k],sprintf('<a href="%s">%s</a>',$m[2][$k],$m[1][$k]),$line);
+					}
+				}
 				
-				$trim_act = trim($act);
-				if(preg_match('/^([#]+)(.+)$/',$trim_act,$m)){
+				$trim_line = trim($line);
+				if(preg_match('/^([#]+)(.+)$/',$trim_line,$m)){
 					$hn = strlen($m[1]);
 					$line = '<h'.$hn.'>'.$m[2].'</h'.$hn.'>';
-				}else if(preg_match('/^>(.+)$/',$trim_act,$m)){
+				}else if(preg_match('/^>(.+)$/',$trim_line,$m)){
 					$line = '<blockquote>'.$m[1].'</blockquote>';
-				}else if(preg_match('/^-[-]+$/',$trim_act)){
+				}else if(preg_match('/^-[-]+$/',$trim_line)){
 					$line = '<hr />';
-				}else if(preg_match('/``[`]+(.*)$/',$trim_act)){
+				}else if(preg_match('/``[`]+(.*)$/',$trim_line)){
 					$this->md_pre($line, $explode_lines, $lines);
 					$line = '';
-				}else if(preg_match('/^\|.+\|$/',$trim_act)){
+				}else if(preg_match('/^\|.+\|$/',$trim_line)){
 					$this->md_table($line, $explode_lines, $lines);
 					$line = '';
 				}
 			}
-			$lines[] = $line;
+			if(!empty($line)){
+				$lines[] = '<p>'.$line.'</p>';
+			}
 		}
 		return implode(PHP_EOL,$lines);
 	}
@@ -352,11 +362,7 @@ class Helper{
 				$lines[] = '</pre>';
 				return;
 			}else{
-				// TODO
-				$act = html_entity_decode((substr($line,-6) == '<br />') ? substr($line,0,-6) : $line);
-				$act = str_replace("\t",'    ',$act);
-				
-				$pre_lines[] = $act;
+				$pre_lines[] = str_replace("\t",'    ',$line);
 			}
 		}
 	}
@@ -366,11 +372,7 @@ class Helper{
 		array_unshift($explode_lines,$line);
 		
 		while(!empty($explode_lines)){
-			$line = array_shift($explode_lines);
-			// TODO
-			$line = trim(html_entity_decode((substr($line,-6) == '<br />') ? substr($line,0,-6) : $line));
-			
-			
+			$line = array_shift($explode_lines);			
 			if(preg_match('/^\|.+\|$/',$line)){
 				if(!$table_head && sizeof($table) == 1 && preg_match('/^[\|\-\040]+$/',$line)){
 					$table_head = true;

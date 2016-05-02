@@ -90,13 +90,31 @@ class Conf{
 	 */
 	public static function in_mode($mode){
 		/**
-		 * アプリケーションモードのグループ 
+		 * TODO test
+		 * ## アプリケーションモードのグループ 
 		 * 
 		 * `````````````````````````
 		 * [
 		 * 	グループ名 => [モード,モード]
 		 * ]
 		 * `````````````````````````
+		 * 
+		 * 
+		 * |111|222|333|
+		 * |---|---|---|
+		 * |aaa|bbb|ccc|
+		 * |AAA|BBB|CCC|
+		 * 
+		 * あああああああ
+		 * いいいいいいい
+		 * <abc>ABC</abc>
+		 * 
+		 * ![<a>エビ</a>](https://pbs.twimg.com/profile_images/673532086809071616/hy8lOhSH.png) aadd  ![エビ](https://pbs.twimg.com/profile_images/673532086809071616/hy8lOhSH.png)
+		 * 
+		 *  ![エビ](https://pbs.twimg.com/profile_images/673532086809071616/hy8lOhSH.png)
+		 *  
+		 *  [エビ](https://pbs.twimg.com/profile_images/673532086809071616/hy8lOhSH.png)
+		 * 
 		 * @param array $group
 		 */
 		$group = \ebi\Conf::get('appmode_group',['dev'=>['local']]);
