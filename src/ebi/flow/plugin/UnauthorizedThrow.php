@@ -1,10 +1,10 @@
 <?php
 namespace ebi\flow\plugin;
 /**
- * do_login以外の場合にログインしていなければ例外をだす
+ * do_login以外の場合にログインしていなければ例外
  * @author tokushima
  */
-class LoginRequiredAlways{
+class UnauthorizedThrow{
 	/**
 	 * @plugin ebi.flow.Request
 	 * @param \ebi\flow\Request $req
