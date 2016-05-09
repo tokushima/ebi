@@ -90,7 +90,6 @@ class Conf{
 	 */
 	public static function in_mode($mode){
 		/**
-		 * TODO test
 		 * ## アプリケーションモードのグループ 
 		 * 
 		 * `````````````````````````
