@@ -116,7 +116,6 @@ class Util{
 		}else if(is_file($source) && unlink($source)){
 			return;
 		}
-		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * コピー
