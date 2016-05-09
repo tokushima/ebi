@@ -455,6 +455,7 @@ abstract class Dao extends \ebi\Object{
 	
 	/**
 	 * 発行したSQLの記録を開始する
+	 * @return mixed[]
 	 */
 	public static function start_record(){
 		$query = self::$record_query;
@@ -464,6 +465,7 @@ abstract class Dao extends \ebi\Object{
 	}
 	/**
 	 * 発行したSQLの記録を終了する
+	 * @return mixed[]
 	 */
 	public static function stop_record(){
 		self::$recording_query = false;
