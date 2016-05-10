@@ -25,7 +25,10 @@ class Browser{
 	private $password;
 	
 	private $raw;
-
+	
+	private static $recording_request = false;
+	private static $record_request = [];
+	
 	public function __construct($agent=null,$timeout=30,$redirect_max=20){
 		$this->agent = $agent;
 		$this->timeout = (int)$timeout;
@@ -266,6 +269,25 @@ class Browser{
 		$this->body .= $data;
 		return strlen($data);
 	}
+	/**
+	 * 送信たリクエストの記録を開始する
+	 * @return string[]
+	 */
+	public static function start_record(){
+		self::$recording_request = true;
+	
+		$requests = self::$record_request;
+		self::$record_request = [];
+		return $requests;
+	}
+	/**
+	 * 送信したリクエストの記録を終了する
+	 * @return string[]
+	 */
+	public static function stop_record(){
+		self::$recording_request = false;
+		return self::$record_request;
+	}
 	private function request($method,$url,$download_path=null){
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
@@ -336,6 +358,9 @@ class Browser{
 		curl_setopt($this->resource,CURLOPT_FAILONERROR,false);
 		curl_setopt($this->resource,CURLOPT_TIMEOUT,$this->timeout);
 		
+		if(self::$recording_request){
+			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
+		}		
 		/**
 		 * SSL証明書を確認するかの真偽値
 		 */
@@ -348,6 +373,7 @@ class Browser{
 		}
 		if(!isset($this->request_header['Cookie'])){
 			$cookies = '';
+			
 			foreach($this->cookie as $domain => $cookie_value){
 				if(strpos($cookie_base_domain,$domain) === 0 || strpos($cookie_base_domain,(($domain[0] == '.') ? $domain : '.'.$domain)) !== false){
 					foreach($cookie_value as $k => $v){
@@ -413,6 +439,9 @@ class Browser{
 		$this->url = curl_getinfo($this->resource,CURLINFO_EFFECTIVE_URL);
 		$this->status = curl_getinfo($this->resource,CURLINFO_HTTP_CODE);
 
+		if(self::$recording_request){
+			self::$record_request[] = curl_getinfo($this->resource,CURLINFO_HEADER_OUT);
+		}
 		if(preg_match_all('/Set-Cookie:[\s]*(.+)/i',$this->head,$match)){
 			foreach($match[1] as $cookies){
 				$cookie_name = $cookie_value = $cookie_domain = $cookie_path = $cookie_expires = null;

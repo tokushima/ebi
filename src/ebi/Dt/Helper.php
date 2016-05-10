@@ -287,32 +287,8 @@ class Helper{
 		
 		return is_subclass_of($package,$class);
 	}
-	
-	/**
-	 * ```〜```を<pre>表記にする
-	 * @param string $v
-	 * @return string
-	 */
-	public function pre($v){
-		$lines = [];
-		$pre = false;
-		
-		foreach(explode(PHP_EOL,$v) as $line){
-			if($pre){
-				if(substr($line,-6) == '<br />'){
-					$line = str_replace("\t",'    ',substr($line,0,-6));
-				}
-			}
-			if(preg_match('/^``[`]+/',$line,$m)){
-				$line = str_replace($m[0],($pre ? '</pre>' : '<pre>'),$line);
-
-				if(substr($line,-6) == '<br />'){
-					$line = substr($line,0,-6);
-				}
-				$pre = !$pre;
-			}
-			$lines[] = $line;
-		}
-		return implode(PHP_EOL,$lines);
+	public function md2html($v){
+		$md = new \ebi\Md();
+		return $md->html($v);
 	}
 }
