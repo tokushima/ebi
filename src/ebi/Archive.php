@@ -121,8 +121,7 @@ class Archive{
 	 */
 	public function zipwrite($filename,$compress=true,$append=false){
 		$zip = new \ZipArchive();
-		$mode = (!is_file($filename) || $append) ? \ZipArchive::CREATE : \ZipArchive::OVERWRITE;
-		$mode = $compress ? $mode : (\ZipArchive::CM_STORE|$mode);
+		$mode = $compress ? \ZipArchive::CREATE : (\ZipArchive::CM_STORE|\ZipArchive::CREATE);
 		
 		if($zip->open($filename,$mode) === true){
 			foreach([5,0] as $t){
