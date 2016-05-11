@@ -297,6 +297,16 @@ class Flow{
 					$exception = null;
 					$has_flow_plugin = false;
 					$result_vars = $plugins = [];
+					$accept_debug = (
+						/**
+						 * Accept: application/debug を有効にする
+						 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
+						 * テンプレートやリダイレクト、出力プラグインを無視する
+						 * @param boolean
+						 */
+						\ebi\Conf::get('accept_debug',false) &&
+						strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
+					);
 					array_shift($param_arr);
 					
 					if(array_key_exists('action',$pattern)){
@@ -414,63 +424,66 @@ class Flow{
 						throw $exception;
 					}
 					\ebi\Exceptions::throw_over();
-										
-					if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
-						if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
-							foreach($pattern['post_cond_after'] as $cak => $cav){
+					
+					if(!$accept_debug){
+						if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
+							if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
+								foreach($pattern['post_cond_after'] as $cak => $cav){
+									if(isset($result_vars[$cak])){
+										self::map_redirect($cav,$result_vars,$pattern);
+									}
+								}
+							}
+							if(array_key_exists('post_after',$pattern)){
+								self::map_redirect($pattern['post_after'],$result_vars,$pattern);
+							}
+						}
+						if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
+							foreach($pattern['cond_after'] as $cak => $cav){
 								if(isset($result_vars[$cak])){
 									self::map_redirect($cav,$result_vars,$pattern);
 								}
 							}
 						}
-						if(array_key_exists('post_after',$pattern)){
-							self::map_redirect($pattern['post_after'],$result_vars,$pattern);
+						if(array_key_exists('after',$pattern)){
+							self::map_redirect($pattern['after'],$result_vars,$pattern);
 						}
-					}
-					if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
-						foreach($pattern['cond_after'] as $cak => $cav){
-							if(isset($result_vars[$cak])){
-								self::map_redirect($cav,$result_vars,$pattern);
+					
+						if(array_key_exists('template',$pattern)){
+							if(array_key_exists('template_super',$pattern)){
+								self::$template->template_super(\ebi\Util::path_absolute(self::$template_path,$pattern['template_super']));
 							}
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['template']));
+						}else if(isset($template)){
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
+						}else if(
+							array_key_exists('@',$pattern)
+							&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name']).'.html')
+						){
+							return self::template($result_vars,$pattern,$ins,$t);					
+						}else if(
+							array_key_exists('@',$pattern)
+							&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
+						){
+							return self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
+						}else if(
+							array_key_exists('find_template',self::$map) && self::$map['find_template'] === true
+							&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name'].'.html'))
+						){
+							return self::template($result_vars,$pattern,$ins,$t);
+						}else if(self::has_class_plugin('flow_output')){
+							/**
+							 * 結果を出力する
+							 * @param mixed{} $result_vars actionで返却された変数
+							 */
+							self::call_class_plugin_funcs('flow_output',$result_vars);
+							return self::terminate();
 						}
 					}
-					if(array_key_exists('after',$pattern)){
-						self::map_redirect($pattern['after'],$result_vars,$pattern);
-					}
-					if(array_key_exists('template',$pattern)){
-						if(array_key_exists('template_super',$pattern)){
-							self::$template->template_super(\ebi\Util::path_absolute(self::$template_path,$pattern['template_super']));
-						}
-						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['template']));
-					}else if(isset($template)){
-						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
-					}else if(
-						array_key_exists('@',$pattern)
-						&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name']).'.html')
-					){
-						self::template($result_vars,$pattern,$ins,$t);					
-					}else if(
-						array_key_exists('@',$pattern)
-						&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
-					){
-						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
-					}else if(
-						array_key_exists('find_template',self::$map) && self::$map['find_template'] === true
-						&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name'].'.html'))
-					){
-						self::template($result_vars,$pattern,$ins,$t);
-					}else if(self::has_class_plugin('flow_output')){
-						/**
-						 * 結果を出力する
-						 * @param mixed{} $result_vars actionで返却された変数
-						 */
-						self::call_class_plugin_funcs('flow_output',$result_vars);
-						return self::terminate();
-					}else{
-						\ebi\HttpHeader::send('Content-Type','application/json');
-						print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
-						return self::terminate();
-					}
+					
+					\ebi\HttpHeader::send('Content-Type','application/json');
+					print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
+					return self::terminate();
 				}catch(\Exception $e){
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
@@ -484,27 +497,31 @@ class Flow{
 					if(isset($pattern['vars']) && !empty($pattern['vars']) && is_array($pattern['vars'])){
 						$result_vars = array_merge($result_vars,$pattern['vars']);
 					}
-					if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
-						self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
-					}else if(array_key_exists('error_redirect',$pattern)){
-						self::map_redirect($pattern['error_redirect'],[],$pattern);
-					}else if(array_key_exists('error_template',$pattern)){
-						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['error_template']));
-					}else if(array_key_exists('error_redirect',self::$map)){
-						self::map_redirect(self::$map['error_redirect'],[],$pattern);
-					}else if(array_key_exists('error_template',self::$map)){
-						self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,self::$map['error_template']));
-					}else if(self::has_class_plugin('flow_exception')){
-						/**
-						 * 例外発生時の処理・出力
-						 * @param \Exception $e 発生した例外
-						 */
-						self::call_class_plugin_funcs('flow_exception',$e);
-						return self::terminate();
-					}else if(self::has_class_plugin('flow_output')){
-						self::call_class_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
-						return self::terminate();
+					
+					if(!$accept_debug){
+						if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
+							return self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
+						}else if(array_key_exists('error_redirect',$pattern)){
+							return self::map_redirect($pattern['error_redirect'],[],$pattern);
+						}else if(array_key_exists('error_template',$pattern)){
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['error_template']));
+						}else if(array_key_exists('error_redirect',self::$map)){
+							return self::map_redirect(self::$map['error_redirect'],[],$pattern);
+						}else if(array_key_exists('error_template',self::$map)){
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,self::$map['error_template']));
+						}else if(self::has_class_plugin('flow_exception')){
+							/**
+							 * 例外発生時の処理・出力
+							 * @param \Exception $e 発生した例外
+							 */
+							self::call_class_plugin_funcs('flow_exception',$e);
+							return self::terminate();
+						}else if(self::has_class_plugin('flow_output')){
+							self::call_class_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
+							return self::terminate();
+						}
 					}
+					
 					/**
 					 *  Error Json出力時にException traceも出力するフラグ
 					 */
