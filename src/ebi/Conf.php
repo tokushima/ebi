@@ -166,12 +166,15 @@ class Conf{
 	public static function cookie_params(){
 		/**
 		 * ブラウザに送信するクッキーの有効期間(秒)
+		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
+		 * デフォルトは、0 です
 		 * @param integer $val
 		 */
 		$cookie_lifetime = \ebi\Conf::get('cookie_lifetime',0);
 		
 		/**
 		 * クッキーで設定するパス
+		 * デフォルトは、/ です
 		 * @param string $val
 		 */
 		$cookie_path = \ebi\Conf::get('cookie_path','/');
@@ -184,23 +187,28 @@ class Conf{
 		
 		/**
 		 *  セキュアな接続を通じてのみCookieを送信できるか
+		 * デフォルトは、false です
 		 * @param boolean $val
 		 */
 		$cookie_secure = \ebi\Conf::get('cookie_secure',false);
 		
 		/**
 		 * セッション名
+		 * デフォルトは、SID です
 		 * @param string $val
 		 */
 		$session_name = \ebi\Conf::get('session_name','SID');
 		
 		/**
 		 * キャッシュの有効期限 (分)
+		 * デフォルトは、180 です
 		 * @param integer $val
 		 */
 		$session_expire = \ebi\Conf::get('session_expire',180);
+		
 		/**
 		 * キャッシュリミッタの名前 public / private_no_expire / private / nocache
+		 * デフォルトは、nocache です
 		 * @param string $val
 		 * @see http://jp2.php.net/manual/ja/function.session-cache-limiter.php
 		 */
