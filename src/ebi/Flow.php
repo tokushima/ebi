@@ -298,6 +298,12 @@ class Flow{
 					$has_flow_plugin = false;
 					$result_vars = $plugins = [];
 					$accept_debug = (
+						/**
+						 * Accept: application/debug を有効にする
+						 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
+						 * テンプレートやリダイレクト、出力プラグインを無視する
+						 * @param boolean
+						 */
 						\ebi\Conf::get('accept_debug',false) &&
 						strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
 					);
