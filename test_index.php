@@ -137,6 +137,11 @@ include_once('autoload.php');
 		'name'=>'requestflow_vars',
 		'action'=>'test.flow.RequestFlow::get_vars',
 	],
+	'flow/request/vars/template'=>[
+		'name'=>'requestflow_vars_template',
+		'action'=>'test.flow.RequestFlow::get_vars',
+		'template'=>'requestflow_vars.html'
+	],
 	'flow/request/vars/callback'=>[
 		'name'=>'requestflow_vars_callback',
 		'action'=>'test.flow.RequestFlow::get_vars',
