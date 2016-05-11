@@ -28,8 +28,6 @@ class Xml{
 	 * @param \Exception $exception
 	 */
 	public function flow_exception(\Exception $exception){
-		\ebi\HttpHeader::send_status(500);
-		
 		if(!($exception instanceof \ebi\Exceptions)){
 			$exception = [''=>$exception];
 		}
