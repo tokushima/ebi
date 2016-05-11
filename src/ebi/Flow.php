@@ -524,7 +524,6 @@ class Flow{
 						}
 						$message[] = $em;
 					}
-					\ebi\HttpHeader::send_status(500);
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));
 					
