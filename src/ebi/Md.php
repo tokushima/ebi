@@ -11,9 +11,16 @@ class Md{
 	 * @param string $v
 	 */
 	public function html($v){
+		$escape = ['|*-`#'];
+		$v = htmlentities($v).PHP_EOL;
+		
+		foreach($escape as $k => $e){
+			$v = str_replace('\\'.$e,'@%'.$k,$v);
+		}
+		
 		$lines = [];
-		$pre = $on = false;
-		$explode_lines = explode(PHP_EOL,htmlentities($v).PHP_EOL);
+		$pre = $on = false;		
+		$explode_lines = explode(PHP_EOL,$v);
 	
 		while(!empty($explode_lines)){
 			$line = array_shift($explode_lines);
@@ -53,7 +60,7 @@ class Md{
 				}else if(preg_match('/``[`]+(.*)$/',$trim_line)){
 					$this->html_pre($line, $explode_lines, $lines);
 					$line = '';
-				}else if(preg_match('/^\|.+\|$/',$trim_line)){
+				}else if(strpos($trim_line,'|')){
 					$this->html_table($line, $explode_lines, $lines);
 					$line = '';
 				}
@@ -62,7 +69,12 @@ class Md{
 				$lines[] = '<p>'.$line.'</p>';
 			}
 		}
-		return implode(PHP_EOL,$lines);
+		$r = implode(PHP_EOL,$lines);
+		
+		foreach($escape as $k => $e){
+			$r = str_replace('@%'.$k,$e,$r);
+		}
+		return $r;
 	}
 	private function html_pre($line,&$explode_lines,&$lines){
 		$pre_lines = [];
@@ -89,8 +101,15 @@ class Md{
 		array_unshift($explode_lines,$line);
 	
 		while(!empty($explode_lines)){
-			$line = array_shift($explode_lines);
-			if(preg_match('/^\|.+\|$/',$line)){
+			$line = trim(array_shift($explode_lines));
+			
+			if(strlen($line) > 2 && strpos($line,'|')){
+				if($line[0] != '|'){
+					$line = '|'.$line;
+				}
+				if(substr($line,-1)){
+					$line = $line.'|';
+				}
 				if(!$table_head && sizeof($table) == 1 && preg_match('/^[\|\-\040]+$/',$line)){
 					$table_head = true;
 				}else{
