@@ -11,7 +11,7 @@ class Md{
 	 * @param string $v
 	 */
 	public function html($v){
-		$escape = ['|*-`#'];
+		$escape = str_split('|*-`#_');
 		$v = htmlentities($v).PHP_EOL;
 		
 		foreach($escape as $k => $e){
@@ -50,23 +50,29 @@ class Md{
 				}
 	
 				$trim_line = trim($line);
-				if(preg_match('/^([#]+)(.+)$/',$trim_line,$m)){
-					$hn = strlen($m[1]);
-					$line = '<h'.$hn.'>'.$m[2].'</h'.$hn.'>';
-				}else if(preg_match('/^>(.+)$/',$trim_line,$m)){
-					$line = '<blockquote>'.$m[1].'</blockquote>';
-				}else if(preg_match('/^-[-]+$/',$trim_line)){
-					$line = '<hr />';
-				}else if(preg_match('/``[`]+(.*)$/',$trim_line)){
-					$this->html_pre($line, $explode_lines, $lines);
-					$line = '';
-				}else if(strpos($trim_line,'|')){
-					$this->html_table($line, $explode_lines, $lines);
-					$line = '';
+				
+				if(!empty($trim_line)){
+					if(preg_match('/^([#]+)(.+)$/',$trim_line,$m)){
+						$hn = strlen($m[1]);
+						$line = '<h'.$hn.'>'.$m[2].'</h'.$hn.'>';
+					}else if(preg_match('/^>(.+)$/',$trim_line,$m)){
+						$line = '<blockquote>'.$m[1].'</blockquote>';
+					}else if(preg_match('/^-[-]+$/',$trim_line)){
+						$line = '<hr />';
+					}else if(preg_match('/``[`]+(.*)$/',$trim_line)){
+						$this->html_pre($line, $explode_lines, $lines);
+						$line = '';
+					}else if(strpos($trim_line,'|')){
+						$this->html_table($line, $explode_lines, $lines);
+						$line = '';
+					}else if($trim_line[0] == '*'){
+						$this->html_list($line, $explode_lines, $lines);
+						$line = '';					
+					}
 				}
 			}
 			if(!empty($line)){
-				$lines[] = '<p>'.$line.'</p>';
+				$lines[] = $line.'<br />';
 			}
 		}
 		$r = implode(PHP_EOL,$lines);
@@ -110,14 +116,14 @@ class Md{
 				if(substr($line,-1)){
 					$line = $line.'|';
 				}
-				if(!$table_head && sizeof($table) == 1 && preg_match('/^[\|\-\040]+$/',$line)){
+				if(!$table_head && sizeof($table) == 1 && preg_match('/^[\|\-\040\t]+$/',$line)){
 					$table_head = true;
 				}else{
 					$table[] = $line;
 				}
 			}else{
 				if(!empty($table)){
-					$lines[] = '<table>';
+					$lines[] = '<table class="table">';
 	
 					if($table_head){
 						$thead = array_shift($table);
@@ -134,5 +140,32 @@ class Md{
 			}
 		}
 	}
-	
+
+	private function html_list($line,&$explode_lines,&$lines){
+		$list = [];
+		$splen = 0;
+		array_unshift($explode_lines,$line);		
+
+		while(!empty($explode_lines)){
+			$line = array_shift($explode_lines);
+			
+			if(preg_match('/^([\t\040]*)\*(.+)$/',$line,$m)){
+				$sp = strlen(str_replace('	','    ',$m[1]));
+				
+				if($splen > $sp){
+					$splen = $sp;
+					$lines[] = '<li><ul>';
+				}else if($splen < $sp){
+					$splen = $sp;
+					$lines[] = '</ul></li>';
+				}
+				$lines[] = '<li>'.$m[2].'</li>';
+			}else{
+				$lines[] = '</ul>';
+				
+				array_unshift($explode_lines,$line);				
+				return;
+			}
+		}
+	}
 }
