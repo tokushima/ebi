@@ -142,30 +142,53 @@ class Md{
 	}
 
 	private function html_list($line,&$explode_lines,&$lines){
-		$list = [];
-		$splen = 0;
 		array_unshift($explode_lines,$line);		
 
-		while(!empty($explode_lines)){
-			$line = array_shift($explode_lines);
-			
-			if(preg_match('/^([\t\040]*)\*(.+)$/',$line,$m)){
-				$sp = strlen(str_replace('	','    ',$m[1]));
-				
-				if($splen > $sp){
-					$splen = $sp;
-					$lines[] = '<li><ul>';
-				}else if($splen < $sp){
-					$splen = $sp;
-					$lines[] = '</ul></li>';
-				}
-				$lines[] = '<li>'.$m[2].'</li>';
-			}else{
-				$lines[] = '</ul>';
-				
-				array_unshift($explode_lines,$line);				
-				return;
+		$efunc = function(&$explode_lines,$index=1,$a=null) use(&$efunc){
+			$result = [];
+		
+			if(isset($a)){
+				$result[] = $a;
 			}
-		}
+		
+			while(!empty($explode_lines)){
+				$line = array_shift($explode_lines);
+				
+				if(preg_match('/^([\t\040]*)\*(.+)$/',' '.$line,$m)){
+					$sp = strlen(str_replace('	','    ',$m[1]));
+					$v = ltrim($m[2]);
+						
+					if($sp == $index){
+						$result[] = $v;
+					}else if($sp > $index){
+						$result[] = $efunc($explode_lines,$sp,$v);
+					}else{
+						array_unshift($explode_lines,$line);
+						return $result;
+					}
+				}else{
+					array_unshift($explode_lines,$line);
+					break;
+				}
+			}
+			return $result;
+		};
+		
+		$ofunc = function($list,&$lines) use(&$ofunc){
+			$lines[] = '<ul>';
+		
+			foreach($list as $v){
+				if(is_array($v)){
+					$line_c = [];
+					$ofunc($v,$line_c);
+					$lines[] = implode(PHP_EOL,$line_c);
+				}else{
+					$lines[] = '<li>'.$v.'</li>';
+				}
+			}
+			$lines[] = '</ul>';
+		};
+		
+		$ofunc($efunc($explode_lines),$lines);
 	}
 }
