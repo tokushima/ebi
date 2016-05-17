@@ -19,7 +19,7 @@ class LoginRequestAction2 extends \ebi\flow\Request{
 	 * @return multitype:number
 	 */
 	public function bbb(){
-		if(!$this->is_login()){
+		if(!$this->is_user_logged_in()){
 			throw new \LogicException('login required');
 		}
 		return ['abc'=>123];
