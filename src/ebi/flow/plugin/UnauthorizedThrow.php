@@ -10,7 +10,7 @@ class UnauthorizedThrow{
 	 * @param \ebi\flow\Request $req
 	 */
 	public function before_login_required(\ebi\flow\Request $req){
-		if(!$req->is_login()){
+		if(!$req->is_user_logged_in()){
 			\ebi\HttpHeader::send_status(401);
 			throw new \ebi\exception\UnauthorizedException('Unauthorized');
 		}

@@ -90,7 +90,7 @@ class Request extends \ebi\Request{
 			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
 		if(
-			!$this->is_login() && 
+			!$this->is_user_logged_in() && 
 			((isset($this->login_anon)) || $this->has_object_plugin('login_condition'))
 		){
 			$this->login_required();
@@ -139,7 +139,7 @@ class Request extends \ebi\Request{
 	private function login_required(){
 		$selected_pattern = $this->get_selected_pattern();
 		
-		if(!$this->is_login() 
+		if(!$this->is_user_logged_in() 
 			&& array_key_exists('action',$selected_pattern)
 			&& strpos($selected_pattern['action'],'::do_login') === false
 		){
@@ -151,7 +151,7 @@ class Request extends \ebi\Request{
 				$this->call_object_plugin_funcs('before_login_required',$this);
 			}
 			if(strpos($selected_pattern['action'],'::do_logout') === false){
-				$this->set_login_redirect(\ebi\Request::current_url().\ebi\Request::request_string(true));
+				$this->logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 			}
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
@@ -186,16 +186,24 @@ class Request extends \ebi\Request{
 	 * ログイン済みか
 	 * @return boolean
 	 */
-	public function is_login(){
+	public function is_user_logged_in(){
 		return ($this->in_sessions($this->login_id) !== null);
 	}
 	/**
 	 * ログイン後のリダイレクト先設定
 	 * @param string $url
 	 */
-	public function set_login_redirect($url){
+	public function logged_in_redirect_to($url){
 		$this->sessions('logged_in_redirect_to',$url);
 	}
+	/**
+	 * ログインに失敗した際のリダイレクト先設定
+	 * @param string $url
+	 */
+	public function failed_login_redirect_to($url){
+		$this->sessions('failed_login_redirect_to',$url);
+	}
+	
 	/**
 	 * ログイン
 	 * ログインに必要なパラメータはPluginによる
@@ -214,7 +222,7 @@ class Request extends \ebi\Request{
 			}
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
 		}
-		if($this->is_login()){
+		if($this->is_user_logged_in()){
 			if($this->map_arg('login_redirect') != null){
 				$this->sessions('logged_in_redirect_to',$this->map_arg('login_redirect'));
 			}
@@ -235,34 +243,37 @@ class Request extends \ebi\Request{
 			}
 		}
 		
-		$rtn_vars = ['login'=>$this->is_login()];
+		$rtn_vars = ['login'=>$this->is_user_logged_in()];
 		
-		if($this->is_login()){
+		if($this->is_user_logged_in()){
 			$redirect_to = $this->in_sessions('logged_in_redirect_to');
 			$this->rm_sessions('logged_in_redirect_to');
+			$this->rm_sessions('failed_login_redirect_to');
+			
+			if(!empty($redirect_to)){
+				$this->set_after_redirect($redirect_to);
+			}
 			/**
 			 * ログイン処理の後処理
 			 * @param \ebi\flow\Request $arg1
 			 */
 			$vars = $this->call_object_plugin_funcs('after_do_login',$this);
-
-			if(!empty($redirect_to)){
-				$this->set_after_redirect($redirect_to);
-			}
+			
 			if(!empty($vars) && is_array($vars)){
 				$rtn_vars = array_merge($rtn_vars,$vars);
 			}
 		}else{
-			$redirect_to = $this->in_sessions('not_logged_in_redirect_to');
-			$this->rm_sessions('not_logged_in_redirect_to');
-			
-			if(!empty($redirect_to)){
-				$this->set_after_redirect($redirect_to);
+			if($this->is_sessions('failed_login_redirect_to')){
+				$this->set_after_redirect($this->in_sessions('failed_login_redirect_to'));
 			}else{
 				\ebi\HttpHeader::send_status(401);
 				$pattern = $this->get_selected_pattern();
 				
-				if(!isset($pattern['template']) && !(isset($pattern['@']) && is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))){
+				if(
+					!isset($pattern['template']) && 
+					!(isset($pattern['@']) && 
+					is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))
+				){
 					throw new \ebi\exception\UnauthorizedException();
 				}
 			}
@@ -274,7 +285,6 @@ class Request extends \ebi\Request{
 	 * @automap
 	 */
 	public function do_logout(){
-		$this->rm_sessions('logged_in_redirect_to');
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
 		session_regenerate_id(true);

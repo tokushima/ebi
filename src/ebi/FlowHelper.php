@@ -7,14 +7,14 @@ namespace ebi;
 class FlowHelper{
 	private $name;
 	
-	private $is_login = false;
+	private $is_user_logged_in = false;
 	private $user;
 	
 	public function __construct($name=null,$obj=null){
 		$this->name = $name;
 		
 		if($obj instanceof \ebi\flow\Request){
-			$this->is_login = $obj->is_login();
+			$this->is_user_logged_in = $obj->is_user_logged_in();
 			$this->user = $obj->user();
 		}
 	}
@@ -48,8 +48,8 @@ class FlowHelper{
 	 * ログイン済みか
 	 * @return boolean
 	 */
-	public function is_login(){
-		return $this->is_login;
+	public function is_user_logged_in(){
+		return $this->is_user_logged_in;
 	}
 	/**
 	 * ログインユーザを返す
