@@ -194,7 +194,7 @@ class Request extends \ebi\Request{
 	 * @param string $url
 	 */
 	public function set_login_redirect($url){
-		$this->sessions('logined_redirect_to',$url);
+		$this->sessions('logged_in_redirect_to',$url);
 	}
 	/**
 	 * ログイン
@@ -216,11 +216,11 @@ class Request extends \ebi\Request{
 		}
 		if($this->is_login()){
 			if($this->map_arg('login_redirect') != null){
-				$this->sessions('logined_redirect_to',$this->map_arg('login_redirect'));
+				$this->sessions('logged_in_redirect_to',$this->map_arg('login_redirect'));
 			}
 		}else{
-			if(!$this->is_sessions('logined_redirect_to') && $this->map_arg('login_redirect') != null){
-				$this->sessions('logined_redirect_to',$this->map_arg('login_redirect'));
+			if(!$this->is_sessions('logged_in_redirect_to') && $this->map_arg('login_redirect') != null){
+				$this->sessions('logged_in_redirect_to',$this->map_arg('login_redirect'));
 			}
 			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) === false){
 				$this->call_object_plugin_func('login_invalid',$this);
@@ -238,8 +238,8 @@ class Request extends \ebi\Request{
 		$rtn_vars = ['login'=>$this->is_login()];
 		
 		if($this->is_login()){
-			$redirect_to = $this->in_sessions('logined_redirect_to');
-			$this->rm_sessions('logined_redirect_to');
+			$redirect_to = $this->in_sessions('logged_in_redirect_to');
+			$this->rm_sessions('logged_in_redirect_to');
 			/**
 			 * ログイン処理の後処理
 			 * @param \ebi\flow\Request $arg1
@@ -253,11 +253,18 @@ class Request extends \ebi\Request{
 				$rtn_vars = array_merge($rtn_vars,$vars);
 			}
 		}else{
-			\ebi\HttpHeader::send_status(401);
-			$pattern = $this->get_selected_pattern();
+			$redirect_to = $this->in_sessions('not_logged_in_redirect_to');
+			$this->rm_sessions('not_logged_in_redirect_to');
 			
-			if(!isset($pattern['template']) && !(isset($pattern['@']) && is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))){
-				throw new \ebi\exception\UnauthorizedException();
+			if(!empty($redirect_to)){
+				$this->set_after_redirect($redirect_to);
+			}else{
+				\ebi\HttpHeader::send_status(401);
+				$pattern = $this->get_selected_pattern();
+				
+				if(!isset($pattern['template']) && !(isset($pattern['@']) && is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))){
+					throw new \ebi\exception\UnauthorizedException();
+				}
 			}
 		}
 		return $rtn_vars;
@@ -267,7 +274,7 @@ class Request extends \ebi\Request{
 	 * @automap
 	 */
 	public function do_logout(){
-		$this->rm_sessions('logined_redirect_to');
+		$this->rm_sessions('logged_in_redirect_to');
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
 		session_regenerate_id(true);

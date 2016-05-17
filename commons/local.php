@@ -11,10 +11,7 @@
 		'accept_debug'=>true,
 	],
 	'ebi.flow.plugin.Cors'=>[
-		'origin'=>[
-			'http://localhost:8000',
-			'http://127.0.0.1:8001',
-		]
+		'origin'=>'http://localhost:8000',
 	],
 	'ebi.Dt'=>[
 		'ignore'=>[
