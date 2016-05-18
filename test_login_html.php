@@ -8,7 +8,7 @@ include_once('autoload.php');
 			'name'=>'login',
 			'action'=>'ebi.flow.Request::do_login',
 			'template'=>'login.html',
-			'args'=>['login_redirect'=>'aaa'],
+			'logged_in_after'=>'aaa',
 		],
 		'logout_url'=>[
 			'name'=>'logout',

@@ -151,7 +151,7 @@ class Request extends \ebi\Request{
 				$this->call_object_plugin_funcs('before_login_required',$this);
 			}
 			if(strpos($selected_pattern['action'],'::do_logout') === false){
-				$this->logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
+				$this->sessions('logged_in_redirect_to',\ebi\Request::current_url().\ebi\Request::request_string(true));
 			}
 			$req = new \ebi\Request();
 			$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
@@ -189,25 +189,10 @@ class Request extends \ebi\Request{
 	public function is_user_logged_in(){
 		return ($this->in_sessions($this->login_id) !== null);
 	}
-	/**
-	 * ログイン後のリダイレクト先設定
-	 * @param string $url
-	 */
-	public function logged_in_redirect_to($url){
-		$this->sessions('logged_in_redirect_to',$url);
-	}
-	/**
-	 * ログインに失敗した際のリダイレクト先設定
-	 * @param string $url
-	 */
-	public function failed_login_redirect_to($url){
-		$this->sessions('failed_login_redirect_to',$url);
-	}
 	
 	/**
 	 * ログイン
 	 * ログインに必要なパラメータはPluginによる
-	 * @arg string $login_redirect ログイン後にリダイレクトされるマップ名
 	 * @automap
 	 */
 	public function do_login(){
@@ -222,14 +207,9 @@ class Request extends \ebi\Request{
 			}
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
 		}
-		if($this->is_user_logged_in()){
-			if($this->map_arg('login_redirect') != null){
-				$this->sessions('logged_in_redirect_to',$this->map_arg('login_redirect'));
-			}
-		}else{
-			if(!$this->is_sessions('logged_in_redirect_to') && $this->map_arg('login_redirect') != null){
-				$this->sessions('logged_in_redirect_to',$this->map_arg('login_redirect'));
-			}
+		$pattern = $this->get_selected_pattern();
+		
+		if(!$this->is_user_logged_in()){
 			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) === false){
 				$this->call_object_plugin_func('login_invalid',$this);
 			}else{
@@ -241,18 +221,17 @@ class Request extends \ebi\Request{
 				 */
 				$this->call_object_plugin_funcs('after_login',$this);
 			}
-		}
-		
+		}		
 		$rtn_vars = ['login'=>$this->is_user_logged_in()];
 		
 		if($this->is_user_logged_in()){
-			$redirect_to = $this->in_sessions('logged_in_redirect_to');
-			$this->rm_sessions('logged_in_redirect_to');
-			$this->rm_sessions('failed_login_redirect_to');
-			
-			if(!empty($redirect_to)){
-				$this->set_after_redirect($redirect_to);
+			if(array_key_exists('logged_in_after',$pattern)){
+				$this->set_after_redirect($pattern['logged_in_after']);
+			}else if(empty($this->get_after_redirect()) && $this->is_sessions('logged_in_redirect_to')){
+				$this->set_after_redirect($this->in_sessions('logged_in_redirect_to'));
 			}
+			$this->rm_sessions('logged_in_redirect_to');
+			
 			/**
 			 * ログイン処理の後処理
 			 * @param \ebi\flow\Request $arg1
@@ -263,11 +242,11 @@ class Request extends \ebi\Request{
 				$rtn_vars = array_merge($rtn_vars,$vars);
 			}
 		}else{
-			if($this->is_sessions('failed_login_redirect_to')){
-				$this->set_after_redirect($this->in_sessions('failed_login_redirect_to'));
-			}else{
+			if(array_key_exists('after',$pattern)){
+				$this->set_after_redirect($pattern['after']);
+			}
+			if(empty($this->get_after_redirect())){
 				\ebi\HttpHeader::send_status(401);
-				$pattern = $this->get_selected_pattern();
 				
 				if(
 					!isset($pattern['template']) && 
@@ -288,10 +267,6 @@ class Request extends \ebi\Request{
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
 		session_regenerate_id(true);
-		
-		if($this->map_arg('logout_redirect') != null){
-			$this->set_after_redirect($this->map_arg('logout_redirect'));
-		}
 	}
 	/**
 	 * 何も処理をせずに、varsを返す

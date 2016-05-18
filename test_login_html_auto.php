@@ -12,7 +12,7 @@ include_once('autoload.php');
 		'logout_url'=>[
 			'name'=>'logout',
 			'action'=>'ebi.flow.Request::do_logout',
-			'args'=>['logout_redirect'=>'temp2'],
+			'after'=>'temp2',
 		],
 		'temp1'=>[
 			'name'=>'temp1',
