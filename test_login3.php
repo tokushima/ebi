@@ -12,6 +12,10 @@ include_once('autoload.php');
 			'name'=>'logout',
 			'action'=>'ebi.flow.Request::do_logout',
 		],
+		'aaa'=>[
+			'name'=>'aaa',
+			'action'=>'test.flow.LoginRequestAction1::aaa',
+		],
 	]
 ]);
 
