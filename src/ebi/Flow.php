@@ -175,7 +175,7 @@ class Flow{
 		 * 最後尾に「*」で実行エントリに自動変換
 		 * http://localhost:8000/* => http://localhost:8000/api
 		 * 
-		 * 「**」でエントリファイル名(.php付き)に変換される
+		 * 「**」でエントリファイル名に変換される
 		 * http://localhost:8000/** => http://localhost:8000/api.php
 		 * 
 		 */
@@ -218,6 +218,7 @@ class Flow{
 		 * テンプレートファイルのディレクトリ
 		 */
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
+		/// TODO
 		
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
@@ -271,12 +272,6 @@ class Flow{
 		}
 		foreach(self::$map['patterns'] as $k => $pattern){
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
-				if(array_key_exists('mode',$pattern)){
-					if(!\ebi\Conf::in_mode($pattern['mode'])){
-						\ebi\HttpHeader::send_status(404);
-						return self::terminate();
-					}
-				}
 				if(array_key_exists('secure',$pattern) && $pattern['secure'] === true && $conf_secure !== false){
 					if(substr(\ebi\Request::current_url(),0,5) === 'http:' &&
 						(
@@ -564,10 +559,11 @@ class Flow{
 		\ebi\FlowInvalid::clear();
 		return;
 	}
+	
 	private static function expand_patterns($pk,$patterns,$extends,&$automap_idx){
 		$result = [];
 		$ext_arr = ['plugins'=>[],'vars'=>[]];
-	
+				
 		foreach($ext_arr as $k =>$v){
 			if(array_key_exists($k,$extends)){
 				$ext_arr[$k] = $extends[$k];
@@ -578,35 +574,40 @@ class Flow{
 			if(is_callable($v)){
 				$v = ['action'=>$v];
 			}
-			if(!empty($extends)){
-				$v = array_merge($extends,$v);
-			}
-			foreach($ext_arr as $ek => $ev){
-				if(!empty($ev)){
-					$v[$ek] = array_key_exists($ek,$v) ? (is_array($v[$ek]) ? $v[$ek] : [$v[$ek]]) : [];
-					$v[$ek] = array_merge($ev,$v[$ek]);
+			if(!isset($v['mode']) || \ebi\Conf::in_mode($v['mode'])){
+				if(!empty($extends)){
+					$v = array_merge($extends,$v);
 				}
-			}
-			$pt = (empty($pk) ? '' : $pk.'/').$k;
-	
-			if(array_key_exists('patterns',$v)){
-				$vp = $v['patterns'];
-				unset($v['patterns']);
-				$result = array_merge($result,self::expand_patterns($pt,$vp,$v,$automap_idx));
-			}else{
-				if(!isset($v['name'])){
-					$v['name'] = $pt;
+				foreach($ext_arr as $ek => $ev){
+					if(!empty($ev)){
+						$v[$ek] = array_key_exists($ek,$v) ? (is_array($v[$ek]) ? $v[$ek] : [$v[$ek]]) : [];
+						$v[$ek] = array_merge($ev,$v[$ek]);
+					}
 				}
-				if(isset($v['action'])){
-					if(!is_callable($v['action']) && strpos($v['action'],'::') === false){
-						foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
-							$result[$ak] = array_merge($v,$av);
+				$pt = (empty($pk) ? '' : $pk.'/').$k;
+		
+				if(array_key_exists('patterns',$v)){
+					if(!array_key_exists('mode',$v) || \ebi\Conf::in_mode($v['mode'])){
+						$vp = $v['patterns'];
+						unset($v['patterns']);
+						$result = array_merge($result,self::expand_patterns($pt,$vp,$v,$automap_idx));
+					}
+				}else{
+					if(!isset($v['name'])){
+						$v['name'] = $pt;
+					}
+					if(isset($v['action'])){
+						if(!is_callable($v['action']) && strpos($v['action'],'::') === false){
+							// TODO
+							foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
+								$result[$ak] = array_merge($v,$av);
+							}
+						}else{
+							$result[$pt] = $v;
 						}
 					}else{
 						$result[$pt] = $v;
 					}
-				}else{
-					$result[$pt] = $v;
 				}
 			}
 		}
