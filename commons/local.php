@@ -1,5 +1,10 @@
 <?php
 \ebi\Conf::set([
+	'ebi.Conf'=>[
+		'appmode_group'=>[
+			'dev'=>['local'],
+		],
+	],
 	'ebi.Log'=>[
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',

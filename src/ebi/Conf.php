@@ -100,7 +100,7 @@ class Conf{
 		 * 
 		 * @param array $group
 		 */
-		$group = \ebi\Conf::get('appmode_group',['dev'=>['local']]);
+		$group = \ebi\Conf::get('appmode_group',[]);
 		$chkmode = is_array($mode) ? 
 						$mode : 
 						((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));

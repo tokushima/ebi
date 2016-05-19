@@ -165,7 +165,7 @@ include_once('autoload.php');
 	],
 	
 	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],
-	'dt'=>['action'=>'ebi.Dt']
+	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 
 
