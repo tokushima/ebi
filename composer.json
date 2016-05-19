@@ -7,7 +7,7 @@
 		}
 	],
 	"require": {
-		"php": ">=5.5.0",
+		"php": ">=5.6.0",
 		"ext-mbstring": "*"
 	},
 	"autoload": {
@@ -26,8 +26,9 @@
 			"/lib",
 			"/commons",
 			"/resources",
-			"ebi.phar",
-			"README.md"
+			"/ebi.phar",
+			"/autoload.php",
+			"/README.md"
 		]
 	}
 }
