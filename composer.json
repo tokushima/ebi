@@ -1,21 +1,34 @@
 {
-    "name": "tokushima/ebi",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "tokushima"
-        }
-    ],
+	"name": "tokushima/ebi",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "tokushima"
+		}
+	],
 	"require": {
 		"php": ">=5.5.0",
 		"ext-mbstring": "*"
 	},
 	"autoload": {
-    	"psr-0": {
-        	"ebi": "src/"
-	    },
-	    "files": [
-	    	"bootstrap.php"
+		"psr-0": {
+			"ebi": "src/"
+		},
+		"files": [
+			"bootstrap.php"
 	   	]
+	},
+	"archive": {
+		"exclude": [
+			"/test",
+			"/test*.php",
+			"/setup",
+			"/lib",
+			"/commons",
+			"/resources",
+			"ebi.phar",
+			"README.md"
+		]
 	}
 }
+
