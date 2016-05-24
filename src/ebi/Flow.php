@@ -218,7 +218,6 @@ class Flow{
 		 * テンプレートファイルのディレクトリ
 		 */
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
-		/// TODO
 		
 		$automap_idx = 1;
 		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
@@ -598,7 +597,6 @@ class Flow{
 					}
 					if(isset($v['action'])){
 						if(!is_callable($v['action']) && strpos($v['action'],'::') === false){
-							// TODO
 							foreach(self::automap($pt,$v['action'],$v['name'],$automap_idx++) as $ak => $av){
 								$result[$ak] = array_merge($v,$av);
 							}

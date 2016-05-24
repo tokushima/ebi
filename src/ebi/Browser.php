@@ -391,15 +391,6 @@ class Browser{
 				)
 			);
 		}
-		if(!isset($this->request_header['Accept']) && isset($_SERVER['HTTP_ACCEPT'])){
-			$this->request_header['Accept'] = $_SERVER['HTTP_ACCEPT'];
-		}
-		if(!isset($this->request_header['Accept-Language']) && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])){
-			$this->request_header['Accept-Language'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-		}
-		if(!isset($this->request_header['Accept-Charset']) && isset($_SERVER['HTTP_ACCEPT_CHARSET'])){
-			$this->request_header['Accept-Charset'] = $_SERVER['HTTP_ACCEPT_CHARSET'];
-		}
 		curl_setopt($this->resource,CURLOPT_HTTPHEADER,
 			array_map(
 				function($k,$v){
