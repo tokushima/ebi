@@ -1,11 +1,11 @@
 <?php
 namespace ebi\Dt;
 /**
- * Dt用のHTML form フォーマッタ
+ * Dt/Helperの後処理
  * @author tokushima
  *
  */
-class FormFormat{
+class HelperReplace{
 	public function after_exec_template($src){
 		$xml = \ebi\Xml::anonymous($src);
 		
@@ -37,6 +37,9 @@ class FormFormat{
 				$src = str_replace($form->plain(),$form->escape(false)->get(),$src);
 			}
 		}
+		
+		$src = str_replace('@VALPREFIX@','{$',$src);
+		
 		return $src;
 	}
 }

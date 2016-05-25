@@ -1,0 +1,23 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+<div class="row">
+	<div class="col-sm-9">
+		{$f.md2html($doc)}
+	</div>
+	<div class="col-sm-3">
+		<ul class="nav nav-sidebar">
+			<rt:loop param="file_list" var="title" key="name">
+				<li class="{$t.cond_switch($t.eq($name,$select_name),'active','')}">
+					<a href="{$t.package_method_url('document')}?name={$name}&q={$q}" style="font-size: x-small;">
+						{$title}
+					</a>
+				</li>
+			</rt:loop>
+		</ul>
+	</div>
+
+</div>
+
+</rt:block>
+

@@ -289,6 +289,6 @@ class Helper{
 	}
 	public function md2html($v){
 		$md = new \ebi\Md();
-		return $md->html($v);
+		return str_replace('{$','@VALPREFIX@',$md->html($v));
 	}
 }
