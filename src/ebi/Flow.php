@@ -77,9 +77,8 @@ class Flow{
 		self::$template->media_url(empty($media) ? self::$media_url : $media);
 		self::$template->cp($vars);
 		self::$template->vars('t',new \ebi\FlowHelper((isset($selected_pattern['name']) ? $selected_pattern['name'] :  null),$ins));
-		$src = self::$template->read($path);
 		
-		print($src);
+		print(self::$template->read($path));
 		self::terminate();
 		exit;
 	}

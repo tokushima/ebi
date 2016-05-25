@@ -19,7 +19,7 @@ class Md{
 		}
 		
 		$lines = [];
-		$pre = $on = false;		
+		$pre = $on = false;
 		$explode_lines = explode(PHP_EOL,$v);
 	
 		while(!empty($explode_lines)){
@@ -48,7 +48,6 @@ class Md{
 						$line = str_replace($m[0][$k],sprintf('<a href="%s">%s</a>',$m[2][$k],$m[1][$k]),$line);
 					}
 				}
-	
 				$trim_line = trim($line);
 				
 				if(!empty($trim_line)){

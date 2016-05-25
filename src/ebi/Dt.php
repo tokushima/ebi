@@ -9,10 +9,27 @@ use \ebi\Q;
 class Dt{
 	use \ebi\FlowPlugin;
 	
+	private $entry;
+	private $entry_name;
+	private $self_class;
+	
+	public function __construct(){
+		$this->self_class = str_replace('\\','.',__CLASS__);
+		$trace = debug_backtrace(false);
+		krsort($trace);
+		
+		foreach($trace as $t){
+			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+				$this->entry = $t['file'];
+				$this->entry_name = basename($this->entry,'.php');
+				break;
+			}
+		}
+	}
 	public function get_flow_plugins(){
 		return [
-			'ebi.flow.plugin.TwitterBootstrap3Helper',
-			'ebi.Dt.FormFormat'
+			\ebi\flow\plugin\TwitterBootstrap3Helper::class,
+			\ebi\Dt\HelperReplace::class,
 		];
 	}
 	public function get_after_vars(){
@@ -23,6 +40,7 @@ class Dt{
 			'perm_phpinfo'=>\ebi\Conf::get('phpinfo',true),
 			'perm_model'=>\ebi\Conf::get('model',true),
 			'perm_data'=>\ebi\Conf::get('data',true),
+			'perm_docs'=>is_dir(\ebi\Conf::resource_path('documents/'.$this->entry_name)),
 		];
 	}
 	private function filter_query($query,$value){
@@ -40,9 +58,14 @@ class Dt{
 	}
 	private function get_query(){
 		$req = new \ebi\Request();
-		$q = $req->in_vars('q');
-		$query = empty($q) ? [] : explode(' ',str_replace('　',' ',$q));
+		$q = trim($req->in_vars('q'));
+		$query = [];
 		
+		foreach((empty($q) ? [] : explode(' ',str_replace('　',' ',$q))) as $v){
+			if(trim($v) != ''){
+				$query[] = $v;
+			}
+		}		
 		return $query;
 	}
 	/**
@@ -61,28 +84,19 @@ class Dt{
 		$info = ob_get_clean();
 		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
 		$info = preg_replace('/<table .+>/','<table class="table table-striped table-bordered table-condensed">',$info);
-		return ['phpinfo'=>$info];
+
+		return [
+			'phpinfo'=>$info
+		];
 	}
 	/**
 	 * @automap
 	 */
-	public function index($entry=null){
+	public function index(){
 		$flow_output_maps = [];
 		$query = $this->get_query();
 		
-		$self_class = str_replace('\\','.',__CLASS__);
-		$trace = debug_backtrace(false);
-		krsort($trace);
-		
-		if(empty($entry)){
-			foreach($trace as $t){
-				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
-					$entry = $t['file'];
-					break;
-				}
-			}
-		}
-		$map = \ebi\Flow::get_map($entry);		
+		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
 		
@@ -97,7 +111,7 @@ class Dt{
 				if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
 				$m['class'] = str_replace('\\','.',$m['class']);
 			}
-			if(!isset($m['class']) || $m['class'] != $self_class){
+			if(!isset($m['class']) || $m['class'] != $this->self_class){
 				try{
 					$m['error'] = null;
 					$m['url'] = $k;
@@ -130,7 +144,7 @@ class Dt{
 		return [
 			'map_list'=>$flow_output_maps,
 			'q'=>implode(' ',$query),
-			'description'=>\ebi\Dt\Man::entry_description($entry),
+			'description'=>\ebi\Dt\Man::entry_description($this->entry),
 		];
 	}
 
@@ -338,6 +352,71 @@ class Dt{
 		ksort($model_list);
 		return ['models'=>$model_list,'q'=>implode(' ',$query)];	
 	}
+	
+	/**
+	 * @automap
+	 */
+	public function document(){
+		$req = new \ebi\Request();
+		$file_list = [];
+		$doc = null;
+		$select_name = $req->in_vars('name');
+		$query = $this->get_query();
+		
+		$dir = \ebi\Conf::resource_path('documents/'.$this->entry_name);
+		
+		if(is_dir($dir)){
+			$dir = realpath($dir);
+			
+			foreach(\ebi\Util::ls($dir,true,'/\.md$/') as $f){
+				$name = substr(str_replace($dir,'',$f->getPathname()),1,-3);
+				$line = null;
+				
+				if(empty($query)){
+					$fp = fopen($f->getPathname(),'r');
+					$line = trim(fgets($fp,4096));
+					fclose($fp);
+				}else{
+					$src = file_get_contents($f->getPathname());
+					
+					if($this->filter_query($query,$src)){
+						list($line) = explode(PHP_EOL,$src,2);
+					}
+				}
+				if(isset($line)){
+					$title = (preg_match('/\#([^#].+)/',$line)) ? substr($line,1) : $name;				
+					$file_list[$name] = $title;
+				}
+			}
+		}
+		if($req->is_vars('name')){
+			$file = \ebi\Util::path_absolute($dir,$req->in_vars('name').'.md');
+			
+			if(is_file($file)){
+				$doc = file_get_contents($file);
+			}
+		}
+		if(is_file($f=\ebi\Util::path_absolute($dir,'index'))){
+			$index_list = [];
+			
+			foreach(explode(PHP_EOL,file_get_contents($f)) as $index){
+				$index = trim($index);
+				
+				if(!empty($index)){
+					if(isset($file_list[$index])){
+						$index_list[$index] = $file_list[$index];
+						unset($file_list[$index]);
+					}
+				}
+			}
+			$file_list = array_merge($index_list,$file_list);
+		}
+		return $req->ar_vars([
+			'doc'=>$doc,
+			'select_name'=>$select_name,
+			'file_list'=>$file_list,
+		]);
+	}
 
 	private function get_model($name,$sync=true){
 		$req = new \ebi\Request();
@@ -412,17 +491,12 @@ class Dt{
 		}
 		$object_list = $class::find_all($q,$paginator,Q::select_order($order,$req->in_vars('porder')));
 		
-		return array_merge(
-			$req->ar_vars(),
-			[
-				'object_list'=>$object_list,
-				'paginator'=>$paginator,
-				'model'=>new $class(),
-				'package'=>$package,
-			]
-		);
-		
-		return $result;
+		return $req->ar_vars([
+			'object_list'=>$object_list,
+			'paginator'=>$paginator,
+			'model'=>new $class(),
+			'package'=>$package,
+		]);
 	}
 	/**
 	 * 詳細
@@ -435,10 +509,11 @@ class Dt{
 		}
 		$obj = $this->get_model($package);
 		
-		return ['object'=>$obj,
-				'model'=>$obj,
-				'package'=>$package,
-				];
+		return [
+			'object'=>$obj,
+			'model'=>$obj,
+			'package'=>$package,
+		];
 	}
 	/**
 	 * 削除

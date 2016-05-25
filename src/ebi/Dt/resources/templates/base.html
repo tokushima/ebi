@@ -25,6 +25,14 @@
 			font-style: italic;
 			color: #aaaaaa;
 		}
+		.nav-sidebar > .active > a,
+		.nav-sidebar > .active > a:hover,
+		.nav-sidebar > .active > a:focus {
+			color: #fff;
+			background-color: #428bca;
+		}
+
+		
 	</style>
 </head>
 
@@ -54,10 +62,14 @@
 					<rt:if param="{$perm_config}">
 						<li class="{$t.match_package_method_switch('config','active','inactive')}"><a href="{$t.package_method_url('config')}">Config</a></li>
 					</rt:if>
+
+					<rt:if param="{$perm_docs}">
+						<li class="{$t.match_package_method_switch('document','active','inactive')}"><a href="{$t.package_method_url('document')}">Docs</a></li>					
+					</rt:if>
+					
 					<rt:if param="{$perm_phpinfo}">
 						<li class="{$t.match_package_method_switch('phpinfo','active','inactive')}"><a href="{$t.package_method_url('phpinfo')}">phpinfo</a></li>
 					</rt:if>
-					
 				</ul>
 				
 				<rt:block name="list_search">
