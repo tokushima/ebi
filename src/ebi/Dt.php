@@ -360,7 +360,6 @@ class Dt{
 		$req = new \ebi\Request();
 		$file_list = [];
 		$doc = null;
-		$select_name = $req->in_vars('name');
 		$query = $this->get_query();
 		
 		$dir = \ebi\Conf::resource_path('documents/'.$this->entry_name);
@@ -389,13 +388,6 @@ class Dt{
 				}
 			}
 		}
-		if($req->is_vars('name')){
-			$file = \ebi\Util::path_absolute($dir,$req->in_vars('name').'.md');
-			
-			if(is_file($file)){
-				$doc = file_get_contents($file);
-			}
-		}
 		if(is_file($f=\ebi\Util::path_absolute($dir,'index'))){
 			$index_list = [];
 			
@@ -411,9 +403,22 @@ class Dt{
 			}
 			$file_list = array_merge($index_list,$file_list);
 		}
+		if(!$req->is_vars('name')){
+			foreach($file_list as $n => $v){
+				$req->vars('name',$n);
+				break;
+			}
+		}
+		if($req->is_vars('name')){
+			$file = \ebi\Util::path_absolute($dir,$req->in_vars('name').'.md');
+				
+			if(is_file($file)){
+				$doc = file_get_contents($file);
+			}
+		}
 		return $req->ar_vars([
 			'doc'=>$doc,
-			'select_name'=>$select_name,
+			'select_name'=>$req->in_vars('name'),
 			'file_list'=>$file_list,
 		]);
 	}

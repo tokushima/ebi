@@ -92,7 +92,7 @@ class Browser{
 	 */
 	public function vars($key,$value=null){
 		if(is_bool($value)){
-			$value = ($value) ? 'true' : 'false'; 
+			$value = ($value) ? 'true' : 'false';
 		}
 		$this->request_vars[$key] = $value;
 		
@@ -275,7 +275,7 @@ class Browser{
 	 */
 	public static function start_record(){
 		self::$recording_request = true;
-	
+		
 		$requests = self::$record_request;
 		self::$record_request = [];
 		return $requests;
@@ -298,15 +298,17 @@ class Browser{
 		switch($method){
 			case 'RAW':
 			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
-			case 'GET':				
+			case 'GET':
 				if(isset($url_info['query'])){
 					parse_str($url_info['query'],$vars);
 				
 					foreach($vars as $k => $v){
-						if(!isset($this->request_vars[$k])) $this->request_vars[$k] = $v;
+						if(!isset($this->request_vars[$k])){
+							$this->request_vars[$k] = $v;
+						}
 					}
 					list($url) = explode('?',$url,2);
-				}				
+				}
 				curl_setopt($this->resource,CURLOPT_HTTPGET,true);
 				break;
 			case 'HEAD': curl_setopt($this->resource,CURLOPT_NOBODY,true); break;
@@ -343,7 +345,7 @@ class Browser{
 					$this->request_header['Content-Type'] = 'text/plain';
 				}
 				curl_setopt($this->resource,CURLOPT_POSTFIELDS,$this->raw);
-				break;				
+				break;
 			case 'GET':
 			case 'HEAD':
 			case 'PUT':
@@ -360,7 +362,7 @@ class Browser{
 		
 		if(self::$recording_request){
 			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
-		}		
+		}
 		/**
 		 * SSL証明書を確認するかの真偽値
 		 */
@@ -411,13 +413,16 @@ class Browser{
 			$fp = fopen($download_path,'wb');
 			
 			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,function($resource,$data) use(&$fp){
-				if($fp) fwrite($fp,$data);
+				if($fp){
+					fwrite($fp,$data);
+				}
 				return strlen($data);
 			});
 		}
 		$this->request_header = $this->request_vars = [];
 		$this->head = $this->body = $this->raw = '';
 		curl_exec($this->resource);
+		
 		if(!empty($download_path) && $fp){
 			fclose($fp);
 		}
@@ -439,7 +444,7 @@ class Browser{
 				$cookie_domain = $cookie_base_domain;
 				$cookie_path = '/';
 				$secure = false;
-		
+				
 				foreach(explode(';',$cookies) as $cookie){
 					$cookie = trim($cookie);
 					if(strpos($cookie,'=') !== false){
@@ -461,15 +466,18 @@ class Browser{
 					}
 				}
 				$cookie_domain = substr(\ebi\Util::path_absolute('http://'.$cookie_domain,$cookie_path),7);
+				
 				if($cookie_expires !== null && $cookie_expires < time()){
-					if(isset($this->cookie[$cookie_domain][$cookie_name])) unset($this->cookie[$cookie_domain][$cookie_name]);
+					if(isset($this->cookie[$cookie_domain][$cookie_name])){
+						unset($this->cookie[$cookie_domain][$cookie_name]);
+					}
 				}else{
 					$this->cookie[$cookie_domain][$cookie_name] = ['value'=>$cookie_value,'expires'=>$cookie_expires,'secure'=>$secure];
 				}
 			}
 		}
 		curl_close($this->resource);
-		unset($this->resource);		
+		unset($this->resource);
 		
 		if($this->redirect_count++ < $this->redirect_max){
 			switch($this->status){
