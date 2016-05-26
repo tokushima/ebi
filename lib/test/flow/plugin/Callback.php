@@ -18,6 +18,10 @@ class Callback{
 		}
 	}
 	
+	/**
+	 * @context string $callback
+	 * @context string $result_data 
+	 */
 	public function get_after_vars_request(){
 		return $this->result;
 	}

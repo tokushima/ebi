@@ -33,6 +33,10 @@ class RequestFlow extends \ebi\flow\Request{
 	
 	}
 	
+	/**
+	 * @context integer $abc
+	 * @context integer $def
+	 */
 	public function get_vars(){
 		return ['abc'=>123,'def'=>456];
 	}

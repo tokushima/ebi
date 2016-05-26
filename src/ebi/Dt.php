@@ -212,7 +212,7 @@ class Dt{
 		return $info;
 	}
 	/**
-	 * クラスドメソッドのキュメント
+	 * クラスドメソッドのドキュメント
 	 * @param string $class
 	 * @param string $method
 	 * @automap
@@ -221,6 +221,31 @@ class Dt{
 		$info = \ebi\Dt\Man::method_info($class,$method,true);
 		return $info;
 	}
+	
+	/**
+	 * アクションのドキュメント
+	 * @param string $class
+	 * @param string $method
+	 * @automap
+	 */
+	public function action_doc($name){
+		// TODO
+		$map = \ebi\Flow::get_map($this->entry);
+		foreach($map['patterns'] as $m){
+			if($m['name'] == $name){
+				list($m['class'],$m['method']) = explode('::',$m['action']);				
+				
+				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
+				
+				if(isset($m['plugins'])){
+					// TODO get_after_vars_request を探す .. requestflow_vars_callback
+				}
+				return $info;
+			}
+		}
+		throw new \ebi\exception\NotFoundException();
+	}
+	
 	/**
 	 * pluginのキュメント
 	 * @param string $class

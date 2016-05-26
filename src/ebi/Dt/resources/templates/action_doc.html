@@ -8,6 +8,18 @@
 	<a href="{$t.package_method_url('class_doc',$package)}">{$f.package_name($package)}</a>
 	::
 	{$method_name}
+
+	<rt:if param="{$http_method}">
+		<rt:if param="{$http_method}" value="POST">
+			<span class="label label-danger">POST</span>
+		<rt:else />
+			<rt:if param="{$http_method}" value="GET">
+				<span class="label label-warning">GET</span>
+			<rt:else />
+				<span class="label label-default">{$http_method}</span>
+			</rt:if>
+		</rt:if>
+	</rt:if>
 </h2>
 
 <rt:if param="{$description}">
@@ -82,21 +94,65 @@
 </table>
 </rt:if>
 
+<rt:if param="{$request}">
+<h4 class="text-warning">Request</h4>
 
-<rt:if param="{$return}">
-<h4 class="text-warning">Return</h4>
-
-<table rt:param="{$return}" rt:var="r" class="table table-condensed" style="margin-bottom: 50px;">
+<table rt:param="{$request}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
-	<td style="width:25%;">
-		<rt:if param="{$f.type($r[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($r[0]))}">{$r[0]}</a>
+	<td style="width: 25%;">
+		<rt:if param="{$f.type($arg[0])}">
+			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
 		<rt:else />
-			{$r[0]}
+			{$arg[0]}
 		</rt:if>
 	</td>
+	<td style="width: 20%;">
+		<rt:if param="{$arg[2]}">
+			{$name}
+		<rt:else />
+			{$name}
+		</rt:if>
+	</td>
+	<td style="width: 55%;">
+		{$t.html($arg[1])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+<rt:if param="{$context}">
+<h4 class="text-warning">Context</h4>
+	
+<table rt:param="{$context}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td style="width: 25%;">
+		<rt:if param="{$f.type($arg[0])}">
+			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
+		<rt:else />
+			{$arg[0]}
+		</rt:if>
+	</td>
+	<td style="width: 20%;">
+		{$name}
+	</td>
+	<td style="width: 55%;">
+		{$t.html($arg[1])}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+
+<rt:if param="{$args}">
+<h4 class="text-warning">Arg</h4>
+
+<table rt:param="{$args}" rt:var="summary" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td style="width:25%;">
+		{$name}
+	</td>
 	<td style="width:75%;">
-		{$t.html($r[1])}
+		{$t.html($summary)}
 	</td>
 </tr>
 </table>
@@ -116,6 +172,17 @@
 	</td>
 </tr>
 </table>
+</rt:if>
+
+
+<rt:if param="{$modules}">
+<h4 class="text-warning">Modules</h4>
+
+<table rt:param="{$modules}" rt:var="pkg" class="table table-condensed" style="margin-bottom: 50px;">
+<tr>
+	<td><a href="{$t.package_method_url('class_doc',$f.type($pkg))}">{$f.type($pkg)}</a></td>
+</tr>
+</table>	
 </rt:if>
 
 </rt:block>
