@@ -291,4 +291,7 @@ class Helper{
 		$md = new \ebi\Md();
 		return str_replace('{$','@VALPREFIX@',$md->html($v));
 	}
+	public function md5($v){
+		return md5($v);
+	}
 }

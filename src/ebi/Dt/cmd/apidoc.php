@@ -5,9 +5,10 @@
  * @param string $out 出力フォルダ
  */
 if(empty($out)){
-	$out = getcwd().'/classdoc';
+	$out = getcwd().'/apidoc';
 }
 $resources = dirname(dirname(__DIR__)).'/Dt/resources/apidoc/';
+$dt = new \ebi\Dt($in);
 
 $get_template = function($vars){
 	$template = new \ebi\Template();
@@ -19,9 +20,9 @@ $get_template = function($vars){
 	return $template;
 };
 
-$class_doc = function($type) use(&$class_doc,$get_template,$out,$resources){
+$class_doc = function($type) use(&$class_doc,$get_template,$dt,$out,$resources){
 	try{
-		$class_vars = (new \ebi\Dt())->class_doc($type);
+		$class_vars = $dt->class_doc($type);
 		$classout = $out.'/classes/'.$class_vars['package'].'.html';
 		
 		if(!is_file($classout)){
@@ -39,15 +40,16 @@ $class_doc = function($type) use(&$class_doc,$get_template,$out,$resources){
 };
 
 \ebi\Util::rm($out,false);
-$entry_vars = (new \ebi\Dt())->index($in);
+$entry_vars = $dt->index();
+$helper = new \ebi\Dt\Helper();
 $template = $get_template($entry_vars);
 \ebi\Util::file_write($out.'/index.html',$template->read($resources.'index.html'));
 
 foreach($entry_vars['map_list'] as $info){
 	if(isset($info['class']) && isset($info['method'])){
-		$method_vars = (new \ebi\Dt())->method_doc($info['class'],$info['method']);
+		$method_vars = $dt->action_doc($info['name']);
 		$template = $get_template($method_vars);
-		\ebi\Util::file_write($out.'/classes/'.$info['class'].'/'.$info['method'].'.html',$template->read($resources.'method_doc.html'));
+		\ebi\Util::file_write($out.'/action/'.$helper->md5($info['name']).'.html',$template->read($resources.'action_doc.html'));
 		
 		foreach($method_vars['context'] as $context){
 			$type = (preg_match('/[\[\]\{\}]{2}$/',$context[0])) ? substr($context[0],0,-2) : $context[0];
