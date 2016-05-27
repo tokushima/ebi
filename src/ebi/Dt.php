@@ -13,17 +13,24 @@ class Dt{
 	private $entry_name;
 	private $self_class;
 	
-	public function __construct(){
-		$this->self_class = str_replace('\\','.',__CLASS__);
-		$trace = debug_backtrace(false);
-		krsort($trace);
-		
-		foreach($trace as $t){
-			if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
-				$this->entry = $t['file'];
-				$this->entry_name = basename($this->entry,'.php');
-				break;
+	
+	public function __construct($entryfile=null){
+		if(empty($entryfile)){		
+			$this->self_class = str_replace('\\','.',__CLASS__);
+			$trace = debug_backtrace(false);
+			krsort($trace);
+			
+			foreach($trace as $t){
+				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+					$this->entry = $t['file'];
+					$this->entry_name = basename($this->entry,'.php');
+					break;
+				}
 			}
+		}else{
+			$entryfile = realpath($entryfile);
+			$this->entry = $entryfile;
+			$this->entry_name = basename($this->entry,'.php');			
 		}
 	}
 	public function get_flow_plugins(){
@@ -80,7 +87,6 @@ class Dt{
 			throw new \ebi\exception\BadMethodCallException('not permitted');
 		}
 		ob_start();
-			phpinfo();
 		$info = ob_get_clean();
 		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
 		$info = preg_replace('/<table .+>/','<table class="table table-striped table-bordered table-condensed">',$info);
@@ -212,7 +218,7 @@ class Dt{
 		return $info;
 	}
 	/**
-	 * クラスドメソッドのキュメント
+	 * クラスドメソッドのドキュメント
 	 * @param string $class
 	 * @param string $method
 	 * @automap
@@ -221,6 +227,48 @@ class Dt{
 		$info = \ebi\Dt\Man::method_info($class,$method,true);
 		return $info;
 	}
+	
+	/**
+	 * アクションのドキュメント
+	 * @param string $class
+	 * @param string $method
+	 * @automap
+	 */
+	public function action_doc($name){
+		$map = \ebi\Flow::get_map($this->entry);
+		foreach($map['patterns'] as $m){
+			if($m['name'] == $name){
+				list($m['class'],$m['method']) = explode('::',$m['action']);				
+				
+				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
+				
+				if(isset($m['plugins'])){
+					foreach($m['plugins'] as $p){
+						if(is_string($p)){
+							$p = $this->strtoclass($p);
+							
+							foreach(['get_after_vars','get_after_vars_request'] as $mn){
+								try{
+									$r = new \ReflectionMethod($p,$mn);
+									
+									if(preg_match_all("/@context\s+([^\s]+)\s+\\$(\w+)(.*)/",$r->getDocComment(),$c)){
+										foreach($c[0] as $k => $v){
+											$info['context'][$c[2][$k]][0] = $c[1][$k];
+											$info['context'][$c[2][$k]][1] = (isset($c[3][$k]) ? $c[3][$k] : 'null');
+										}
+									}
+								}catch(\ReflectionException $e){
+								}
+							}
+						}
+					}
+				}
+				return $info;
+			}
+		}
+		throw new \ebi\exception\NotFoundException();
+	}
+	
 	/**
 	 * pluginのキュメント
 	 * @param string $class
@@ -999,5 +1047,16 @@ class Dt{
 			return true;
 		}
 		return false;
+	}
+	private function strtoclass($str){
+		$str = str_replace('.','\\',$str);
+		
+		if($str[0] != '\\'){
+			$str = '\\'.$str;
+		}
+		if(class_exists($str)){
+			return $str;
+		}
+		throw new \ebi\exception\NotFoundException();
 	}
 }
