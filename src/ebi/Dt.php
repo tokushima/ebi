@@ -236,30 +236,31 @@ class Dt{
 	 */
 	public function action_doc($name){
 		$map = \ebi\Flow::get_map($this->entry);
+		
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
-				list($m['class'],$m['method']) = explode('::',$m['action']);				
+				list($m['class'],$m['method']) = explode('::',$m['action']);
 				
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
+				$plugins = (isset($map['plugins']) ? $map['plugins']  : []);
 				
-				if(isset($m['plugins'])){
-					foreach($m['plugins'] as $p){
-						if(is_string($p)){
-							$p = $this->strtoclass($p);
+				if(is_subclass_of($this->strtoclass($m['class']),\ebi\flow\Request::class)){
+					$plugins = array_merge($plugins,isset($m['plugins']) ? $m['plugins']  : []);
+				}
+				foreach($plugins as $p){
+					$p = $this->strtoclass($p);
+					
+					foreach(['get_after_vars','get_after_vars_request'] as $mn){
+						try{
+							$r = new \ReflectionMethod($p,$mn);
 							
-							foreach(['get_after_vars','get_after_vars_request'] as $mn){
-								try{
-									$r = new \ReflectionMethod($p,$mn);
-									
-									if(preg_match_all("/@context\s+([^\s]+)\s+\\$(\w+)(.*)/",$r->getDocComment(),$c)){
-										foreach($c[0] as $k => $v){
-											$info['context'][$c[2][$k]][0] = $c[1][$k];
-											$info['context'][$c[2][$k]][1] = (isset($c[3][$k]) ? $c[3][$k] : 'null');
-										}
-									}
-								}catch(\ReflectionException $e){
+							if(preg_match_all("/@context\s+([^\s]+)\s+\\$(\w+)(.*)/",$r->getDocComment(),$c)){
+								foreach($c[0] as $k => $v){
+									$info['context'][$c[2][$k]][0] = $c[1][$k];
+									$info['context'][$c[2][$k]][1] = (isset($c[3][$k]) ? $c[3][$k] : 'null');
 								}
 							}
+						}catch(\ReflectionException $e){
 						}
 					}
 				}
