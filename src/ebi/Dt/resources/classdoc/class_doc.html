@@ -27,7 +27,7 @@
 
 <rt:if param="{$description}">
 	<div class="text-muted" style="padding: 10px;">
-		{$f.md2html($description)}
+		{$t.noop($f.md2html($description))}
 	</div>
 </rt:if>
 
