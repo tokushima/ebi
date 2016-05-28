@@ -1,0 +1,35 @@
+<rt:extends href="base.html" />
+
+<rt:block name="list_search">
+</rt:block>
+
+<rt:block name="content">
+
+
+<h1 class="text-{$f.progress_css($covered)}">
+	Coverage {$covered}%
+</h1>
+<p class="text-muted">
+	({$create_date})
+</p>
+
+<table rt:param="file_list" rt:var="file">
+<tr>
+	<td style="width: 70%;">
+		<a href="{$t.package_method_url('coverage')}?file={$file['name']}">
+			{$file['name']}
+		</a>
+	</td>
+	<td style="width: 30%;">
+		<div class="progress" style="margin: 0;">
+			<a href="{$t.package_method_url('coverage')}?file={$file['name']}">
+				<div class="progress-bar progress-bar-{$f.progress_css($file['covered'])}" role="progressbar" aria-valuenow="{$file['covered']}" aria-valuemin="0" aria-valuemax="100" style="width: {$file['covered']}%;">
+					{$file['covered']}%
+				</div>
+			</a>
+		</div>
+	</td>
+</tr>
+</table>
+</rt:block>
+

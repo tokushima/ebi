@@ -6,6 +6,41 @@ namespace ebi\Dt;
  *
  */
 class Helper{
+	private $perms = [];
+	
+	public function __construct($perms=[]){
+		$this->perms = $perms;
+	}
+	/**
+	 * 権限
+	 * @param string $nmae
+	 * @return boolean
+	 */
+	public function perm($name){
+		return (isset($this->perms[$name]) && $this->perms[$name] === true);
+	}
+	public function progress_css($no){
+		if($no == 100){
+			return 'success';
+		}
+		if($no < 30){
+			return 'danger';
+		}
+		return 'warning';
+	}
+	public function src_covered_css($type){
+		if($type === 1){
+			return 'success';
+		}
+		if($type === -1){
+			return 'danger';
+		}
+		return 'muted';
+	}
+	public function src2html($src){
+		$src = str_replace(["\t",' '],['    ','&nbsp;'],$src);
+		return $src;
+	}
 	/**
 	 * パッケージ名の文字列表現
 	 * @param string $p 

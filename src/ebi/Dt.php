@@ -12,7 +12,7 @@ class Dt{
 	private $entry;
 	private $entry_name;
 	private $self_class;
-	
+	private $perms = [];
 	
 	public function __construct($entryfile=null){
 		if(empty($entryfile)){		
@@ -32,6 +32,13 @@ class Dt{
 			$this->entry = $entryfile;
 			$this->entry_name = basename($this->entry,'.php');			
 		}
+
+		$this->perms['config'] = \ebi\Conf::get('config',true);
+		$this->perms['phpinfo'] = \ebi\Conf::get('phpinfo',true);
+		$this->perms['model'] = \ebi\Conf::get('model',true);
+		$this->perms['data'] = \ebi\Conf::get('data',true);
+		$this->perms['docs'] = is_dir(\ebi\Conf::resource_path('documents/'.$this->entry_name));
+		$this->perms['coverage'] = is_file(getcwd().'/coverage.xml');
 	}
 	public function get_flow_plugins(){
 		return [
@@ -41,15 +48,16 @@ class Dt{
 	}
 	public function get_after_vars(){
 		return [
-			'f'=>new \ebi\Dt\Helper(),
+			'f'=>new \ebi\Dt\Helper($this->perms),
 			'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
-			'perm_config'=>\ebi\Conf::get('config',true),
-			'perm_phpinfo'=>\ebi\Conf::get('phpinfo',true),
-			'perm_model'=>\ebi\Conf::get('model',true),
-			'perm_data'=>\ebi\Conf::get('data',true),
-			'perm_docs'=>is_dir(\ebi\Conf::resource_path('documents/'.$this->entry_name)),
 		];
 	}
+	private function perm($name){
+		if(!(isset($this->perms[$name]) && $this->perms[$name] === true)){
+			throw new \ebi\exception\BadMethodCallException();
+		}
+	}
+	
 	private function filter_query($query,$value){
 		$bool = true;
 		$value = strtolower($value);
@@ -72,20 +80,15 @@ class Dt{
 			if(trim($v) != ''){
 				$query[] = $v;
 			}
-		}		
+		}
 		return $query;
 	}
 	/**
 	 * @automap
 	 */
 	public function phpinfo(){
-		/**
-		 * phpinfoを表示・操作するか
-		 * @param boolean $arg する: true, しない: false
-		 */
-		if(\ebi\Conf::get('phpinfo') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perms('phpinfo');
+		
 		ob_start();
 		$info = ob_get_clean();
 		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
@@ -323,9 +326,8 @@ class Dt{
 	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
-		if(\ebi\Conf::get('config') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perms('config');
+		
 		$query = $this->get_query();
 		$conf_list = [];
 		
@@ -344,20 +346,18 @@ class Dt{
 		}
 		ksort($conf_list);
 		
-		return ['conf_list'=>$conf_list,'q'=>implode(' ',$query)];
+		return [
+			'conf_list'=>$conf_list,
+			'q'=>implode(' ',$query),
+		];
 	}
 	
 	/**
 	 * @automap
 	 */
 	public function model_list(){
-		/**
-		 * Modelを表示するか
-		 * @param boolean $arg する: true, しない: false
-		 */
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perms('model');
+		
 		$query = $this->get_query();
 		$model_list = [];
 		
@@ -471,6 +471,79 @@ class Dt{
 			'file_list'=>$file_list,
 		]);
 	}
+	
+	/**
+	 * @automap
+	 */
+	public function coverage_list(){
+		$this->perm('coverage');
+		$xml = file_get_contents(getcwd().'/coverage.xml');
+		
+		$coverage = \ebi\Xml::extract($xml,'coverage');
+		$create_date = $coverage->in_attr('create_date');
+		$covered = $coverage->in_attr('covered');
+		$file_list = [];
+		
+		foreach($coverage->find('file') as $f){
+			$file_list[] = [
+				'name'=>$f->in_attr('name'),
+				'covered'=>$f->in_attr('covered'),
+			];
+		}
+		
+		return [
+			'create_date'=>$create_date,
+			'covered'=>$covered,
+			'file_list'=>$file_list,
+		];
+	}
+	/**
+	 * @automap
+	 * @request string $file @['require'=>true]
+	 */
+	public function coverage(){
+		$this->perm('coverage');
+		$xml = file_get_contents(getcwd().'/coverage.xml');
+		
+		$req = new \ebi\Request();
+		$coverage = \ebi\Xml::extract($xml,'coverage');
+		$name = null;
+		
+		foreach($coverage->find('file') as $f){
+			if($f->in_attr('name') == $req->in_vars('file')){
+				$name = $f->in_attr('name');
+				$covered = $f->in_attr('covered');
+				$covered_lines = explode(',',$f->find_get('covered_lines')->value());
+				$uncovered_lines = explode(',',$f->find_get('uncovered_lines')->value());
+				
+				break;
+			}
+		}
+		if(empty($name)){
+			throw new \ebi\exception\NotFoundException($req->in_vars('file').' not found');
+		}
+		$src = \ebi\Util::file_read(getcwd().'/'.$req->in_vars('file'));
+		$lines = [];
+		
+		foreach(explode(PHP_EOL,$src) as $i => $v){
+			if(in_array($i+1,$covered_lines)){
+				$c = 1;
+			}else if(in_array($i+1,$uncovered_lines)){
+				$c = -1;
+			}else{
+				$c = 0;
+			}			
+			$lines[$i+1] = [
+				'value'=>$v,
+				'type'=>$c,
+			];
+		}
+		return [
+			'name'=>$name,
+			'covered'=>$covered,
+			'lines'=>$lines,
+		];
+	}
 
 	private function get_model($name,$sync=true){
 		$req = new \ebi\Request();
@@ -502,9 +575,8 @@ class Dt{
 	 * @context string $model_name 検索対象のモデルの名前
 	 */
 	public function do_find($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+
 		$req = new \ebi\Request();
 		$class = '\\'.str_replace('.','\\',$package);
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
@@ -558,9 +630,7 @@ class Dt{
 	 * @automap
 	 */
 	public function do_detail($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
 		$obj = $this->get_model($package);
 		
 		return [
@@ -575,12 +645,9 @@ class Dt{
 	 * @automap @['post_after'=>'']
 	 */
 	public function do_drop($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
-		if(\ebi\Conf::get('data') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+		$this->perm('data');
+		
 		$req = new \ebi\Request();
 		if($req->is_post()){
 			$this->get_model($package)->delete();
@@ -592,12 +659,9 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_update($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
-		if(\ebi\Conf::get('data') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+		$this->perm('data');
+		
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -621,16 +685,9 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_create($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
-		/**
-		 * Modelでデータを操作するか
-		 * @param boolean $arg する: true, しない: false
-		 */		
-		if(\ebi\Conf::get('data') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+		$this->perm('data');
+		
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -649,9 +706,8 @@ class Dt{
 		return $result;
 	}
 	public static function get_dao_connection($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+		
 		if(!is_object($package)){
 			$r = new \ReflectionClass('\\'.str_replace('.','\\',$package));
 			$package = $r->newInstance();
@@ -685,12 +741,9 @@ class Dt{
 	 * @automap
 	 */
 	public function do_sql($package){
-		if(\ebi\Conf::get('model') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
-		if(\ebi\Conf::get('data') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
+		$this->perm('model');
+		$this->perm('data');
+		
 		$req = new \ebi\Request();
 		$result_list = $keys = [];
 		$sql = $req->in_vars('sql');
@@ -745,7 +798,9 @@ class Dt{
 	 * @return array
 	 */
 	public static function get_urls($dir=null){
-		if(empty($dir)) $dir = getcwd();
+		if(empty($dir)){
+			$dir = getcwd();
+		}
 		
 		$urls = [];
 		foreach(new \RecursiveDirectoryIterator(
@@ -901,8 +956,7 @@ class Dt{
 	/**
 	 * モデルからデータを全削除する
 	 */
-	public static function delete_all(){
-		
+	public static function delete_all(){		
 		foreach(self::classes('\ebi\Dao') as $class_info){
 			$r = new \ReflectionClass($class_info['class']);
 	
