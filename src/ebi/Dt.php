@@ -87,9 +87,10 @@ class Dt{
 	 * @automap
 	 */
 	public function phpinfo(){
-		$this->perms('phpinfo');
+		$this->perm('phpinfo');
 		
 		ob_start();
+			phpinfo();
 		$info = ob_get_clean();
 		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
 		$info = preg_replace('/<table .+>/','<table class="table table-striped table-bordered table-condensed">',$info);
@@ -209,7 +210,10 @@ class Dt{
 			$this->class_list_summary($info['class'],$query,$libs);
 		}
 		ksort($libs);
-		return ['class_list'=>$libs,'q'=>implode(' ',$query)];
+		return [
+			'class_list'=>$libs,
+			'q'=>implode(' ',$query),
+		];
 	}
 	/**
 	 * クラスのドキュメント
@@ -326,7 +330,7 @@ class Dt{
 	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
-		$this->perms('config');
+		$this->perm('config');
 		
 		$query = $this->get_query();
 		$conf_list = [];
@@ -356,7 +360,7 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
-		$this->perms('model');
+		$this->perm('model');
 		
 		$query = $this->get_query();
 		$model_list = [];
@@ -706,8 +710,6 @@ class Dt{
 		return $result;
 	}
 	public static function get_dao_connection($package){
-		$this->perm('model');
-		
 		if(!is_object($package)){
 			$r = new \ReflectionClass('\\'.str_replace('.','\\',$package));
 			$package = $r->newInstance();
