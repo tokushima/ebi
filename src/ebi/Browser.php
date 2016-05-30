@@ -373,6 +373,9 @@ class Browser{
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
 		}
+		if(!isset($this->request_header['Expect'])){
+			$this->request_header['Expect'] = null;
+		}
 		if(!isset($this->request_header['Cookie'])){
 			$cookies = '';
 			
