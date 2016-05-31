@@ -26,28 +26,6 @@ class Md{
 			$line = array_shift($explode_lines);
 				
 			if(!empty($line)){
-				foreach(['\*\*'=>'strong','__'=>'em','~~'=>'s'] as $p => $t){
-					if(preg_match_all('/'.$p.'(.+?)'.$p.'/',$line,$m)){
-						foreach($m[1] as $k =>$v){
-							$line = str_replace($m[0][$k],'<'.$t.'>'.$v.'</'.$t.'>',$line);
-						}
-					}
-				}
-				if(substr($line,0,3) != '```' && preg_match_all('/([`]+)(.+?)\\1/',$line,$m)){
-					foreach($m[2] as $k =>$v){
-						$line = str_replace($m[0][$k],'<code>'.$v.'</code>',$line);
-					}
-				}
-				if(preg_match_all('/\!\[(.*?)\]\((.+?)\)/',$line,$m)){
-					foreach($m[1] as $k =>$v){
-						$line = str_replace($m[0][$k],sprintf('<img src="%s" alt="%s" />',$m[2][$k],$m[1][$k]),$line);
-					}
-				}
-				if(preg_match_all('/\[(.*?)\]\((.+?)\)/',$line,$m)){
-					foreach($m[1] as $k =>$v){
-						$line = str_replace($m[0][$k],sprintf('<a href="%s">%s</a>',$m[2][$k],$m[1][$k]),$line);
-					}
-				}
 				$trim_line = trim($line);
 				
 				if(!empty($trim_line)){
@@ -74,12 +52,39 @@ class Md{
 				$lines[] = $line.'<br />';
 			}
 		}
-		$r = implode(PHP_EOL,$lines);
+		$result = implode(PHP_EOL,$lines);
+		
+		if(preg_match_all('/([`]+)(.+?)\\1/',$result,$m)){
+			foreach($m[2] as $k =>$v){
+				$result = str_replace($m[0][$k],'<code>'.$v.'</code>',$result);
+			}
+		}
+		
+		foreach(['\*\*'=>'strong','__'=>'em','~~'=>'s'] as $p => $t){
+			if(preg_match_all('/'.$p.'(.+?)'.$p.'/',$result,$m)){
+				foreach($m[1] as $k =>$v){
+					$result = str_replace($m[0][$k],'<'.$t.'>'.$v.'</'.$t.'>',$result);
+				}
+			}
+		}
+		if(preg_match_all('/\!\[(.*?)\]\((.+?)\)/',$result,$m)){
+			foreach($m[1] as $k =>$v){
+				$result = str_replace($m[0][$k],sprintf('<img src="%s" alt="%s" />',$m[2][$k],$m[1][$k]),$result);
+			}
+		}
+		if(preg_match_all('/\[(.*?)\]\((.+?)\)/',$result,$m)){
+			foreach($m[1] as $k =>$v){
+				if(empty($m[1][$k])){
+					$m[1][$k] = $m[2][$k];
+				}
+				$result = str_replace($m[0][$k],sprintf('<a href="%s">%s</a>',$m[2][$k],$m[1][$k]),$result);
+			}
+		}		
 		
 		foreach($escape as $k => $e){
-			$r = str_replace('@%'.$k,$e,$r);
+			$result = str_replace('@%'.$k,$e,$result);
 		}
-		return $r;
+		return $result;
 	}
 	private function html_pre($line,&$explode_lines,&$lines){
 		$pre_lines = [];
