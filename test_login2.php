@@ -1,5 +1,5 @@
 <?php
-include_once('autoload.php');
+include_once('bootstrap.php');
 
 \ebi\Flow::app([
 	'plugins'=>'test.flow.plugin.Login2',
