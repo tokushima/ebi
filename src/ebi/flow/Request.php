@@ -95,6 +95,14 @@ class Request extends \ebi\Request{
 		){
 			$this->login_required();
 		}
+		if(isset($annon['user_role']['value']) && is_object($this->user())){
+			$role = $annon['user_role']['value'];
+			$traits = \ebi\Util::get_class_traits(get_class($this->user()));
+			
+			if(!in_array(\ebi\UserRole::class, $traits) || !in_array($role,$this->user()->get_role())){
+				throw new \ebi\exception\InvalidRoleException();
+			}
+		}
 	}
 	/**
 	 * 後処理

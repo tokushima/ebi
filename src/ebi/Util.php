@@ -398,4 +398,22 @@ class Util{
 		}
 		return $value;
 	}
+	/**
+	 * 与えられたクラスのtraitを全て返します
+	 * @param string $class
+	 * @return array
+	 */
+	public static function get_class_traits($class){
+		$ref = new \ReflectionClass($class);
+		$traits = [];
+		
+		while(true){
+			$traits = array_merge($traits,$ref->getTraitNames());
+			
+			if(($ref = $ref->getParentClass()) === false){
+				break;
+			}
+		}
+		return array_unique($traits);
+	}
 }
