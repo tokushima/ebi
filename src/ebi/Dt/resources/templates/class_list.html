@@ -4,7 +4,7 @@
 
 <h4 class="text-warning">Classes</h4>
 
-<table class="table table-condensed" style="margin-bottom: 50px;">
+<table class="table table-condensed" style="margin-bottom: 50px; margin-left: 5px;">
 <rt:loop param="{$class_list}" var="summary" key="package">
 	<rt:notif param="{$f.is_subclass_of($package,'Exception')}">
 	<tr>
@@ -17,7 +17,7 @@
 
 
 <h4 class="text-warning">Exceptions</h4>
-<table class="table table-condensed" style="margin-bottom: 50px;">
+<table class="table table-condensed" style="margin-bottom: 50px; margin-left: 5px;">
 <rt:loop param="{$class_list}" var="summary" key="package">
 	<rt:if param="{$f.is_subclass_of($package,'Exception')}">
 	<tr>
