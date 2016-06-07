@@ -5,5 +5,5 @@ namespace ebi\exception;
  * @author tokushima
  */
 class NotPermittedException extends \ebi\Exception{
-	public $message = 'not permitted'
+	public $message = 'not permitted';
 }

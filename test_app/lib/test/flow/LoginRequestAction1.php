@@ -24,4 +24,10 @@ class LoginRequestAction1 extends \ebi\flow\Request{
 		}
 		return ['abc'=>123];
 	}
+	/**
+	 * @user_role 100
+	 */
+	public function not_user_perm(){
+		
+	}
 }

@@ -24,3 +24,7 @@ eq(401,$b->status());
 eq(url('test_login1::login'),$b->url());
 eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 
+$b->do_post(url('test_login1::not_user_perm'));
+eq(200,$b->status());
+eq('{"error":[{"message":"not permitted","type":"NotPermittedException"}]}',$b->body());
+
