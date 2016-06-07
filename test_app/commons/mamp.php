@@ -10,5 +10,5 @@
 	],
 ]);
 
-include_once('local.php');
+include_once('./local.php');
 

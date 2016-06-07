@@ -17,6 +17,10 @@ include_once('bootstrap.php');
 			'name'=>'aaa',
 			'action'=>'test.flow.LoginRequestAction1::aaa',
 		],
+		'not_user_perm'=>[
+			'name'=>'not_user_perm',
+			'action'=>'test.flow.LoginRequestAction1::not_user_perm',
+		],
 		'aaa'=>[
 			'name'=>'aaa',
 			'action'=>'test.flow.LoginRequestAction1::aaa',
