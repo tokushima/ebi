@@ -60,7 +60,7 @@ class Request extends \ebi\Request{
 	 */
 	public function before(){
 		list(,$method) = explode('::',$this->get_selected_pattern()['action']);
-		$annon = \ebi\Annotation::get_method(get_class($this), $method,['http_method','request']);
+		$annon = \ebi\Annotation::get_method(get_class($this), $method,['http_method','request','user_role']);
 			
 		if(isset($annon['http_method']['value']) && strtoupper($annon['http_method']['value']) != \ebi\Request::method()){
 			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
@@ -95,12 +95,14 @@ class Request extends \ebi\Request{
 		){
 			$this->login_required();
 		}
-		if(isset($annon['user_role']['value']) && is_object($this->user())){
-			$role = $annon['user_role']['value'];
-			$traits = \ebi\Util::get_class_traits(get_class($this->user()));
-			
-			if(!in_array(\ebi\UserRole::class, $traits) || !in_array($role,$this->user()->get_role())){
-				throw new \ebi\exception\InvalidRoleException();
+		if(isset($annon['user_role']['value'])){
+			if(
+				!$this->is_user_logged_in() || 
+				!is_object($this->user()) || 
+				!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) || 
+				!in_array($annon['user_role']['value'],$this->user()->get_role())
+			){
+				throw new \ebi\exception\NotPermittedException();
 			}
 		}
 	}
