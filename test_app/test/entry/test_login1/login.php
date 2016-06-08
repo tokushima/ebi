@@ -24,6 +24,17 @@ eq(401,$b->status());
 eq(url('test_login1::login'),$b->url());
 eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 
+
+// ログインしてなければ401
+$b->do_post(url('test_login1::not_user_perm'));
+eq(401,$b->status());
+
+$b->vars('user','tokushima');
+$b->vars('password','hogehoge');
+$b->do_post(url('test_login1::login'));
+eq(200,$b->status());
+
+// ログインしていればエラー
 $b->do_post(url('test_login1::not_user_perm'));
 eq(200,$b->status());
 eq('{"error":[{"message":"not permitted","type":"NotPermittedException"}]}',$b->body());
