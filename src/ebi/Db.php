@@ -22,18 +22,26 @@ class Db implements \Iterator{
 		if(empty($def)){
 			$def = \ebi\Conf::get('connection',[]);
 		}
-		foreach(['type','host','dbname','user','password','port','sock','encode','timezone'] as $k){
-			${$k} = isset($def[$k]) ? $def[$k] : null;
-		}
+		$type = isset($def['type']) ? $def['type'] : null;
+		$host = isset($def['host']) ? $def['host'] : null;
+		$dbname = isset($def['dbname']) ? $def['dbname'] : null;
+		$port = isset($def['port']) ? $def['port'] : null;
+		$user = isset($def['user']) ? $def['user'] : null;
+		$password = isset($def['password']) ? $def['password'] : null;
+		$sock = isset($def['sock']) ? $def['sock'] : null;
+		$encode = isset($def['encode']) ? $def['encode'] : null;
+		$timezone = isset($def['timezone']) ? $def['timezone'] : null;
+		
 		if(empty($type)){
 			$type = \ebi\DbConnector::type();
-			if(empty($host)) $host = ':memory:';
 		}
 		if(empty($encode)){
 			$encode = 'utf8';
 		}
 		$type = str_replace('.','\\',$type);
-		if($type[0] !== '\\') $type = '\\'.$type;		
+		if($type[0] !== '\\'){
+			$type = '\\'.$type;
+		}
 		
 		if(empty($type) || !class_exists($type)){
 			throw new \ebi\exception\ConnectionException('could not find connector `'.((substr($s=str_replace("\\",'.',$type),0,1) == '.') ? substr($s,1) : $s).'`');
