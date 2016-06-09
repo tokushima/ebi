@@ -1,4 +1,7 @@
 <?php
+if(is_dir(getcwd().'/lib')){
+	set_include_path(get_include_path().PATH_SEPARATOR.getcwd().'/lib');
+}
 spl_autoload_register(function($c){
 	if(!empty($c)){
 		$cp = str_replace('\\','/',(($c[0] == '\\') ? substr($c,1) : $c));
