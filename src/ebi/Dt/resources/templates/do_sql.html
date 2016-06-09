@@ -26,30 +26,37 @@
 </div>
 </rt:if>
 
+
 <rt:if param="maximum">
-	<div class="alert alert-error">
+	<div class="alert alert-danger">
 		結果が100件を超えたため省略されました
 	</div>
 </rt:if>
 
-<table>
-<thead>
-<tr>
-	<rt:loop param="result_keys" var="key">
-	<th>{$key}</th>
-	</rt:loop>
-</tr>
-</thead>
-<tbody>
-	<rt:loop param="result_list" var="result">
+<rt:if param="{$result_list}">
+	<table>
+	<thead>
 	<tr>
-		<rt:loop param="result" var="var">
-			<td>{$t.html($var)}</td>
+		<rt:loop param="result_keys" var="key">
+		<th>{$key}</th>
 		</rt:loop>
 	</tr>
-	</rt:loop>
-</tbody>
-</table>
+	</thead>
+	<tbody>
+		<rt:loop param="result_list" var="result">
+		<tr>
+			<rt:loop param="result" var="var">
+				<td>{$t.html($var)}</td>
+			</rt:loop>
+		</tr>
+		</rt:loop>
+	</tbody>
+	</table>
+<rt:else />
+	<div class="alert alert-warning">
+		結果がありません
+	</div>
+</rt:if>
 
 <rt:invalid />
 
