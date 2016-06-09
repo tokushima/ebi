@@ -36,13 +36,10 @@ class DbConnector{
 		}
 		$con = null;
 		
-		if(empty($host)){
-			$host = empty($name) ? ':memory:' : getcwd();
+		if(empty($name)){
+			$name = getcwd().'/data.sqlite3';
 		}
 		if($host != ':memory:'){
-			if(empty($name)){
-				$name = 'data';
-			}
 			if(strpos($name,'.') === false){
 				$name = $name.'.sqlite3';
 			}
