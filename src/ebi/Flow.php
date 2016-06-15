@@ -151,7 +151,7 @@ class Flow{
 	 */
 	public static function app($map=[]){
 		if(empty($map)){
-			$map = ['patterns'=>[''=>['action'=>'ebi.Dt','mode'=>'@dev']]];
+			$map = ['patterns'=>[''=>['action'=>'ebi.Dt','mode'=>'local']]];
 		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
 		}else if(is_array($map) && !isset($map['patterns'])){
