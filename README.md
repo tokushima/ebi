@@ -2,7 +2,7 @@ ebi
 ====
 __2012-12-25__
 
-PHP framework (PHP 5 >= 5.6.0)
+PHP framework (PHP 5 >= 5.5.26)
 
 ![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/resources/media/ebi.png)
 
