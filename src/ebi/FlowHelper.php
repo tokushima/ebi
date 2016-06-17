@@ -206,8 +206,11 @@ class FlowHelper{
 	 * @param number $add 加算する秒数
 	 * @return number
 	 */
-	public function time($add=0){
-		return (time() + $add);
+	public function time($add=0,$time=null){
+		if(empty($time)){
+			$time = time();
+		}
+		return ($time + $add);
 	}
 	/**
 	 * 改行を削除(置換)する
