@@ -239,18 +239,14 @@ class Conf{
 	public static function set_class_plugin($class,$obj=null){
 		if(is_array($class)){
 			foreach($class as $c => $v){
-				$c = str_replace("\\",'.',$c);
-				if($c[0] === '.') $c = substr($c,1);				
-				
-				foreach($v as $k => $value){
-					if(!isset(self::$plugins[$c]) || !array_key_exists($k,self::$plugins[$c])){
-						self::$plugins[$c][] = $value;
-					}
-				}
+				static::set_class_plugin($c,$v);
 			}
 		}else if(!empty($obj)){
-			$class = str_replace("\\",'.',$class);
-			if($class[0] === '.') $class = substr($class,1);
+			$class = str_replace('.','\\',$class);
+			
+			if($class[0] === '\\'){
+				$class = substr($class,1);
+			}
 			if(!is_array($obj)){
 				$obj = [$obj];
 			}
@@ -266,7 +262,6 @@ class Conf{
 	 */
 	public static function get_class_plugin($class){
 		$rtn = [];
-		$class = str_replace('\\','.',$class);
 		
 		if(isset(self::$plugins[$class])){
 			$rtn = self::$plugins[$class];
