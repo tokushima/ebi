@@ -4,7 +4,7 @@ __2012-12-25__
 
 PHP framework (PHP 5 >= 5.5.26)
 
-![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/resources/media/ebi.png)
+![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/ebi.png)
 
 
 
@@ -48,17 +48,16 @@ cmdmanにpharファイルを指定するとphar内で利用できるコマンド
 ```
 $ php cmdman.phar ebi.phar 
 
-cmdman 20160421.232725 (PHP 7.0.1)
+cmdman 20160621.215129 (PHP 7.0.1)
 Type 'php cmdman.phar subcommand --help' for usage.
 
 Subcommands:
   ebi.phar#ebi.Dt::apidoc           : publish API Document
   ebi.phar#ebi.Dt::classdoc         : publish Classes Document
-  ebi.phar#ebi.Dt::dao_create_table : モデルからtableを作成する
-  ebi.phar#ebi.Dt::dao_export       : dao data export
-  ebi.phar#ebi.Dt::dao_import       : dao data import
+  ebi.phar#ebi.Dt::dao_create_table : create table
+  ebi.phar#ebi.Dt::dao_export       : data export
+  ebi.phar#ebi.Dt::dao_import       : data import
   ebi.phar#ebi.Dt::setup            : Application setup
-  ebi.phar#ebi.Dt::start            : 簡易ランチャー作成
 ```
 
 
