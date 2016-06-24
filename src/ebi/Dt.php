@@ -848,6 +848,8 @@ class Dt{
 				// vendor以外の定義されているパスを探す
 				foreach($loader->getPrefixes() as $ns){
 					foreach($ns as $path){
+						$path = realpath($path);
+						
 						if(strpos($path,$vendor_dir) === false){
 							$include_path[] = $path;
 						}
