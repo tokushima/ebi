@@ -1,13 +1,13 @@
 <?php
 $src = <<< 'PRE'
 <table><tr><td><table rt:param="xyz" rt:var="o">
-<tr class="odd"><td>{$o["B"]}</td></tr>
+<tr><td>{$o["B"]}</td></tr>
 </table></td></tr></table>
 PRE;
 $result = <<< 'PRE'
-<table><tr><td><table><tr class="odd"><td>222</td></tr>
-<tr class="even"><td>444</td></tr>
-<tr class="odd"><td>666</td></tr>
+<table><tr><td><table><tr><td>222</td></tr>
+<tr><td>444</td></tr>
+<tr><td>666</td></tr>
 </table></td></tr></table>
 PRE;
 $t = new \ebi\Template();
@@ -33,8 +33,8 @@ $t->vars("abc",array(array("A","B"),array("C","D")));
 eq($result,$t->get($src));
 
  
-$src = '<table rt:param="xyz" rt:var="o"><tr class="odd"><td>{$o["B"]}</td></tr></table>';
-$result = '<table><tr class="odd"><td>222</td></tr><tr class="even"><td>444</td></tr><tr class="odd"><td>666</td></tr></table>';
+$src = '<table rt:param="xyz" rt:var="o"><tr><td>{$o["B"]}</td></tr></table>';
+$result = '<table><tr><td>222</td></tr><tr><td>444</td></tr><tr><td>666</td></tr></table>';
 $t = new \ebi\Template();
 $t->vars("xyz",array(array("A"=>"111","B"=>"222"),array("A"=>"333","B"=>"444"),array("A"=>"555","B"=>"666")));
 eq($result,$t->get($src));
@@ -47,8 +47,8 @@ $t->vars("xyz",array(array("A"=>"111","B"=>"222"),array("A"=>"333","B"=>"444"),a
 eq($result,$t->get($src));
 
 
-$src = '<ul rt:param="xyz" rt:var="o"><li class="odd">{$o["B"]}</li></ul>';
-$result = '<ul><li class="odd">222</li><li class="even">444</li><li class="odd">666</li></ul>';
+$src = '<ul rt:param="xyz" rt:var="o"><li>{$o["B"]}</li></ul>';
+$result = '<ul><li>222</li><li>444</li><li>666</li></ul>';
 $t = new \ebi\Template();
 $t->vars("xyz",array(array("A"=>"111","B"=>"222"),array("A"=>"333","B"=>"444"),array("A"=>"555","B"=>"666")));
 eq($result,$t->get($src));

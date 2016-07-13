@@ -304,6 +304,15 @@ class FlowHelper{
 		return ($a == $b);
 	}
 	/**
+	 * !=
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return boolean
+	 */
+	public function neq($a,$b){
+		return ($a != $b);
+	}
+	/**
 	 * aがbより小さい
 	 * @param integer $a
 	 * @param integer $b
@@ -397,5 +406,16 @@ class FlowHelper{
 			}
 		}
 		return false;
+	}
+	/**
+	 * オブジェクトのクラス名を返す
+	 * @param object $obj
+	 * @return string
+	 */
+	public function get_class($obj){
+		if(is_object($obj)){
+			return get_class($obj);
+		}
+		return '';
 	}
 }
