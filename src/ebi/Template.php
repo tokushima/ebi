@@ -415,10 +415,18 @@ class Template{
 				if(!$tag->is_attr('param')){
 					throw new \ebi\exception\InvalidTemplateException('if');
 				}
+				$uniq = uniqid('$I');
+				$arg1 = $this->variable_string($this->parse_plain_variable($tag->in_attr('param')));
+				
 				$src = str_replace(
 					$tag->plain(),
 					$this->php_exception_catch(
-						sprintf('<?php if(%s){ ?>',$this->variable_string($this->parse_plain_variable($tag->in_attr('param')))).
+						sprintf(
+							'<?php try{ %s=%s; }catch(\Exception $e){ %s=null; } ?>'.
+							'<?php if(%s){ ?>',
+							$uniq,$arg1,$uniq,
+							$uniq
+						).
 						preg_replace('/<rt\:else[\s]*.*?>/i','<?php }else{ ?>',$tag->value()).'<?php } ?>'),
 					$src
 				);

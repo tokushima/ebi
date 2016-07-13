@@ -10,10 +10,10 @@
 	{$method_name}
 
 	<rt:if param="{$http_method}">
-		<rt:if param="{$http_method}" value="POST">
+		<rt:if param="{$t.eq($http_method,'POST')}">
 			<span class="label label-danger">POST</span>
 		<rt:else />
-			<rt:if param="{$http_method}" value="GET">
+			<rt:if param="{$t.eq($http_method,'GET')}">
 				<span class="label label-warning">GET</span>
 			<rt:else />
 				<span class="label label-default">{$http_method}</span>
