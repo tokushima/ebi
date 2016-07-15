@@ -295,6 +295,14 @@ class FlowHelper{
 		return json_encode($value);
 	}
 	/**
+	 * !=
+	 * @param mixed $a
+	 * @return boolean 
+	 */
+	public function not($a){
+		return !($a);
+	}
+	/**
 	 * ==
 	 * @param mixed $a
 	 * @param mixed $b
