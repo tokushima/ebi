@@ -380,76 +380,58 @@ class Template{
 				$var = '$'.$tag->in_attr('var','_v_'.$uniq);
 				$key = '$'.$tag->in_attr('key','_k_'.$uniq);
 				$counter = '$'.$tag->in_attr('counter','_c_'.$uniq);
-				$evenodd = '$'.$tag->in_attr('evenodd','loop_evenodd');
-				$even = $tag->in_attr('even_value','even');
-				$odd = $tag->in_attr('odd_value','odd');
 				
 				$src = $this->php_exception_catch(str_replace(
-							$tag->plain(),
-							sprintf('<?php '
-										.' %s=%s; '
-										.' %s = 0; '
-										.' foreach(%s as %s => %s){'
-											.' %s++; '
-											.' %s=((%s %% 2) === 0) ? \'%s\' : \'%s\';'
-									.' ?>'
-											.'%s'
-									.'<?php '
-										.' } '
-									.' ?>'
-										,$varname,$param
-										,$counter
-										,$varname,$key,$var
-											,$counter
-											,$evenodd,$counter,$even,$odd
-										,$value
-							)
-							,$src
-						));
+					$tag->plain(),
+					sprintf('<?php '
+								.' %s=%s; '
+								.' %s = 0; '
+								.' foreach(%s as %s => %s){'
+									.' %s++; '
+							.' ?>'
+									.'%s'
+							.'<?php '
+								.' } '
+							.' ?>'
+							,$varname,$param
+							,$counter
+							,$varname,$key,$var
+								,$counter
+							,$value
+					)
+					,$src
+				));
 			}
 		}catch(\ebi\exception\NotFoundException $e){
 		}
 		return $src;
 	}
 	private function rtif($src){
-		foreach(['rt:if'=>'','rt:notif'=>'!'] as $rttag => $not){
-			try{
-				while(true){
-					$tag = \ebi\Xml::extract($src,$rttag);
-					$tag->escape(false);
-					if(!$tag->is_attr('param')){
-						throw new \ebi\exception\InvalidTemplateException('if');
-					}
-					$arg1 = $this->variable_string($this->parse_plain_variable($tag->in_attr('param')));
-	
-					if($tag->is_attr('value')){
-						$arg2 = $this->parse_plain_variable($tag->in_attr('value'));
-						if($arg2 == 'true' || $arg2 == 'false' || preg_match('/^-?[0-9]+$/',(string)$arg2)){
-							$cond = sprintf('<?php if(%s(%s === %s || %s === "%s")){ ?>',$not,$arg1,$arg2,$arg1,$arg2);
-						}else{
-							if($arg2 === '' || $arg2[0] != '$') $arg2 = '"'.$arg2.'"';
-							$cond = sprintf('<?php if(%s(%s === %s)){ ?>',$not,$arg1,$arg2);
-						}
-					}else{
-						$uniq = uniqid('$I');
-						$cond = sprintf(
-									'<?php try{ '
-										.' %s=%s; '
-									.'}catch(\Exception $e){ %s=null; } ?>'
-									.'<?php if(%s(%s !== null && %s !== false && ( (!is_string(%s) && !is_array(%s)) || (is_string(%s) && %s !== "") || (is_array(%s) && !empty(%s)) ) )){ ?>'
-											,$uniq,$arg1
-											,$uniq
-											,$not,$uniq,$uniq,$uniq,$uniq,$uniq,$uniq,$uniq,$uniq
-								);
-					}
-					$src = str_replace(
-								$tag->plain(),
-								$this->php_exception_catch($cond.preg_replace('/<rt\:else[\s]*.*?>/i','<?php }else{ ?>',$tag->value()).'<?php } ?>')
-								,$src
-							);
+		try{
+			while(true){
+				$tag = \ebi\Xml::extract($src,'rt:if');
+				$tag->escape(false);
+				
+				if(!$tag->is_attr('param')){
+					throw new \ebi\exception\InvalidTemplateException('if');
 				}
-			}catch(\ebi\exception\NotFoundException $e){
+				$uniq = uniqid('$I');
+				$arg1 = $this->variable_string($this->parse_plain_variable($tag->in_attr('param')));
+				
+				$src = str_replace(
+					$tag->plain(),
+					$this->php_exception_catch(
+						sprintf(
+							'<?php try{ %s=%s; }catch(\Exception $e){ %s=null; } ?>'.
+							'<?php if(%s){ ?>',
+							$uniq,$arg1,$uniq,
+							$uniq
+						).
+						preg_replace('/<rt\:else[\s]*.*?>/i','<?php }else{ ?>',$tag->value()).'<?php } ?>'),
+					$src
+				);
 			}
+		}catch(\ebi\exception\NotFoundException $e){
 		}
 		return $src;
 	}
@@ -633,10 +615,10 @@ class Template{
 		return sprintf('<?php if('
 					.((strpos($name,'->') === false) ? 'isset('.$name.') && ' : '')
 					.'(%s === %s '
-										.' || (!is_array(%s) && ctype_digit((string)%s) && (string)%s === (string)%s)'
-										.' || ((%s === "true" || %s === "false") ? (%s === (%s == "true")) : false)'
-										.' || in_array(%s,((is_array(%s)) ? %s : (is_null(%s) ? [] : [%s])),true) '
-									.') '
+							.' || (!is_array(%s) && ctype_digit((string)%s) && (string)%s === (string)%s)'
+							.' || ((%s === "true" || %s === "false") ? (%s === (%s == "true")) : false)'
+							.' || in_array(%s,((is_array(%s)) ? %s : (is_null(%s) ? [] : [%s])),true) '
+						.') '
 					.'){ print(" %s=\"%s\""); } ?>' // no escape
 					,$name,$value
 					,$name,$name,$name,$value
@@ -659,41 +641,28 @@ class Template{
 				$name = strtolower($obj->name());
 				$param = $obj->in_attr('rt:param');
 				$value = sprintf('<rt:loop param="%s" var="%s" counter="%s" '
-									.'key="%s" '
-									.'evenodd="%s" even_value="%s" odd_value="%s" '
-									.'>'
-								,$param,$obj->in_attr('rt:var','loop_var'),$obj->in_attr('rt:counter','loop_counter')
-								,$obj->in_attr('rt:key','loop_key')
-								,$obj->in_attr('rt:evenodd','loop_evenodd'),$obj->in_attr('rt:even_value','even'),$obj->in_attr('rt:odd_value','odd')
-							);
+					.'key="%s" '
+					.'>'
+					,$param,$obj->in_attr('rt:var','loop_var'),$obj->in_attr('rt:counter','loop_counter')
+					,$obj->in_attr('rt:key','loop_key')
+				);
 				$rawvalue = $obj->value();
-				$loop_evenodd = $obj->in_attr('rt:evenodd','loop_evenodd');
+
 				if($name == 'table'){
 					try{
 						$t = \ebi\Xml::extract($rawvalue,'tbody');
 						$t->escape(false);
-						$t->value($value.$this->table_tr_even_odd($t->value(),'tr',$loop_evenodd).'</rt:loop>');
+						$t->value($value.$t->value().'</rt:loop>');
 						$value = str_replace($t->plain(),$t->get(),$rawvalue);
 					}catch(\ebi\exception\NotFoundException $e){
-						$value = $value.$this->table_tr_even_odd($rawvalue,'tr',$loop_evenodd).'</rt:loop>';
+						$value = $value.$rawvalue.'</rt:loop>';
 					}
 				}else{
-					$value = $value.$this->table_tr_even_odd($rawvalue,'li',$loop_evenodd).'</rt:loop>';
+					$value = $value.$rawvalue.'</rt:loop>';
 				}
 				$obj->value($this->html_list($value));
-				$obj->rm_attr('rt:param','rt:key','rt:var','rt:counter','rt:evenodd','rt:even_value','rt:odd_value');
+				$obj->rm_attr('rt:param','rt:key','rt:var','rt:counter');
 				$src = str_replace($obj->plain(),$obj->get(),$src);
-			}
-		}
-		return $src;
-	}
-	private function table_tr_even_odd($src,$name,$even_odd){
-		foreach(\ebi\Xml::anonymous($src)->find($name) as $tr){
-			$tr->escape(false);
-			$class = ' '.$tr->in_attr('class').' ';
-			if(preg_match('/[\s](even|odd)[\s]/',$class,$match)){
-				$tr->attr('class',trim(str_replace($match[0],' {$'.$even_odd.'} ',$class)));
-				$src = str_replace($tr->plain(),$tr->get(),$src);
 			}
 		}
 		return $src;

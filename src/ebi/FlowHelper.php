@@ -295,6 +295,14 @@ class FlowHelper{
 		return json_encode($value);
 	}
 	/**
+	 * !=
+	 * @param mixed $a
+	 * @return boolean 
+	 */
+	public function not($a){
+		return !($a);
+	}
+	/**
 	 * ==
 	 * @param mixed $a
 	 * @param mixed $b
@@ -302,6 +310,15 @@ class FlowHelper{
 	 */
 	public function eq($a,$b){
 		return ($a == $b);
+	}
+	/**
+	 * !=
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return boolean
+	 */
+	public function neq($a,$b){
+		return ($a != $b);
 	}
 	/**
 	 * aがbより小さい
@@ -397,5 +414,16 @@ class FlowHelper{
 			}
 		}
 		return false;
+	}
+	/**
+	 * オブジェクトのクラス名を返す
+	 * @param object $obj
+	 * @return string
+	 */
+	public function get_class($obj){
+		if(is_object($obj)){
+			return get_class($obj);
+		}
+		return '';
 	}
 }

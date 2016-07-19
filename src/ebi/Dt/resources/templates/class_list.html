@@ -6,12 +6,12 @@
 
 <table class="table table-condensed" style="margin-bottom: 50px; margin-left: 5px;">
 <rt:loop param="{$class_list}" var="summary" key="package">
-	<rt:notif param="{$f.is_subclass_of($package,'Exception')}">
+	<rt:if param="{$t.neq($f.is_subclass_of($package,'Exception'))}">
 	<tr>
 		<td style="width: 30%;"><a href="{$t.package_method_url('class_doc',$package)}">{$package}</a></td>
 		<td style="width: 70%; color: #aaaaaa;">{$summary}</td>
 	</tr>
-	</rt:notif>
+	</rt:if>
 </rt:loop>
 </table>
 

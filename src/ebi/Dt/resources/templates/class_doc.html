@@ -280,7 +280,7 @@
 <table rt:param="{$added_plugins}" rt:var="plugin_class" class="table table-condensed" style="margin-bottom: 50px;">
 <tr>
 	<td>
-		<rt:if param="{$plugin_class}" value="Closure">
+		<rt:if param="{$t.eq($plugin_class,'Closure')}">
 			{$plugin_class}
 		<rt:else />
 			<a href="{$t.package_method_url('class_doc',$plugin_class)}">{$plugin_class}</a>
