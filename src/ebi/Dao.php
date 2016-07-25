@@ -510,6 +510,7 @@ abstract class Dao extends \ebi\Object{
 	private function save_verify_primary_unique(){
 		$q = new \ebi\Q();
 		$primary = false;
+		
 		foreach($this->primary_columns() as $column){
 			$value = $this->{$column->name()}();
 			if($this->prop_anon($column->name(),'type') === 'serial'){
@@ -571,8 +572,10 @@ abstract class Dao extends \ebi\Object{
 					}
 				}
 				try{
-					if($this->{'verify_'.$column->name()}() === false){
-						\ebi\Exceptions::add(new \ebi\exception\VerifyException($column->name().' verification failed'),$column->name());
+					if(method_exists($this,'__verify_'.$column->name().'__')){
+						if(call_user_func([$this,'__verify_'.$column->name().'__']) === false){
+							\ebi\Exceptions::add(new \ebi\exception\VerifyException($column->name().' verification failed'),$column->name());							
+						}
 					}
 				}catch(\ebi\Exceptions $e){
 				}catch(\Exception $e){
@@ -904,11 +907,10 @@ abstract class Dao extends \ebi\Object{
 	 * @return string 生成されたユニークコード
 	 */
 	public function set_unique_code($prop_name,$size=null){
-		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		/**
 		 * ユニークコードで利用する文字
 		 * 
-		 * @param string $base ex. ABCDEFGHJKLMNPQRSTUWXY01234567890
+		 * @param string $base ex. ABCDEFGHJKLMNPQRSTUWXY0123456789
 		 */
 		$base = $this->prop_anon($prop_name,'base',\ebi\Conf::get('unique_code_base'));
 		
@@ -938,18 +940,27 @@ abstract class Dao extends \ebi\Object{
 				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
 			}
 		}
+		
 		$code = '';
 		$challenge = 0;
 		$challenge_max = 10;
 		$bool = true;
+		$prefix = '';
+		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
+		
+		if(method_exists($this,'__unique_code_prefix__')){
+			$prefix = call_user_func_array([$this,'__unique_code_prefix__'],[$prop_name,$base]);
+			$length = $length - strlen($prefix);
+		}		
+		$has_verify_func = method_exists($this,'__verify_'.$prop_name.'__');
+		$bool = true;		
 		
 		while($code == ''){
 			for($i=0;$i<=$challenge_max;$i++){
-				$code = \ebi\Code::rand($base,$length);
+				$code = $prefix.\ebi\Code::rand($base,$length);
 				$this->{$prop_name}($code);
-				$bool = true;
 				
-				if($this->{'verify_'.$prop_name}() === false){
+				if($has_verify_func && call_user_func([$this,'__verify_'.$prop_name.'__']) === false){
 					$bool = false;
 				}else{
 					break;
@@ -963,7 +974,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			$code = '';
 			$this->{$prop_name}($code);
-			usleep(1000); // 1ms
+			usleep(1000);
 		}
 		return $code;
 	}
@@ -1113,12 +1124,6 @@ abstract class Dao extends \ebi\Object{
 			}
 		}
 		return $this;
-	}
-	/**
-	 * @return boolean
-	 */
-	protected function ___verify___(){
-		return true;
 	}
 	/**
 	 * テーブルの作成
