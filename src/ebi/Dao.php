@@ -453,6 +453,10 @@ abstract class Dao extends \ebi\Object{
 	protected function __before_save__(){}
 	protected function __after_save__(){}
 	
+	protected function __verify_props__($prop_name){
+		return true;
+	}
+	
 	/**
 	 * 発行したSQLの記録を開始する
 	 * @return mixed[]
@@ -572,10 +576,13 @@ abstract class Dao extends \ebi\Object{
 					}
 				}
 				try{
-					if(method_exists($this,'__verify_'.$column->name().'__')){
-						if(call_user_func([$this,'__verify_'.$column->name().'__']) === false){
-							\ebi\Exceptions::add(new \ebi\exception\VerifyException($column->name().' verification failed'),$column->name());							
-						}
+					if($this->__verify_props__($column->name()) === false){
+						\ebi\Exceptions::add(
+							new \ebi\exception\VerifyException(
+								$column->name().' verification failed'
+							),
+							$column->name()
+						);
 					}
 				}catch(\ebi\Exceptions $e){
 				}catch(\Exception $e){
@@ -952,29 +959,22 @@ abstract class Dao extends \ebi\Object{
 			$prefix = call_user_func_array([$this,'__unique_code_prefix__'],[$prop_name,$base]);
 			$length = $length - strlen($prefix);
 		}		
-		$has_verify_func = method_exists($this,'__verify_'.$prop_name.'__');
-		$bool = true;		
-		
 		while($code == ''){
 			for($i=0;$i<=$challenge_max;$i++){
 				$code = $prefix.\ebi\Code::rand($base,$length);
-				$this->{$prop_name}($code);
+				call_user_func_array([$this,$prop_name],[$code]);
 				
-				if($has_verify_func && call_user_func([$this,'__verify_'.$prop_name.'__']) === false){
-					$bool = false;
-				}else{
-					break;
+				if($this->__verify_props__($prop_name) !== false && 
+					static::find_count(Q::eq($prop_name,$code)) === 0
+				){
+					break 2;
 				}
-			}
-			if($bool && static::find_count(Q::eq($prop_name,$code)) == 0){
-				break;
 			}
 			if($challenge++ > $challenge_max){
 				throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException($prop_name.': generate unique code retry limit over');
 			}
-			$code = '';
-			$this->{$prop_name}($code);
 			usleep(1000);
+			$code = '';
 		}
 		return $code;
 	}
