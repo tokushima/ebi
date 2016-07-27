@@ -8,7 +8,9 @@ class UniqueCodeIgnore extends \test\db\UniqueCode{
 	protected $id;
 	protected $code1;
 	
-	protected function __verify_code1__(){
-		return !preg_match('/^[0-8]$/',$this->code1);
+	protected function __verify_props__($prop_name){
+		if($prop_name == 'code1'){
+			return !preg_match('/^[0-8]$/',$this->code1);
+		}
 	}
 }
