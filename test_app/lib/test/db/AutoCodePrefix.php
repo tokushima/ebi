@@ -7,7 +7,7 @@ class AutoCodePrefix extends \ebi\Dao{
 	protected $id;
 	protected $code;
 	
-	public function __unique_code_prefix__($name,$codebase){
+	public function __prefix_code__($codebase){
 		$time = time();
 
 		return \ebi\Code::encode($codebase,date('Y',$time)).

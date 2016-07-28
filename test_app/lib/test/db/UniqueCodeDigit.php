@@ -12,9 +12,7 @@ class UniqueCodeDigit extends UniqueCode{
 	protected $code2;
 	protected $code3;
 	
-	protected function __verify_props__($prop_name){
-		if($prop_name == 'code2'){
-			return !preg_match('/^000.+000$/',$this->code2);
-		}
+	protected function __verify_code2__(){
+		return !preg_match('/^000.+000$/',$this->code2);
 	}
 }
