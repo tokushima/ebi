@@ -453,10 +453,6 @@ abstract class Dao extends \ebi\Object{
 	protected function __before_save__(){}
 	protected function __after_save__(){}
 	
-	protected function __verify_props__($prop_name){
-		return true;
-	}
-	
 	/**
 	 * 発行したSQLの記録を開始する
 	 * @return mixed[]
@@ -576,7 +572,7 @@ abstract class Dao extends \ebi\Object{
 					}
 				}
 				try{
-					if($this->__verify_props__($column->name()) === false){
+					if(method_exists($this,'__verify_'.$column->name().'__') && call_user_func([$this,'__verify_'.$column->name().'__']) === false){
 						\ebi\Exceptions::add(
 							new \ebi\exception\VerifyException(
 								$column->name().' verification failed'
@@ -954,9 +950,10 @@ abstract class Dao extends \ebi\Object{
 		$bool = true;
 		$prefix = '';
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
+		$vefify_func = method_exists($this,'__verify_'.$prop_name.'__');
 		
-		if(method_exists($this,'__unique_code_prefix__')){
-			$prefix = call_user_func_array([$this,'__unique_code_prefix__'],[$prop_name,$base]);
+		if(method_exists($this,'__prefix_'.$prop_name.'__')){
+			$prefix = call_user_func_array([$this,'__prefix_'.$prop_name.'__'],[$base]);
 			$length = $length - strlen($prefix);
 		}		
 		while($code == ''){
@@ -964,7 +961,7 @@ abstract class Dao extends \ebi\Object{
 				$code = $prefix.\ebi\Code::rand($base,$length);
 				call_user_func_array([$this,$prop_name],[$code]);
 				
-				if($this->__verify_props__($prop_name) !== false && 
+				if((!$vefify_func || call_user_func([$this,'__verify_'.$prop_name.'__']) !== false) && 
 					static::find_count(Q::eq($prop_name,$code)) === 0
 				){
 					break 2;
