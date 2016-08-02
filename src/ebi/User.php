@@ -12,6 +12,6 @@ class User{
 		$this->id = $id;
 	}
 	public function id(){
-		return $this->id();
+		return $this->id;
 	}
 }
