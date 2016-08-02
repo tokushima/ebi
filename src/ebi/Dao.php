@@ -915,7 +915,7 @@ abstract class Dao extends \ebi\Object{
 		 * 
 		 * @param string $base ex. ABCDEFGHJKLMNPQRSTUWXY0123456789
 		 */
-		$base = $this->prop_anon($prop_name,'base',\ebi\Conf::get('unique_code_base'));
+		$base = $this->prop_anon($prop_name,'base');
 		
 		if(empty($base)){
 			/**
@@ -924,14 +924,14 @@ abstract class Dao extends \ebi\Object{
 			 * 
 			 * 0: 数字 0123456789
 			 * a: 小文字 abcdefghjkmnprstuvwxy
-			 * A: 大文字 ABCDEFGHJKLMNPQRSTUWXY
+			 * A: 大文字 ABCDEFGHJKLMNPQRSTUVWXY
 			 * 
 			 * @param string $unique_code_ctype 0aAの組み合わせ
 			 */
-			$ctype = $this->prop_anon($prop_name,'ctype',\ebi\Conf::get('unique_code_ctype','0a'));
+			$ctype = $this->prop_anon($prop_name,'ctype','0A');
 			
 			if(strpos($ctype,'A') !== false){
-				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';
+				$base .= 'ABCDEFGHJKLMNPQRSTUVWXY';
 			}
 			if(strpos($ctype,'a') !== false){
 				$base .= 'abcdefghjkmnprstuvwxy';

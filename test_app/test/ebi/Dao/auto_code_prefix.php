@@ -4,7 +4,7 @@
 
 
 
-$codebase = 'abcdefghjkmnprstuvwxy0123456789';
+$codebase = 'ABCDEFGHJKLMNPQRSTUVWXY0123456789';
 $time = time();
 
 $code = \ebi\Code::encode($codebase,date('Y',$time)).
