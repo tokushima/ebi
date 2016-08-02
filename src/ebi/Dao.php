@@ -928,7 +928,7 @@ abstract class Dao extends \ebi\Object{
 			 * 
 			 * @param string $unique_code_ctype 0aAの組み合わせ
 			 */
-			$ctype = $this->prop_anon($prop_name,'ctype','0A');
+			$ctype = $this->prop_anon($prop_name,'ctype','0a');
 			
 			if(strpos($ctype,'A') !== false){
 				$base .= 'ABCDEFGHJKLMNPQRSTUVWXY';
