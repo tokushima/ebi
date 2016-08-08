@@ -370,7 +370,7 @@ class Util{
 	}
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
-	 * @param mixed $bool
+	 * @param integer $bool true: 1, それ以外: 0
 	 */
 	public static function is_true($bool){
 		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? 1 : 0;		
