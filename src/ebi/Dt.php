@@ -885,7 +885,15 @@ class Dt{
 		 * @param string[] $vendor
 		 */
 		$use_vendor = \ebi\Conf::get('use_vendor',[]);
+		$use_vendor_callback = \ebi\Conf::get('use_vendor_callback');
 		
+		if(!empty($use_vendor_callback)){
+			$callback_result = call_user_func($use_vendor_callback);
+			
+			if(is_array($callback_result)){
+				$use_vendor = array_merge($use_vendor,$callback_result);
+			}
+		}
 		if(is_array($use_vendor)){
 			foreach($use_vendor as $class){
 				$find_package = false;
