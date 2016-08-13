@@ -57,6 +57,20 @@ if(defined('COMMONDIR')){
 		include_once($f);
 	}
 }
+if(\ebi\Conf::exists('ebi.Conf','timezone')){
+	$timezone = \ebi\Conf::get('ebi.Conf::timezone');
+	
+	if(date_default_timezone_set($timezone) === false){
+		throw new \InvalidArgumentException($timezone.' is not supported');
+	}
+}
+if(\ebi\Conf::exists('ebi.Conf','language')){
+	$language = \ebi\Conf::get('ebi.Conf::language');
+	
+	if(mb_language($language) === false){
+		throw new \InvalidArgumentException($language.' is not supported');
+	}
+}
 if(!defined('CMDMAN_ERROR_CALLBACK')){
 	define('CMDMAN_ERROR_CALLBACK','\\ebi\\Log::error');
 }
