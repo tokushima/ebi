@@ -33,7 +33,7 @@ class Db implements \Iterator{
 		$timezone = isset($def['timezone']) ? $def['timezone'] : null;
 		
 		if(empty($type)){
-			$type = \ebi\DbConnector::type();
+			$type = \ebi\SqliteConnector::type();
 		}
 		if(empty($encode)){
 			$encode = 'utf8';

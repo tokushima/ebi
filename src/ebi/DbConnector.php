@@ -1,15 +1,15 @@
 <?php
 namespace ebi;
 /**
- * DB接続クラス(SQLite)
+ * DB接続IF
  * @author tokushima
  *
  */
-class DbConnector{
+abstract class DbConnector{
 	protected $encode;
 	protected $timezone;
 	protected $quotation = '`';
-	protected $order_random_str = 'random()';
+	protected $order_random_str;
 	
 	public function __construct($encode=null,$timezone=null){
 		$this->encode = $encode;
@@ -29,37 +29,8 @@ class DbConnector{
 	 * @param boolean $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
-		unset($port,$user,$password,$sock);
-		
-		if(!extension_loaded('pdo_sqlite')){
-			throw new \ebi\exception\ConnectionException('pdo_sqlite not supported');
-		}
-		$con = null;
-		
-		if(empty($name)){
-			$name = getcwd().'/data.sqlite3';
-		}
-		if($host != ':memory:'){
-			if(strpos($name,'.') === false){
-				$name = $name.'.sqlite3';
-			}
-			$host = str_replace('\\','/',$host);
-			if(substr($host,-1) != '/'){
-				$host = $host.'/';
-			}
-			$path = \ebi\Util::path_absolute($host,$name);
-			\ebi\Util::mkdir(dirname($path));
-		}
-		try{
-			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $path));
-			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
-		}catch(\PDOException $e){
-			throw new \ebi\exception\ConnectionException($e->getMessage());
-		}
-		return $con;
 	}
 	public function last_insert_id_sql(){
-		return new \ebi\Daq('select last_insert_rowid() as last_insert_id;');
 	}
 	/**
 	 * insert文を生成する
@@ -111,8 +82,10 @@ class DbConnector{
 		$vars = array_merge($updatevars,$wherevars);
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
-			'update '.$this->quotation($column->table()).' set '.implode(',',$update).' where '.implode(' and ',$where).(empty($where_sql) ? '' : ' and '.$where_sql)
-			,array_merge($vars,$where_vars)
+			'update '.$this->quotation($column->table()).' set '.
+			implode(',',$update).' where '.implode(' and ',$where).
+			(empty($where_sql) ? '' : ' and '.$where_sql),
+			array_merge($vars,$where_vars)
 		);
 	}
 	/**
@@ -165,10 +138,8 @@ class DbConnector{
 		foreach($dao->columns() as $column){
 			if($name === null || ($break = ($column->name() == $name))){
 				$column_map = $column->table_alias().'.'.$this->quotation($column->column());
+				$column_map = $this->select_column_format($column_map,$dao,$column,['date_format'=>$date_format]);
 
-				if(isset($date_format[$column->name()])){
-					$column_map = $this->date_format($column_map,$date_format[$column->name()]);
-				}
 				$select[] = $column_map.' '.$column->column_alias();
 				$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
 				
@@ -203,7 +174,7 @@ class DbConnector{
 	protected function select_option_sql($paginator,$order){
 		return ' '
 		.(empty($order) ? '' : ' order by '.implode(',',$order))
-		.(($paginator instanceof \ebi\Paginator) ? sprintf(" limit %d,%d ",$paginator->offset(),$paginator->limit()) : '')
+		.(($paginator instanceof \ebi\Paginator) ? sprintf(' limit %d,%d ',$paginator->offset(),$paginator->limit()) : '')
 		;
 	}
 	/**
@@ -296,14 +267,14 @@ class DbConnector{
 		$exec_map = $target_column->table_alias().'.'.$this->quotation($target_column->column());
 		
 		if(isset($date_format[$target_column->name()])){
-			$exec_map = $this->date_format($exec_map,$date_format[$target_column->name()]);
+			$exec_map = $this->date_format($exec_map,$dao,$target_column,$date_format[$target_column->name()]);
 		}
 		if(!empty($gorup_name)){
 			$group_column = $this->get_column($gorup_name,$dao->columns());
 			$column_map = $group_column->table_alias().'.'.$this->quotation($group_column->column());
 			
 			if(isset($date_format[$group_column->name()])){
-				$column_map = $this->date_format($column_map,$date_format[$group_column->name()]);
+				$column_map = $this->date_format($column_map,$dao,$group_column,$date_format[$group_column->name()]);
 			}
 			$select[] = $column_map.' key_column';			
 		}
@@ -601,15 +572,14 @@ class DbConnector{
 		}
 		return $value;
 	}
-	protected function date_format($table_column,$require){
-		$fmt = [];
-		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%M','s'=>'%S'];
-	
-		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
-			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
+	protected function select_column_format($column_map,$dao,$column,$info){
+		if(isset($info['date_format'][$column->name()])){
+			return $this->date_format($column_map,$dao,$column,$info['date_format'][$column->name()]);
 		}
-		$f = $fmt[0].'/'.$fmt[1].'/'.$fmt[2].' '.$fmt[3].':'.$fmt[4].':'.$fmt[5];
-		return 'strftime(\''.$f.'\',replace('.$table_column.',\'/\',\'-\'))';
+		return $column_map;
+	}
+	protected function date_format($column_map,$dao,$column,$require){
+		return $column_map;
 	}
 }
 

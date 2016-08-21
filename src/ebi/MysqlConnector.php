@@ -113,7 +113,7 @@ class MysqlConnector extends \ebi\DbConnector{
 		$dbc = \ebi\Dao::connection(get_class($dao));		
 		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->table(),$dbc->name());
 	}
-	protected function date_format($table_column,$require){
+	protected function date_format($column_map,$dao,$column,$require){
 		$fmt = [];
 		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%i','s'=>'%s'];
 	

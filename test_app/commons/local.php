@@ -20,7 +20,7 @@
 	],
 	'ebi.Dt'=>[
 		'ignore'=>[
-			'test.*',
+//			'test.*',
 		],
 		'use_vendor'=>[
 			\ebi\SmtpBlackholeDao::class,
@@ -30,6 +30,11 @@
 //		'config'=>false,
 //		'model'=>false,
 //		'data'=>false,
+	],
+	'ebi.Dao'=>[
+		'connection'=>[
+			'*'=>['type'=>'ebi.SqliteConnector','timezone'=>'Asia/Tokyo'],
+		]
 	],
 ]);
 
