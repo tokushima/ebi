@@ -426,13 +426,4 @@ class FlowHelper{
 		}
 		return '';
 	}
-	/**
-	 * あるオブジェクトが指定したクラスのサブクラスに属するか
-	 * @param object $obj
-	 * @param string $class_name
-	 * @return boolean
-	 */
-	public function is_subclass_of($obj,$class_name){
-		return is_subclass_of($object, $class_name);
-	}
 }
