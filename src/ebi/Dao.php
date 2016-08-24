@@ -948,10 +948,13 @@ abstract class Dao extends \ebi\Object{
 		$challenge = 0;
 		$challenge_max = 10;
 		$bool = true;
-		$prefix = '';
-		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$vefify_func = method_exists($this,'__verify_'.$prop_name.'__');
+		$prefix = '';
+		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'length');
 		
+		if(empty($length)){
+			$length = $this->prop_anon($prop_name,'max',32);
+		}
 		if(method_exists($this,'__prefix_'.$prop_name.'__')){
 			$prefix = call_user_func_array([$this,'__prefix_'.$prop_name.'__'],[$base]);
 			$length = $length - strlen($prefix);
