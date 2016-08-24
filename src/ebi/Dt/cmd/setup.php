@@ -9,7 +9,7 @@ $cmddir = defined('COMMONDIR') ? constant('COMMONDIR') : (getcwd().'/commons');
 $mode_list = [];
 if(is_dir($cmddir)){
 	foreach(new \RecursiveDirectoryIterator($cmddir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS) as $f){
-		if(substr($f->getFilename(),-1) != '_' && substr($f->getFilename(),-4) == '.php'){
+		if(substr($f->getFilename(),0) != '_' && substr($f->getFilename(),-4) == '.php'){
 			$mode_list[] = substr($f->getFilename(),0,-4);
 		}
 	}
