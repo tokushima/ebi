@@ -49,7 +49,7 @@ class Dt{
 	public function get_after_vars(){
 		return [
 			'f'=>new \ebi\Dt\Helper($this->perms),
-			'appmode'=>(defined('APPMODE') ? constant('APPMODE') : ''),
+			'appmode'=>constant('APPMODE')
 		];
 	}
 	private function perm($name){
@@ -1102,7 +1102,7 @@ class Dt{
 	 */
 	public static function setup_file(){
 		$dir = defined('COMMONDIR') ? dirname(constant('COMMONDIR')) : getcwd();
-		return $dir.'/setup/'.(defined('APPMODE') ? constant('APPMODE') : 'local').'.php';
+		return $dir.'/setup/'.constant('APPMODE').'.php';
 	}
 	/**
 	 * アプリケーションモードに従い初期処理を実行する

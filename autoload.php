@@ -57,6 +57,9 @@ if(defined('COMMONDIR')){
 		include_once($f);
 	}
 }
+if(!defined('TIMESTAMP_FORMAT')){
+	define('TIMESTAMP_FORMAT','c'); // ISO 8601
+}
 if(!defined('CMDMAN_ERROR_CALLBACK')){
 	define('CMDMAN_ERROR_CALLBACK','\\ebi\\Log::error');
 }

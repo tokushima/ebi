@@ -18,10 +18,10 @@ class HelperReplace{
 					if(ctype_digit($v)){
 						switch($type){
 							case 'date':
-								$form->attr('value',date('Y/m/d',$v));
+								$form->attr('value',date('Y-m-d',$v));
 								break;
 							case 'timestamp':
-								$form->attr('value',date('Y/m/d H:i:s',$v));
+								$form->attr('value',date(constant('TIMESTAMP_FORMAT'),$v));
 								break;
 							case 'time':
 								$h = floor($v / 3600);

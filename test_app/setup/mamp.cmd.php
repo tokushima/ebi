@@ -1,2 +1,2 @@
 <?php
-include('../../setup/local.cmd.php');
+include('local.cmd.php');

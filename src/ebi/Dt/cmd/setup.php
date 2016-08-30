@@ -3,8 +3,8 @@
  * Application setup
  */
 
-$appmode = defined('APPMODE') ? constant('APPMODE') : null;
-$cmddir = defined('COMMONDIR') ? constant('COMMONDIR') : (getcwd().'/commons');
+$appmode = constant('APPMODE');
+$cmddir = constant('COMMONDIR');
 
 $mode_list = [];
 if(is_dir($cmddir)){

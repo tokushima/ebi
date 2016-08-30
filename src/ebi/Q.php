@@ -446,7 +446,7 @@ class Q{
 			$d = $xp[0].'/'.(isset($xp[1]) ? $xp[1] : '12').'/';
 			$d = isset($xp[2]) ? 
 					($d.$xp[2]) : 
-					date('Y/m/d',strtotime('last day of '.$d.'01'));
+					date('Y-m-d',strtotime('last day of '.$d.'01'));
 				
 			if(!isset($exp[1])){
 				$to = $d.' 23:59:59';

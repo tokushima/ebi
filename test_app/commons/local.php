@@ -2,7 +2,7 @@
 \ebi\Conf::set([
 	'ebi.Conf'=>[
 		'appmode_group'=>[
-			'dev'=>['local'],
+			'dev'=>['local','mamp'],
 		],
 	],
 	'ebi.Log'=>[

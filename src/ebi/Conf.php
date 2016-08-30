@@ -81,7 +81,7 @@ class Conf{
 	 * @return string
 	 */
 	public static function appmode(){
-		return defined('APPMODE') ? constant('APPMODE') : null;
+		return constant('APPMODE');
 	}
 	/**
 	 * 現在のアプリケーションモードがモードに所属しているか

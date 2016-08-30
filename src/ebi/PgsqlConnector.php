@@ -129,8 +129,8 @@ class PgsqlConnector extends \ebi\DbConnector{
 		if($value === null) return null;
 		try{
 			switch($dao->prop_anon($name,'type')){
-				case 'timestamp': return date('Y/m/d H:i:s',$value);
-				case 'date': return date('Y/m/d',$value);
+				case 'timestamp': return date('Y-m-d H:i:s',$value);
+				case 'date': return date('Y-m-d',$value);
 				case 'boolean': return (int)$value;
 			}
 		}catch(\Exception $e){
@@ -144,7 +144,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
 			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
 		}
-		$f = $fmt[0].'/'.$fmt[1].'/'.$fmt[2].' '.$fmt[3].':'.$fmt[4].':'.$fmt[5];
+		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 		return 'DATE_FORMAT('.$table_column.',\''.$f.'\')';
 	}
 }

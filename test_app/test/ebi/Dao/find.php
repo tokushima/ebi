@@ -225,7 +225,7 @@ $result = \test\db\Find::find_all(Q::eq('updated',null));
 eq(6,sizeof($result));
 $result = \test\db\Find::find_all(Q::neq('updated',null));
 eq(2,sizeof($result));
-eq('2008/12/24 10:00:00',$result[0]->fm_updated());
+eq('2008-12-24T10:00:00+09:00',$result[0]->fm_updated());
 
 $c = 0;
 for($i=0;$i<10;$i++){

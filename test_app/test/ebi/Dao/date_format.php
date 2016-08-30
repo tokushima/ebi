@@ -4,18 +4,18 @@ use \ebi\Q;
 \test\db\DateFormat::create_table();
 \test\db\DateFormat::find_delete();
 
-$date = strtotime('2015/07/04 12:34:56');
+$date = strtotime('2015/07/04 00:00:00'); // 2015/07/04T00:00:00 +09:00
 $obj = new \test\db\DateFormat();
 $obj->ts($date);
 $obj->num(10);
 $obj->save();
 
 foreach(\test\db\DateFormat::find() as $o){
-	eq(date('Y/m/d H:i:s',$date),$o->fm_ts());
+	eq(date('c',$date),$o->fm_ts());
 }
 
 foreach(\test\db\DateFormat::find(Q::date_format('ts','Ym')) as $o){
-	eq(date('Y/m/01 00:00:00',$date),$o->fm_ts());
+	eq(date('c',strtotime('2015/07/01 00:00:00')),$o->fm_ts());
 }
 
 $date = strtotime('2015/07/01 12:34:56');
@@ -31,7 +31,7 @@ $obj->num(30);
 $obj->save();
 
 foreach(\test\db\DateFormat::find(Q::date_format('ts','Ym')) as $o){
-	eq(date('Y/m/01 00:00:00',$date),$o->fm_ts());
+	eq(date('c',strtotime('2015/07/01 00:00:00')),$o->fm_ts());
 }
 
 $date = strtotime('2015/08/30 12:34:56');

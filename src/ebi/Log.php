@@ -99,8 +99,11 @@ class Log{
 	public function level(){
 		return $this->level;
 	}
-	public function time($format='Y/m/d H:i:s'){
-		return (empty($format)) ? $this->time : date($format,$this->time);
+	public function time($format=null){
+		if(empty($format)){
+			$format = constant('TIMESTAMP_FORMAT');
+		}
+		return date($format,$this->time);
 	}
 	public function file(){
 		return $this->file;

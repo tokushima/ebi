@@ -559,12 +559,12 @@ abstract class DbConnector{
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
 					}
-					return date('Y/m/d H:i:s',$value);
+					return date(constant('TIMESTAMP_FORMAT'),$value);
 				case 'date':
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
 					}					
-					return date('Y/m/d',$value);
+					return date('Y-m-d',$value);
 				case 'boolean':
 					return (int)$value;
 			}
