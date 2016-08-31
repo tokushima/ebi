@@ -199,7 +199,7 @@ class FlowHelper{
 	 */
 	public function date_format($format=null,$value=null){
 		if(empty($format)){
-			$format = constant('TIMESTAMP_FORMAT');
+			$format = \ebi\Conf::timestamp_format();
 		}
 		if(empty($value)){
 			$value = time();

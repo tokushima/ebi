@@ -7,7 +7,7 @@ namespace ebi\flow\plugin;
  */
 class SimpleAuth{
 	public function login_condition(\ebi\flow\Request $req){
-		$users = \ebi\Conf::get('users',[]);
+		$users = \ebi\Conf::gets('users');
 		
 		foreach($users as $user_name => $password){
 			if(

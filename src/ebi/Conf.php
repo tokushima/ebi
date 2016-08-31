@@ -5,7 +5,7 @@ namespace ebi;
  * @author tokushima
  */
 class Conf{
-	private static $value = [];
+	private static $value = ['ebi.Conf'=>[]];
 	private static $plugins = [];
 	/**
 	 * 定義情報をセットする
@@ -46,36 +46,104 @@ class Conf{
 	public static function exists($class,$key){
 		return (isset(self::$value[$class]) && array_key_exists($key,self::$value[$class]));
 	}
-	/**
-	 * 定義情報を取得する
-	 * @param string $key
-	 * @param mixed $default
-	 */
-	public static function get($key,$default=null,$return_vars=null){
+	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
-			list(,$d) = debug_backtrace(false);
+			list(,,$d) = debug_backtrace(false);
+				
 			if(!isset($d['class'])){
 				throw new \ebi\exception\BadMethodCallException('bad key');
 			}
 			$class = str_replace('\\','.',$d['class']);
-			if($class[0] === '.') $class = substr($class,1);
-			if(preg_match('/^(.+?\.[A-Z]\w*)/',$class,$m)) $class = $m[1];
+			
+			if($class[0] === '.'){
+				$class = substr($class,1);
+			}
+			if(preg_match('/^(.+?\.[A-Z]\w*)/',$class,$m)){
+				$class = $m[1];
+			}
 		}else{
 			list($class,$key) = explode('@',$key,2);
 		}
-		$result = self::exists($class,$key) ? self::$value[$class][$key] : $default;
-		if(is_array($return_vars)){
-			if(empty($return_vars) && !is_array($result)){
-				return [$result];
-			}
-			$result_vars = [];
-			foreach($return_vars as $var_name){
-				$result_vars[] = isset($result[$var_name]) ? $result[$var_name] : null;
-			}
-			return $result_vars;
-		}
-		return $result;
+		return [$class,$key];
 	}
+	/**
+	 * 定義情報を取得する
+	 * @param string $key
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public static function get($key,$default=null){
+		list($class,$key) = self::get_defined_class_key($key);
+		return self::exists($class,$key) ? self::$value[$class][$key] : $default;
+	}
+
+	/**
+	 * 定義情報を配列で取得する
+	 * @param string $key
+	 * @param mixed $default
+	 * @return array
+	 */	
+	public static function gets($key,$default=[],$return_vars=[]){
+		list($class,$key) = self::get_defined_class_key($key);
+		$result = self::exists($class,$key) ? self::$value[$class][$key] : $default;
+		
+		if(!empty($result) && !is_array($result)){
+			$result = [$result];
+		}
+		if(empty($return_vars)){
+			return $result;
+		}
+		$result_vars = [];
+		
+		foreach($return_vars as $var_name){
+			$result_vars[] = isset($result[$var_name]) ? $result[$var_name] : null;
+		}
+		return $result_vars;
+	}
+	/**
+	 * Pluginに遅延セットする
+	 * @param string $class
+	 * @param string $obj
+	 */
+	public static function set_class_plugin($class,$obj=null){
+		if(is_array($class)){
+			foreach($class as $c => $v){
+				static::set_class_plugin($c,$v);
+			}
+		}else if(!empty($obj)){
+			$class = str_replace('.','\\',$class);
+				
+			if($class[0] === '\\'){
+				$class = substr($class,1);
+			}
+			if(!is_array($obj)){
+				$obj = [$obj];
+			}
+			foreach($obj as $o){
+				self::$plugins[$class][] = $o;
+			}
+		}
+	}
+	/**
+	 * Pluginに遅延セットされたオブジェクトを返す
+	 * @param string $class
+	 * @return array
+	 */
+	public static function get_class_plugin($class){
+		$rtn = [];
+	
+		if(isset(self::$plugins[$class])){
+			$rtn = self::$plugins[$class];
+			unset(self::$plugins[$class]);
+		}
+		return $rtn;
+	}
+	private static function get_self_value($key,$d=null){
+		return array_key_exists($key,self::$value['ebi.Conf']) ? self::$value['ebi.Conf'][$key] : $d;
+	}
+	
+	
+	
 	/**
 	 * アプリケーションの動作環境
 	 * @return string
@@ -100,10 +168,10 @@ class Conf{
 		 * 
 		 * @param array $group
 		 */
-		$group = \ebi\Conf::get('appmode_group',[]);
+		$group = self::get_self_value('appmode_group',[]);		
 		$chkmode = is_array($mode) ? 
-						$mode : 
-						((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));
+			$mode : 
+			((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));
 		
 		foreach($chkmode as $m){
 			if(substr($m,0,1) == '@'){
@@ -127,7 +195,7 @@ class Conf{
 		/**
 		 * ワーキングディレクトリ
 		 */
-		$dir = \ebi\Conf::get('work_dir');
+		$dir = self::get_self_value('work_dir');
 		
 		if(empty($dir)){
 			$dir = defined('WORK_DIR') ? constant('WORK_DIR') : (getcwd().'/work/');
@@ -147,7 +215,7 @@ class Conf{
 		/**
 		 * リソースファイルのディレクトリ
 		 */
-		$dir = \ebi\Conf::get('resource_dir');
+		$dir = self::get_self_value('resource_dir');
 		
 		if(empty($dir)){
 			$dir = defined('RESOURCE_DIR') ? constant('RESOURCE_DIR') : (getcwd().'/resources/');
@@ -170,41 +238,41 @@ class Conf{
 		 * デフォルトは、0 です
 		 * @param integer $val
 		 */
-		$cookie_lifetime = \ebi\Conf::get('cookie_lifetime',0);
+		$cookie_lifetime = self::get_self_value('cookie_lifetime',0);
 		
 		/**
 		 * クッキーで設定するパス
 		 * デフォルトは、/ です
 		 * @param string $val
 		 */
-		$cookie_path = \ebi\Conf::get('cookie_path','/');
+		$cookie_path = self::get_self_value('cookie_path','/');
 		
 		/**
 		 * クッキーで指定するドメイン
 		 * @param string $val
 		 */
-		$cookie_domain = \ebi\Conf::get('cookie_domain');
+		$cookie_domain = self::get_self_value('cookie_domain');
 		
 		/**
 		 *  セキュアな接続を通じてのみCookieを送信できるか
 		 * デフォルトは、false です
 		 * @param boolean $val
 		 */
-		$cookie_secure = \ebi\Conf::get('cookie_secure',false);
+		$cookie_secure = self::get_self_value('cookie_secure',false);
 		
 		/**
 		 * セッション名
 		 * デフォルトは、SID です
 		 * @param string $val
 		 */
-		$session_name = \ebi\Conf::get('session_name','SID');
+		$session_name = self::get_self_value('session_name','SID');
 		
 		/**
 		 * キャッシュの有効期限 (分)
 		 * デフォルトは、180 です
 		 * @param integer $val
 		 */
-		$session_expire = \ebi\Conf::get('session_expire',180);
+		$session_expire = self::get_self_value('session_expire',180);
 		
 		/**
 		 * キャッシュリミッタの名前 public / private_no_expire / private / nocache
@@ -212,7 +280,7 @@ class Conf{
 		 * @param string $val
 		 * @see http://jp2.php.net/manual/ja/function.session-cache-limiter.php
 		 */
-		$session_limiter = \ebi\Conf::get('session_limiter','nocache');
+		$session_limiter = self::get_self_value('ebi.Conf@session_limiter','nocache');
 		
 		return [
 			'session_name'=>$session_name,
@@ -229,44 +297,20 @@ class Conf{
 	 * @return string
 	 */
 	public static function session_name(){
-		return \ebi\Conf::get('session_name','SID');
+		return self::get_self_value('session_name','SID');
 	}
 	/**
-	 * Pluginに遅延セットする
-	 * @param string $class
-	 * @param string $obj
+	 * timestampの表現書式
+	 * @return string 
 	 */
-	public static function set_class_plugin($class,$obj=null){
-		if(is_array($class)){
-			foreach($class as $c => $v){
-				static::set_class_plugin($c,$v);
-			}
-		}else if(!empty($obj)){
-			$class = str_replace('.','\\',$class);
-			
-			if($class[0] === '\\'){
-				$class = substr($class,1);
-			}
-			if(!is_array($obj)){
-				$obj = [$obj];
-			}
-			foreach($obj as $o){
-				self::$plugins[$class][] = $o;
-			}
-		}
+	public static function timestamp_format(){
+		return self::get_self_value('timestamp_format','c');
 	}
 	/**
-	 * Pluginに遅延セットされたオブジェクトを返す
-	 * @param string $class
-	 * @return array
+	 * dateの表現書式
+	 * @return string
 	 */
-	public static function get_class_plugin($class){
-		$rtn = [];
-		
-		if(isset(self::$plugins[$class])){
-			$rtn = self::$plugins[$class];
-			unset(self::$plugins[$class]);
-		}
-		return $rtn;
+	public static function date_format(){
+		return self::get_self_value('date_format','Y-m-d');
 	}
 }

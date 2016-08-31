@@ -101,7 +101,7 @@ class Log{
 	}
 	public function time($format=null){
 		if(empty($format)){
-			$format = constant('TIMESTAMP_FORMAT');
+			$format = \ebi\Conf::timestamp_format();
 		}
 		return date($format,$this->time);
 	}

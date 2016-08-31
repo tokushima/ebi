@@ -33,7 +33,7 @@
 	],
 	'ebi.Dao'=>[
 		'connection'=>[
-			'*'=>['type'=>'ebi.SqliteConnector','timezone'=>'Asia/Tokyo'],
+			'*'=>['type'=>'ebi.SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
 ]);

@@ -20,7 +20,7 @@ class Db implements \Iterator{
 	 */
 	public function __construct(array $def=[]){
 		if(empty($def)){
-			$def = \ebi\Conf::get('connection',[]);
+			$def = \ebi\Conf::gets('connection');
 		}
 		$type = isset($def['type']) ? $def['type'] : null;
 		$host = isset($def['host']) ? $def['host'] : null;

@@ -138,7 +138,7 @@ abstract class Dao extends \ebi\Object{
 			 * 
 			 * @param string{} $connection 接続情報配列
 			 */
-			self::$_connection_settings_ = \ebi\Conf::get('connection');
+			self::$_connection_settings_ = \ebi\Conf::gets('connection');
 			
 			if(empty(self::$_connection_settings_)){
 				self::$_connection_settings_ = ['*'=>['host'=>getcwd(),]];
@@ -1020,23 +1020,6 @@ abstract class Dao extends \ebi\Object{
 							break;
 						case 'intdate':
 							$this->{$column->name()}(date('Ymd'));
-							break;
-					}
-				}else if($this->prop_anon($column->name(),'auto_future_add') === true){
-					/**
-					 * auto_future_add アノテーションが定義された場合に設定される日付
-					 * 
-					 * @param string $date ex. 2038/01/01 00:00:00
-					 */
-					$time = strtotime(\ebi\Conf::get('future_date','2038/01/01 00:00:00'));
-					
-					switch($this->prop_anon($column->name(),'type')){
-						case 'timestamp':
-						case 'date':
-							$this->{$column->name()}($time);
-							break;
-						case 'intdate':
-							$this->{$column->name()}(date('Ymd',$time));
 							break;
 					}
 				}

@@ -559,12 +559,12 @@ abstract class DbConnector{
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
 					}
-					return date(constant('TIMESTAMP_FORMAT'),$value);
+					return date(\ebi\Conf::timestamp_format(),$value);
 				case 'date':
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
 					}					
-					return date('Y-m-d',$value);
+					return date(\ebi\Conf::date_format(),$value);
 				case 'boolean':
 					return (int)$value;
 			}

@@ -21,7 +21,7 @@ class HelperReplace{
 								$form->attr('value',date('Y-m-d',$v));
 								break;
 							case 'timestamp':
-								$form->attr('value',date(constant('TIMESTAMP_FORMAT'),$v));
+								$form->attr('value',date(\ebi\Conf::timestamp_format(),$v));
 								break;
 							case 'time':
 								$h = floor($v / 3600);

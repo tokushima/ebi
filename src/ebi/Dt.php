@@ -177,7 +177,7 @@ class Dt{
 		 * 一覧から除外するクラス名のパターン(正規表現)
 		 * @param string[] $ignore
 		 */
-		$ignore_patterns = \ebi\Conf::get('ignore',[]);
+		$ignore_patterns = \ebi\Conf::gets('ignore');
 		
 		if(!empty($ignore_patterns)){
 			foreach($ignore_patterns as $p){
@@ -884,7 +884,7 @@ class Dt{
 		 * 利用するvendorのクラス
 		 * @param string[] $vendor
 		 */
-		$use_vendor = \ebi\Conf::get('use_vendor',[]);
+		$use_vendor = \ebi\Conf::gets('use_vendor');
 		$use_vendor_callback = \ebi\Conf::get('use_vendor_callback');
 		
 		if(!empty($use_vendor_callback)){
