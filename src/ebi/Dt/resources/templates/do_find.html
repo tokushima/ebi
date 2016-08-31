@@ -12,10 +12,8 @@
 			<span class="divider"></span>
 		</li>
 		
-		<rt:if param="{$f.perm('data')}">
-			<li><a href="{$t.package_method_url('do_create',$package)}">Create</a> <span class="divider"></span></li>
-			<li><a href="{$t.package_method_url('do_sql',$package)}">SQL</a></li>
-		</rt:if>
+		<li><a href="{$t.package_method_url('do_create',$package)}">Create</a> <span class="divider"></span></li>
+		<li><a href="{$t.package_method_url('do_sql',$package)}">SQL</a></li>
 	</ul>
 
 	<rt:block name="content_body">
@@ -50,29 +48,23 @@
 		<table rt:param="object_list" rt:var="obj" rt:counter="counter">
 		<thead>
 			<tr>
-				<rt:if param="{$f.perm('data')}">
-					<th></th>
-				</rt:if>
+				<th></th>
 				<rt:loop param="{$f.props($model)}" var="name">
 					<th><a href="?{$paginator.query_order($name)}">{$t.trim_width($t.text($name),50,'..')}</a></th>
 				</rt:loop>
-				<rt:if param="{$f.perm('data')}">
-					<th></th>
-				</rt:if>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<rt:if param="{$f.perm('data')}">
-					<td style="width:1em;">
-						<rt:if param="{$f.has_primary($model)}">
-							<form method="get" action="{$t.package_method_url('do_update',$package)}" style="margin:0;" id="edit_form_{$counter}">
-								{$t.noop($f.primary_hidden($obj))}
-								 <a href="#" onclick="edit_form_{$counter}.submit()"><i class="glyphicon glyphicon-edit"></i></a>
-							</form>
-						</rt:if>
-					</td>
-				</rt:if>
+				<td style="width:1em;">
+					<rt:if param="{$f.has_primary($model)}">
+						<form method="get" action="{$t.package_method_url('do_update',$package)}" style="margin:0;" id="edit_form_{$counter}">
+							{$t.noop($f.primary_hidden($obj))}
+							 <a href="#" onclick="edit_form_{$counter}.submit()"><i class="glyphicon glyphicon-edit"></i></a>
+						</form>
+					</rt:if>
+				</td>
 			
 				<rt:loop param="{$f.props($model)}" var="name">
 					<td>
@@ -80,16 +72,14 @@
 					</td>
 				</rt:loop>
 				
-				<rt:if param="{$f.perm('data')}">
-					<td style="width:1em;">
-						<rt:if param="{$f.has_primary($model)}">
-							<form method="post" action="{$t.package_method_url('do_drop',$package)}" style="margin:0;" id="delete_form_{$counter}">
-								{$t.noop($f.primary_hidden($obj))}
-								 <a href="#" onclick="delete_form_{$counter}.submit()"><i class="glyphicon glyphicon-trash glyphicon-white"></i></a>
-							</form>
-						</rt:if>
-					</td>
-				</rt:if>
+				<td style="width:1em;">
+					<rt:if param="{$f.has_primary($model)}">
+						<form method="post" action="{$t.package_method_url('do_drop',$package)}" style="margin:0;" id="delete_form_{$counter}">
+							{$t.noop($f.primary_hidden($obj))}
+							 <a href="#" onclick="delete_form_{$counter}.submit()"><i class="glyphicon glyphicon-trash glyphicon-white"></i></a>
+						</form>
+					</rt:if>
+				</td>
 			</tr>
 		
 		</tbody>

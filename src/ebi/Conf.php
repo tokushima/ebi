@@ -138,7 +138,7 @@ class Conf{
 		}
 		return $rtn;
 	}
-	private static function get_self_value($key,$d=null){
+	private static function get_self_conf_get($key,$d=null){
 		return array_key_exists($key,self::$value['ebi.Conf']) ? self::$value['ebi.Conf'][$key] : $d;
 	}
 	
@@ -158,7 +158,7 @@ class Conf{
 	 */
 	public static function in_mode($mode){
 		/**
-		 * ## アプリケーションモードのグループ 
+		 * アプリケーションモードのグループ 
 		 * 
 		 * `````````````````````````
 		 * [
@@ -168,7 +168,7 @@ class Conf{
 		 * 
 		 * @param array $group
 		 */
-		$group = self::get_self_value('appmode_group',[]);		
+		$group = self::get_self_conf_get('appmode_group',[]);		
 		$chkmode = is_array($mode) ? 
 			$mode : 
 			((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));
@@ -195,7 +195,7 @@ class Conf{
 		/**
 		 * ワーキングディレクトリ
 		 */
-		$dir = self::get_self_value('work_dir');
+		$dir = self::get_self_conf_get('work_dir');
 		
 		if(empty($dir)){
 			$dir = defined('WORK_DIR') ? constant('WORK_DIR') : (getcwd().'/work/');
@@ -215,7 +215,7 @@ class Conf{
 		/**
 		 * リソースファイルのディレクトリ
 		 */
-		$dir = self::get_self_value('resource_dir');
+		$dir = self::get_self_conf_get('resource_dir');
 		
 		if(empty($dir)){
 			$dir = defined('RESOURCE_DIR') ? constant('RESOURCE_DIR') : (getcwd().'/resources/');
@@ -238,41 +238,41 @@ class Conf{
 		 * デフォルトは、0 です
 		 * @param integer $val
 		 */
-		$cookie_lifetime = self::get_self_value('cookie_lifetime',0);
+		$cookie_lifetime = self::get_self_conf_get('cookie_lifetime',0);
 		
 		/**
 		 * クッキーで設定するパス
 		 * デフォルトは、/ です
 		 * @param string $val
 		 */
-		$cookie_path = self::get_self_value('cookie_path','/');
+		$cookie_path = self::get_self_conf_get('cookie_path','/');
 		
 		/**
 		 * クッキーで指定するドメイン
 		 * @param string $val
 		 */
-		$cookie_domain = self::get_self_value('cookie_domain');
+		$cookie_domain = self::get_self_conf_get('cookie_domain');
 		
 		/**
 		 *  セキュアな接続を通じてのみCookieを送信できるか
 		 * デフォルトは、false です
 		 * @param boolean $val
 		 */
-		$cookie_secure = self::get_self_value('cookie_secure',false);
+		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
 		/**
 		 * セッション名
 		 * デフォルトは、SID です
 		 * @param string $val
 		 */
-		$session_name = self::get_self_value('session_name','SID');
+		$session_name = self::get_self_conf_get('session_name','SID');
 		
 		/**
 		 * キャッシュの有効期限 (分)
 		 * デフォルトは、180 です
 		 * @param integer $val
 		 */
-		$session_expire = self::get_self_value('session_expire',180);
+		$session_expire = self::get_self_conf_get('session_expire',180);
 		
 		/**
 		 * キャッシュリミッタの名前 public / private_no_expire / private / nocache
@@ -280,7 +280,7 @@ class Conf{
 		 * @param string $val
 		 * @see http://jp2.php.net/manual/ja/function.session-cache-limiter.php
 		 */
-		$session_limiter = self::get_self_value('ebi.Conf@session_limiter','nocache');
+		$session_limiter = self::get_self_conf_get('session_limiter','nocache');
 		
 		return [
 			'session_name'=>$session_name,
@@ -297,20 +297,28 @@ class Conf{
 	 * @return string
 	 */
 	public static function session_name(){
-		return self::get_self_value('session_name','SID');
+		return self::get_self_conf_get('session_name','SID');
 	}
 	/**
 	 * timestampの表現書式
 	 * @return string 
 	 */
 	public static function timestamp_format(){
-		return self::get_self_value('timestamp_format','c');
+		/**
+		 * timestamp型の書式
+		 * @see http://php.net/manual/ja/function.date.php
+		 */
+		return self::get_self_conf_get('timestamp_format','c');
 	}
 	/**
 	 * dateの表現書式
 	 * @return string
 	 */
 	public static function date_format(){
-		return self::get_self_value('date_format','Y-m-d');
+		/**
+		 * date型の書式
+		 * @see http://php.net/manual/ja/function.date.php
+		 */
+		return self::get_self_conf_get('date_format','Y-m-d');
 	}
 }

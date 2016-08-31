@@ -12,7 +12,6 @@ class Dt{
 	private $entry;
 	private $entry_name;
 	private $self_class;
-	private $perms = [];
 	
 	public function __construct($entryfile=null){
 		if(empty($entryfile)){		
@@ -32,13 +31,6 @@ class Dt{
 			$this->entry = $entryfile;
 			$this->entry_name = basename($this->entry,'.php');			
 		}
-
-		$this->perms['config'] = \ebi\Conf::get('config',true);
-		$this->perms['phpinfo'] = \ebi\Conf::get('phpinfo',true);
-		$this->perms['model'] = \ebi\Conf::get('model',true);
-		$this->perms['data'] = \ebi\Conf::get('data',true);
-		$this->perms['docs'] = is_dir(\ebi\Conf::resource_path('documents/'.$this->entry_name));
-		$this->perms['coverage'] = is_file(getcwd().'/coverage.xml');
 	}
 	public function get_flow_plugins(){
 		return [
@@ -48,16 +40,10 @@ class Dt{
 	}
 	public function get_after_vars(){
 		return [
-			'f'=>new \ebi\Dt\Helper($this->perms),
+			'f'=>new \ebi\Dt\Helper(),
 			'appmode'=>constant('APPMODE')
 		];
 	}
-	private function perm($name){
-		if(!(isset($this->perms[$name]) && $this->perms[$name] === true)){
-			throw new \ebi\exception\BadMethodCallException();
-		}
-	}
-	
 	private function filter_query($query,$value){
 		$bool = true;
 		$value = strtolower($value);
@@ -87,8 +73,6 @@ class Dt{
 	 * @automap
 	 */
 	public function phpinfo(){
-		$this->perm('phpinfo');
-		
 		ob_start();
 			phpinfo();
 		$info = ob_get_clean();
@@ -304,14 +288,6 @@ class Dt{
 	 * @automap
 	 */
 	public function conf_doc($class,$conf_name){
-		/**
-		 * Configを表示・操作するか
-		 * @param boolean $arg する: true, しない: false
-		 */
-		if(\ebi\Conf::get('config') === false){
-			throw new \ebi\exception\BadMethodCallException('not permitted');
-		}
-		
 		$ref = \ebi\Dt\Man::class_info($class);
 	
 		if(!isset($ref['conf_list'][$conf_name])){
@@ -330,8 +306,6 @@ class Dt{
 	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
-		$this->perm('config');
-		
 		$query = $this->get_query();
 		$conf_list = [];
 		
@@ -360,8 +334,6 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
-		$this->perm('model');
-		
 		$query = $this->get_query();
 		$model_list = [];
 		
@@ -476,79 +448,6 @@ class Dt{
 		]);
 	}
 	
-	/**
-	 * @automap
-	 */
-	public function coverage_list(){
-		$this->perm('coverage');
-		$xml = file_get_contents(getcwd().'/coverage.xml');
-		
-		$coverage = \ebi\Xml::extract($xml,'coverage');
-		$create_date = $coverage->in_attr('create_date');
-		$covered = $coverage->in_attr('covered');
-		$file_list = [];
-		
-		foreach($coverage->find('file') as $f){
-			$file_list[] = [
-				'name'=>$f->in_attr('name'),
-				'covered'=>$f->in_attr('covered'),
-			];
-		}
-		
-		return [
-			'create_date'=>$create_date,
-			'covered'=>$covered,
-			'file_list'=>$file_list,
-		];
-	}
-	/**
-	 * @automap
-	 * @request string $file @['require'=>true]
-	 */
-	public function coverage(){
-		$this->perm('coverage');
-		$xml = file_get_contents(getcwd().'/coverage.xml');
-		
-		$req = new \ebi\Request();
-		$coverage = \ebi\Xml::extract($xml,'coverage');
-		$name = null;
-		
-		foreach($coverage->find('file') as $f){
-			if($f->in_attr('name') == $req->in_vars('file')){
-				$name = $f->in_attr('name');
-				$covered = $f->in_attr('covered');
-				$covered_lines = explode(',',$f->find_get('covered_lines')->value());
-				$uncovered_lines = explode(',',$f->find_get('uncovered_lines')->value());
-				
-				break;
-			}
-		}
-		if(empty($name)){
-			throw new \ebi\exception\NotFoundException($req->in_vars('file').' not found');
-		}
-		$src = \ebi\Util::file_read(getcwd().'/'.$req->in_vars('file'));
-		$lines = [];
-		
-		foreach(explode(PHP_EOL,$src) as $i => $v){
-			if(in_array($i+1,$covered_lines)){
-				$c = 1;
-			}else if(in_array($i+1,$uncovered_lines)){
-				$c = -1;
-			}else{
-				$c = 0;
-			}			
-			$lines[$i+1] = [
-				'value'=>$v,
-				'type'=>$c,
-			];
-		}
-		return [
-			'name'=>$name,
-			'covered'=>$covered,
-			'lines'=>$lines,
-		];
-	}
-
 	private function get_model($name,$sync=true){
 		$req = new \ebi\Request();
 		$r = new \ReflectionClass('\\'.str_replace('.','\\',$name));
@@ -579,8 +478,6 @@ class Dt{
 	 * @context string $model_name 検索対象のモデルの名前
 	 */
 	public function do_find($package){
-		$this->perm('model');
-
 		$req = new \ebi\Request();
 		$class = '\\'.str_replace('.','\\',$package);
 		$order = \ebi\Sorter::order($req->in_vars('order'),$req->in_vars('porder'));
@@ -634,7 +531,6 @@ class Dt{
 	 * @automap
 	 */
 	public function do_detail($package){
-		$this->perm('model');
 		$obj = $this->get_model($package);
 		
 		return [
@@ -649,9 +545,6 @@ class Dt{
 	 * @automap @['post_after'=>'']
 	 */
 	public function do_drop($package){
-		$this->perm('model');
-		$this->perm('data');
-		
 		$req = new \ebi\Request();
 		if($req->is_post()){
 			$this->get_model($package)->delete();
@@ -663,9 +556,6 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_update($package){
-		$this->perm('model');
-		$this->perm('data');
-		
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -689,9 +579,6 @@ class Dt{
 	 * @automap @['post_cond_after'=>['save_and_add_another'=>['do_create','@package'],'save'=>['do_find','@package']]]
 	 */
 	public function do_create($package){
-		$this->perm('model');
-		$this->perm('data');
-		
 		$result = [];
 		$req = new \ebi\Request();
 		
@@ -743,9 +630,6 @@ class Dt{
 	 * @automap
 	 */
 	public function do_sql($package){
-		$this->perm('model');
-		$this->perm('data');
-		
 		$req = new \ebi\Request();
 		$result_list = $keys = [];
 		$sql = $req->in_vars('sql');
@@ -885,6 +769,10 @@ class Dt{
 		 * @param string[] $vendor
 		 */
 		$use_vendor = \ebi\Conf::gets('use_vendor');
+		/**
+		 * 利用するvendorのクラス配列を返すメソッド
+		 * @param callback $callback
+		 */
 		$use_vendor_callback = \ebi\Conf::get('use_vendor_callback');
 		
 		if(!empty($use_vendor_callback)){
