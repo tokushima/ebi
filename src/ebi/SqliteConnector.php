@@ -65,8 +65,8 @@ class SqliteConnector extends \ebi\DbConnector{
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
 					}
-					// UTCとして保存
-					return date('Y-m-d\TH:i:s+00:00',$value - $this->timezone_offset);
+					// UTCとして扱う
+					return date('Y-m-d H:i:s',$value - $this->timezone_offset);
 				case 'date':
 					if(!ctype_digit($value)){
 						$value = strtotime($value);

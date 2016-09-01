@@ -28,7 +28,7 @@ foreach($db as $data){
 	if(\ebi\Conf::appmode() == 'mamp'){
 		eq(date('Y-m-d H:i:s',$time),$data['ts']); // mysqlの接続設定でtimezoneをJSTで取得している
 	}else{
-		eq($t->format('c'),$data['ts']);
+		eq($t->format('Y-m-d H:i:s'),$data['ts']);
 	}
 	eq(date('Y-m-d',$time),$data['date']);
 	eq(date('Ymd',$time),$data['idate']);

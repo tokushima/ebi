@@ -115,14 +115,15 @@ class PgsqlConnector extends \ebi\DbConnector{
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = [];
 		$autoid = null;
+		
 		foreach($dao->columns(true) as $column){
 			if(!$column->auto()){
 				$insert[] = $this->quotation($column->column());
-				$vars[] = $this->update_value($dao,$column->name());
+				$vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
 		return new \ebi\Daq('insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
-				,$vars
+			,$vars
 		);
 	}
 	protected function date_format($column_map,$dao,$column,$require){

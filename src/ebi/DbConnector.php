@@ -46,7 +46,7 @@ abstract class DbConnector{
 				$autoid = $column->name();
 			}
 			$insert[] = $this->quotation($column->column());
-			$vars[] = $this->update_value($dao,$column->name());
+			$vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 		}
 		return new \ebi\Daq(
 			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
@@ -65,7 +65,7 @@ abstract class DbConnector{
 		
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
-			$wherevars[] = $this->update_value($dao,$column->name());
+			$wherevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 		}
 		if(empty($where)){
 			throw new \ebi\exception\LogicException('primary not found');
@@ -73,7 +73,7 @@ abstract class DbConnector{
 		foreach($dao->columns(true) as $column){
 			if(!$column->primary()){
 				$update[] = $this->quotation($column->column()).' = ?';
-				$updatevars[] = $this->update_value($dao,$column->name());
+				$updatevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
 		if(empty($update)){
@@ -455,11 +455,15 @@ abstract class DbConnector{
 						$values = [];
 						
 						foreach($value as $v){
-							$values[] = ($q->ignore_case()) ? strtoupper($this->column_value($dao,$column->name(),$v)) : $this->column_value($dao,$column->name(),$v);
+							$values[] = ($q->ignore_case()) ? 
+								strtoupper($this->column_value($dao,$column->name(),$v)) : 
+								$this->column_value($dao,$column->name(),$v);
 						}
 						$vars = array_merge($vars,$values);
 					}else{
-						$vars[] = ($q->ignore_case()) ? strtoupper($this->column_value($dao,$column->name(),$value)) : $this->column_value($dao,$column->name(),$value);
+						$vars[] = ($q->ignore_case()) ? 
+							strtoupper($this->column_value($dao,$column->name(),$value)) : 
+							$this->column_value($dao,$column->name(),$value);
 					}
 				}
 			}
@@ -467,8 +471,28 @@ abstract class DbConnector{
 		}
 		return [implode(' and ',$and),$vars];
 	}
-	protected function update_value(\ebi\Dao $dao,$name){
-		return $this->column_value($dao,$name,$dao->{$name}());
+	protected function column_value(\ebi\Dao $dao,$name,$value){
+		if($value === null){
+			return null;
+		}
+		try{
+			switch($dao->prop_anon($name,'type')){
+				case 'timestamp':
+					if(!ctype_digit($value)){
+						$value = strtotime($value);
+					}
+					return date('Y-m-d H:i:s',$value);
+				case 'date':
+					if(!ctype_digit($value)){
+						$value = strtotime($value);
+					}
+					return date('Y-m-d',$value);
+				case 'boolean':
+					return (int)$value;
+			}
+		}catch(\Exception $e){
+		}
+		return $value;
 	}
 	protected function get_column($column_str,array $self_columns){
 		if(isset($self_columns[$column_str])){
@@ -548,29 +572,6 @@ abstract class DbConnector{
 		};
 		$sql = 'drop table '.$quote($dao->table());
 		return $sql;
-	}
-	protected function column_value(\ebi\Dao $dao,$name,$value){
-		if($value === null){
-			return null;
-		}
-		try{
-			switch($dao->prop_anon($name,'type')){
-				case 'timestamp':
-					if(!ctype_digit($value)){
-						$value = strtotime($value);
-					}
-					return date(\ebi\Conf::timestamp_format(),$value);
-				case 'date':
-					if(!ctype_digit($value)){
-						$value = strtotime($value);
-					}					
-					return date(\ebi\Conf::date_format(),$value);
-				case 'boolean':
-					return (int)$value;
-			}
-		}catch(\Exception $e){
-		}
-		return $value;
 	}
 	protected function select_column_format($column_map,$dao,$column,$info){
 		if(isset($info['date_format'][$column->name()])){
