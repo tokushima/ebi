@@ -115,26 +115,25 @@ class PgsqlConnector extends \ebi\DbConnector{
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = [];
 		$autoid = null;
+		
 		foreach($dao->columns(true) as $column){
 			if(!$column->auto()){
 				$insert[] = $this->quotation($column->column());
-				$vars[] = $this->update_value($dao,$column->name());
+				$vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
 		return new \ebi\Daq('insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
-				,$vars
+			,$vars
 		);
 	}
-	protected function column_value(\ebi\Dao $dao,$name,$value){
-		if($value === null) return null;
-		try{
-			switch($dao->prop_anon($name,'type')){
-				case 'timestamp': return date('Y/m/d H:i:s',$value);
-				case 'date': return date('Y/m/d',$value);
-				case 'boolean': return (int)$value;
-			}
-		}catch(\Exception $e){
+	protected function date_format($column_map,$dao,$column,$require){
+		$fmt = [];
+		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%i','s'=>'%s'];
+	
+		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
+			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
 		}
-		return $value;
+		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
+		return 'DATE_FORMAT('.$table_column.',\''.$f.'\')';
 	}
 }

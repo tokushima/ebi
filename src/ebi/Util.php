@@ -370,10 +370,11 @@ class Util{
 	}
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
-	 * @param mixed $bool
+	 * @param  mixed $bool
+	 * @return boolean
 	 */
 	public static function is_true($bool){
-		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? 1 : 0;		
+		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? true : false;		
 	}
 	/**
 	 * 値をプリミティブ型で返す

@@ -32,8 +32,9 @@ class MysqlConnector extends \ebi\DbConnector{
 			$password = 'root';
 		}
 		$dsn = empty($sock) ?
-					sprintf('mysql:dbname=%s;host=%s;port=%d',$name,$host,((empty($port) ? 3306 : $port))) :
-					sprintf('mysql:dbname=%s;unix_socket=%s',$name,$sock);
+			sprintf('mysql:dbname=%s;host=%s;port=%d',$name,$host,((empty($port) ? 3306 : $port))) :
+			sprintf('mysql:dbname=%s;unix_socket=%s',$name,$sock);
+		
 		try{
 			$con = new \PDO($dsn,$user,$password);
 			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
@@ -42,8 +43,12 @@ class MysqlConnector extends \ebi\DbConnector{
 				$this->prepare_execute($con,'set autocommit=0');
 				$this->prepare_execute($con,'set session transaction isolation level read committed');
 			}			
-			if(!empty($this->encode)) $this->prepare_execute($con,'set names \''.$this->encode.'\'');
-			if(!empty($this->timezone)) $this->prepare_execute($con,'set time_zone=\''.$this->timezone.'\'');
+			if(!empty($this->encode)){
+				$this->prepare_execute($con,'set names \''.$this->encode.'\'');
+			}
+			if(!empty($this->timezone)){
+				$this->prepare_execute($con,'set time_zone=\''.$this->timezone.'\'');
+			}
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException((strpos($e->getMessage(),'SQLSTATE[HY000]') === false) ? $e->getMessage() : __CLASS__.' connect failed');
 		}
@@ -113,14 +118,14 @@ class MysqlConnector extends \ebi\DbConnector{
 		$dbc = \ebi\Dao::connection(get_class($dao));		
 		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->table(),$dbc->name());
 	}
-	protected function date_format($table_column,$require){
+	protected function date_format($column_map,$dao,$column,$require){
 		$fmt = [];
 		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%i','s'=>'%s'];
 	
 		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
 			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
 		}
-		$f = $fmt[0].'/'.$fmt[1].'/'.$fmt[2].' '.$fmt[3].':'.$fmt[4].':'.$fmt[5];
-		return 'DATE_FORMAT('.$table_column.',\''.$f.'\')';
+		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
+		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
 }

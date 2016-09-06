@@ -141,9 +141,9 @@ class Object implements \IteratorAggregate{
 		$v = (method_exists($this,$m=('__get_'.$p.'__'))) ? call_user_func([$this,$m]) : $this->___get___();
 		switch($this->prop_anon($p,'type')){
 			case 'timestamp':
-				return ($v === null) ? null : (date((empty($f) ? 'Y/m/d H:i:s' : $f),(int)$v));
+				return ($v === null) ? null : (date((empty($f) ? \ebi\Conf::timestamp_format() : $f),(int)$v));
 			case 'date':
-				return ($v === null) ? null : (date((empty($f) ? 'Y/m/d' : $f),(int)$v));
+				return ($v === null) ? null : (date((empty($f) ? \ebi\Conf::date_format() : $f),(int)$v));
 			case 'time':
 				if($v === null){
 					return 0;
@@ -157,7 +157,7 @@ class Object implements \IteratorAggregate{
 				if($v === null){
 					return null;
 				}
-				return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? 'Y/m/d' : $f));
+				return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? \ebi\Conf::date_format() : $f));
 			case 'boolean':
 				return ($v) ? (isset($d) ? $d : 'true') : (empty($f) ? 'false' : $f);
 		}

@@ -32,7 +32,7 @@ class LogMailSender{
 			 * メールにバインドする変数
 			 * @param mixed{} $arg1
 			 */
-			$vars = \ebi\Conf::get('vars',[]);
+			$vars = \ebi\Conf::gets('vars');
 			/**
 			 * fromのメールアドレス
 			 * @param string $arg1

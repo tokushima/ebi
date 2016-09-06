@@ -3,13 +3,13 @@
  * Application setup
  */
 
-$appmode = defined('APPMODE') ? constant('APPMODE') : null;
-$cmddir = defined('COMMONDIR') ? constant('COMMONDIR') : (getcwd().'/commons');
+$appmode = constant('APPMODE');
+$cmddir = constant('COMMONDIR');
 
 $mode_list = [];
 if(is_dir($cmddir)){
 	foreach(new \RecursiveDirectoryIterator($cmddir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS) as $f){
-		if(substr($f->getFilename(),-4) == '.php'){
+		if(substr($f->getFilename(),0,1) != '_' && substr($f->getFilename(),-4) == '.php'){
 			$mode_list[] = substr($f->getFilename(),0,-4);
 		}
 	}

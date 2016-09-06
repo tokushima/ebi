@@ -138,7 +138,7 @@ abstract class Dao extends \ebi\Object{
 			 * 
 			 * @param string{} $connection 接続情報配列
 			 */
-			self::$_connection_settings_ = \ebi\Conf::get('connection');
+			self::$_connection_settings_ = \ebi\Conf::gets('connection');
 			
 			if(empty(self::$_connection_settings_)){
 				self::$_connection_settings_ = ['*'=>['host'=>getcwd(),]];
@@ -915,7 +915,7 @@ abstract class Dao extends \ebi\Object{
 		 * 
 		 * @param string $base ex. ABCDEFGHJKLMNPQRSTUWXY0123456789
 		 */
-		$base = $this->prop_anon($prop_name,'base',\ebi\Conf::get('unique_code_base'));
+		$base = $this->prop_anon($prop_name,'base');
 		
 		if(empty($base)){
 			/**
@@ -924,14 +924,14 @@ abstract class Dao extends \ebi\Object{
 			 * 
 			 * 0: 数字 0123456789
 			 * a: 小文字 abcdefghjkmnprstuvwxy
-			 * A: 大文字 ABCDEFGHJKLMNPQRSTUWXY
+			 * A: 大文字 ABCDEFGHJKLMNPQRSTUVWXY
 			 * 
 			 * @param string $unique_code_ctype 0aAの組み合わせ
 			 */
-			$ctype = $this->prop_anon($prop_name,'ctype',\ebi\Conf::get('unique_code_ctype','0a'));
+			$ctype = $this->prop_anon($prop_name,'ctype','0a');
 			
 			if(strpos($ctype,'A') !== false){
-				$base .= 'ABCDEFGHJKLMNPQRSTUWXY';
+				$base .= 'ABCDEFGHJKLMNPQRSTUVWXY';
 			}
 			if(strpos($ctype,'a') !== false){
 				$base .= 'abcdefghjkmnprstuvwxy';
@@ -948,10 +948,13 @@ abstract class Dao extends \ebi\Object{
 		$challenge = 0;
 		$challenge_max = 10;
 		$bool = true;
-		$prefix = '';
-		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'max',32);
 		$vefify_func = method_exists($this,'__verify_'.$prop_name.'__');
+		$prefix = '';
+		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'length');
 		
+		if(empty($length)){
+			$length = $this->prop_anon($prop_name,'max',32);
+		}
 		if(method_exists($this,'__prefix_'.$prop_name.'__')){
 			$prefix = call_user_func_array([$this,'__prefix_'.$prop_name.'__'],[$base]);
 			$length = $length - strlen($prefix);
@@ -1017,23 +1020,6 @@ abstract class Dao extends \ebi\Object{
 							break;
 						case 'intdate':
 							$this->{$column->name()}(date('Ymd'));
-							break;
-					}
-				}else if($this->prop_anon($column->name(),'auto_future_add') === true){
-					/**
-					 * auto_future_add アノテーションが定義された場合に設定される日付
-					 * 
-					 * @param string $date ex. 2038/01/01 00:00:00
-					 */
-					$time = strtotime(\ebi\Conf::get('future_date','2038/01/01 00:00:00'));
-					
-					switch($this->prop_anon($column->name(),'type')){
-						case 'timestamp':
-						case 'date':
-							$this->{$column->name()}($time);
-							break;
-						case 'intdate':
-							$this->{$column->name()}(date('Ymd',$time));
 							break;
 					}
 				}

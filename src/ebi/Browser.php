@@ -503,19 +503,18 @@ class Browser{
 		}
 	}
 	/**
-	 * bodyを解析しXMLオブジェクトとして返す
+	 * bodyをXMLとして解析しXMLオブジェクトとして返す
 	 * @return \ebi\Xml
 	 */
 	public function xml($name=null){
 		return \ebi\Xml::extract($this->body(),$name);
 	}
 	/**
-	 * bodyを解析し配列として返す
+	 * bodyをJsonとして解析し配列として返す
 	 * @param string $name
-	 * @param string $delimiter
 	 * @return mixed{}
 	 */
-	public function json($name=null,$delimiter='/'){
+	public function json($name=null){
 		$array = json_decode($this->body(),true);
 			
 		if($array === false){
@@ -524,7 +523,7 @@ class Browser{
 		if(empty($name)){
 			return $array;
 		}
-		$names = explode($delimiter,$name);
+		$names = explode('/',$name);
 		foreach($names as $key){
 			if(array_key_exists($key,$array)){
 				$array = $array[$key];
@@ -533,5 +532,26 @@ class Browser{
 			}
 		}
 		return $array;
+	}
+	/**
+	 * bodyをクエリ文字列として解析し配列として返す
+	 * @param string $name
+	 * @return mixed{}
+	 */
+	public function query_string($name=null){
+		parse_str($this->body(),$array);
+		
+		if(empty($name)){
+			return $array;
+		}
+		$names = explode('/',$name);
+		foreach($names as $key){
+			if(array_key_exists($key,$array)){
+				$array = $array[$key];
+			}else{
+				throw new \ebi\exception\NotFoundException($name.' not found');
+			}
+		}
+		return $array;		
 	}
 }

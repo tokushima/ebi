@@ -291,23 +291,21 @@
 </rt:if>
 
 
-<rt:if param="{$f.perm('config')}">
-	<rt:if param="{$conf_list}">
-		<h4 class="text-warning">Conf</h4>
-		
-		<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name" class="table table-condensed" style="margin-bottom: 50px;">
-		<tr>
-			<td style="width:20%;">
-				<a href="{$t.package_method_url('conf_doc',$package,$conf_name)}">
-					{$conf_name}
-				</a>
-			</td>
-			<td style="width:80%;">
-				{$t.html($v[0],200,1)}
-			</td>
-		</tr>
-		</table>
-	</rt:if>
+<rt:if param="{$conf_list}">
+	<h4 class="text-warning">Conf</h4>
+	
+	<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name" class="table table-condensed" style="margin-bottom: 50px;">
+	<tr>
+		<td style="width:20%;">
+			<a href="{$t.package_method_url('conf_doc',$package,$conf_name)}">
+				{$conf_name}
+			</a>
+		</td>
+		<td style="width:80%;">
+			{$t.html($v[0],200,1)}
+		</td>
+	</tr>
+	</table>
 </rt:if>
 
 

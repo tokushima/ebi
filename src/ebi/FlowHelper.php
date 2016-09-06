@@ -197,8 +197,13 @@ class FlowHelper{
 	 * @param string $format フォーマット文字列 ( http://jp2.php.net/manual/ja/function.date.php )
 	 * @return string
 	 */
-	public function date_format($format='"Y/m/d H:i:s',$value=null){
-		if(empty($value)) $value = time();
+	public function date_format($format=null,$value=null){
+		if(empty($format)){
+			$format = \ebi\Conf::timestamp_format();
+		}
+		if(empty($value)){
+			$value = time();
+		}
 		return date($format,$value);
 	}
 	/**

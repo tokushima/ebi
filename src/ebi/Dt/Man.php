@@ -13,11 +13,21 @@ class Man{
 			$src = self::get_reflection_source($r);
 		}
 		$conf_list = [];
+		if(preg_match_all("/Conf::gets\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+			}
+		}		
 		if(preg_match_all("/Conf::get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
 				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
 			}
 		}
+		if(preg_match_all("/self::get_self_conf_get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
+			foreach($match[2] as $k => $v){
+				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+			}
+		}		
 		return $conf_list;
 	}
 	public static function entry_description($entry){

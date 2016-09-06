@@ -1,3 +1,3 @@
 <?php
-include('../../setup/local.php');
+include('local.php');
 
