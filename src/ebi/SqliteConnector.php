@@ -84,7 +84,7 @@ class SqliteConnector extends \ebi\DbConnector{
 			return $this->date_format($column_map,$dao,$column,$info['date_format'][$column->name()]);
 		}
 		if($dao->prop_anon($column->name(),'type') === 'timestamp'){
-			return 'datetime(replace('.$column_map.',\'/\',\'-\'),\''.$this->timezone_offset.' seconds\')';
+			return 'datetime('.$column_map.',\''.$this->timezone_offset.' seconds\')';
 		}
 		return $column_map;
 	}
@@ -98,9 +98,9 @@ class SqliteConnector extends \ebi\DbConnector{
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 	
 		if($dao->prop_anon($column->name(),'type') === 'timestamp'){
-			return 'strftime(\''.$f.'\',datetime(replace('.$column_map.',\'/\',\'-\'),\''.$this->timezone_offset.' seconds\'))';
+			return 'strftime(\''.$f.'\',datetime('.$column_map.',\''.$this->timezone_offset.' seconds\'))';
 		}
-		return 'strftime(\''.$f.'\',replace('.$column_map.',\'/\',\'-\'))';
+		return 'strftime(\''.$f.'\','.$column_map.')';
 	}
 }
 
