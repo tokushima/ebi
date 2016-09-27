@@ -10,7 +10,7 @@ class TemplateParts{
 	 * @param string $src
 	 * @return Ambigous <string, string, mixed>|string
 	 */
-	public function init_template($src){
+	public function before_template($src){
 		/**
 		 * テンプレートパーツのファイルがあるディレクトリ
 		 */

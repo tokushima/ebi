@@ -1,5 +1,6 @@
 {
 	"name": "tokushima/ebi",
+	"type" : "library",
 	"license": "MIT",
 	"authors": [
 		{
@@ -17,6 +18,13 @@
 		"files": [
 			"autoload.php"
 	   	]
+	},
+	"archive" :{
+		"exclude": [
+			"/test_app",
+			"/ebi.phar",
+			"/ebi.png"
+		]
 	}
 }
 
