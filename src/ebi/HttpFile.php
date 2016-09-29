@@ -25,7 +25,9 @@ class HttpFile{
 	private static function output_file_content($filename,$disposition,$modified_status){
 		if(is_array($filename)){
 			list($filename,$src) = $filename;
-			
+
+			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
+			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
 			\ebi\HttpHeader::send('Content-length',strlen($src));
 			print($src);
 			exit;
@@ -38,7 +40,7 @@ class HttpFile{
 					exit;
 				}
 				\ebi\HttpHeader::send('Last-Modified',gmdate('D, d M Y H:i:s',$update).' GMT');
-			}			
+			}
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
 
