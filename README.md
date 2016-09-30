@@ -1,84 +1,15 @@
 ebi
 ====
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.txt)
+
 __2012-12-25__
 
-PHP framework (PHP 5 >= 5.5.26)
+PHP Library (PHP 5 >= 5.5.26)
 
-![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/ebi.png)
-
-
-
-## Quick Start 
+![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/sushi_ebi.png = 120x)
 
 
-### cmdmanのダウンロード
-
-```
-$ curl -LO http://git.io/cmdman.phar
-```
 
 
-### cmdman を実行すると利用可能なコマンドが一覧されます
-
-```
-$ php cmdman.phar
-
-cmdman 20151202.213659 (PHP 7.0.0RC4)
-Type 'php cmdman.phar subcommand --help' for usage.
-
-Subcommands:
-  ebi.phar      : Download ebi.phar
-  composer.phar : Download composer.phar
-  archive       : Creating Phar Archives
-  extract       : Extract the contents of a phar archive to a directory
-```
-
-
-### ebiをダウンロードします
-
-```
-$ php cmdman.phar ebi.phar 
-
-ebi successfully installed to: /Users/tokushima/Documents/workspace/work/ebi.phar
-```
-
-
-cmdmanにpharファイルを指定するとphar内で利用できるコマンドが一覧されます
-
-```
-$ php cmdman.phar ebi.phar 
-
-cmdman 20160621.215129 (PHP 7.0.1)
-Type 'php cmdman.phar subcommand --help' for usage.
-
-Subcommands:
-  ebi.phar#ebi.Dt::apidoc           : publish API Document
-  ebi.phar#ebi.Dt::classdoc         : publish Classes Document
-  ebi.phar#ebi.Dt::dao_create_table : create table
-  ebi.phar#ebi.Dt::dao_export       : data export
-  ebi.phar#ebi.Dt::dao_import       : data import
-  ebi.phar#ebi.Dt::setup            : Application setup
-```
-
-
-### ebiの単純な構成をインストールします
-
-```
-$ php cmdman.phar ebi.phar#ebi.Dt::start 
-
-Application mode (local) [local]: local
-Application mode is `local`
-getting testman? (y / n) [n]: n
-Done.
-
-
-port? [8000]: 8000
-entry? [index.php]: index.php
-Written: /Users/tokushima/Documents/workspace/work/start.sh
-Written: /Users/tokushima/Documents/workspace/work/start.html
-```
-
-testmanはtestを実行するシンプルなコマンドラインツールです。 ( https://github.com/tokushima/testman )
-
-
+[![download](https://raw.githubusercontent.com/tokushima/ebi/master/sushi_ebi.png = 120x)](https://git.io/ebi.phar)
 
