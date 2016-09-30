@@ -1,15 +1,25 @@
 ebi
 ====
+
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.txt)
+
 
 __2012-12-25__
 
 PHP Library (PHP 5 >= 5.5.26)
 
-![ebi](https://raw.githubusercontent.com/tokushima/ebi/master/sushi_ebi.png = 120x)
+
+![ebi](sushi_ebi.png)
 
 
 
 
-[![download](https://raw.githubusercontent.com/tokushima/ebi/master/sushi_ebi.png = 120x)](https://git.io/ebi.phar)
+[![download](button_download2.png)](https://git.io/ebi.phar)
 
+
+
+## Composer 
+
+```
+composer.phar require tokushima/ebi
+```
