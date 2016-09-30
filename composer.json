@@ -23,7 +23,9 @@
 		"exclude": [
 			"/test_app",
 			"/ebi.phar",
-			"/ebi.png"
+			"/button_download2.png",
+			"/sushi_ebi.png",
+			"/README.md"			
 		]
 	}
 }
