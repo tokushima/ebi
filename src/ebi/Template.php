@@ -14,7 +14,6 @@ class Template{
 	
 	private $file;
 	private $selected_template;
-	private $selected_src;
 
 	private $secure = false;
 	private $vars = [];
@@ -164,7 +163,6 @@ class Template{
 			$src = static::call_func($o,$src);
 		}
 		$src = $this->rtcomment($this->rtblock($src,$this->file));
-		$this->selected_src = $src;
 		/**
 		 * 前処理
 		 * @param string $src
@@ -210,25 +208,18 @@ class Template{
 		foreach($this->default_vars() as $k => $v){
 			$this->vars($k,$v);
 		}
-		ob_start();
+
+		try{
+			ob_start();
 			if(is_array($this->vars) && !empty($this->vars)){
 				extract($this->vars);
 			}
-			$rtn = eval('?>'.$_src_);
-		$_eval_src_ = ob_get_clean();
-
-		if($rtn === false){
-			$error_last = error_get_last();
-
-			if(isset($error_last['message']) && $error_last['message'] == 'parse error'){
-				$line = $error_last['line'];
-				$lines = explode("\n",$_src_);
-				$plrp = substr_count(implode("\n",array_slice($lines,0,$line)),"<?php 'PLRP'; ?>\n");
-				$plain = explode("\n",$this->selected_src);
-				\ebi\Log::error('Parse error: line '.($line-$plrp).': '.PHP_EOL.'[complie] '.trim($lines[$line-1]).PHP_EOL.'[Source] '.trim($plain[$line-1-$plrp]));
-			}
+			eval('?>'.$_src_);
+			$_eval_src_ = ob_get_clean();
+		}catch(\ParseError $e){
+			ob_clean();
+			throw new \ebi\exception\InvalidTemplateException($e->getMessage());
 		}
-		$_src_ = $this->selected_src = null;
 		return $_eval_src_;
 	}
 	private function replace_xtag($src){
