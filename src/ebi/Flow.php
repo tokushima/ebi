@@ -16,8 +16,10 @@ class Flow{
 	private static $url_pattern = [];
 	private static $selected_class_pattern = [];
 	private static $workgroup;
+	private static $conf_secure = false;
 	
 	private static $is_get_map = false;
+	private static $map_secure = false;
 	private static $map = [];
 	
 	private static $template;
@@ -224,31 +226,25 @@ class Flow{
 		self::$map = array_merge(self::$map,$map);
 		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
 		
-		$http = self::$app_url;
-		$https = str_replace('http://','https://',self::$app_url);
-		
 		/**
 		 * HTTPSを有効にするか (falseの場合、mapのsecureフラグもすべてfalseとなる)
 		 */
-		$conf_secure = (\ebi\Conf::get('secure',true) === true);
-		$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
-
-		$url_format_func = function($url,$map_secure,$conf_secure,$https,$http){
+		self::$conf_secure = (\ebi\Conf::get('secure',true) === true);
+		self::$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
+		
+		$https = str_replace('http://','https://',self::$app_url);
+		$url_format_func = function($url,$secure) use($https){
 			$num = 0;
 			$format = \ebi\Util::path_absolute(
-				(($conf_secure && $map_secure === true) ? $https : $http),
+				((self::$conf_secure && $secure === true) ? $https : self::$app_url),
 				(empty($url)) ? '' : substr(preg_replace_callback("/([^\\\\])(\(.*?[^\\\\]\))/",function($n){return $n[1].'%s';},' '.$url,-1,$num),1)
 			);
 			return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
 		};
-		
 		foreach(self::$map['patterns'] as $k => $v){
 			list(self::$map['patterns'][$k]['format'],self::$map['patterns'][$k]['num']) = $url_format_func(
 				$k,
-				(array_key_exists('secure',$v) ? ($v['secure'] === true) : $map_secure),
-				$conf_secure,
-				$https,
-				$http
+				(array_key_exists('secure',$v) ? ($v['secure'] === true) : self::$map_secure)
 			);
 		}
 		krsort(self::$map['patterns']);
@@ -451,7 +447,10 @@ class Flow{
 							array_key_exists('@',$pattern)
 							&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 						){
-							return self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
+							$app_url = (self::$conf_secure && (array_key_exists('secure',$pattern) ? ($pattern['secure'] === true) : self::$map_secure)) ? 
+								str_replace('http://','https://',self::$app_url) : 
+								self::$app_url;
+							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx']);
 						}else if(
 							array_key_exists('find_template',self::$map) && self::$map['find_template'] === true
 							&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name'].'.html'))
@@ -491,7 +490,10 @@ class Flow{
 					
 					if(!$accept_debug){
 						if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
-							return self::template($result_vars,$pattern,$ins,$t,self::$app_url.self::$package_media_url.'/'.$pattern['idx']);
+							$app_url = (self::$conf_secure && (array_key_exists('secure',$pattern) ? ($pattern['secure'] === true) : self::$map_secure)) ?
+								str_replace('http://','https://',self::$app_url) :
+								self::$app_url;
+							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx']);
 						}else if(array_key_exists('error_redirect',$pattern)){
 							return self::map_redirect($pattern['error_redirect'],[],$pattern);
 						}else if(array_key_exists('error_template',$pattern)){
