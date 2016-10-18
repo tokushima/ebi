@@ -4,7 +4,7 @@ namespace ebi;
  * テンプレートを処理する
  * @author tokushima
  * @var mixed{} $vars バインドされる変数
- * @var boolean $secure https://をhttp://に置換するか
+ * @var boolean $secure http://をhttps://に置換するか
  * @var string $put_block ブロックファイル
  * @var string $template_super 継承元テンプレート
  * @var string $media_url メディアファイルへのURLの基点
