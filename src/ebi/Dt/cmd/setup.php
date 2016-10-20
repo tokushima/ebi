@@ -3,7 +3,7 @@
  * Application setup
  */
 
-$appmode = defined('APPMODE') ? constant('APPMODE') : null;
+$appmode = defined('APPMODE') ? constant('APPMODE') : 'local';
 $cmndir = defined('COMMONDIR') ? constant('COMMONDIR') : str_replace('\\','/',getcwd()).'/commons';
 
 $mode_list = [];
@@ -19,24 +19,25 @@ $mode = \cmdman\Std::read('Application mode',$default,$mode_list);
 $settings_file = getcwd().'/__settings__.php';
 $path = getcwd();
 
-if($mode != $appmode || !is_file($settings_file)){
-	file_put_contents($settings_file,
+
+file_put_contents($settings_file,
 	'<?php'
-		.PHP_EOL.'define(\'APPMODE\',\''.$mode.'\');'
-			.PHP_EOL.'define(\'COMMONDIR\',\''.$cmndir.'\');'
-			.PHP_EOL
-	);
-	
-	if(!is_file($f=($cmndir.'/'.$mode.'.php'))){
-		\ebi\Util::file_write($f,<<< '__SRC__'
+	.PHP_EOL.'define(\'APPMODE\',\''.$mode.'\');'
+	.PHP_EOL.'define(\'COMMONDIR\',\''.$cmndir.'\');'
+	.PHP_EOL
+);
+\cmdman\Std::println_success('Written: '.realpath($settings_file));
+
+if(!is_file($f=($cmndir.'/'.$mode.'.php'))){
+	\ebi\Util::file_write($f,<<< '__SRC__'
 <?php
 \ebi\Conf::set([
 ]);
 __SRC__
-		);
-	}
-	\cmdman\Std::println_success('Written: '.realpath($f));	
-	\cmdman\Std::println_success('Written: '.realpath($settings_file));	
+			);
+	\cmdman\Std::println_success('Written: '.realpath($f));
+}
+if($mode != $appmode){
 	\cmdman\Std::println_info('Application mode changed.');
 	return;
 }else{
