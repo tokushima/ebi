@@ -302,8 +302,8 @@ class Dt{
 	}
 
 	/**
+	 * 
 	 * @automap
-	 * @return multitype:multitype:multitype:unknown string
 	 */
 	public function config(){
 		$query = $this->get_query();
@@ -317,7 +317,17 @@ class Dt{
 				
 				if($this->valid_class_list($p)){
 					if($this->filter_query($query,$p.$c[0])){
-						$conf_list[$p.'::'.$k] = ['package'=>$p,'key'=>$k,'description'=>$c[0]];
+						$type = 'mixed';
+
+						if(sizeof($c[1]) == 1){
+							$type = array_shift($c[1])[1];
+						}
+						$conf_list[$p.'::'.$k] = [
+							'package'=>$p,
+							'key'=>$k,
+							'description'=>$c[0],
+							'type'=>$type,
+						];
 					}
 				}
 			}

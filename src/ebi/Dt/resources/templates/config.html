@@ -5,14 +5,15 @@
 <table rt:param="{$conf_list}" rt:var="conf" class="table table-condensed">
 <thead>
 	<tr class="text-muted">
-		<th style="width:30%;">class</th>
-		<th style="width:20%;">key</th>
+		<th>class</th>
+		<th>type</th>
+		<th>key</th>
 		<th>description</th>
 	</tr>
 </thead>
 <tbody>
 	<tr>
-		<td style="width:25%">
+		<td>
 			<a href="{$t.package_method_url('class_doc',$conf['package'])}">
 				<rt:if param="{$f.has_conf($conf['package'],$conf['key'])}">
 					<div style="color:#aaaaaa;">
@@ -23,7 +24,19 @@
 				</rt:if>
 			</a>
 		</td>
-		<td style="width:15%">
+		<td>
+			<rt:if param="{$f.has_conf($conf['package'],$conf['key'])}">
+				<div style="color:#aaaaaa;">
+					{$conf['type']}
+				</div>
+			<rt:else />
+				<div style="color:#666666;">
+					{$conf['type']}
+				</div>
+			</rt:if>
+		</td>
+		
+		<td>
 			<a href="{$t.package_method_url('conf_doc',$conf['package'],$conf['key'])}">
 				<rt:if param="{$f.has_conf($conf['package'],$conf['key'])}">
 					<div style="color:#aaaaaa;">
@@ -35,7 +48,7 @@
 
 			</a>
 		</td>
-		<td style="width:60%">
+		<td>
 			<span style="color: #aaaaaa;">
 				{$t.html($conf['description'],200,1)}
 			</span>

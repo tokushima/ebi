@@ -166,7 +166,7 @@ class Conf{
 		 * ]
 		 * `````````````````````````
 		 * 
-		 * @param array $group
+		 * @param string{} $group
 		 */
 		$group = self::get_self_conf_get('appmode_group',[]);		
 		$chkmode = is_array($mode) ? 
@@ -194,6 +194,7 @@ class Conf{
 	public static function work_path($path=null){
 		/**
 		 * ワーキングディレクトリ
+		 * @param string $val
 		 */
 		$dir = self::get_self_conf_get('work_dir');
 		
@@ -214,6 +215,7 @@ class Conf{
 	public static function resource_path($path=null){
 		/**
 		 * リソースファイルのディレクトリ
+		 * @param string $val
 		 */
 		$dir = self::get_self_conf_get('resource_dir');
 		
@@ -306,6 +308,7 @@ class Conf{
 	public static function timestamp_format(){
 		/**
 		 * timestamp型の書式
+		 * @param string $val Y-m-d H:i:s
 		 * @see http://php.net/manual/ja/function.date.php
 		 */
 		return self::get_self_conf_get('timestamp_format','c');
@@ -317,6 +320,7 @@ class Conf{
 	public static function date_format(){
 		/**
 		 * date型の書式
+		 * @param string $val Y-m-d
 		 * @see http://php.net/manual/ja/function.date.php
 		 */
 		return self::get_self_conf_get('date_format','Y-m-d');

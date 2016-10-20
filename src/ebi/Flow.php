@@ -178,7 +178,7 @@ class Flow{
 		 * 
 		 * 「**」でエントリファイル名に変換される
 		 * http://localhost:8000/** => http://localhost:8000/api.php
-		 * 
+		 * @param string $val
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
@@ -196,6 +196,7 @@ class Flow{
 		/**
 		 * メディアファイルのベースURL
 		 * http://localhost:8000/resources/media
+		 * @param string $val
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
@@ -217,6 +218,7 @@ class Flow{
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
 		/**
 		 * テンプレートファイルのディレクトリ
+		 * @param string $val
 		 */
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		
@@ -228,6 +230,7 @@ class Flow{
 		
 		/**
 		 * HTTPSを有効にするか (falseの場合、mapのsecureフラグもすべてfalseとなる)
+		 * @param boolean $val
 		 */
 		self::$conf_secure = (\ebi\Conf::get('secure',true) === true);
 		self::$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
@@ -288,7 +291,7 @@ class Flow{
 						 * Accept: application/debug を有効にする
 						 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
 						 * テンプレートやリダイレクト、出力プラグインを無視する
-						 * @param boolean
+						 * @param boolean $val
 						 */
 						\ebi\Conf::get('accept_debug',false) &&
 						strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
@@ -470,6 +473,7 @@ class Flow{
 					
 					/**
 					 * ログに記録しない例外クラス名
+					 * @param string[] $val
 					 */
 					if(!in_array(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
 						\ebi\Log::warning($e);
@@ -510,6 +514,7 @@ class Flow{
 					
 					/**
 					 *  Error Json出力時にException traceも出力するフラグ
+					 *  @param boolean $val
 					 */
 					$trace = \ebi\Conf::get('exception_trace',false);
 					$message = [];

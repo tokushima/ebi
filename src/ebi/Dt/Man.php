@@ -8,6 +8,11 @@ class Man{
 	public static function get_reflection_source(\ReflectionClass $r){
 		return implode(array_slice(file($r->getFileName()),$r->getStartLine(),($r->getEndLine()-$r->getStartLine()-1)));
 	}
+	/**
+	 * \ebi\Conf:get
+	 * @param \ReflectionClass $r
+	 * @param unknown $src
+	 */
 	public static function get_conf_list(\ReflectionClass $r,$src=null){
 		if(empty($src)){
 			$src = self::get_reflection_source($r);
@@ -16,16 +21,28 @@ class Man{
 		if(preg_match_all("/Conf::gets\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
 				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+				
+				if(empty($conf_list[$v[0]][1])){
+					$conf_list[$v[0]][1]['val'] = ['val','mixed[]',''];
+				}
 			}
 		}		
 		if(preg_match_all("/Conf::get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
 				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+				
+				if(empty($conf_list[$v[0]][1])){
+					$conf_list[$v[0]][1]['val'] = ['val','mixed',''];
+				}				
 			}
 		}
 		if(preg_match_all("/self::get_self_conf_get\(([\"\'])(.+?)\\1/",$src,$match,PREG_OFFSET_CAPTURE)){
 			foreach($match[2] as $k => $v){
 				self::get_desc($conf_list,$match,$k,$v[0],$src,$r->getName());
+				
+				if(empty($conf_list[$v[0]][1])){
+					$conf_list[$v[0]][1]['val'] = ['val','mixed',''];
+				}				
 			}
 		}		
 		return $conf_list;
