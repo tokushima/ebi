@@ -3,12 +3,12 @@
  * Application setup
  */
 
-$appmode = constant('APPMODE');
-$cmddir = constant('COMMONDIR');
+$appmode = defined('APPMODE') ? constant('APPMODE') : null;
+$cmndir = defined('COMMONDIR') ? constant('COMMONDIR') : str_replace('\\','/',getcwd()).'/commons';
 
 $mode_list = [];
-if(is_dir($cmddir)){
-	foreach(new \RecursiveDirectoryIterator($cmddir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS) as $f){
+if(is_dir($cmndir)){
+	foreach(new \RecursiveDirectoryIterator($cmndir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS) as $f){
 		if(substr($f->getFilename(),0,1) != '_' && substr($f->getFilename(),-4) == '.php'){
 			$mode_list[] = substr($f->getFilename(),0,-4);
 		}
@@ -23,11 +23,11 @@ if($mode != $appmode || !is_file($settings_file)){
 	file_put_contents($settings_file,
 	'<?php'
 		.PHP_EOL.'define(\'APPMODE\',\''.$mode.'\');'
-			.PHP_EOL.'define(\'COMMONDIR\',\''.$cmddir.'\');'
+			.PHP_EOL.'define(\'COMMONDIR\',\''.$cmndir.'\');'
 			.PHP_EOL
 	);
 	
-	if(!is_file($f=($cmddir.'/'.$mode.'.php'))){
+	if(!is_file($f=($cmndir.'/'.$mode.'.php'))){
 		\ebi\Util::file_write($f,<<< '__SRC__'
 <?php
 \ebi\Conf::set([
@@ -38,7 +38,6 @@ __SRC__
 	\cmdman\Std::println_success('Written: '.realpath($f));	
 	\cmdman\Std::println_success('Written: '.realpath($settings_file));	
 	\cmdman\Std::println_info('Application mode changed.');
-	\cmdman\Std::println_danger('Not complete setup - please try again.');
 	return;
 }else{
 	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
