@@ -39,10 +39,11 @@ class Dt{
 		];
 	}
 	public function get_after_vars(){
-		return [
+		$vars = [
 			'f'=>new \ebi\Dt\Helper(),
 			'appmode'=>constant('APPMODE')
 		];
+		return $vars;
 	}
 	private function filter_query($query,$value){
 		$bool = true;
@@ -72,37 +73,31 @@ class Dt{
 	/**
 	 * @automap
 	 */
-	public function phpinfo(){
-		ob_start();
-			phpinfo();
-		$info = ob_get_clean();
-		$info = \ebi\Xml::extract($info,'body')->escape(false)->value();
-		$info = preg_replace('/<table .+>/','<table class="table table-striped table-bordered table-condensed">',$info);
-
-		return [
-			'phpinfo'=>$info
-		];
-	}
-	/**
-	 * @automap
-	 */
 	public function index(){
 		$flow_output_maps = [];
 		$query = $this->get_query();
-		
+	
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
-		
-		foreach($patterns as $k => $m){
-			if(!isset($m['deprecated'])) $m['deprecated'] = false;
-			if(!isset($m['mode'])) $m['mode'] = null;
-			if(!isset($m['summary'])) $m['summary'] = null;
-			if(!isset($m['template'])) $m['template'] = null;
 	
+		foreach($patterns as $k => $m){
+			foreach([
+				'deprecated'=>false,
+				'mode'=>null,
+				'summary'=>null,
+				'template'=>null,
+			] as $i => $d){
+				if(!isset($m[$i])){
+					$m[$i] = $d;
+				}
+			}
 			if(isset($m['action']) && is_string($m['action'])){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
-				if(substr($m['class'],0,1) == '\\') $m['class'] = substr($m['class'],1);
+				
+				if(substr($m['class'],0,1) == '\\'){
+					$m['class'] = substr($m['class'],1);
+				}
 				$m['class'] = str_replace('\\','.',$m['class']);
 			}
 			if(!isset($m['class']) || $m['class'] != $this->self_class){
@@ -112,9 +107,9 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-							
+
 						if(empty($m['summary'])){
-							list($summary) = explode(PHP_EOL,$info['description']);
+							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
 						}
 					}
@@ -135,10 +130,70 @@ class Dt{
 				}
 			}
 		}
+		$entry_desc = (preg_match('/\/\*\*.+?\*\//s',\ebi\Util::file_read($this->entry),$m)) ?
+			trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$m[0]))) :
+			'';
+	
 		return [
 			'map_list'=>$flow_output_maps,
-			'q'=>implode(' ',$query),
-			'description'=>\ebi\Dt\Man::entry_description($this->entry),
+			'description'=>$entry_desc,
+		];
+	}	
+	/**
+	 * アクションのドキュメント
+	 * @param string $name
+	 * @context \ebi\man\DocInfo $method
+	 * @automap
+	 */
+	public function action_doc($name){
+		$map = \ebi\Flow::get_map($this->entry);
+		
+		foreach($map['patterns'] as $m){
+			if($m['name'] == $name){
+				list($m['class'],$m['method']) = explode('::',$m['action']);
+				
+				$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+				$info->set_opt('name',$name);
+				
+				foreach(['get_after_vars','get_after_vars_request'] as $mn){
+					try{
+						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn);
+						
+						foreach(['requests','contexts','args'] as $k){
+							$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
+						}
+					}catch(\ReflectionException $e){
+					}
+				}
+
+				// TODO
+				$plugins = (isset($map['plugins']) ? $map['plugins']  : []);
+				if(is_subclass_of($this->strtoclass($m['class']),\ebi\flow\Request::class)){
+					$plugins = array_merge($plugins,isset($m['plugins']) ? $m['plugins']  : []);
+				}
+				
+				return ['method'=>$info];
+			}
+		}
+		throw new \ebi\exception\NotFoundException();
+	}
+	/**
+	 * @automap
+	 */
+	public function config_list(){
+		$conf_list = [];
+
+		foreach(self::classes() as $info){
+			$ref = new \ReflectionClass($info['class']);
+			
+			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
+				$conf_list[$ref->getName()][] = $c;
+			}
+		}
+		ksort($conf_list);
+		
+		return [
+			'conf_list'=>$conf_list,
 		];
 	}
 
@@ -158,8 +213,7 @@ class Dt{
 	}
 	private function valid_class_list($class){
 		/**
-		 * 一覧から除外するクラス名のパターン(正規表現)
-		 * @param string[] $ignore
+		 * @param string[] $ignore 一覧から除外するクラス名のパターン(正規表現)
 		 */
 		$ignore_patterns = \ebi\Conf::gets('ignore');
 		
@@ -172,33 +226,7 @@ class Dt{
 		}
 		return true;
 	}
-	/**
-	 * ライブラリの一覧
-	 * @automap
-	 */
-	public function class_list(){
-		$query = $this->get_query();
-		$libs = [];
-					
-		if(!empty($query)){
-			$q = str_replace('.','\\',implode('',$query));
-				
-			if($q[0] != '\\'){
-				$q = '\\'.$q;
-			}
-			if(class_exists($q)){
-				$this->class_list_summary($q,$query,$libs);
-			}
-		}
-		foreach(self::classes() as $info){
-			$this->class_list_summary($info['class'],$query,$libs);
-		}
-		ksort($libs);
-		return [
-			'class_list'=>$libs,
-			'q'=>implode(' ',$query),
-		];
-	}
+
 	/**
 	 * クラスのドキュメント
 	 * @param string $class
@@ -219,126 +247,10 @@ class Dt{
 		return $info;
 	}
 	
-	/**
-	 * アクションのドキュメント
-	 * @param string $class
-	 * @param string $method
-	 * @automap
-	 */
-	public function action_doc($name){
-		$map = \ebi\Flow::get_map($this->entry);
-		
-		foreach($map['patterns'] as $m){
-			if($m['name'] == $name){
-				list($m['class'],$m['method']) = explode('::',$m['action']);
-				
-				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
-				$plugins = (isset($map['plugins']) ? $map['plugins']  : []);
-				
-				if(is_subclass_of($this->strtoclass($m['class']),\ebi\flow\Request::class)){
-					$plugins = array_merge($plugins,isset($m['plugins']) ? $m['plugins']  : []);
-				}
-				foreach($plugins as $p){
-					$p = $this->strtoclass($p);
-					
-					foreach(['get_after_vars','get_after_vars_request'] as $mn){
-						try{
-							$r = new \ReflectionMethod($p,$mn);
-							
-							if(preg_match_all("/@context\s+([^\s]+)\s+\\$(\w+)(.*)/",$r->getDocComment(),$c)){
-								foreach($c[0] as $k => $v){
-									$info['context'][$c[2][$k]][0] = $c[1][$k];
-									$info['context'][$c[2][$k]][1] = (isset($c[3][$k]) ? $c[3][$k] : 'null');
-								}
-							}
-						}catch(\ReflectionException $e){
-						}
-					}
-				}
-				return $info;
-			}
-		}
-		throw new \ebi\exception\NotFoundException();
-	}
-	
-	/**
-	 * pluginのキュメント
-	 * @param string $class
-	 * @param string $plugin_name
-	 * @automap
-	 */
-	public function plugin_doc($class,$plugin_name){
-		$ref = \ebi\Dt\Man::class_info($class);
-		
-		if(!isset($ref['plugins'][$plugin_name])){
-			throw new \ebi\exception\NotFoundException($plugin_name.' not found');
-		}
-		return [
-			'package'=>$class,
-			'plugin_name'=>$plugin_name,
-			'description'=>$ref['plugins'][$plugin_name][0],
-			'params'=>$ref['plugins'][$plugin_name][1],
-			'return'=>$ref['plugins'][$plugin_name][2],
-		];
-	}
-	/**
-	 * Confのキュメント
-	 * @param string $class
-	 * @param string $conf_name
-	 * @automap
-	 */
-	public function conf_doc($class,$conf_name){
-		$ref = \ebi\Dt\Man::class_info($class);
-	
-		if(!isset($ref['conf_list'][$conf_name])){
-			throw new \ebi\exception\NotFoundException($conf_name.' not found');
-		}
-		return [
-			'package'=>$class,
-			'conf_name'=>$conf_name,
-			'description'=>$ref['conf_list'][$conf_name][0],
-			'params'=>$ref['conf_list'][$conf_name][1],
-		];
-	}
 
-	/**
-	 * 
-	 * @automap
-	 */
-	public function config(){
-		$query = $this->get_query();
-		$conf_list = [];
-		
-		foreach(self::classes() as $info){
-			$ref = new \ReflectionClass($info['class']);
-			
-			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
-				$p = str_replace(['\\','/'],['/','.'],$ref->getName());
-				
-				if($this->valid_class_list($p)){
-					if($this->filter_query($query,$p.$c[0])){
-						$type = 'mixed';
-
-						if(sizeof($c[1]) == 1){
-							$type = array_shift($c[1])[1];
-						}
-						$conf_list[$p.'::'.$k] = [
-							'package'=>$p,
-							'key'=>$k,
-							'description'=>$c[0],
-							'type'=>$type,
-						];
-					}
-				}
-			}
-		}
-		ksort($conf_list);
-		
-		return [
-			'conf_list'=>$conf_list,
-			'q'=>implode(' ',$query),
-		];
-	}
+	
+	
+	
 	
 	/**
 	 * @automap
@@ -775,13 +687,12 @@ class Dt{
 		}
 				
 		/**
-		 * 利用するvendorのクラス
-		 * @param string[] $vendor
+		 * @param string[] $vendor 利用するvendorのクラス
 		 */
 		$use_vendor = \ebi\Conf::gets('use_vendor');
+		
 		/**
-		 * 利用するvendorのクラス配列を返すメソッド
-		 * @param callback $callback
+		 * @param callback $callback 利用するvendorのクラス配列を返すメソッド
 		 */
 		$use_vendor_callback = \ebi\Conf::get('use_vendor_callback');
 		

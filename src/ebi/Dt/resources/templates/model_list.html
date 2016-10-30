@@ -2,22 +2,7 @@
 
 <rt:block name="content">
 
-<script type="text/javascript">
-	function conf_sample(pkg){
-		alert("\\ebi\\Conf::set([" + "\n"
-			+ "\t" + "'ebi.Dao'=>[" + "\n"
-				+ "\t\t" + "'connection'=>[" + "\n"
-					+ "\t\t\t" + "'" + pkg + "'=>[" + "\n"
-						+ "\t\t\t\t" + "'type'=>'ebi.DbConnector'," + "\n"
-						+ "\t\t\t\t" + "'dbname'=>'data.db'," + "\n"
-					+ "\t\t\t" + "]," + "\n" 
-				+ "\t\t" + "]," + "\n"
-			+ "\t" + "]," + "\n"
-		+ "]);" + "\n");
-	}
-</script>
-
-<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count" class="table table-condensed">
+<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count">
 <tr>
 	<td style="width: 20px;">
 		<rt:if param="{$model['con']}">
@@ -26,8 +11,6 @@
 			<rt:else />
 				<a class="glyphicon glyphicon-list-alt" href="{$t.package_method_url('class_doc',$package)}"></a>
 			</rt:if>
-		<rt:else>
-			<a class="glyphicon glyphicon-warning-sign" onClick="conf_sample('{$package}')"></a>
 		</rt:if>
 	</td>
 	<td style="width:25%;">

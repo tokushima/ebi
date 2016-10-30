@@ -172,13 +172,12 @@ class Flow{
 		}
 		
 		/**
-		 * アプリケーションURL 
+		 * @param string $val アプリケーションURL 
 		 * 最後尾に「*」で実行エントリに自動変換
 		 * http://localhost:8000/* => http://localhost:8000/api
 		 * 
 		 * 「**」でエントリファイル名に変換される
 		 * http://localhost:8000/** => http://localhost:8000/api.php
-		 * @param string $val
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
@@ -194,9 +193,8 @@ class Flow{
 		self::$app_url = $app_url;
 		
 		/**
-		 * メディアファイルのベースURL
+		 * @param string $val メディアファイルのベースURL
 		 * http://localhost:8000/resources/media
-		 * @param string $val
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
 		
@@ -217,8 +215,7 @@ class Flow{
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
 		/**
-		 * テンプレートファイルのディレクトリ
-		 * @param string $val
+		 * @param string $val テンプレートファイルのディレクトリ
 		 */
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		
@@ -229,8 +226,8 @@ class Flow{
 		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
 		
 		/**
-		 * HTTPSを有効にするか (falseの場合、mapのsecureフラグもすべてfalseとなる)
-		 * @param boolean $val
+		 * falseの場合、mapのsecureフラグもすべてfalseとなる
+		 * @param boolean $val HTTPSを有効にするか
 		 */
 		self::$conf_secure = (\ebi\Conf::get('secure',true) === true);
 		self::$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
@@ -288,10 +285,9 @@ class Flow{
 					$result_vars = $plugins = [];
 					$accept_debug = (
 						/**
-						 * Accept: application/debug を有効にする
+						 * @param boolean $val Accept: application/debug を有効にする
 						 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
 						 * テンプレートやリダイレクト、出力プラグインを無視する
-						 * @param boolean $val
 						 */
 						\ebi\Conf::get('accept_debug',false) &&
 						strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
@@ -472,8 +468,7 @@ class Flow{
 					\ebi\Dao::rollback_all();
 					
 					/**
-					 * ログに記録しない例外クラス名
-					 * @param string[] $val
+					 * @param string[] $val ログに記録しない例外クラス名
 					 */
 					if(!in_array(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
 						\ebi\Log::warning($e);
@@ -513,8 +508,7 @@ class Flow{
 					}
 					
 					/**
-					 *  Error Json出力時にException traceも出力するフラグ
-					 *  @param boolean $val
+					 *  @param boolean $val Error Json出力時にException traceも出力するフラグ
 					 */
 					$trace = \ebi\Conf::get('exception_trace',false);
 					$message = [];

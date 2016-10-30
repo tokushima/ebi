@@ -1,10 +1,10 @@
 <?php
 namespace test\object;
 /**
- * @var integer $aaa
- * @var boolean $bbb
- * @var integer $ccc
- * @var timestamp $ddd
+ * @var integer $aaa 数値
+ * @var boolean $bbb 真偽値
+ * @var integer $ccc 数値 @['hash'=>false]
+ * @var timestamp $ddd 日付型
  */
 class Fm extends \ebi\Object{
 	protected $aaa;
@@ -15,5 +15,9 @@ class Fm extends \ebi\Object{
 	protected function __get_ccc__(){
 		$this->ddd(time());
 		return 2;
+	}
+	
+	public function aaabbb(){
+		return $this->aaa.$this->bbb;
 	}
 }

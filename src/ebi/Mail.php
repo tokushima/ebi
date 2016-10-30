@@ -308,7 +308,7 @@ class Mail{
 	 */
 	public function set_template($template_path,$vars=[]){
 		/**
-		 * テンプレートのあるディレクトリパス
+		 * @param string $path テンプレートのあるディレクトリパス
 		 */
 		$resource_path = empty($this->resource_path) ? \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail')) : $this->resource_path;
 		$template_path = \ebi\Util::path_absolute($resource_path,$template_path);

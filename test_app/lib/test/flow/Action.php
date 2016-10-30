@@ -6,11 +6,27 @@ class Action{
 		/**
 		 * Confのダミー
 		 * @param string $aa ダミー
+		 * @see https://github.com/tokushima/ebi
 		 */
 		$value = \ebi\Conf::get('value');
 		$var = isset($_GET['abc']) ? $_GET['abc'] : null;
 		return ['abc'=>$var];
 	}
+	/**
+	 * @request string $rrrrr らららら
+	 */
+	public function get_after_vars(){
+		
+	}
+	/**
+	 * 常にLogicException
+	 * @param string $aaa あああ
+	 * @param \ebi\Dao $bbb いいい
+	 * @request string $ccc メメメめ
+	 * @context \ebi\Dao $ssss カカカカか
+	 * @arg string $arg あぐ
+	 * @throws \LogicException 常に例外
+	 */
 	public function raise(){
 		throw new \LogicException('raise test');
 	}

@@ -26,7 +26,8 @@ class Log{
 	private static function cur_level(){
 		if(self::$current_level === null){
 			/**
-			 * エラーレベル ('emergency','alert','critical','error','warning','notice','info','debug')
+			 * @param string $level エラーレベル
+			 * 'emergency','alert','critical','error','warning','notice','info','debug'
 			 */
 			self::$current_level = array_search(\ebi\Conf::get('level','critical'),self::$level_strs);
 		}
@@ -35,7 +36,7 @@ class Log{
 	public function __construct($level,$message,$file=null,$line=null,$time=null){
 		if(!isset(self::$fpout)){
 			/**
-			 * ログを出力するファイルを指定する
+			 * @param string $path ログを出力するファイルを指定する
 			 */
 			self::$fpout = \ebi\Conf::get('file','');
 		

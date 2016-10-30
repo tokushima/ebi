@@ -5,7 +5,7 @@
 
 <rt:block name="content">
 <h2>
-	{$f.package_name($package)}
+	{$f.package_name($name)}
 	
 	<rt:if param="{$abstract}">
 		<span class="label label-info">Abstract</span>
@@ -30,96 +30,36 @@
 </rt:if>
 
 
-<rt:if param="{$t.has($see_class,$see_method,$see_url)}">
+<rt:if param="{$t.has($see)}">
 <h4 class="text-warning">See</h4>
 
 <table class="table table-condensed">
-<rt:loop param="{$see_class}" var="class">
-	<tr>
-		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
-	</tr>
-</rt:loop>
-	
-<rt:loop param="{$see_method}" var="class_method">
-	<tr>
-		<td>
-			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
-				{$f.type($class_method[0])}
+<rt:loop param="{$see}" var="seeinfo">
+<tr>
+	<td>
+		<rt:if param="{$t.eq($seeinfo['type'],'class')}">
+			<a href="{$t.package_method_url('class_doc',$f.type($seeinfo['class']))}">
+				{$f.type($class)}
+			</a>
+		</rt:if>
+		<rt:if param="{$t.eq($seeinfo['type'],'method')}">
+			<a href="{$t.package_method_url('class_doc',$f.type($seeinfo['class']))}">
+				{$f.type($seeinfo['class'])}
 			</a>
 			::
-			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
-				{$class_method[1]}
+			<a href="{$t.package_method_url('method_doc',$seeinfo['class'],$seeinfo['method'])}">
+				{$seeinfo['method']}
 			</a>
-		</td>
-	</tr>
-</rt:loop>
-	
-<rt:loop param="{$see_url}" var="url">
-	<tr>
-		<td>
-			<a href="{$url}">
-				{$url}
+		</rt:if>
+		<rt:if param="{$t.eq($seeinfo['type'],'url')}">
+			<a href="{$seeinfo['url']}">
+				{$seeinfo['url']}
 			</a>
-		</td>
-	</tr>
+		</rt:if>		
+	</td>
+</tr>
 </rt:loop>
 
-</table>
-</rt:if>
-
-<rt:if param="{$static_methods}">
-<h4 class="text-warning">Static methods</h4>
-
-<table rt:param="{$static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 25%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width: 75%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-<rt:if param="{$methods}">
-<h4 class="text-warning">Methods</h4>
-
-<table rt:param="{$methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width:80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$plugin_method}">
-<h4 class="text-warning">Plugin methods</h4>
-	
-<table rt:param="{$plugin_method}" rt:var="method_name_list" rt:key="class_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:25%;">
-		<a href="{$t.package_method_url('class_doc',$f.package_name($class_name))}">
-			{$f.package_name($class_name)}
-		</a>
-	</td>
-	<td style="width: 75%;">
-		<rt:loop param="method_name_list" var="method_name">
-			<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-				{$method_name}
-			</a>
-		</rt:loop>
-	</td>
-</tr>
 </table>
 </rt:if>
 
@@ -127,129 +67,40 @@
 <rt:if param="{$properties}">
 <h4 class="text-warning">Properties</h4>
 
-<table rt:param="{$properties}" rt:var="prop" rt:key="prop_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr class="{$t.cond_switch($prop[2],'hash_on','hash_off')}">
+<table rt:param="{$properties}" rt:var="param" class="table table-condensed">
+<tr class="{$t.cond_switch($param.opt('hash'),'hash_on','hash_off')}">
 	<td style="width: 25%;">
-		<rt:if param="{$f.type($prop[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($prop[0]))}">{$prop[0]}</a>
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
 		<rt:else />
-			{$prop[0]}
+			{$param.fm_type()}
 		</rt:if>
 	</td>
 	<td style="width: 20%;">
-		{$prop_name}
+		{$param.name()}
 	</td>
 	<td style="width: 55%;">
-		{$prop[1]}
+		{$param.summary()}
 	</td>
 </tr>
 </table>
 </rt:if>
 
 
-<rt:if param="{$protected_static_methods}">
-<h4 class="text-warning">Protected static methods</h4>
+<rt:if param="{$methods}">
+<h4 class="text-warning">Methods</h4>
 
-<table rt:param="{$protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
+<table rt:param="{$methods}" rt:var="info" class="table table-condensed">
 <tr>
-	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
+	<td>
+		<a href="{$t.package_method_url('method_doc',$name,$info.name())}">
+			{$info.name()}
 		</a>
 	</td>
-	<td style="width: 80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$protected_methods}">
-<h4 class="text-warning">Protected methods</h4>
-
-<table rt:param="{$protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 20%;">
-		<a name="{$method_name}" href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width: 80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-
-<rt:if param="{$inherited_static_methods}">
-<h4 class="text-warning">Inherited Static methods</h4>
-
-<table rt:param="{$inherited_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width: 80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$inherited_methods}">
-<h4 class="text-warning">Inherited Methods</h4>
-
-<table rt:param="{$inherited_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width:80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$inherited_protected_static_methods}">
-<h4 class="text-warning">Inherited Protected static methods</h4>		
-
-<table rt:param="{$inherited_protected_static_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:20%;">
-		<a href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width:80%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$inherited_protected_methods}">
-<h4 class="text-warning">Inherited Protected methods</h4>
-
-<table rt:param="{$inherited_protected_methods}" rt:var="summary" rt:key="method_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:20%;">
-		<a name="{$method_name}" href="{$t.package_method_url('method_doc',$package,$method_name)}">
-			{$method_name}
-		</a>
-	</td>
-	<td style="width:80%;">
-		{$t.html($summary)}
+	<td>
+		{$t.html($info.summary())}
 	</td>
 </tr>
 </table>
@@ -258,51 +109,45 @@
 
 
 <rt:if param="{$plugins}">
-<h4 class="text-warning">Call Plugin funcs</h4>
+	<h4 class="text-warning">Plugins</h4>
+	
+	<table rt:param="{$plugins}" rt:var="info" class="table table-condensed">
+	<tr>
+		<td>
+			<a href="{$t.package_method_url('plugin_doc',$name,$info.name())}">
+				{$info.name()}
+			</a>
+		</td>
+		<td>
+			{$t.html($info.summary(),200,1)}
+		</td>
+		<td>
+			<rt:loop param="{$info.opt('added')}" var="class_name">
+				<div>
+					<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
+						{$class_name}
+					</a>
+				</div>
+			</rt:loop>
+		</td>
 
-<table rt:param="{$plugins}" rt:var="v" rt:key="plugin_name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:20%;">
-		<a href="{$t.package_method_url('plugin_doc',$package,$plugin_name)}">
-			{$plugin_name}
-		</a>
-	</td>
-	<td style="width:80%;">
-		{$t.html($v[0],0,1)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-<rt:if param="{$added_plugins}">
-<h4 class="text-warning">Added Plugins</h4>
-
-<table rt:param="{$added_plugins}" rt:var="plugin_class" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td>
-		<rt:if param="{$t.eq($plugin_class,'Closure')}">
-			{$plugin_class}
-		<rt:else />
-			<a href="{$t.package_method_url('class_doc',$plugin_class)}">{$plugin_class}</a>
-		</rt:if>
-	</td>
-</tr>
-</table>
+	</tr>
+	</table>
 </rt:if>
 
 
 <rt:if param="{$conf_list}">
 	<h4 class="text-warning">Conf</h4>
 	
-	<table rt:param="{$conf_list}" rt:var="v" rt:key="conf_name" class="table table-condensed" style="margin-bottom: 50px;">
+	<table rt:param="{$conf_list}" rt:var="info" class="table table-condensed">
 	<tr>
-		<td style="width:20%;">
-			<a href="{$t.package_method_url('conf_doc',$package,$conf_name)}">
-				{$conf_name}
+		<td>
+			<a href="{$t.package_method_url('conf_doc',$name,$info.name())}">
+				{$info.name()}
 			</a>
 		</td>
-		<td style="width:80%;">
-			{$t.html($v[0],200,1)}
+		<td>
+			{$t.html($info.summary(),200,1)}
 		</td>
 	</tr>
 	</table>

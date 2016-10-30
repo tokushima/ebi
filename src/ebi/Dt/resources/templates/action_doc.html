@@ -1,189 +1,134 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
-</rt:block>
+<rt:block name="list_search"></rt:block>
 
 <rt:block name="content">
-<h2 style="{$t.cond_switch($deprecated,'text-decoration: line-through;','')}">
-	<a href="{$t.package_method_url('class_doc',$package)}">{$f.package_name($package)}</a>
+<h2 style="{$t.cond_switch($method.opt('deprecated'),'text-decoration: line-through;','')}">
+	{$method.opt('name')}
+	
+	(
+	<a href="{$t.package_method_url('class_doc',$method.opt('class'))}">
+		{$method.opt('class')}
+	</a>
 	::
-	{$method_name}
-
-	<rt:if param="{$http_method}">
-		<rt:if param="{$t.eq($http_method,'POST')}">
-			<span class="label label-danger">POST</span>
-		<rt:else />
-			<rt:if param="{$t.eq($http_method,'GET')}">
-				<span class="label label-warning">GET</span>
-			<rt:else />
-				<span class="label label-default">{$http_method}</span>
-			</rt:if>
-		</rt:if>
-	</rt:if>
+	{$method.opt('method')}
+	)
+	<span class="label label-default">{$method.opt('http_method')}</span>
 </h2>
 
-<rt:if param="{$description}">
-	<div class="text-muted" style="padding: 10px;">
-		{$t.noop($f.md2html($description))}
-	</div>
-</rt:if>
+<div class="text-muted" style="padding: 10px;">
+	{$t.noop($f.md2html($method.document()))}
+</div>
 
 
-<rt:if param="{$t.has($see_class,$see_method,$see_url)}">
-<h4 class="text-warning">See</h4>
-
-<table class="table table-condensed">
-<rt:loop param="{$see_class}" var="class">
-	<tr>
-		<td><a href="{$t.package_method_url('class_doc',$f.type($class))}">{$f.type($class)}</a></td>
-	</tr>
-</rt:loop>
-	
-<rt:loop param="{$see_method}" var="class_method">
-	<tr>
-		<td>
-			<a href="{$t.package_method_url('class_doc',$f.type($class_method[0]))}">
-				{$f.type($class_method[0])}
-			</a>
-			::
-			<a href="{$t.package_method_url('method_doc',$class_method[0],$class_method[1])}">
-				{$class_method[1]}
-			</a>
-		</td>
-	</tr>
-</rt:loop>
-	
-<rt:loop param="{$see_url}" var="url">
-	<tr>
-		<td>
-			<a href="{$url}">
-				{$url}
-			</a>
-		</td>
-	</tr>
-</rt:loop>
-
-</table>
-</rt:if>
-
-
-<rt:if param="{$params}">
 <h4 class="text-warning">Params</h4>
-
-<table rt:param="{$params}" rt:var="param" rt:key="param_name" class="table table-condensed" style="margin-bottom: 50px;">
+<table rt:param="{$method.params()}" rt:var="param" class="table table-condensed">
 <tr>
 	<td style="width:25%;">
-		<rt:if param="{$f.type($param[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($param[0]))}">{$param[0]}</a>
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
 		<rt:else />
-			{$param[0]}
+			{$param.fm_type()}
 		</rt:if>
 	</td>
 	<td style="width:30%;">
-		<rt:if param="{$param[1]}">&</rt:if>
-		${$param_name}
-		
-		<rt:if param="{$param[3]}">
-		= {$param[3]}
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+
+<h4 class="text-warning">Request</h4>
+<table rt:param="{$method.opt('requests')}" rt:var="param" class="table table-condensed">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:30%;">
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+<h4 class="text-warning">Context</h4>
+<table rt:param="{$method.opt('contexts')}" rt:var="param" class="table table-condensed">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:30%;">
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+<h4 class="text-warning">Args</h4>
+<table rt:param="{$method.opt('args')}" rt:var="param" class="table table-condensed">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:30%;">
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+
+<h4 class="text-warning">Throws</h4>
+<table rt:param="{$method.opt('throws')}" rt:var="param" class="table table-condensed">
+<tr>
+	<td style="width:55%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
 		</rt:if>
 	</td>
 	<td style="width:45%;">
-		{$t.html($param[4])}
+		{$t.html($param.summary())}
 	</td>
 </tr>
 </table>
-</rt:if>
 
-<rt:if param="{$request}">
-<h4 class="text-warning">Request</h4>
-
-<table rt:param="{$request}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 25%;">
-		<rt:if param="{$f.type($arg[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
-		<rt:else />
-			{$arg[0]}
-		</rt:if>
-	</td>
-	<td style="width: 20%;">
-		<rt:if param="{$arg[2]}">
-			{$name}
-		<rt:else />
-			{$name}
-		</rt:if>
-	</td>
-	<td style="width: 55%;">
-		{$t.html($arg[1])}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-<rt:if param="{$context}">
-<h4 class="text-warning">Context</h4>
-	
-<table rt:param="{$context}" rt:var="arg" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width: 25%;">
-		<rt:if param="{$f.type($arg[0])}">
-			<a href="{$t.package_method_url('class_doc',$f.type($arg[0]))}">{$arg[0]}</a>
-		<rt:else />
-			{$arg[0]}
-		</rt:if>
-	</td>
-	<td style="width: 20%;">
-		{$name}
-	</td>
-	<td style="width: 55%;">
-		{$t.html($arg[1])}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$args}">
-<h4 class="text-warning">Arg</h4>
-
-<table rt:param="{$args}" rt:var="summary" rt:key="name" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="width:25%;">
-		{$name}
-	</td>
-	<td style="width:75%;">
-		{$t.html($summary)}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$throws}">
-<h4 class="text-warning">Throws</h4>
-
-<table rt:param="{$throws}" rt:var="e" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td style="color:#888888; width: 25%;">
-		<div data-toggle="tooltip" data-placement="top" title="{$t.html($e[2])}">{$f.type($e[0])}</div>
-	</td>
-	<td style="color:#aaaaaa; width: 75%;">
-		{$t.html($e[1])}
-	</td>
-</tr>
-</table>
-</rt:if>
-
-
-<rt:if param="{$modules}">
-<h4 class="text-warning">Modules</h4>
-
-<table rt:param="{$modules}" rt:var="pkg" class="table table-condensed" style="margin-bottom: 50px;">
-<tr>
-	<td><a href="{$t.package_method_url('class_doc',$f.type($pkg))}">{$f.type($pkg)}</a></td>
-</tr>
-</table>	
-</rt:if>
 
 </rt:block>
 

@@ -1,24 +1,24 @@
 <?php
 \ebi\Conf::set([
-	'ebi.Conf'=>[
+	\ebi\Conf::class=>[
 		'appmode_group'=>[
 			'dev'=>['local','mamp'],
 		],
 	],
-	'ebi.Log'=>[
+	\ebi\Log::class=>[
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 	],
-	'ebi.Flow'=>[
+	\ebi\Flow::class=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 		'secure'=>false,
 		'accept_debug'=>true,
 	],
-	'ebi.flow.plugin.Cors'=>[
+	\ebi\flow\plugin\Cors::class=>[
 		'origin'=>'http://localhost:8000',
 	],
-	'ebi.Dt'=>[
+	\ebi\Dt::class=>[
 		'ignore'=>[
 //			'test.*',
 		],
@@ -31,7 +31,7 @@
 //		'model'=>false,
 //		'data'=>false,
 	],
-	'ebi.Dao'=>[
+	\ebi\Dao::class=>[
 		'connection'=>[
 			'*'=>['type'=>'ebi.SqliteConnector','timezone'=>'+09:00'],
 		]

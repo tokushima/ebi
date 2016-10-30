@@ -53,25 +53,7 @@ class Helper{
 		}
 		return $p;
 	}	
-	/**
-	 * 型の文字列表現を返す
-	 * @param string $class
-	 */
-	public function type($class){
-		if(preg_match('/[A-Z]/',$class)){
-			switch(substr($class,-2)){
-				case '{}':
-				case '[]': $class = substr($class,0,-2);
-			}
-			$class = str_replace('\\','.',$class);
-			
-			if(substr($class,0,1) == '.'){
-				$class = substr($class,1);
-			}
-			return $class;
-		}
-		return null;
-	}
+
 	/**
 	 * 加算
 	 * @param number $i
