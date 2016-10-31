@@ -21,11 +21,9 @@
 	},
 	"archive" :{
 		"exclude": [
-			"/test_app",
-			"/ebi.phar",
-			"/button_download2.png",
-			"/sushi_ebi.png",
-			"/README.md"			
+			"/tests",
+			"/media",
+			"/ebi.phar"
 		]
 	}
 }
