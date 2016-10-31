@@ -16,34 +16,8 @@
 	</ul>
 
 	<rt:block name="content_body">
-		<div class="modal fade" id="filter" role="dialog" aria-labelledby="filter" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-						<h4 class="modal-title">Filter</h4>
-					</div>
-					<div class="modal-body">
-						<form method="get" name="search_frm" rt:aref="true">
-							<table rt:param="{$f.props($model)}" rt:var="name">
-							<tr>
-								<td>{$t.trim_width($name,50,'..')}</td>
-								<td>{$t.noop($f.filter($model,$name))}</td>
-							</tr>
-							</table>
-							<input type="submit" class="btn btn-primary" name="search" value="Submit" />
-						</form>	
-					</div>
-					<div class="modal-footer">
-					</div>
-				</div>
-			</div>
-		</div>
-		<a class="glyphicon glyphicon-filter" data-toggle="modal" href="#filter"></a>
-		( Total: {$paginator.total()} )
-		
-		
-		
+		Total: {$paginator.total()}
+				
 		<table rt:param="object_list" rt:var="obj" rt:counter="counter">
 		<thead>
 			<tr>

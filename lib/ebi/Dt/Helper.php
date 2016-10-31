@@ -6,41 +6,6 @@ namespace ebi\Dt;
  *
  */
 class Helper{
-	private $perms = [];
-	
-	public function __construct($perms=[]){
-		$this->perms = $perms;
-	}
-	/**
-	 * 権限
-	 * @param string $nmae
-	 * @return boolean
-	 */
-	public function perm($name){
-		return (isset($this->perms[$name]) && $this->perms[$name] === true);
-	}
-	public function progress_css($no){
-		if($no == 100){
-			return 'success';
-		}
-		if($no < 30){
-			return 'danger';
-		}
-		return 'warning';
-	}
-	public function src_covered_css($type){
-		if($type === 1){
-			return 'success';
-		}
-		if($type === -1){
-			return 'danger';
-		}
-		return 'muted';
-	}
-	public function src2html($src){
-		$src = str_replace(["\t",' '],['    ','&nbsp;'],$src);
-		return $src;
-	}
 	/**
 	 * パッケージ名の文字列表現
 	 * @param string $p 
@@ -52,17 +17,8 @@ class Helper{
 			$p = substr($p,1);
 		}
 		return $p;
-	}	
-
-	/**
-	 * 加算
-	 * @param number $i
-	 * @param number $add
-	 * @return number
-	 */
-	public function calc_add($i,$add=1){
-		return $i + $add;
 	}
+
 	/**
 	 * プロパティへのアクセサ
 	 * @param \ebi\Dao $obj
@@ -143,67 +99,7 @@ class Helper{
 		}
 		return false;
 	}
-	/**
-	 * 検索用フォーム生成
-	 * @param \ebi\Dao $obj
-	 * @param string $name
-	 * @return string
-	 */
-	public function filter(\ebi\Dao $obj,$name){
-		if($obj->prop_anon($name,'master') !== null){
-			$options = [];
-			$options[] = '<option value=""></option>';
-			$master = $obj->prop_anon($name,'master');
-			
-			if(!empty($master)){
-				$master = str_replace('.',"\\",$master);
-				
-				if($master[0] !== "\\"){
-					$master = "\\".$master;
-				}
-				$r = new \ReflectionClass($master);
 
-				$mo = $r->newInstanceArgs();
-				$primarys = $mo->primary_columns();
-				
-				if(sizeof($primarys) != 1){
-					return sprintf('<input name="%s" type="text" />',$name);
-				}
-				$primary = array_shift($primarys);
-				$pri = $primary->name();
-				
-				foreach($master::find() as $dao){
-					$options[] = sprintf('<option value="%s">%s</option>',$dao->{$pri}(),(string)$dao);
-				}
-			}
-			return sprintf('<select name="%s">%s</select>',$name,implode('',$options));
-		}else{
-			$type = $obj->prop_anon($name,'type');
-			
-			switch($type){
-				case 'boolean':
-					$options = [];
-					$options[] = '<option value=""></option>';
-					
-					foreach(['true','false'] as $choice){
-						$options[] = sprintf('<option value="%s">%s</option>',$choice,$choice);
-					}
-					return sprintf('<select name="search_%s_%s">%s</select>',$type,$name,implode('',$options));
-				case 'timestamp':
-					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name).
-					' 〜 '.
-					sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD HH:MI:SS" />',$type,$name);
-				case 'date':
-					return sprintf('<input name="search_%s_from_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name).
-						' 〜 '.
-						sprintf('<input name="search_%s_to_%s" type="text" placeholder="YYYY/MM/DD" />',$type,$name);
-				default:
-					if(empty($type) || preg_match('/^[a-z]+$/',$type)){
-						return sprintf('<input name="search_%s_%s" type="text" />',$type,$name);
-					}
-			}
-		}
-	}
 	/**
 	 * 登録用フォーム生成
 	 * @param \ebi\Dao $obj
@@ -284,31 +180,9 @@ class Helper{
 		$value = preg_replace('/\[\d+\]/','&nbsp;&nbsp;\\0',$value);
 		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
 	}
-	/**
-	 * Confが定義されているか
-	 * @param string $package
-	 * @param string $key
-	 * @return boolean
-	 */
-	public function has_conf($package,$key){
-		return \ebi\Conf::exists($package, $key);
-	}
-	/**
-	 * パッケージが指定したクラスのサブクラスに属するか
-	 * @param string $package 
-	 * @param string $class 
-	 */
-	public function is_subclass_of($package,$class){
-		$package = '\\'.str_replace('.','\\',$package);
-		$class = '\\'.str_replace('.','\\',$class);
-		
-		return is_subclass_of($package,$class);
-	}
+
 	public function md2html($v){
 		$md = new \ebi\Md();
 		return str_replace('{$','@VALPREFIX@',$md->html($v));
-	}
-	public function md5($v){
-		return md5($v);
 	}
 }
