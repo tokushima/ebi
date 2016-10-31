@@ -127,11 +127,11 @@ abstract class Dao extends \ebi\Object{
 			 * [
 			 * 	'ebi.SessionDao'=>[ // ebi.SessionDaoモデルの接続情報となります
 			 * 		'type'=>'ebi.MysqlConnector',
-			 * 		'dbname'=>'ebitest'
+			 * 		'name'=>'ebitest'
 			 * 	],
 			 * 	'*'=>[ // *を指定した場合は他のパターンにマッチしたなかったもの全てがこの接続になります
 			 * 		'type'=>'ebi.MysqlConnector',
-			 * 		'dbname'=>'ebitest'
+			 * 		'name'=>'ebitest'
 			 * 	],
 			 * ]
 			 * ``````````````````````````````````````````````````````````
@@ -145,14 +145,14 @@ abstract class Dao extends \ebi\Object{
 			}
 		}
 		// find connection settings
-		$findns = explode("\\",$p);
-		while(!isset(self::$_connection_settings_[implode('.',$findns)]) && !empty($findns)){
+		$findns = explode('\\',$p);
+		while(!array_key_exists(implode('\\',$findns),self::$_connection_settings_) && !empty($findns)){
 			array_pop($findns);
 		}
 		if(empty($findns) && !isset(self::$_connection_settings_['*'])){
 			throw new \ebi\exception\ConnectionException('could not find the connection settings `'.$p.'`');
 		}
-		$anon[0] = empty($findns) ? '*' : implode('.',$findns);
+		$anon[0] = empty($findns) ? '*' : implode('\\',$findns);
 		
 		if(empty($anon[1])){
 			$table_class = $p;
@@ -558,7 +558,10 @@ abstract class Dao extends \ebi\Object{
 				$master = $this->prop_anon($name,'master');
 				if(!empty($master)){
 					$master = str_replace('.',"\\",$master);
-					if($master[0] !== "\\") $master = "\\".$master;
+					
+					if($master[0] !== "\\"){
+						$master = "\\".$master;
+					}
 					try{
 						$r = new \ReflectionClass($master);
 					}catch(\ReflectionException $e){

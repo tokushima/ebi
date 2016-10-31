@@ -33,7 +33,9 @@
 	],
 	\ebi\Dao::class=>[
 		'connection'=>[
-			'*'=>['type'=>'ebi.SqliteConnector','timezone'=>'+09:00'],
+// 			\ebi\SessionDao::class=>['type'=>\ebi\SqliteConnector::class],
+// 			'\\test\\db\\ReplicationSlave'=>['type'=>\ebi\SqliteConnector::class,'dbname'=>'slave'],
+			'*'=>['type'=>\ebi\SqliteConnector::class,'timezone'=>'+09:00'],
 		]
 	],
 ]);

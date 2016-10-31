@@ -24,7 +24,7 @@ class Db implements \Iterator{
 		}
 		$type = isset($def['type']) ? $def['type'] : null;
 		$host = isset($def['host']) ? $def['host'] : null;
-		$dbname = isset($def['dbname']) ? $def['dbname'] : null;
+		$dbname = isset($def['name']) ? $def['name'] : null;
 		$port = isset($def['port']) ? $def['port'] : null;
 		$user = isset($def['user']) ? $def['user'] : null;
 		$password = isset($def['password']) ? $def['password'] : null;
