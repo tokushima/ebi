@@ -12,8 +12,8 @@
 		"ext-mbstring": "*"
 	},
 	"autoload": {
-		"psr-0": {
-			"ebi": "src/"
+		"psr-4": {
+			"ebi\\": "src/ebi/"
 		},
 		"files": [
 			"autoload.php"

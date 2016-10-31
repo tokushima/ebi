@@ -16,3 +16,6 @@
 /publish/
 /apidoc/
 /version
+/vendor/
+/composer.lock
+/composer.phar
