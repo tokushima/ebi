@@ -2,6 +2,11 @@
 namespace test\flow;
 
 class Action{
+	/**
+	 * 入力された文字を返す
+	 * @request string $abc 返す文字列
+	 * @context string $abc 入力された文字列
+	 */
 	public function abc(){
 		/**
 		 * Confのダミー

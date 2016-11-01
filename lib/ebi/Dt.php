@@ -165,13 +165,6 @@ class Dt{
 					}catch(\ReflectionException $e){
 					}
 				}
-
-				// TODO
-				$plugins = (isset($map['plugins']) ? $map['plugins']  : []);
-				if(is_subclass_of($this->strtoclass($m['class']),\ebi\flow\Request::class)){
-					$plugins = array_merge($plugins,isset($m['plugins']) ? $m['plugins']  : []);
-				}
-				
 				return ['method'=>$info];
 			}
 		}
@@ -196,37 +189,7 @@ class Dt{
 			'conf_list'=>$conf_list,
 		];
 	}
-
-	private function class_list_summary($class,$query,&$libs){
-		$r = new \ReflectionClass($class);
-		
-		$class_doc = $r->getDocComment();
-		$document = trim(preg_replace("/@.+/",'',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-		list($summary) = explode("\n",$document);
-		$pkg = str_replace('/','.',str_replace('\\','/',substr($class,1)));
-		
-		if($this->valid_class_list($pkg)){
-			if($this->filter_query($query,$class.$document.$pkg)){
-				$libs[$pkg] = $summary;
-			}
-		}
-	}
-	private function valid_class_list($class){
-		/**
-		 * @param string[] $ignore 一覧から除外するクラス名のパターン(正規表現)
-		 */
-		$ignore_patterns = \ebi\Conf::gets('ignore');
-		
-		if(!empty($ignore_patterns)){
-			foreach($ignore_patterns as $p){
-				if(preg_match('/^'.$p.'/',$class)){
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
+	
 	/**
 	 * クラスのドキュメント
 	 * @param string $class
@@ -244,7 +207,10 @@ class Dt{
 	 */
 	public function method_doc($class,$method){
 		$info = \ebi\Dt\Man::method_info($class,$method,true);
-		return $info;
+		
+		return [
+			'method'=>$info,
+		];
 	}
 	
 	/**
@@ -262,6 +228,42 @@ class Dt{
 		}
 		return [
 			'class_list'=>$plugins_class,
+		];
+	}
+	
+	/**
+	 * @automap
+	 */
+	public function mail_list(){
+		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
+		$template_list = [];
+		
+		try{
+			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
+				$info = new \ebi\man\DocInfo();
+				$info->name(str_replace($path.'/','',$f->getPathname()));
+				
+				$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
+				$info->document($xml->find_get('subject')->value());
+
+				$info->set_opt('use',false);
+				$template_list[] = $info;
+			}
+		}catch(\ebi\exception\InvalidArgumentException $e){
+		}
+		
+		foreach(self::classes() as $class_info){
+			$src = file_get_contents($class_info['filename']);
+			
+			foreach($template_list as $k => $info){
+				if(strpos($src,$info->name()) !== false){
+					$info->set_opt('use',true);
+					break 2;
+				}
+			}
+		}
+		return [
+			'template_list'=>$template_list,
 		];
 	}
 	
@@ -283,31 +285,29 @@ class Dt{
 				$class_doc = $r->getDocComment();
 				$package = str_replace('\\','.',substr($class,1));
 				
-				if($this->valid_class_list($package)){
-					$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-					list($summary) = explode("\n",$document);
-					
-					if($this->filter_query($query,$package.$document)){
-						$model_list[$package] = [
-							'label'=>$package,
-							'error'=>null,
-							'error_query'=>null,
-							'con'=>true,
-							'summary'=>$summary
-						];
+				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
+				list($summary) = explode("\n",$document);
 				
-						try{
-							\ebi\Dao::start_record();
-								call_user_func([$class,'find_get']);
-							\ebi\Dao::stop_record();
-						}catch(\ebi\exception\NotFoundException $e){
-						}catch(\ebi\exception\ConnectionException $e){
-							$model_list[$package]['error'] = $e->getMessage();
-							$model_list[$package]['con'] = false;
-						}catch(\Exception $e){
-							$model_list[$package]['error'] = $e->getMessage();
-							$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
-						}
+				if($this->filter_query($query,$package.$document)){
+					$model_list[$package] = [
+						'label'=>$package,
+						'error'=>null,
+						'error_query'=>null,
+						'con'=>true,
+						'summary'=>$summary
+					];
+			
+					try{
+						\ebi\Dao::start_record();
+							call_user_func([$class,'find_get']);
+						\ebi\Dao::stop_record();
+					}catch(\ebi\exception\NotFoundException $e){
+					}catch(\ebi\exception\ConnectionException $e){
+						$model_list[$package]['error'] = $e->getMessage();
+						$model_list[$package]['con'] = false;
+					}catch(\Exception $e){
+						$model_list[$package]['error'] = $e->getMessage();
+						$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
 					}
 				}
 			}

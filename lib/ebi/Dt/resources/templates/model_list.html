@@ -2,17 +2,15 @@
 
 <rt:block name="content">
 
-<table rt:param="{$models}" rt:key="package" rt:var="model" rt:counter="count">
+<table rt:param="{$models}" rt:key="class_name" rt:var="model" rt:counter="count">
 <tr>
 	<td>
-		<a href="{$t.package_method_url('do_find',$package)}">
-			{$f.package_name($package)}
+		<a href="{$t.package_method_url('do_find',$class_name)}">
+			{$f.package_name($class_name)}
 		</a>
 	</td>
 	<td>
-		<span style="color: #aaaaaa;">
-			{$t.html($model['summary'])}
-		</span>
+		{$t.html($model['summary'])}
 		
 		<rt:if param="{$model['error']}">
 			<rt:if param="{$model['error_query']}">

@@ -1,0 +1,16 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<table rt:param="{$template_list}" rt:var="info">
+<tr style="{$t.cond_switch($info.has_opt('use'),'color: #888888;','')}">
+	<td style="width:20%;">
+		{$info.name()}
+	</td>
+	<td>
+		{$info.summary()}
+	</td>
+</tr>
+</table>
+</rt:block>
+

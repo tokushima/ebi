@@ -6,15 +6,9 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	
-	<rt:if param="{$media_url}">
-		<script src="{$media_url}/jquery-2.1.4.min.js"></script>
-		<script src="{$media_url}/bootstrap/js/bootstrap.min.js"></script>
-		<link rel="stylesheet" href="{$media_url}/bootstrap/css/bootstrap.min.css" />
-	<rt:else />
-		<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-		<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />		
-	</rt:if>
+	<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
 </head>
 
 <body>
@@ -35,18 +29,13 @@
 				<ul class="nav navbar-nav">
 					<li class="{$t.match_package_method_switch('index','active','inactive')}"><a href="{$t.package_method_url('index')}">Urls</a></li>
 					<li class="{$t.match_package_method_switch('config_list','active','inactive')}"><a href="{$t.package_method_url('config_list')}">Config</a></li>
-					<li class="{$t.match_package_method_switch('plugin_list','active','inactive')}"><a href="{$t.package_method_url('plugin_list')}">Plugin</a></li>					
+					<li class="{$t.match_package_method_switch('plugin_list','active','inactive')}"><a href="{$t.package_method_url('plugin_list')}">Plugin</a></li>
+					<li class="{$t.match_package_method_switch('mail_list','active','inactive')}"><a href="{$t.package_method_url('mail_list')}">Mail</a></li>
 					<li class="{$t.match_package_method_switch('document','active','inactive')}"><a href="{$t.package_method_url('document')}">Docs</a></li>					
 					
 					<li class="{$t.match_package_method_switch('model_list','active','inactive')}"><a href="{$t.package_method_url('model_list')}">Models</a></li>
 					
 				</ul>
-				
-				<rt:block name="list_search">
-					<form class="navbar-form navbar-right" rt:ref="true">
-						<input type="text" class="form-control" name="q" placeholder="Search...">
-					</form>
-				</rt:block>
 			</div>
 
 		</div>
@@ -64,10 +53,5 @@
 	</div>
 </div>
 
-<script type="text/javascript">
-$(function () {
-	  $('[data-toggle="tooltip"]').tooltip()
-});
-</script>
 </body>
 </html>

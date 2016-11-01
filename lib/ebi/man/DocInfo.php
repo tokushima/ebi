@@ -47,10 +47,10 @@ class DocInfo extends \ebi\Object{
 	public static function	parse($name,$src,$startpos=0){
 		$info = new static();
 		$info->name($name);
-		
-		$doc = ($startpos === 0) ? $src : substr($src,0,$startpos);
+
+		$doc = (($startpos === 0) ? $src : substr($src,0,$startpos)).PHP_EOL;
 		$doc = trim(substr($doc,0,strrpos($doc,PHP_EOL)));
-	
+
 		if(substr($doc,-2) == '*'.'/'){
 			$desc = '';
 			
