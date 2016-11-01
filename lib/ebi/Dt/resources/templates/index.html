@@ -27,13 +27,7 @@
 		}
 	</script>
 
-	<rt:if param="{$description}">
-		<div class="text-muted" style="padding: 10px;">
-			{$t.noop($f.md2html($description))}
-		</div>
-	</rt:if>
-
-	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-condensed">
+	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
 		<th style="width: 3%;"></th>
