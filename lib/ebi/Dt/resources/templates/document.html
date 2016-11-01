@@ -9,7 +9,7 @@
 		<ul class="nav nav-sidebar">
 			<rt:loop param="file_list" var="title" key="name">
 				<li class="{$t.cond_switch($t.eq($name,$select_name),'active','')}">
-					<a href="{$t.package_method_url('document')}?name={$name}&q={$q}" style="font-size: x-small;">
+					<a href="{$t.package_method_url('document')}?name={$name}&q={$q}" style="font-size: small;">
 						{$title}
 					</a>
 				</li>

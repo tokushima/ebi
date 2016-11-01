@@ -1,22 +1,22 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2 style="{$t.cond_switch($method.opt('deprecated'),'text-decoration: line-through;','')}">
-	<a href="{$t.package_method_url('class_doc',$method.opt('class'))}">
-		{$method.opt('class')}
+<h2 style="{$t.cond_switch($method_info.opt('deprecated'),'text-decoration: line-through;','')}">
+	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
+		{$method_info.opt('class')}
 	</a>
 	::
-	{$method.opt('method')}
-	<span class="label label-default">{$method.opt('http_method')}</span>
+	{$method_info.opt('method')}
+	<span class="label label-default">{$method_info.opt('http_method')}</span>
 </h2>
 
-<div class="text-muted" style="padding: 10px;">
-	{$t.noop($f.md2html($method.document()))}
+<div class="alert alert-warning text-muted" style="margin-top: 30px;">
+	{$t.noop($f.md2html($method_info.document()))}
 </div>
 
 
-<h4 class="text-warning">Params</h4>
-<table rt:param="{$method.params()}" rt:var="param" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
+<table rt:param="{$method_info.params()}" rt:var="param" class="table table-condensed table-condensed">
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -36,26 +36,30 @@
 </tr>
 </table>
 
-<h4 class="text-warning">Return</h4>
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Return</h4>
+
+<rt:if param="{$method_info.is_return()}">
 <table class="table table-condensed">
 <tr>
 	<td style="width:55%;">
-		<rt:if param="{$method.return().is_type_class()}">
-			<a href="{$t.package_method_url('class_doc',$method.return().fm_type())}">
-				{$method.return().fm_type()}
+		<rt:if param="{$method_info.return().is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$method_info.return().fm_type())}">
+				{$method_info.return().fm_type()}
 			</a>
 		<rt:else />
-			{$method.return().fm_type()}
+			{$method_info.return().fm_type()}
 		</rt:if>
 	</td>
 	<td style="width:45%;">
-		{$t.html($method.return().summary())}
+		{$t.html($method_info.return().summary())}
 	</td>
 </tr>
 </table>
+</rt:if>
 
-<h4 class="text-warning">Throws</h4>
-<table rt:param="{$method.opt('throws')}" rt:var="param" class="table table-condensed">
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Throws</h4>
+<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-condensed table-condensed">
 <tr>
 	<td style="width:55%;">
 		<rt:if param="{$param.is_type_class()}">

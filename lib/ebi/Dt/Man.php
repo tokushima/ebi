@@ -233,7 +233,7 @@ class Man{
 			if(!$info->is_return() && $info->has_opt('contexts')){
 				$info->return(new \ebi\man\DocParam('return','mixed{}'));
 			}
-			
+
 			$throws = $throw_param = [];
 			foreach(self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) as $class_method){
 				list($uclass,$umethod) = explode('::',$class_method);
