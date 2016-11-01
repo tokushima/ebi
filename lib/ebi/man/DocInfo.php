@@ -36,6 +36,9 @@ class DocInfo extends \ebi\Object{
 	public function set_opt($n,$val){
 		$this->opt[$n] = $val;
 	}
+	public function has_opt($n){
+		return (isset($this->opt[$n]) && !empty($this->opt[$n]));
+	}
 	public function opt($n,$def=null){
 		return (isset($this->opt[$n])) ? $this->opt[$n] : $def;
 	}

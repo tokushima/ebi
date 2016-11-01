@@ -31,6 +31,7 @@ class Man{
 					if(!$conf_list[$v[0]]->has_params()){
 						$conf_list[$v[0]]->add_params(new \ebi\man\DocParam('val',$default_type));
 					}
+					$conf_list[$v[0]]->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
 				}
 			}			
 		}
@@ -250,6 +251,7 @@ class Man{
 				}
 			}
 			$info->set_opt('throws',$throw_param);
+			
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();

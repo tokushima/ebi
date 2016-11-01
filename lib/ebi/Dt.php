@@ -247,7 +247,23 @@ class Dt{
 		return $info;
 	}
 	
-
+	/**
+	 * @automap
+	 */
+	public function plugin_list(){
+		$plugins_class = [];
+		
+		foreach(self::classes() as $class_info){
+			$info = \ebi\Dt\Man::class_info($class_info['class']);
+			
+			if(!empty($info['plugins'])){
+				$plugins_class[] = $info;
+			}
+		}
+		return [
+			'class_list'=>$plugins_class,
+		];
+	}
 	
 	
 	

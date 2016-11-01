@@ -114,9 +114,7 @@
 	<table rt:param="{$plugins}" rt:var="info" class="table table-condensed">
 	<tr>
 		<td>
-			<a href="{$t.package_method_url('plugin_doc',$name,$info.name())}">
-				{$info.name()}
-			</a>
+			{$info.name()}
 		</td>
 		<td>
 			{$t.html($info.summary(),200,1)}

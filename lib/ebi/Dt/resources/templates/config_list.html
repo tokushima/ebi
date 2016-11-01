@@ -20,7 +20,7 @@
 		</td>
 		<td colspan="3">
 			<table rt:param="class_conf" rt:var="conf">
-			<tr>
+			<tr style="{$t.cond_switch($conf.opt('def'),'color: #888888;','')}">
 				<td style="width:25%;">{$conf.name()}</td>
 				<td style="width:25%;">{$conf.param().type()}</td>
 				<td style="width:50%;">{$conf.param().summary()}</td>
