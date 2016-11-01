@@ -6,7 +6,11 @@ namespace ebi\Dt;
  */
 class Man{
 	private static function get_reflection_source(\ReflectionClass $r){
-		return implode(array_slice(file($r->getFileName()),$r->getStartLine(),($r->getEndLine()-$r->getStartLine()-1)));
+		return implode(array_slice(
+			file($r->getFileName()),
+			$r->getStartLine(),
+			($r->getEndLine()-$r->getStartLine()-1)
+		));
 	}
 	/**
 	 * \ebi\Conf:get
@@ -26,12 +30,15 @@ class Man{
 		] as $preg => $default_type){
 			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 				foreach($m[2] as $k => $v){
-					$conf_list[$v[0]] = \ebi\man\DocInfo::parse($v[0],$src,$m[0][$k][1]);
-					
-					if(!$conf_list[$v[0]]->has_params()){
-						$conf_list[$v[0]]->add_params(new \ebi\man\DocParam('val',$default_type));
+					// 呼び出しが重複したら先にドキュメントがあった方
+					if(!array_key_exists($v[0],$conf_list) || !$conf_list[$v[0]]->has_params()){
+						$conf_list[$v[0]] = \ebi\man\DocInfo::parse($v[0],$src,$m[0][$k][1]);
+						
+						if(!$conf_list[$v[0]]->has_params()){
+							$conf_list[$v[0]]->add_params(new \ebi\man\DocParam('val',$default_type));
+						}
+						$conf_list[$v[0]]->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
 					}
-					$conf_list[$v[0]]->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
 				}
 			}			
 		}

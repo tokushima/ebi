@@ -44,29 +44,34 @@ class DocInfo extends \ebi\Object{
 	}
 	
 	
-	public static function	parse($name,$src,$startpos=0){
+	public static function	parse($name,$src,$docendpos=0){
 		$info = new static();
 		$info->name($name);
 
-		$doc = (($startpos === 0) ? $src : substr($src,0,$startpos)).PHP_EOL;
-		$doc = trim(substr($doc,0,strrpos($doc,PHP_EOL)));
-
-		if(substr($doc,-2) == '*'.'/'){
-			$desc = '';
+		if($docendpos > 0){
+			$doc = trim(substr($src,0,$docendpos));
+			$startpos = strrpos($doc,'/**');
 			
-			foreach(array_reverse(explode(PHP_EOL,$doc)) as $line){
-				if(strpos(ltrim($line),'/'.'**') !== 0){
-					$desc = $line.PHP_EOL.$desc;
+			if($startpos !== false){
+				$doc = substr($doc,$startpos - 3);
+
+				if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
+					$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
 				}else{
-					$desc = substr($line,strpos($line,'/**')+3).PHP_EOL.$desc;
-					break;
+					$doc = '';
 				}
+			}else{
+				$doc = '';
 			}
-			$doc = $desc;
+		}else{
+			$doc = $src;
 		}
-		$info->params(
-			\ebi\man\DocParam::parse('param',$doc)
-		);
+
+		$params = \ebi\man\DocParam::parse('param',$doc);
+		
+		if(!empty($params)){
+			$info->params($params);
+		}
 		if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
 			$info->return(new \ebi\man\DocParam(
 				'return',
@@ -78,7 +83,7 @@ class DocInfo extends \ebi\Object{
 			trim(preg_replace('/@.+/','',
 				preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace('*'.'/','',$doc))
 			))
-		);
+		);		
 		return $info;
 	}
 }

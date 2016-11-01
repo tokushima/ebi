@@ -173,11 +173,8 @@ class Flow{
 		
 		/**
 		 * @param string $val アプリケーションURL 
-		 * 最後尾に「*」で実行エントリに自動変換
-		 * http://localhost:8000/* => http://localhost:8000/api
 		 * 
-		 * 「**」でエントリファイル名に変換される
-		 * http://localhost:8000/** => http://localhost:8000/api.php
+		 * 末尾が「*」で実行エントリに、「**」でエントリファイル名(*.php)に変換される
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
