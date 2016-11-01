@@ -1,26 +1,32 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2 style="{$t.cond_switch($method.opt('deprecated'),'text-decoration: line-through;','')}">
-	{$method.opt('name')}
+
+<h2 style="{$t.cond_switch($action.opt('deprecated'),'text-decoration: line-through;','')}">
+	{$action.opt('name')}
 	
 	(
-	<a href="{$t.package_method_url('class_doc',$method.opt('class'))}">
-		{$method.opt('class')}
+	<a href="{$t.package_method_url('class_doc',$action.opt('class'))}">
+		{$action.opt('class')}
 	</a>
 	::
-	{$method.opt('method')}
+	{$action.opt('method')}
 	)
-	<span class="label label-default">{$method.opt('http_method')}</span>
+	<span class="label label-default">{$action.opt('http_method')}</span>
 </h2>
 
-<div class="text-muted" style="padding: 10px;">
-	{$t.noop($f.md2html($method.document()))}
+<div style="margin-left: 20px;" class="text-muted">
+	{$action.opt('url')}
 </div>
 
 
-<h4 class="text-warning">Params</h4>
-<table rt:param="{$method.params()}" rt:var="param" class="table table-condensed">
+<div class="alert alert-warning text-muted" style="margin-top: 30px;">
+	{$t.noop($f.md2html($action.document()))}
+</div>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
+<table rt:param="{$action.params()}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -42,8 +48,8 @@
 
 
 
-<h4 class="text-warning">Request</h4>
-<table rt:param="{$method.opt('requests')}" rt:var="param" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Request</h4>
+<table rt:param="{$action.opt('requests')}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -64,8 +70,8 @@
 </table>
 
 
-<h4 class="text-warning">Context</h4>
-<table rt:param="{$method.opt('contexts')}" rt:var="param" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Context</h4>
+<table rt:param="{$action.opt('contexts')}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -86,8 +92,8 @@
 </table>
 
 
-<h4 class="text-warning">Args</h4>
-<table rt:param="{$method.opt('args')}" rt:var="param" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Args</h4>
+<table rt:param="{$action.opt('args')}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -109,8 +115,8 @@
 
 
 
-<h4 class="text-warning">Throws</h4>
-<table rt:param="{$method.opt('throws')}" rt:var="param" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Throws</h4>
+<table rt:param="{$action.opt('throws')}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:55%;">
 		<rt:if param="{$param.is_type_class()}">

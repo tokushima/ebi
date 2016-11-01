@@ -153,6 +153,7 @@ class Dt{
 				
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 				$info->set_opt('name',$name);
+				$info->set_opt('url',$m['format']);
 				
 				foreach(['get_after_vars','get_after_vars_request'] as $mn){
 					try{
@@ -164,7 +165,7 @@ class Dt{
 					}catch(\ReflectionException $e){
 					}
 				}
-				return ['method'=>$info];
+				return ['action'=>$info];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
@@ -196,7 +197,10 @@ class Dt{
 	 */
 	public function class_doc($class){
 		$info = \ebi\Dt\Man::class_info($class);
-		return $info;
+		
+		return [
+			'class_info'=>$info,
+		];
 	}
 	/**
 	 * クラスドメソッドのドキュメント
@@ -208,7 +212,7 @@ class Dt{
 		$info = \ebi\Dt\Man::method_info($class,$method,true);
 		
 		return [
-			'method'=>$info,
+			'method_info'=>$info,
 		];
 	}
 	
@@ -221,7 +225,7 @@ class Dt{
 		foreach(self::classes() as $class_info){
 			$info = \ebi\Dt\Man::class_info($class_info['class']);
 			
-			if(!empty($info['plugins'])){
+			if($info->has_opt('plugins')){
 				$plugins_class[] = $info;
 			}
 		}

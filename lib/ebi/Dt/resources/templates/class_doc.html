@@ -1,73 +1,27 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
-</rt:block>
-
 <rt:block name="content">
 <h2>
-	{$f.package_name($name)}
-	
-	<rt:if param="{$abstract}">
-		<span class="label label-info">Abstract</span>
-	</rt:if>
+	{$class_info.name()}
 </h2>
 
-
-<rt:if param="{$extends}">
+<rt:if param="{$class_info.has_opt('extends')}">
 	extends 
 	
-	<a href="{$t.package_method_url('class_doc',$f.package_name($extends))}">
-		{$f.package_name($extends)}
+	<a href="{$t.package_method_url('class_doc',$class_info.opt('extends'))}">
+		{$class_info.opt('extends')}
 	</a>
 </rt:if>
 
 
-
-<rt:if param="{$description}">
-	<div class="text-muted" style="padding: 10px;">
-		{$t.noop($f.md2html($description))}
-	</div>
-</rt:if>
+<div class="alert alert-warning text-muted" style="margin-top: 30px;">
+	{$t.noop($f.md2html($class_info.document()))}
+</div>
 
 
-<rt:if param="{$t.has($see)}">
-<h4 class="text-warning">See</h4>
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Properties</h4>
 
-<table class="table table-condensed">
-<rt:loop param="{$see}" var="seeinfo">
-<tr>
-	<td>
-		<rt:if param="{$t.eq($seeinfo['type'],'class')}">
-			<a href="{$t.package_method_url('class_doc',$f.type($seeinfo['class']))}">
-				{$f.type($class)}
-			</a>
-		</rt:if>
-		<rt:if param="{$t.eq($seeinfo['type'],'method')}">
-			<a href="{$t.package_method_url('class_doc',$f.type($seeinfo['class']))}">
-				{$f.type($seeinfo['class'])}
-			</a>
-			::
-			<a href="{$t.package_method_url('method_doc',$seeinfo['class'],$seeinfo['method'])}">
-				{$seeinfo['method']}
-			</a>
-		</rt:if>
-		<rt:if param="{$t.eq($seeinfo['type'],'url')}">
-			<a href="{$seeinfo['url']}">
-				{$seeinfo['url']}
-			</a>
-		</rt:if>		
-	</td>
-</tr>
-</rt:loop>
-
-</table>
-</rt:if>
-
-
-<rt:if param="{$properties}">
-<h4 class="text-warning">Properties</h4>
-
-<table rt:param="{$properties}" rt:var="param" class="table table-condensed">
+<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-condensed table-striped">
 <tr class="{$t.cond_switch($param.opt('hash'),'hash_on','hash_off')}">
 	<td style="width: 25%;">
 		<rt:if param="{$param.is_type_class()}">
@@ -86,16 +40,13 @@
 	</td>
 </tr>
 </table>
-</rt:if>
 
 
-<rt:if param="{$methods}">
-<h4 class="text-warning">Methods</h4>
-
-<table rt:param="{$methods}" rt:var="info" class="table table-condensed">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Methods</h4>
+<table rt:param="{$class_info.opt('methods')}" rt:var="info" class="table table-condensed table-striped">
 <tr>
 	<td>
-		<a href="{$t.package_method_url('method_doc',$name,$info.name())}">
+		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
 			{$info.name()}
 		</a>
 	</td>
@@ -104,52 +55,45 @@
 	</td>
 </tr>
 </table>
-</rt:if>
 
 
 
-<rt:if param="{$plugins}">
-	<h4 class="text-warning">Plugins</h4>
-	
-	<table rt:param="{$plugins}" rt:var="info" class="table table-condensed">
-	<tr>
-		<td>
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>
+<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-condensed table-striped">
+<tr>
+	<td>
+		{$info.name()}
+	</td>
+	<td>
+		{$t.html($info.summary(),200,1)}
+	</td>
+	<td>
+		<rt:loop param="{$info.opt('added')}" var="class_name">
+			<div>
+				<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
+					{$class_name}
+				</a>
+			</div>
+		</rt:loop>
+	</td>
+
+</tr>
+</table>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Conf</h4>
+<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-condensed table-striped">
+<tr>
+	<td>
+		<a href="{$t.package_method_url('conf_doc',$name,$info.name())}">
 			{$info.name()}
-		</td>
-		<td>
-			{$t.html($info.summary(),200,1)}
-		</td>
-		<td>
-			<rt:loop param="{$info.opt('added')}" var="class_name">
-				<div>
-					<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
-						{$class_name}
-					</a>
-				</div>
-			</rt:loop>
-		</td>
-
-	</tr>
-	</table>
-</rt:if>
-
-
-<rt:if param="{$conf_list}">
-	<h4 class="text-warning">Conf</h4>
-	
-	<table rt:param="{$conf_list}" rt:var="info" class="table table-condensed">
-	<tr>
-		<td>
-			<a href="{$t.package_method_url('conf_doc',$name,$info.name())}">
-				{$info.name()}
-			</a>
-		</td>
-		<td>
-			{$t.html($info.summary(),200,1)}
-		</td>
-	</tr>
-	</table>
-</rt:if>
+		</a>
+	</td>
+	<td>
+		{$t.html($info.summary(),200,1)}
+	</td>
+</tr>
+</table>
 
 
 </rt:block>

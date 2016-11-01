@@ -71,6 +71,7 @@ class Man{
 	 * @param string $class
 	 */
 	public static function class_info($class){
+		$info = new \ebi\man\DocInfo();
 		$r = new \ReflectionClass(self::get_class_name($class));
 		
 		if($r->getFilename() === false || !is_file($r->getFileName())){
@@ -78,6 +79,13 @@ class Man{
 		}
 		$src = self::get_reflection_source($r);
 		$document = self::trim_doc($r->getDocComment());
+		
+		$info->name($r->getName());
+		$info->document(trim(preg_replace('/@.+/','',$document)));
+		
+		$info->set_opt('filename',$r->getFileName());
+		$info->set_opt('extends',(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()));
+		$info->set_opt('abstract',$r->isAbstract());
 		
 		$see = [];
 		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
@@ -93,7 +101,7 @@ class Man{
 					$see[$v] = ['type'=>'class','class'=>$class];
 				}
 			}
-		}
+		}		
 		
 		$methods = [];
 		foreach($r->getMethods() as $method){
@@ -104,13 +112,14 @@ class Man{
 					$method_document = self::get_method_document($method);
 					list($desc) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 					
-					$info = new \ebi\man\DocInfo();
-					$info->name($method->getName());
-					$info->document($desc);
-					$methods[] = $info;
+					$method_info = new \ebi\man\DocInfo();
+					$method_info->name($method->getName());
+					$method_info->document($desc);
+					$methods[] = $method_info;
 				}
 			}
 		}
+		$info->set_opt('methods',$methods);
 		
 		$properties = [];
 		$anon = \ebi\Annotation::get_class(self::get_class_name($class),'var','summary');
@@ -129,6 +138,7 @@ class Man{
 				}
 			}
 		}
+		$info->set_opt('properties',$properties);
 		
 		$call_plugins = [];
 		foreach([
@@ -168,19 +178,10 @@ class Man{
 				}
 			}
 		}
-		
-		return [
-			'name'=>$r->getName(),
-			'filename'=>$r->getFileName(),
-			'extends'=>(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()),
-			'abstract'=>$r->isAbstract(),
-			'description'=>trim(preg_replace('/@.+/','',$document)),
-			'methods'=>$methods,
-			'properties'=>$properties,
-			'plugins'=>$call_plugins,
-			'conf_list'=>self::get_conf_list($r,$src),
-			'see'=>$see,
-		];
+		$info->set_opt('plugins',$call_plugins);
+		$info->set_opt('conf_list',self::get_conf_list($r,$src));
+				
+		return $info;
 	}
 	private static function get_class_name($class){
 		return str_replace(['.','/'],['\\','\\'],$class);
