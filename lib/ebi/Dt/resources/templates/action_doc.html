@@ -5,13 +5,6 @@
 <h2 style="{$t.cond_switch($action.opt('deprecated'),'text-decoration: line-through;','')}">
 	{$action.opt('name')}
 	
-	(
-	<a href="{$t.package_method_url('class_doc',$action.opt('class'))}">
-		{$action.opt('class')}
-	</a>
-	::
-	{$action.opt('method')}
-	)
 	<span class="label label-default">{$action.opt('http_method')}</span>
 </h2>
 
@@ -20,31 +13,44 @@
 </div>
 
 
-<div class="alert alert-warning text-muted" style="margin-top: 30px;">
-	{$t.noop($f.md2html($action.document()))}
+
+<div style="margin-top: 30px;">
+	<div>
+		<a href="{$t.package_method_url('class_doc',$action.opt('class'))}">
+			{$action.opt('class')}
+		</a>
+		::
+		{$action.opt('method')}
+	</div>
+	
+	<div class="alert alert-warning text-muted">
+		{$t.noop($f.md2html($action.document()))}
+	</div>
 </div>
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
-<table rt:param="{$action.params()}" rt:var="param" class="table table-condensed table-striped">
-<tr>
-	<td style="width:25%;">
-		<rt:if param="{$param.is_type_class()}">
-			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+<rt:if param="{$action.is_params()}">
+	<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
+	<table rt:param="{$action.params()}" rt:var="param" class="table table-condensed table-striped">
+	<tr>
+		<td style="width:25%;">
+			<rt:if param="{$param.is_type_class()}">
+				<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+					{$param.fm_type()}
+				</a>
+			<rt:else />
 				{$param.fm_type()}
-			</a>
-		<rt:else />
-			{$param.fm_type()}
-		</rt:if>
-	</td>
-	<td style="width:30%;">
-		{$param.name()}
-	</td>
-	<td style="width:45%;">
-		{$t.html($param.summary())}
-	</td>
-</tr>
-</table>
+			</rt:if>
+		</td>
+		<td style="width:30%;">
+			{$param.name()}
+		</td>
+		<td style="width:45%;">
+			{$t.html($param.summary())}
+		</td>
+	</tr>
+	</table>
+</rt:if>
 
 
 
@@ -124,27 +130,28 @@
 </table>
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Map Args</h4>
-<table rt:param="{$action.opt('args')}" rt:var="param" class="table table-condensed table-striped">
-<tr>
-	<td style="width:25%;">
-		<rt:if param="{$param.is_type_class()}">
-			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+<rt:if param="{$action.has_opt('args')}">
+	<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Map Args</h4>
+	<table rt:param="{$action.opt('args')}" rt:var="param" class="table table-condensed table-striped">
+	<tr>
+		<td style="width:25%;">
+			<rt:if param="{$param.is_type_class()}">
+				<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+					{$param.fm_type()}
+				</a>
+			<rt:else />
 				{$param.fm_type()}
-			</a>
-		<rt:else />
-			{$param.fm_type()}
-		</rt:if>
-	</td>
-	<td style="width:30%;">
-		{$param.name()}
-	</td>
-	<td style="width:45%;">
-		{$t.html($param.summary())}
-	</td>
-</tr>
-</table>
-
+			</rt:if>
+		</td>
+		<td style="width:30%;">
+			{$param.name()}
+		</td>
+		<td style="width:45%;">
+			{$t.html($param.summary())}
+		</td>
+	</tr>
+	</table>
+</rt:if>
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>
 <table rt:param="{$action.opt('plugins')}" rt:var="info" class="table table-condensed table-striped">

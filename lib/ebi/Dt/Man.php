@@ -32,12 +32,16 @@ class Man{
 				foreach($m[2] as $k => $v){
 					// 呼び出しが重複したら先にドキュメントがあった方
 					if(!array_key_exists($v[0],$conf_list) || !$conf_list[$v[0]]->has_params()){
-						$conf_list[$v[0]] = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
+						$info = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
+						$info->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
 						
-						if(!$conf_list[$v[0]]->has_params()){
-							$conf_list[$v[0]]->add_params(new \ebi\Dt\DocParam('val',$default_type));
+						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',self::trim_doc($r->getDocComment()))));
+						$info->set_opt('class_summary',$summary);
+						
+						if(!$info->has_params()){
+							$info->add_params(new \ebi\Dt\DocParam('val',$default_type));
 						}
-						$conf_list[$v[0]]->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
+						$conf_list[$v[0]] = $info;
 					}
 				}
 			}			
@@ -139,12 +143,14 @@ class Man{
 			}
 		}
 		$info->set_opt('properties',$properties);
-		
+
 		$call_plugins = [];
 		foreach([
 			"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 			"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 			"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
+			"/->call_object_plugin_func\(([\"\'])(.+?)\\1/",
+			"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",
 		] as $preg){
 			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 				foreach($m[2] as $k => $v){
@@ -153,7 +159,6 @@ class Man{
 				}
 			}
 		}
-		
 		$traits = [];
 		$parent = new \ReflectionClass($r->getName());
 		do{
@@ -242,6 +247,8 @@ class Man{
 					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
+					"/->call_object_plugin_func\(([\"\'])(.+?)\\1/",
+					"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",						
 				] as $preg){
 					if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 						foreach($m[2] as $k => $v){

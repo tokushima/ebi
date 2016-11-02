@@ -195,6 +195,7 @@ class Dt{
 		$plugins_class = [];
 		
 		foreach(self::classes() as $class_info){
+
 			$info = \ebi\Dt\Man::class_info($class_info['class']);
 			
 			if($info->has_opt('plugins')){
@@ -218,7 +219,6 @@ class Dt{
 			foreach($template_list as $k => $info){
 				if(strpos($src,$info->name()) !== false){
 					$template_list[$k]->set_opt('use',true);
-					break 2;
 				}
 			}
 		}
@@ -667,6 +667,7 @@ class Dt{
 			}
 		}
 		if(is_array($use_vendor)){
+			
 			foreach($use_vendor as $class){
 				$find_package = false;
 				
@@ -676,7 +677,7 @@ class Dt{
 				}
 				
 				$class = str_replace('.','\\',$class);
-				
+
 				if(class_exists($class)){
 					if($find_package){
 						$r = new \ReflectionClass($class);
