@@ -79,7 +79,7 @@ class Dt{
 					$m['url'] = $k;
 	
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],false);
 
 						if(empty($m['summary'])){
 							list($summary) = explode(PHP_EOL,$info->document());

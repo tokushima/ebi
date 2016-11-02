@@ -191,7 +191,7 @@ class Man{
 	 * @param string $class
 	 * @param string $method
 	 */
-	public static function method_info($class,$method){
+	public static function method_info($class,$method,$deep=true){
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -234,87 +234,88 @@ class Man{
 				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
 			}
 			
-			$call_plugins = [];
-			$plugins = [];
+			if($deep){
+				$call_plugins = [];
+				$plugins = [];
 				
-			foreach([
+				foreach([
 					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
-			] as $preg){
-				if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
-					foreach($m[2] as $k => $v){
-						$plugins[$v[0]] = true;
+				] as $preg){
+					if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
+						foreach($m[2] as $k => $v){
+							$plugins[$v[0]] = true;
+						}
 					}
 				}
-			}
-			$class_info = self::class_info($ref->getDeclaringClass()->getName());
-			$class_plugins = $class_info->opt('plugins');
-		
-			foreach(array_keys($plugins) as $plugin_method_name){
-				if(array_key_exists($plugin_method_name, $class_plugins)){
-					$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
+				$class_info = self::class_info($ref->getDeclaringClass()->getName());
+				$class_plugins = $class_info->opt('plugins');
+			
+				foreach(array_keys($plugins) as $plugin_method_name){
+					if(array_key_exists($plugin_method_name, $class_plugins)){
+						$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
+					}
 				}
-			}
-			$info->set_opt('plugins',$call_plugins);
-
-			
-			$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
-			$use_method_list = array_merge($use_method_list,[$method_fullname]);
-			
-			foreach($call_plugins as $plugin_info){
-				foreach($plugin_info->opt('added') as $class_name){
-					$use_method_list[] = $class_name.'::'.$plugin_info->name();
-				}
-			}
-			
-			$mail_template_list = self::mail_template_list();
-			$throws = $throw_param = $mail_list = [];
-			
-			foreach($use_method_list as $class_method){
-				list($uclass,$umethod) = explode('::',$class_method);
+				$info->set_opt('plugins',$call_plugins);
+	
 				
-				try{
-					$ref = new \ReflectionMethod($uclass,$umethod);
-					$use_method_src = self::method_src($ref);
-					$use_method_doc = self::trim_doc($ref->getDocComment());
-					
-					if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
-						foreach($m[1] as $k => $n){
-							$throws[$n] = [$n,$m[2][$k]];
-						}
+				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
+				$use_method_list = array_merge($use_method_list,[$method_fullname]);
+				
+				foreach($call_plugins as $plugin_info){
+					foreach($plugin_info->opt('added') as $class_name){
+						$use_method_list[] = $class_name.'::'.$plugin_info->name();
 					}
+				}
+				
+				$mail_template_list = self::mail_template_list();
+				$throws = $throw_param = $mail_list = [];
+				
+				foreach($use_method_list as $class_method){
+					list($uclass,$umethod) = explode('::',$class_method);
 					
-					foreach($mail_template_list as $k => $mail_info){
-						if(preg_match('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src)){
-							$mail_template_list[$k]->set_opt('use',true);
+					try{
+						$ref = new \ReflectionMethod($uclass,$umethod);
+						$use_method_src = self::method_src($ref);
+						$use_method_doc = self::trim_doc($ref->getDocComment());
+						
+						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
+							foreach($m[1] as $k => $n){
+								$throws[$n] = [$n,$m[2][$k]];
+							}
 						}
+						
+						foreach($mail_template_list as $k => $mail_info){
+							if(preg_match('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src)){
+								$mail_template_list[$k]->set_opt('use',true);
+							}
+						}
+					}catch(\ReflectionException $e){
 					}
-				}catch(\ReflectionException $e){
 				}
-			}
-			
-			foreach($throws as $n => $t){				
-				try{
-					$ref = new \ReflectionClass($n);
-					$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];				
-					$throw_param[$n] = new \ebi\Dt\DocParam(
-						$ref->getName(),
-						$ref->getName(),
-						$doc
-					);
-				}catch(\ReflectionException $e){
+				
+				foreach($throws as $n => $t){				
+					try{
+						$ref = new \ReflectionClass($n);
+						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];				
+						$throw_param[$n] = new \ebi\Dt\DocParam(
+							$ref->getName(),
+							$ref->getName(),
+							$doc
+						);
+					}catch(\ReflectionException $e){
+					}
 				}
-			}
-			$info->set_opt('throws',$throw_param);
-			
-			foreach($mail_template_list as $mail_info){
-				if($mail_info->opt('use') === true){
-					$mail_list[] = $mail_info;
+				$info->set_opt('throws',$throw_param);
+				
+				foreach($mail_template_list as $mail_info){
+					if($mail_info->opt('use') === true){
+						$mail_list[] = $mail_info;
+					}
 				}
-			}
-			$info->set_opt('mail_list',$mail_list);
-			
+				$info->set_opt('mail_list',$mail_list);
+			}			
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();
