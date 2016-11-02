@@ -417,4 +417,25 @@ class Util{
 		}
 		return array_unique($traits);
 	}
+	/**
+	 * クラス名
+	 * @param string $class_name
+	 * @throws \InvalidArgumentException
+	 * @return string
+	 */
+	public static function get_class_name($class_name){
+		if(class_exists($class_name)){
+			return $class_name;
+		}
+		$class_name = str_replace('.','\\',$class_name);
+	
+		if(substr($class_name,0,1) !== '\\'){
+			$class_name = '\\'.$class_name;
+		}
+		if(!class_exists($class_name)){
+			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
+		}
+		$r = new \ReflectionClass($class_name);
+		return $r->getName();
+	}
 }

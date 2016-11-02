@@ -366,18 +366,6 @@ class Q{
 		return new self(self::ORDER_RAND);
 	}
 	/**
-	 * 指定の文字列と前回指定の文字列を比較しソート順を指定する
-	 * @param string $column_str 指定のプロパティ名
-	 * @param string $pre_column_str 前回指定したプロパティ名
-	 * @return \ebi\Q
-	 */
-	public static function select_order(&$column_str,$pre_column_str){
-		if($column_str == $pre_column_str){
-			$column_str = (substr($column_str,0,1) == '-') ? substr($column_str,1) : '-'.$column_str;
-		}
-		return new self(self::ORDER,$column_str);
-	}
-	/**
 	 * 検索文字列による検索条件
 	 * @param string $dict 検索文字列 スペース区切り
 	 * @param string[] $param 対象のカラム

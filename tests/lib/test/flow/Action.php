@@ -1,6 +1,10 @@
 <?php
 namespace test\flow;
-
+/**
+ * Sample Action
+ * @author tokushima
+ *
+ */
 class Action{
 	/**
 	 * 入力された文字を返す

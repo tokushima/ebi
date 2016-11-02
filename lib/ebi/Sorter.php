@@ -60,26 +60,5 @@ class Sorter{
 		uasort($list,create_function('$a,$b',sprintf('return (strcmp((string)($a),(string)($b)) > 0) ? %s1 : %s1;',(($revers) ? '-' : ''),(($revers) ? '' : '-'))));
 		return $list;
 	}
-	/**
-	 * オーダー文字列を取得
-	 * @param string $o 現在のオーダー 
-	 * @param string $p 前回のオーダー
-	 * @return string
-	 */
-	public static function order($o,$p){
-		$or = $pr = false;
-		
-		if(empty($o)) return null;
-		if($o[0] == '-'){
-			$or = true;
-			$o = substr($o,1);
-		}
-		if(!empty($p) && $p[0] == '-'){
-			$pr = true;
-			$p = substr($p,1);
-		}
-		if($p !== $o) return (($or) ? '-' : '').$o;
-		if($or === $pr) return (($or) ? '' : '-').$o;
-		return (($or) ? '-' : '').$o;
-	}
+
 }

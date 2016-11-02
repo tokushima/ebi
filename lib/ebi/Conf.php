@@ -8,21 +8,6 @@ class Conf{
 	private static $value = [self::class=>[]];
 	private static $plugins = [];
 	
-	private static function get_class_name($class_name){
-		if(class_exists($class_name)){
-			return $class_name;
-		}
-		$class_name = str_replace('.','\\',$class_name);
-	
-		if(substr($class_name,0,1) !== '\\'){
-			$class_name = '\\'.$class_name;
-		}
-		if(!class_exists($class_name)){
-			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
-		}
-		$r = new \ReflectionClass($class_name);
-		return $r->getName();
-	}
 	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
 			list(,,$d) = debug_backtrace(false);
@@ -33,7 +18,7 @@ class Conf{
 			return [$d['class'],$key];
 		}
 		list($class_name,$key) = explode('@',$key,2);
-		return [self::get_class_name($class_name),$key];
+		return [\ebi\Util::get_class_name($class_name),$key];
 	}
 	/**
 	 * 定義情報をセットする
@@ -44,7 +29,7 @@ class Conf{
 	public static function set($class_name,$key=null,$value=null){
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
-				$c = self::get_class_name($c);
+				$c = \ebi\Util::get_class_name($c);
 				
 				foreach($v as $k => $value){
 					if(!isset(self::$value[$c]) || !array_key_exists($k,self::$value[$c])){
@@ -53,7 +38,7 @@ class Conf{
 				}
 			}
 		}else if(!empty($key)){
-			$class_name = self::get_class_name($class_name);
+			$class_name = \ebi\Util::get_class_name($class_name);
 			
 			if(func_num_args() > 3){
 				$value = func_get_args();
@@ -123,14 +108,14 @@ class Conf{
 				static::set_class_plugin($c,$v);
 			}
 		}else if(!empty($obj)){
-			$class_name = self::get_class_name($class_name);
+			$class_name = \ebi\Util::get_class_name($class_name);
 			
 			if(!is_array($obj)){
 				$obj = [$obj];
 			}
 			foreach($obj as $o){
 				if(is_string($o)){
-					$o = self::get_class_name($o);
+					$o = \ebi\Util::get_class_name($o);
 				}
 				self::$plugins[$class_name][] = $o;
 			}

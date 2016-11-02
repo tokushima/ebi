@@ -84,8 +84,17 @@ class Paginator implements \IteratorAggregate{
 	 * return string
 	 */
 	public function order($value=null,$asc=true){
-		if(isset($value)) $this->order = ($asc ? '' :'-').(string)(is_array($value) ? array_shift($value) : $value);
+		if(isset($value)){
+			$this->order = ($asc ? '' :'-').(string)(is_array($value) ? array_shift($value) : $value);
+		}
 		return $this->order;
+	}
+	/**
+	 * ソートキーが設定されているか
+	 * @return boolean
+	 */
+	public function has_order(){
+		return !empty($this->order);
 	}
 	/**
 	 * 合計
@@ -196,6 +205,21 @@ class Paginator implements \IteratorAggregate{
 			$paginate_by = $max_paginate_by;
 		}
 		$self = new self($paginate_by,$req->in_vars('page',1));
+		
+		if($req->is_vars('order')){
+			$o = $req->in_vars('order');
+			$p = $req->in_vars('porder');
+			
+			if($o == $p){
+				if($o[0] == '-'){
+					$o = substr($o,1);
+				}else{
+					$o = '-'.$o;
+				}
+				$req->vars('order',$o);
+			}
+			$self->order($o);
+		}
 		$self->cp($req->ar_vars());
 	
 		return $self;
@@ -260,23 +284,26 @@ class Paginator implements \IteratorAggregate{
 	public function query_prev(){
 		$prev = $this->prev();
 		$vars = array_merge($this->vars,[
-					$this->query_name() => (($this->dynamic && isset($this->tmp[3])) ? 
-						(isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : 
-						$prev
-					)
-				]);
-
+			$this->query_name() => (($this->dynamic && isset($this->tmp[3])) ? 
+				(isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : 
+				$prev
+			)
+		]);
+		
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
 		}
-		return Query::get($vars);
+		return \ebi\Query::get($vars);
 	}
 	/**
 	 * 次のページを表すクエリ
 	 * @return string
 	 */
 	public function query_next(){
-		$vars = array_merge($this->vars,[$this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())]);
+		$vars = array_merge(
+			$this->vars,
+			[$this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())]
+		);
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
 		}
@@ -292,11 +319,12 @@ class Paginator implements \IteratorAggregate{
 		if(isset($this->vars['order'])){
 			$this->order = $this->vars['order'];
 			unset($this->vars['order']);
+			unset($this->vars['page']);
 		}
 		return Query::get(array_merge(
-							$this->vars
-							,['order'=>$order,'porder'=>$this->order()]
-						));
+			$this->vars
+			,['order'=>$order,'porder'=>$this->order()]
+		));
 	}
 	/**
 	 * 指定のページを表すクエリ
