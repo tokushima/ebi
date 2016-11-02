@@ -13,7 +13,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"ebi\\": "src/ebi/"
+			"ebi\\": "lib/ebi/"
 		},
 		"files": [
 			"autoload.php"
