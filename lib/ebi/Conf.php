@@ -129,6 +129,9 @@ class Conf{
 				$obj = [$obj];
 			}
 			foreach($obj as $o){
+				if(is_string($o)){
+					$o = self::get_class_name($o);
+				}
 				self::$plugins[$class_name][] = $o;
 			}
 		}
