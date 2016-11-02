@@ -1,11 +1,11 @@
 <?php
 
-namespace ebi\man;
+namespace ebi\Dt;
 /**
  * @var string $name
  * @var text $document
- * @var \ebi\man\DocParam[] $params
- * @var \ebi\man\DocParam $return
+ * @var \ebi\Dt\DocParam[] $params
+ * @var \ebi\Dt\DocParam $return
  * @author tokushima
  *
  */
@@ -20,7 +20,7 @@ class DocInfo extends \ebi\Object{
 		list($summary) = explode(PHP_EOL,$this->document());
 		return $summary;
 	}
-	public function add_params(\ebi\man\DocParam $p){
+	public function add_params(\ebi\Dt\DocParam $p){
 		$this->params[] = $p;
 	}
 	public function has_params(){
@@ -30,7 +30,7 @@ class DocInfo extends \ebi\Object{
 		if(!empty($this->params)){
 			return $this->params[0];
 		}
-		return new \ebi\man\DocParam(null,null);
+		return new \ebi\Dt\DocParam(null,null);
 	}
 	
 	public function set_opt($n,$val){
@@ -67,13 +67,13 @@ class DocInfo extends \ebi\Object{
 			$doc = $src;
 		}
 
-		$params = \ebi\man\DocParam::parse('param',$doc);
+		$params = \ebi\Dt\DocParam::parse('param',$doc);
 		
 		if(!empty($params)){
 			$info->params($params);
 		}
 		if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
-			$info->return(new \ebi\man\DocParam(
+			$info->return(new \ebi\Dt\DocParam(
 				'return',
 				$m[1],
 				$m[2]

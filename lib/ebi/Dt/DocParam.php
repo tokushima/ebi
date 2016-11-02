@@ -1,5 +1,5 @@
 <?php
-namespace ebi\man;
+namespace ebi\Dt;
 /**
  * 
  * @author tokushima

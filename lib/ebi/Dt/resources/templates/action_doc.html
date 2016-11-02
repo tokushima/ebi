@@ -92,7 +92,39 @@
 </table>
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Args</h4>
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Mail</h4>
+<table rt:param="{$action.opt('mail_list')}" rt:var="info" class="table table-condensed table-striped">
+<tr style="{$t.cond_switch($info.has_opt('use'),'color: #888888;','')}">
+	<td style="width:20%;">
+		{$info.name()}
+	</td>
+	<td>
+		{$info.summary()}
+	</td>
+</tr>
+</table>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Throws</h4>
+<table rt:param="{$action.opt('throws')}" rt:var="param" class="table table-condensed table-striped">
+<tr>
+	<td style="width:55%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Map Args</h4>
 <table rt:param="{$action.opt('args')}" rt:var="param" class="table table-condensed table-striped">
 <tr>
 	<td style="width:25%;">
@@ -114,24 +146,28 @@
 </table>
 
 
-
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Throws</h4>
-<table rt:param="{$action.opt('throws')}" rt:var="param" class="table table-condensed table-striped">
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>
+<table rt:param="{$action.opt('plugins')}" rt:var="info" class="table table-condensed table-striped">
 <tr>
-	<td style="width:55%;">
-		<rt:if param="{$param.is_type_class()}">
-			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
-				{$param.fm_type()}
-			</a>
-		<rt:else />
-			{$param.fm_type()}
-		</rt:if>
+	<td>
+		{$info.name()}
 	</td>
-	<td style="width:45%;">
-		{$t.html($param.summary())}
+	<td>
+		{$t.html($info.summary(),200,1)}
 	</td>
+	<td>
+		<rt:loop param="{$info.opt('added')}" var="class_name">
+			<div>
+				<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
+					{$class_name}
+				</a>
+			</div>
+		</rt:loop>
+	</td>
+
 </tr>
 </table>
+
 
 </rt:block>
 

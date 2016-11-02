@@ -9,19 +9,19 @@ class Conf{
 	private static $plugins = [];
 	
 	private static function get_class_name($class_name){
-		if(!class_exists($class_name)){
-			$class_name = str_replace('.','\\',$class_name);
-		
-			if(substr($class_name,0,1) !== '\\'){
-				$class_name = '\\'.$class_name;
-			}
-			if(!class_exists($class_name)){
-				throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
-			}
-			$r = new \ReflectionClass($class_name);
-			$class_name = $r->getName();
+		if(class_exists($class_name)){
+			return $class_name;
 		}
-		return $class_name;
+		$class_name = str_replace('.','\\',$class_name);
+	
+		if(substr($class_name,0,1) !== '\\'){
+			$class_name = '\\'.$class_name;
+		}
+		if(!class_exists($class_name)){
+			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
+		}
+		$r = new \ReflectionClass($class_name);
+		return $r->getName();
 	}
 	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
@@ -44,6 +44,8 @@ class Conf{
 	public static function set($class_name,$key=null,$value=null){
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
+				$c = self::get_class_name($c);
+				
 				foreach($v as $k => $value){
 					if(!isset(self::$value[$c]) || !array_key_exists($k,self::$value[$c])){
 						self::$value[$c][$k] = $value;

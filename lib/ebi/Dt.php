@@ -44,37 +44,11 @@ class Dt{
 		];
 		return $vars;
 	}
-	private function filter_query($query,$value){
-		$bool = true;
-		$value = strtolower($value);
-		
-		if(!empty($query)){
-			foreach($query as $q){
-				if(strpos($value,strtolower($q)) === false){
-					$bool = false;
-				}
-			}
-		}
-		return $bool;
-	}
-	private function get_query(){
-		$req = new \ebi\Request();
-		$q = trim($req->in_vars('q'));
-		$query = [];
-		
-		foreach((empty($q) ? [] : explode(' ',str_replace('　',' ',$q))) as $v){
-			if(trim($v) != ''){
-				$query[] = $v;
-			}
-		}
-		return $query;
-	}
 	/**
 	 * @automap
 	 */
 	public function index(){
 		$flow_output_maps = [];
-		$query = $this->get_query();
 	
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
@@ -124,9 +98,7 @@ class Dt{
 						}
 					}
 				}
-				if($this->filter_query($query,$m['name'].$m['url'].$m['summary'])){
-					$flow_output_maps[$m['name']] = $m;
-				}
+				$flow_output_maps[$m['name']] = $m;
 			}
 		}
 		$entry_desc = (preg_match('/\/\*\*.+?\*\//s',\ebi\Util::file_read($this->entry),$m)) ?
@@ -238,29 +210,14 @@ class Dt{
 	 * @automap
 	 */
 	public function mail_list(){
-		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
-		$template_list = [];
-		
-		try{
-			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
-				$info = new \ebi\man\DocInfo();
-				$info->name(str_replace($path.'/','',$f->getPathname()));
-				
-				$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-				$info->document($xml->find_get('subject')->value());
-
-				$info->set_opt('use',false);
-				$template_list[] = $info;
-			}
-		}catch(\ebi\exception\InvalidArgumentException $e){
-		}
+		$template_list = \ebi\Dt\Man::mail_template_list();
 		
 		foreach(self::classes() as $class_info){
 			$src = file_get_contents($class_info['filename']);
 			
 			foreach($template_list as $k => $info){
 				if(strpos($src,$info->name()) !== false){
-					$info->set_opt('use',true);
+					$template_list[$k]->set_opt('use',true);
 					break 2;
 				}
 			}
@@ -277,7 +234,6 @@ class Dt{
 	 * @automap
 	 */
 	public function model_list(){
-		$query = $this->get_query();
 		$model_list = [];
 		
 		foreach(self::classes('\ebi\Dao') as $class_info){
@@ -291,32 +247,30 @@ class Dt{
 				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
 				list($summary) = explode("\n",$document);
 				
-				if($this->filter_query($query,$package.$document)){
-					$model_list[$package] = [
-						'label'=>$package,
-						'error'=>null,
-						'error_query'=>null,
-						'con'=>true,
-						'summary'=>$summary
-					];
-			
-					try{
-						\ebi\Dao::start_record();
-							call_user_func([$class,'find_get']);
-						\ebi\Dao::stop_record();
-					}catch(\ebi\exception\NotFoundException $e){
-					}catch(\ebi\exception\ConnectionException $e){
-						$model_list[$package]['error'] = $e->getMessage();
-						$model_list[$package]['con'] = false;
-					}catch(\Exception $e){
-						$model_list[$package]['error'] = $e->getMessage();
-						$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
-					}
+				$model_list[$package] = [
+					'label'=>$package,
+					'error'=>null,
+					'error_query'=>null,
+					'con'=>true,
+					'summary'=>$summary
+				];
+		
+				try{
+					\ebi\Dao::start_record();
+						call_user_func([$class,'find_get']);
+					\ebi\Dao::stop_record();
+				}catch(\ebi\exception\NotFoundException $e){
+				}catch(\ebi\exception\ConnectionException $e){
+					$model_list[$package]['error'] = $e->getMessage();
+					$model_list[$package]['con'] = false;
+				}catch(\Exception $e){
+					$model_list[$package]['error'] = $e->getMessage();
+					$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
 				}
 			}
 		}
 		ksort($model_list);
-		return ['models'=>$model_list,'q'=>implode(' ',$query)];	
+		return ['models'=>$model_list];	
 	}
 	
 	/**
@@ -326,7 +280,6 @@ class Dt{
 		$req = new \ebi\Request();
 		$file_list = [];
 		$doc = null;
-		$query = $this->get_query();
 		
 		$dir = \ebi\Conf::resource_path('documents/'.$this->entry_name);
 		
@@ -335,19 +288,11 @@ class Dt{
 			
 			foreach(\ebi\Util::ls($dir,true,'/\.md$/') as $f){
 				$name = substr(str_replace($dir,'',$f->getPathname()),1,-3);
-				$line = null;
 				
-				if(empty($query)){
-					$fp = fopen($f->getPathname(),'r');
-					$line = trim(fgets($fp,4096));
-					fclose($fp);
-				}else{
-					$src = file_get_contents($f->getPathname());
-					
-					if($this->filter_query($query,$src)){
-						list($line) = explode(PHP_EOL,$src,2);
-					}
-				}
+				$fp = fopen($f->getPathname(),'r');
+				$line = trim(fgets($fp,4096));
+				fclose($fp);
+				
 				if(isset($line)){
 					$title = (preg_match('/\#([^#].+)/',$line)) ? substr($line,1) : $name;				
 					$file_list[$name] = $title;
@@ -409,7 +354,6 @@ class Dt{
 	 *
 	 * @request string $order ソート順
 	 * @request int $page ページ番号
-	 * @request string $query 検索文字列
 	 * @request string $porder 直前のソート順
 	 *
 	 * @context array $object_list 結果配列

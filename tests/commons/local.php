@@ -9,7 +9,7 @@
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 	],
-	\ebi\Flow::class=>[
+	'ebi.Flow'=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 		'secure'=>false,
@@ -18,7 +18,7 @@
 	\ebi\flow\plugin\Cors::class=>[
 		'origin'=>'http://localhost:8000',
 	],
-	\ebi\Dt::class=>[
+	'ebi.Dt'=>[
 		'ignore'=>[
 //			'test.*',
 		],
@@ -43,5 +43,6 @@
 	'ebi.Mail'=>[\ebi\SmtpBlackholeDao::class],
 	'ebi.Session'=>[\ebi\SessionDao::class],
 	'ebi.Log'=>[\ebi\LogMailSender::class],
+	\test\flow\RequestFlow::class=>[\test\plugin\RequestPlugin::class],
 ]);
 

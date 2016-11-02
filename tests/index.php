@@ -155,6 +155,10 @@ include_once('bootstrap.php');
 		'action'=>'test.flow.RequestFlow::get_vars',
 		'plugins'=>['test.flow.plugin.Callback','test.flow.plugin.AddVars'],
 	],
+	'flow/request/mail'=>[
+		'name'=>'requestflow_mail',
+		'action'=>'test.flow.RequestFlow::sendmail',
+	],
 	
 	'http/method/vars'=>[
 		'name'=>'http_method_vars',

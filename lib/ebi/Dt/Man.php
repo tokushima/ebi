@@ -32,10 +32,10 @@ class Man{
 				foreach($m[2] as $k => $v){
 					// 呼び出しが重複したら先にドキュメントがあった方
 					if(!array_key_exists($v[0],$conf_list) || !$conf_list[$v[0]]->has_params()){
-						$conf_list[$v[0]] = \ebi\man\DocInfo::parse($v[0],$src,$m[0][$k][1]);
+						$conf_list[$v[0]] = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
 						
 						if(!$conf_list[$v[0]]->has_params()){
-							$conf_list[$v[0]]->add_params(new \ebi\man\DocParam('val',$default_type));
+							$conf_list[$v[0]]->add_params(new \ebi\Dt\DocParam('val',$default_type));
 						}
 						$conf_list[$v[0]]->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
 					}
@@ -71,7 +71,7 @@ class Man{
 	 * @param string $class
 	 */
 	public static function class_info($class){
-		$info = new \ebi\man\DocInfo();
+		$info = new \ebi\Dt\DocInfo();
 		$r = new \ReflectionClass(self::get_class_name($class));
 		
 		if($r->getFilename() === false || !is_file($r->getFileName())){
@@ -112,7 +112,7 @@ class Man{
 					$method_document = self::get_method_document($method);
 					list($desc) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 					
-					$method_info = new \ebi\man\DocInfo();
+					$method_info = new \ebi\Dt\DocInfo();
 					$method_info->name($method->getName());
 					$method_info->document($desc);
 					$methods[] = $method_info;
@@ -129,7 +129,7 @@ class Man{
 				$name = $prop->getName();
 				
 				if($name[0] != '_' && !$prop->isStatic()){
-					$properties[$name] = new \ebi\man\DocParam(
+					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
 						(isset($anon[$name]['type']) ? $anon[$name]['type'] : 'mixed'),
 						(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
@@ -148,11 +148,11 @@ class Man{
 		] as $preg){
 			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 				foreach($m[2] as $k => $v){
-					$call_plugins[$v[0]] = \ebi\man\DocInfo::parse($v[0], $src, $m[0][$k][1]);
+					$call_plugins[$v[0]] = \ebi\Dt\DocInfo::parse($v[0], $src, $m[0][$k][1]);
 					$call_plugins[$v[0]]->set_opt('added',[]);
 				}
 			}
-		}		
+		}
 		
 		$traits = [];
 		$parent = new \ReflectionClass($r->getName());
@@ -180,7 +180,7 @@ class Man{
 		}
 		$info->set_opt('plugins',$call_plugins);
 		$info->set_opt('conf_list',self::get_conf_list($r,$src));
-				
+		
 		return $info;
 	}
 	private static function get_class_name($class){
@@ -213,7 +213,7 @@ class Man{
 			$document = $document.self::get_method_document($ref);
 			$src = self::method_src($ref);
 
-			$info = \ebi\man\DocInfo::parse($method_fullname,$document);
+			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			$info->set_opt('deprecated',(strpos($document,'@deprecated') !== false));
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -226,17 +226,54 @@ class Man{
 			}
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
-			$info->set_opt('requests',\ebi\man\DocParam::parse('request',$document));
-			$info->set_opt('contexts',\ebi\man\DocParam::parse('context',$document));
-			$info->set_opt('args',\ebi\man\DocParam::parse('arg',$document));
+			$info->set_opt('requests',\ebi\Dt\DocParam::parse('request',$document));
+			$info->set_opt('contexts',\ebi\Dt\DocParam::parse('context',$document));
+			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
 
 			if(!$info->is_return() && $info->has_opt('contexts')){
-				$info->return(new \ebi\man\DocParam('return','mixed{}'));
+				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
 			}
+			
+			$call_plugins = [];
+			$plugins = [];
+				
+			foreach([
+					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
+					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
+					"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
+			] as $preg){
+				if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
+					foreach($m[2] as $k => $v){
+						$plugins[$v[0]] = true;
+					}
+				}
+			}
+			$class_info = self::class_info($ref->getDeclaringClass()->getName());
+			$class_plugins = $class_info->opt('plugins');
+		
+			foreach(array_keys($plugins) as $plugin_method_name){
+				if(array_key_exists($plugin_method_name, $class_plugins)){
+					$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
+				}
+			}
+			$info->set_opt('plugins',$call_plugins);
 
-			$throws = $throw_param = [];
-			foreach(self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()) as $class_method){
+			
+			$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
+			$use_method_list = array_merge($use_method_list,[$method_fullname]);
+			
+			foreach($call_plugins as $plugin_info){
+				foreach($plugin_info->opt('added') as $class_name){
+					$use_method_list[] = $class_name.'::'.$plugin_info->name();
+				}
+			}
+			
+			$mail_template_list = self::mail_template_list();
+			$throws = $throw_param = $mail_list = [];
+			
+			foreach($use_method_list as $class_method){
 				list($uclass,$umethod) = explode('::',$class_method);
+				
 				try{
 					$ref = new \ReflectionMethod($uclass,$umethod);
 					$use_method_src = self::method_src($ref);
@@ -247,14 +284,21 @@ class Man{
 							$throws[$n] = [$n,$m[2][$k]];
 						}
 					}
+					
+					foreach($mail_template_list as $k => $mail_info){
+						if(preg_match('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src)){
+							$mail_template_list[$k]->set_opt('use',true);
+						}
+					}
 				}catch(\ReflectionException $e){
 				}
 			}
+			
 			foreach($throws as $n => $t){				
 				try{
 					$ref = new \ReflectionClass($n);
 					$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];				
-					$throw_param[$n] = new \ebi\man\DocParam(
+					$throw_param[$n] = new \ebi\Dt\DocParam(
 						$ref->getName(),
 						$ref->getName(),
 						$doc
@@ -264,11 +308,36 @@ class Man{
 			}
 			$info->set_opt('throws',$throw_param);
 			
+			foreach($mail_template_list as $mail_info){
+				if($mail_info->opt('use') === true){
+					$mail_list[] = $mail_info;
+				}
+			}
+			$info->set_opt('mail_list',$mail_list);
+			
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();
 	}
-
+	public static function mail_template_list(){
+		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
+		$template_list = [];
+	
+		try{
+			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
+				$info = new \ebi\Dt\DocInfo();
+				$info->name(str_replace($path.'/','',$f->getPathname()));
+	
+				$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
+				$info->document($xml->find_get('subject')->value());
+	
+				$info->set_opt('use',false);
+				$template_list[] = $info;
+			}
+		}catch(\ebi\exception\InvalidArgumentException $e){
+		}
+		return $template_list;
+	}
 
 	private static function method_src(\ReflectionMethod $ref){
 		if(is_file($ref->getDeclaringClass()->getFileName())){

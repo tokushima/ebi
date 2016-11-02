@@ -41,10 +41,19 @@ class RequestFlow extends \ebi\flow\Request{
 		return ['abc'=>123,'def'=>456];
 	}
 	
+	/**
+	 * メールを送信する
+	 */
 	public function sendmail(){
 		$vars = ['abc'=>'ABC'];
 		$mail = new \ebi\Mail();
 		$mail->to("test@email.address");
 		$mail->send_template('send.xml',$vars);
+		
+		/**
+		 * メール送信拡張
+		 * @param string $address
+		 */
+		self::call_class_plugin_funcs('plguin_sendmail',$address);
 	}
 }
