@@ -14,7 +14,7 @@ class Dt{
 	private $self_class;
 	
 	public function __construct($entryfile=null){
-		if(empty($entryfile)){		
+		if(empty($entryfile)){
 			$this->self_class = str_replace('\\','.',__CLASS__);
 			$trace = debug_backtrace(false);
 			krsort($trace);
@@ -142,25 +142,6 @@ class Dt{
 		}
 		throw new \ebi\exception\NotFoundException();
 	}
-	/**
-	 * @automap
-	 */
-	public function config_list(){
-		$conf_list = [];
-
-		foreach(self::classes() as $info){
-			$ref = new \ReflectionClass($info['class']);
-			
-			foreach(\ebi\Dt\Man::get_conf_list($ref) as $k => $c){
-				$conf_list[$ref->getName()][] = $c;
-			}
-		}
-		ksort($conf_list);
-		
-		return [
-			'conf_list'=>$conf_list,
-		];
-	}
 	
 	/**
 	 * クラスのドキュメント
@@ -191,19 +172,40 @@ class Dt{
 	/**
 	 * @automap
 	 */
-	public function plugin_list(){
-		$plugins_class = [];
-		
-		foreach(self::classes() as $class_info){
-
-			$info = \ebi\Dt\Man::class_info($class_info['class']);
-			
-			if($info->has_opt('plugins')){
-				$plugins_class[] = $info;
+	public function config_list(){
+		$list = [];
+	
+		foreach(self::classes() as $info){
+			$class_info = \ebi\Dt\Man::class_info($info['class']);
+				
+			if($class_info->has_opt('config_list')){
+				$list[$class_info->name()] = $class_info;
 			}
 		}
+		ksort($list);
+		
 		return [
-			'class_list'=>$plugins_class,
+			'class_info_list'=>$list,
+		];
+	}
+	
+	/**
+	 * @automap
+	 */
+	public function plugin_list(){
+		$list = [];
+		
+		foreach(self::classes() as $class_info){
+			$class_info = \ebi\Dt\Man::class_info($class_info['class']);
+			
+			if($class_info->has_opt('plugins')){
+				$list[$class_info->name()] = $class_info;
+			}
+		}
+		ksort($list);
+		
+		return [
+			'class_info_list'=>$list,
 		];
 	}
 	
@@ -370,12 +372,7 @@ class Dt{
 			'model'=>$dao,
 		]);
 	}
-
-	
-	
-	
-	
-	
+		
 	/**
 	 * ライブラリ一覧
 	 * composerの場合はcomposer.jsonで定義しているPSR-0のもののみ
@@ -492,18 +489,6 @@ class Dt{
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	/**
 	 * エントリのURL群
 	 * @param string $dir
@@ -560,17 +545,5 @@ class Dt{
 			}
 		}
 		throw new \ebi\exception\NotFoundException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
-	}
-
-	private function strtoclass($str){
-		$str = str_replace('.','\\',$str);
-		
-		if($str[0] != '\\'){
-			$str = '\\'.$str;
-		}
-		if(class_exists($str)){
-			return $str;
-		}
-		throw new \ebi\exception\NotFoundException();
 	}
 }

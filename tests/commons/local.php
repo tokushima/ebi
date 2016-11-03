@@ -33,7 +33,6 @@
 	],
 	\ebi\Dao::class=>[
 		'connection'=>[
-//  			'ebi.SessionDao'=>['type'=>\ebi\SqliteConnector::class,'name'=>'session'],
 			'*'=>['type'=>\ebi\SqliteConnector::class,'timezone'=>'+09:00'],
 		]
 	],

@@ -25,8 +25,12 @@ class Helper{
 		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
 	}
 
+	/**
+	 * parse md
+	 * @param string $v
+	 */
 	public function md2html($v){
 		$md = new \ebi\Md();
-		return str_replace('{$','@VALPREFIX@',$md->html($v));
+		return $md->html($v);
 	}
 }

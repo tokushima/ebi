@@ -12,43 +12,7 @@ class Man{
 			($r->getEndLine()-$r->getStartLine()-1)
 		));
 	}
-	/**
-	 * \ebi\Conf:get
-	 * @param \ReflectionClass $r
-	 * @param string $src
-	 */
-	public static function get_conf_list(\ReflectionClass $r,$src=null){
-		if(empty($src)){
-			$src = self::get_reflection_source($r);
-		}
-		$conf_list = [];
-		
-		foreach([
-			"/Conf::gets\(([\"\'])(.+?)\\1/"=>'mixed[]',
-			"/Conf::get\(([\"\'])(.+?)\\1/"=>'mixed',
-			"/self::get_self_conf_get\(([\"\'])(.+?)\\1/"=>'mixed',
-		] as $preg => $default_type){
-			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
-				foreach($m[2] as $k => $v){
-					// 呼び出しが重複したら先にドキュメントがあった方
-					if(!array_key_exists($v[0],$conf_list) || !$conf_list[$v[0]]->has_params()){
-						$info = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
-						$info->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
-						
-						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',self::trim_doc($r->getDocComment()))));
-						$info->set_opt('class_summary',$summary);
-						
-						if(!$info->has_params()){
-							$info->add_params(new \ebi\Dt\DocParam('val',$default_type));
-						}
-						$conf_list[$v[0]] = $info;
-					}
-				}
-			}			
-		}
-		ksort($conf_list);
-		return $conf_list;
-	}
+
 	private static function get_method_document(\ReflectionMethod $method){
 		$method_document = $method->getDocComment();
 		
@@ -144,6 +108,32 @@ class Man{
 		}
 		$info->set_opt('properties',$properties);
 
+		
+		$config_list = [];		
+		foreach([
+			"/Conf::gets\(([\"\'])(.+?)\\1/"=>'mixed[]',
+			"/Conf::get\(([\"\'])(.+?)\\1/"=>'mixed',
+			"/self::get_self_conf_get\(([\"\'])(.+?)\\1/"=>'mixed',
+		] as $preg => $default_type){
+			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
+				foreach($m[2] as $k => $v){
+					// 呼び出しが重複したら先にドキュメントがあった方
+					if(!array_key_exists($v[0],$config_list) || !$config_list[$v[0]]->has_params()){
+						$conf_info = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
+						$conf_info->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
+		
+						if(!$conf_info->has_params()){
+							$conf_info->add_params(new \ebi\Dt\DocParam('val',$default_type));
+						}
+						$config_list[$v[0]] = $conf_info;
+					}
+				}
+			}
+		}
+		ksort($config_list);
+		$info->set_opt('config_list',$config_list);
+		
+		
 		$call_plugins = [];
 		foreach([
 			"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
@@ -184,7 +174,6 @@ class Man{
 			}
 		}
 		$info->set_opt('plugins',$call_plugins);
-		$info->set_opt('conf_list',self::get_conf_list($r,$src));
 		
 		return $info;
 	}

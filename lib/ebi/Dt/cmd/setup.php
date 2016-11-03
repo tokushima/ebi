@@ -44,45 +44,6 @@ if($mode != $appmode){
 	\cmdman\Std::println_info('Application mode is `'.$mode.'`');
 }
 
-foreach(\ebi\Dt::classes('\ebi\Dao') as $class_info){
-	if(\cmdman\Std::read('create table','n',['y','n']) == 'y'){
-		foreach(\ebi\Dt::create_table() as $model){
-			\cmdman\Std::println_primary('Created '.$model[1]);
-		}
-	}
-	break;
-}
-if(!is_file($path.'/test/testman.phar') && !is_file($path.'/testman.phar')){
-	if(\cmdman\Std::read('getting testman?','n',['y','n']) == 'y'){
-		\ebi\Util::mkdir($path.'/test');
-		
-		file_put_contents($f=$path.'/test/testman.phar',file_get_contents('http://git.io/testman.phar'));
-		\cmdman\Std::println_success('Written file '.$f);
-		
-		file_put_contents($f=$path.'/test/testman.settings.php',<<< '__SRC__'
-<?php
-\ebi\Conf::set('ebi.Db','autocommit',true);
-\testman\Conf::set('urls',\ebi\Dt::get_urls());
-__SRC__
-		);
-		\cmdman\Std::println_success('Written file '.$f);
-		
-		file_put_contents($f=$path.'/test/testman.fixture.php',<<< '__SRC__'
-<?php
-\ebi\Dt::setup();
-\ebi\Dt::create_table();
-__SRC__
-		);
-		\cmdman\Std::println_success('Written file '.$f);
-		
-		file_put_contents($f=$path.'/test/__setup__.php',<<< '__SRC__'
-<?php
-\ebi\Exceptions::clear();
-__SRC__
-		);
-		\cmdman\Std::println_success('Written file '.$f);
-	}
-}
 if(!is_file($f=$path.'/bootstrap.php')){
 	$autoload_file = '';
 		
@@ -105,13 +66,4 @@ if(!is_file($f=$path.'/bootstrap.php')){
 	}
 }
 
-$setup_cmd = substr(\ebi\Dt::setup_file(),0,-4).'.cmd.php';
-if(is_file($setup_cmd)){
-	include($setup_cmd);
-}
-if(is_file($f=\ebi\Dt::setup_file())){
-	\cmdman\Std::println_info('Run setup.');
-	\ebi\Dt::setup();
-}
-\cmdman\Std::println_info('Done.');
 

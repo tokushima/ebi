@@ -9,8 +9,12 @@ class RequestAction{
 		$req->write_cookie('set_cookie');
 		return $req->ar_vars();
 	}
+	
+	/**
+	 * http://localhost:8000/index/request へリダイレクトする
+	 */
 	public function redirect(){
-		header('Location: http://localhost/ebi/test_index/request');
+		header('Location: http://localhost:8000/index/request');
 		exit;
 	}
 }
