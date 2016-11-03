@@ -170,6 +170,7 @@ class Dt{
 	}
 	
 	/**
+	 * Config
 	 * @automap
 	 */
 	public function config_list(){
@@ -190,6 +191,7 @@ class Dt{
 	}
 	
 	/**
+	 * Plugins
 	 * @automap
 	 */
 	public function plugin_list(){
@@ -210,6 +212,7 @@ class Dt{
 	}
 	
 	/**
+	 * Mail Templates
 	 * @automap
 	 */
 	public function mail_list(){
@@ -230,6 +233,7 @@ class Dt{
 	}
 	
 	/**
+	 * Document
 	 * @automap
 	 */
 	public function document(){
@@ -289,90 +293,7 @@ class Dt{
 			'file_list'=>$file_list,
 		]);
 	}
-		
-	
-	
-	/**
-	 * @automap
-	 */
-	public function model_list(){
-		$model_list = [];
-	
-		foreach(self::classes('\ebi\Dao') as $class_info){
-			$class = $class_info['class'];
-			$r = new \ReflectionClass($class);
-	
-			if((!$r->isInterface() && !$r->isAbstract()) && is_subclass_of($class,'\ebi\Dao')){
-				$class_doc = $r->getDocComment();
-				$package = str_replace('\\','.',substr($class,1));
-	
-				$document = trim(preg_replace('/@.+/','',preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$class_doc))));
-				list($summary) = explode("\n",$document);
-	
-				$model_list[$package] = [
-						'label'=>$package,
-						'error'=>null,
-						'error_query'=>null,
-						'con'=>true,
-						'summary'=>$summary
-				];
-	
-				try{
-					\ebi\Dao::start_record();
-					call_user_func([$class,'find_get']);
-					\ebi\Dao::stop_record();
-				}catch(\ebi\exception\NotFoundException $e){
-				}catch(\ebi\exception\ConnectionException $e){
-					$model_list[$package]['error'] = $e->getMessage();
-					$model_list[$package]['con'] = false;
-				}catch(\Exception $e){
-					$model_list[$package]['error'] = $e->getMessage();
-					$model_list[$package]['error_query'] = print_r(\ebi\Dao::stop_record(),true);
-				}
-			}
-		}
-		ksort($model_list);
-		return ['models'=>$model_list];
-	}
-	
-	/**
-	 * 検索
-	 *
-	 * @param string $name モデル名
-	 * @automap
-	 *
-	 * @request string $order ソート順
-	 * @request int $page ページ番号
-	 * @request string $porder 直前のソート順
-	 *
-	 * @context array $object_list 結果配列
-	 * @context Paginator $paginator ページ情報
-	 * @context string $porder 直前のソート順
-	 * @context Dao $model 検索対象のモデルオブジェクト
-	 * @context string $model_name 検索対象のモデルの名前
-	 */
-	public function do_find($class_name){
-		$req = new \ebi\Request();
-		$class_name = str_replace('/','\\',$class_name);
-		$class_name = \ebi\Util::get_class_name($class_name);
-		$paginator = \ebi\Paginator::request($req);
-		
-		$ref = new \ReflectionClass($class_name);
-		$dao = $ref->newInstance();
-		
-		$object_list = call_user_func_array(
-			[$dao,'find_all'],
-			[$paginator]
-		);
-		return $req->ar_vars([
-			'class_name'=>$class_name,
-			'class_path'=>str_replace('\\','/',$class_name),
-			'object_list'=>$object_list,
-			'paginator'=>$paginator,
-			'model'=>$dao,
-		]);
-	}
-		
+			
 	/**
 	 * ライブラリ一覧
 	 * composerの場合はcomposer.jsonで定義しているPSR-0のもののみ

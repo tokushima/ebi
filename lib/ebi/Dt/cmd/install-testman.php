@@ -1,6 +1,6 @@
 <?php
 /**
- * testman install
+ * Install of testman
  */
 $path = getcwd();
 

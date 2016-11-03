@@ -1,6 +1,6 @@
 <?php
 /**
- * create table
+ * Create table
  * @param string $model 
  * @param boolean $drop 
  */

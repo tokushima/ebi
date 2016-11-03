@@ -1,6 +1,6 @@
 <?php
 /**
- * data export
+ * Data export
  * @param string $file
  */
 if(empty($file)){

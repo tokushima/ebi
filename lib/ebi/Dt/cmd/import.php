@@ -1,6 +1,6 @@
 <?php
 /**
- * data import
+ * Data import
  * @param string $file
  */
 
