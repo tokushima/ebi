@@ -15,26 +15,20 @@ class Mail{
 	private $html;
 	private $name;
 	private $from;
+	private $subject;
 	
 	private $to = [];
 	private $cc = [];
 	private $bcc = [];
-	
 	private $return_path;
-	private $reply_to;
-	private $errors_to;
-	private $notification;
-	private $subject;
+	
+	private $header = [];
 	
 	private $eol = "\n";
 	private $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
-	private $resource_path;
 
 	public function __construct(){
 		$this->boundary = ['mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related')];
-	}
-	public function resource_path($path){
-		$this->resource_path = $path;
 	}
 	public function from($mail,$name=null){
 		$this->from = $mail;
@@ -53,20 +47,6 @@ class Mail{
 	public function return_path($mail){
 		$this->return_path = $mail;
 	}
-	public function errors_to($mail){
-		$this->errors_to = $mail;
-	}
-	public function reply_to($mail){
-		$this->reply_to = $mail;
-	}
-	
-	/**
-	 * 開封確認メール設定
-	 * @param string $mail
-	 */
-	public function notification($mail){
-		$this->notification = $mail;
-	}
 	public function subject($subject){
 		$this->subject = str_replace("\n","",str_replace(["\r\n","\r"],"\n",$subject));
 	}
@@ -77,28 +57,41 @@ class Mail{
 		$this->html = $message;
 		if($this->message === null) $this->message(strip_tags($message));
 	}
-	public function header(){
-		$send = '';
-		$send .= $this->line('MIME-Version: 1.0');
-		$send .= $this->line('To: '.$this->implode_address($this->to));
-		$send .= $this->line('From: '.$this->address($this->from,$this->name));
-		if(!empty($this->cc)) $send .= $this->line('Cc: '.$this->implode_address($this->cc));
-		if(!empty($this->bcc)) $send .= $this->line('Bcc: '.$this->implode_address($this->bcc));
-		if(!empty($this->return_path)) $send .= $this->line('Return-Path: '.$this->return_path);
-		if(!empty($this->errors_to)) $send .= $this->line('Errors-To: '.$this->errors_to);
-		if(!empty($this->reply_to)) $send .= $this->line('Reply-To: '.$this->reply_to);
-		if(!empty($this->notification)) $send .= $this->line('Disposition-Notification-To: '.$this->notification);
-		$send .= $this->line('Date: '.date('D, d M Y H:i:s O',time()));
-		$send .= $this->line('Subject: '.$this->jis($this->subject));
+	public function header($name,$val){
+		$this->header[$name] = $val;
+	}
+	
+	public function message_header(){
+		$rtn = '';
+		
+		$rtn .= $this->line('MIME-Version: 1.0');
+		$rtn .= $this->line('To: '.$this->implode_address($this->to));
+		$rtn .= $this->line('From: '.$this->address($this->from,$this->name));
+		
+		if(!empty($this->cc)){
+			$rtn .= $this->line('Cc: '.$this->implode_address($this->cc));
+		}
+		if(!empty($this->bcc)){
+			$rtn .= $this->line('Bcc: '.$this->implode_address($this->bcc));
+		}
+		if(!empty($this->return_path)){
+			$rtn .= $this->line('Return-Path: '.$this->return_path);
+		}
+		foreach($this->header as $n => $v){
+			$n = ucwords(str_replace('_','-',$n));
+			$rtn .= $this->line($n.': '.$v);
+		}		
+		$rtn .= $this->line('Date: '.date('D, d M Y H:i:s O',time()));
+		$rtn .= $this->line('Subject: '.$this->jis($this->subject));
 
 		if(!empty($this->attach)){
-			$send .= $this->line(sprintf('Content-Type: multipart/mixed; boundary="%s"',$this->boundary['mixed']));
+			$rtn .= $this->line(sprintf('Content-Type: multipart/mixed; boundary="%s"',$this->boundary['mixed']));
 		}else if(!empty($this->html)){
-			$send .= $this->line(sprintf('Content-Type: multipart/alternative; boundary="%s"',$this->boundary['alternative']));
+			$rtn .= $this->line(sprintf('Content-Type: multipart/alternative; boundary="%s"',$this->boundary['alternative']));
 		}else{
-			$send .= $this->meta('plain');
+			$rtn .= $this->meta('plain');
 		}
-		return $send;
+		return $rtn;
 	}
 	private function implode_address($list){
 		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
@@ -133,7 +126,10 @@ class Mail{
 		$send .= $this->line();
 		$send .= $this->line($this->encode($this->message));
 		$send .= $this->line('--'.$this->boundary['alternative']);
-		if(empty($this->media)) $send .= $this->meta('html');
+		
+		if(empty($this->media)){
+			$send .= $this->meta('html');
+		}
 		$send .= $this->line($this->encode((empty($this->media)) ? $this->line().$this->html : $this->related()));
 		$send .= $this->line('--'.$this->boundary['alternative'].'--');
 		return $send;
@@ -241,7 +237,7 @@ class Mail{
 		$this->eol = ($eol) ? "\r\n" : "\n";
 		$bcc = $this->bcc;
 		$this->bcc = [];
-		$send = $this->header().$this->line().$this->body();
+		$send = $this->message_header().$this->line().$this->body();
 		$this->bcc = $bcc;
 		$this->eol = $pre;
 		return $send;
@@ -273,9 +269,13 @@ class Mail{
 			 */
 			self::call_class_plugin_funcs('send_mail',$this);
 		}else{
-			if(empty($this->to)) throw new \ebi\exception\RequiredException('undefine to');
-			if(empty($this->from)) throw new \ebi\exception\RequiredException('undefine from');
-			$header = $this->header();
+			if(empty($this->to)){
+				throw new \ebi\exception\RequiredException('undefine to');
+			}
+			if(empty($this->from)){
+				throw new \ebi\exception\RequiredException('undefine from');
+			}
+			$header = $this->message_header();
 			$header = preg_replace('/'.$this->eol.'Subject: .+'.$this->eol.'/',"\n",$header);
 			$header = preg_replace('/'.$this->eol.'To: .+'.$this->eol.'/',"\n",$header);
 			mail($this->implode_address($this->to),$this->jis($this->subject),$this->body(),trim($header),'-f'.$this->from);
@@ -310,7 +310,7 @@ class Mail{
 		/**
 		 * @param string $path テンプレートのあるディレクトリパス
 		 */
-		$resource_path = empty($this->resource_path) ? \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail')) : $this->resource_path;
+		$resource_path = \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail'));
 		$path = \ebi\Util::path_absolute($resource_path,$template_path);
 		
 		if(!is_file($path)){
@@ -328,26 +328,12 @@ class Mail{
 				$this->to($to->in_attr('address'),$to->in_attr('name'));
 			}
 			try{
-				$return_path = $xml->find_get('return_path');
-				$this->return_path($return_path->in_attr('address'));
+				$this->return_path($xml->find_get('return_path')->in_attr('address'));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
-			try{
-				$errors_to = $xml->find_get('errors_to');
-				$this->errors_to($errors_to->in_attr('address'));
-			}catch(\ebi\exception\NotFoundException $e){
-			}
-			try{
-				$reply_to = $xml->find_get('reply_to');
-				$this->reply_to($reply_to->in_attr('address'));
-			}catch(\ebi\exception\NotFoundException $e){
-			}
-			try{
-				$notification = $xml->find_get('notification');
-				$this->notification($notification->in_attr('notification'));
-			}catch(\ebi\exception\NotFoundException $e){
-			}
-			$vars['template_code'] = self::create_code($template_path);
+			$template_code = self::create_code($template_path);
+			$this->header['X-T-Code'] = $template_code;
+			$vars['t_code'] = $template_code;
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
