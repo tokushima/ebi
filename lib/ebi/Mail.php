@@ -311,12 +311,14 @@ class Mail{
 		 * @param string $path テンプレートのあるディレクトリパス
 		 */
 		$resource_path = empty($this->resource_path) ? \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail')) : $this->resource_path;
-		$template_path = \ebi\Util::path_absolute($resource_path,$template_path);
-		if(!is_file($template_path)){
+		$path = \ebi\Util::path_absolute($resource_path,$template_path);
+		
+		if(!is_file($path)){
 			throw new \ebi\exception\InvalidArgumentException($template_path.' not found');
 		}
 		try{
-			$xml = \ebi\Xml::extract(file_get_contents($template_path),'mail');
+			$xml = \ebi\Xml::extract(file_get_contents($path),'mail');
+			
 			try{
 				$from = $xml->find_get('from');
 				$this->from($from->in_attr('address'),$from->in_attr('name'));
@@ -345,6 +347,8 @@ class Mail{
 				$this->notification($notification->in_attr('notification'));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
+			$vars['template_code'] = self::create_code($template_path);
+			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
 			$template->cp($vars);
@@ -355,7 +359,7 @@ class Mail{
 				$html = $xml->find_get('html');
 				$html_path = \ebi\Util::path_absolute(
 					$resource_path,
-					$html->in_attr('src',preg_replace('/^(.+)\.\w+$/','\\1',$template_path).'.html')
+					$html->in_attr('src',preg_replace('/^(.+)\.\w+$/','\\1',$path).'.html')
 				);
 				
 				foreach($html->find('media') as $media){
@@ -387,5 +391,15 @@ class Mail{
 	}
 	public function media($filename,$src,$type="application/octet-stream"){
 		$this->media[$filename] = [basename($filename),$src,$type];
+	}
+	
+	/**
+	 * 値のコード化
+	 * @param string $name
+	 * @param integer $len
+	 * @return string
+	 */
+	public static function create_code($val,$len=5){
+		return strtoupper(substr(sha1(md5(str_repeat($val,5))),0,$len));
 	}
 }
