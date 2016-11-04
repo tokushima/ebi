@@ -1,7 +1,7 @@
 <?php
 namespace ebi;
 /**
- * メールを送信する
+ * Mail
  * @author tokushima
  */
 class Mail{
@@ -10,63 +10,110 @@ class Mail{
 	private $attach;
 	private $media;
 
-	private $encode = 'jis';
-	private $message;
-	private $html;
-	private $name;
 	private $from;
-	private $subject;
-	
+	private $sender_name;
+	private $return_path;
 	private $to = [];
 	private $cc = [];
 	private $bcc = [];
-	private $return_path;
-	
 	private $header = [];
 	
+	private $subject;
+	private $message;
+	private $html;
+	
+	private $encode = 'jis';
 	private $eol = "\n";
 	private $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
 
 	public function __construct(){
 		$this->boundary = ['mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related')];
 	}
-	public function from($mail,$name=null){
-		$this->from = $mail;
-		$this->name = $name;
-		$this->return_path = $mail;
+	/**
+	 * Set from address
+	 * @param string $address
+	 * @param string $sender_name
+	 */
+	public function from($address,$sender_name=null){
+		$this->sender_name = $sender_name;
+		$this->from = $address;
+		$this->return_path = $address;
 	}
-	public function to($mail,$name=''){
-		$this->to[$mail] = $this->address($mail,$name);
+	/**
+	 * Set from-Address
+	 * @param string $address
+	 * @param string $name
+	 */
+	public function to($address,$name=''){
+		$this->to[$address] = $this->address($address,$name);
 	}
-	public function cc($mail,$name=''){
-		$this->cc[$mail] = $this->address($mail,$name);
+	/**
+	 * Add to-Address
+	 * @param string $address
+	 * @param string $name
+	 */
+	public function cc($address,$name=''){
+		$this->cc[$address] = $this->address($address,$name);
 	}
-	public function bcc($mail,$name=''){
-		$this->bcc[$mail] = $this->address($mail,$name);
+	/**
+	 * Add bcc-Address
+	 * @param string $address
+	 * @param string $name
+	 */
+	public function bcc($address,$name=''){
+		$this->bcc[$address] = $this->address($address,$name);
 	}
-	public function return_path($mail){
-		$this->return_path = $mail;
+	/**
+	 * Set return-path-Address
+	 * @param string $address
+	 */
+	public function return_path($address){
+		$this->return_path = $address;
 	}
+	/**
+	 * Set subject
+	 * @param string $subject
+	 */
 	public function subject($subject){
 		$this->subject = str_replace("\n","",str_replace(["\r\n","\r"],"\n",$subject));
 	}
+	/**
+	 * Set message body
+	 * @param text $message
+	 */
 	public function message($message){
 		$this->message = $message;
 	}
+	/**
+	 * Set HTML message body
+	 * @param text $message
+	 */
 	public function html($message){
 		$this->html = $message;
-		if($this->message === null) $this->message(strip_tags($message));
+		
+		if($this->message === null){
+			$this->message(strip_tags($message));
+		}
 	}
+	/**
+	 * Add headers
+	 * @param string $name
+	 * @param string $val
+	 */
 	public function header($name,$val){
 		$this->header[$name] = $val;
 	}
 	
+	/**
+	 * Get message header
+	 * @return text
+	 */
 	public function message_header(){
 		$rtn = '';
 		
 		$rtn .= $this->line('MIME-Version: 1.0');
 		$rtn .= $this->line('To: '.$this->implode_address($this->to));
-		$rtn .= $this->line('From: '.$this->address($this->from,$this->name));
+		$rtn .= $this->line('From: '.$this->address($this->from,$this->sender_name));
 		
 		if(!empty($this->cc)){
 			$rtn .= $this->line('Cc: '.$this->implode_address($this->cc));
@@ -209,28 +256,30 @@ class Mail{
 		$send .= $this->line(trim(chunk_split(base64_encode($src),76,$this->eol)));
 		return $send;
 	}
-	private function address($mail,$name){
-		return '"'.(empty($name) ? $mail : $this->jis($name)).'" <'.$mail.'>';
+	private function address($address,$name){
+		return '"'.(empty($name) ? $address : $this->jis($name)).'" <'.$address.'>';
 	}
 	/**
-	 * セットされた内容の取得
-	 * @param string $key
-	 * @return mixed
+	 * Get properties
+	 * @param string $name
+	 * @return mixed{}
 	 */
-	public function get($key=null){
+	public function get($name=null){
 		$result = get_object_vars($this);
 	
-		if(!empty($key)){
-			if(!isset($result[$key])) return null;
-			return $result[$key];
+		if(!empty($name)){
+			if(!isset($result[$name])){
+				return null;
+			}
+			return $result[$name];
 		}
 		return $result;
 	}
 	
 	/**
-	 * 送信する内容
+	 * Get message 
 	 * @param boolean $eol
-	 * @return string
+	 * @return text
 	 */
 	public function manuscript($eol=true){
 		$pre = $this->eol;
@@ -244,7 +293,7 @@ class Mail{
 	}
 
 	/**
-	 * メールを送信する
+	 * Send mail
 	 * @param string $subject
 	 * @param string $message
 	 * @return boolean
@@ -282,33 +331,23 @@ class Mail{
 		}
 	}
 	/**
-	 * テンプレートから内容を取得しメールを送信する
-	 * @param string　$template_path テンプレートファイルパス
-	 * @param mixed{} $vars テンプレートへ渡す変数
+	 * Send mail (from template)
+	 * @param string　$template_path Relative path from resource_path
+	 * @param mixed{} $vars bind variables
 	 * @return $this
 	 */
 	public function send_template($template_path,$vars=[]){
 		return $this->set_template($template_path,$vars)->send();
 	}
 	/**
-	 * テンプレートから内容を取得しセットする
-	 * 
-	 * テンプレートサンプル
-	 * <mail>
-	 * <from address="support@email.address" name="tokushima" />
-	 * <subject>メールのタイトル</subject>
-	 * <body>
-	 * メールの本文
-	 * </body>
-	 * </mail>
-	 * 
-	 * @param string　$template_path テンプレートファイルパス
-	 * @param mixed{} $vars テンプレートへ渡す変数
+	 * Set template
+	 * @param string　$template_path Relative path from resource_path
+	 * @param mixed{} $vars bind variables
 	 * @return $this
 	 */
 	public function set_template($template_path,$vars=[]){
 		/**
-		 * @param string $path テンプレートのあるディレクトリパス
+		 * @param string $path Email template resources root
 		 */
 		$resource_path = \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail'));
 		$path = \ebi\Util::path_absolute($resource_path,$template_path);
@@ -372,15 +411,27 @@ class Mail{
 			throw new \ebi\exception\InvalidArgumentException($template_path.' invalid data');
 		}
 	}
-	public function attach($filename,$src,$type="application/octet-stream"){
+	/**
+	 * Add attachment file
+	 * @param string $filename
+	 * @param string $src
+	 * @param string $type mime-type
+	 */
+	public function attach($filename,$src,$type='application/octet-stream'){
 		$this->attach[] = [basename($filename),$src,$type];
 	}
-	public function media($filename,$src,$type="application/octet-stream"){
+	/**
+	 * Add HTML resources file
+	 * @param string $filename
+	 * @param string $src
+	 * @param string $type mime-type
+	 */
+	public function media($filename,$src,$type='application/octet-stream'){
 		$this->media[$filename] = [basename($filename),$src,$type];
 	}
 	
 	/**
-	 * 値のコード化
+	 * Get Template Code
 	 * @param string $name
 	 * @param integer $len
 	 * @return string
