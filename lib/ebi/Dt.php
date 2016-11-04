@@ -231,69 +231,7 @@ class Dt{
 			'template_list'=>$template_list,
 		];
 	}
-	
-	/**
-	 * Document
-	 * @automap
-	 */
-	public function document(){
-		$req = new \ebi\Request();
-		$file_list = [];
-		$doc = null;
-		
-		$dir = \ebi\Conf::resource_path('documents/'.$this->entry_name);
-		
-		if(is_dir($dir)){
-			$dir = realpath($dir);
-			
-			foreach(\ebi\Util::ls($dir,true,'/\.md$/') as $f){
-				$name = substr(str_replace($dir,'',$f->getPathname()),1,-3);
 				
-				$fp = fopen($f->getPathname(),'r');
-				$line = trim(fgets($fp,4096));
-				fclose($fp);
-				
-				if(isset($line)){
-					$title = (preg_match('/\#([^#].+)/',$line)) ? substr($line,1) : $name;				
-					$file_list[$name] = $title;
-				}
-			}
-		}
-		if(is_file($f=\ebi\Util::path_absolute($dir,'index'))){
-			$index_list = [];
-			
-			foreach(explode(PHP_EOL,file_get_contents($f)) as $index){
-				$index = trim($index);
-				
-				if(!empty($index)){
-					if(isset($file_list[$index])){
-						$index_list[$index] = $file_list[$index];
-						unset($file_list[$index]);
-					}
-				}
-			}
-			$file_list = array_merge($index_list,$file_list);
-		}
-		if(!$req->is_vars('name')){
-			foreach($file_list as $n => $v){
-				$req->vars('name',$n);
-				break;
-			}
-		}
-		if($req->is_vars('name')){
-			$file = \ebi\Util::path_absolute($dir,$req->in_vars('name').'.md');
-				
-			if(is_file($file)){
-				$doc = file_get_contents($file);
-			}
-		}
-		return $req->ar_vars([
-			'doc'=>$doc,
-			'select_name'=>$req->in_vars('name'),
-			'file_list'=>$file_list,
-		]);
-	}
-			
 	/**
 	 * ライブラリ一覧
 	 * composerの場合はcomposer.jsonで定義しているPSR-0のもののみ
