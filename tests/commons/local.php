@@ -41,7 +41,8 @@
 \ebi\Conf::set_class_plugin([
 	'ebi.Mail'=>[\ebi\SmtpBlackholeDao::class],
 	'ebi.Session'=>[\ebi\SessionDao::class],
-	'ebi.Log'=>[\ebi\LogMailSender::class],
+// 	'ebi.Log'=>[\ebi\LogMailSender::class],
+	'ebi.Log'=>['ebi.LogMailSender'],
 	\test\flow\RequestFlow::class=>[\test\plugin\RequestPlugin::class],
 ]);
 

@@ -213,28 +213,77 @@ class Dt{
 	
 	/**
 	 * Mail Templates
+	 * @context \ebi\Dt\DocInfo[] $template_list
+	 * @context boolean $is_test
 	 * @automap
 	 */
 	public function mail_list(){
+		$has_bh = false;
+		
+		try{
+			\ebi\SmtpBlackholeDao::find_count();			
+			$has_bh = true;
+		}catch(\ebi\exception\InvalidQueryException $e){			
+		}
+			
 		$template_list = \ebi\Dt\Man::mail_template_list();
 		
+		foreach($template_list as $k => $info){
+			$template_list[$k]->set_opt('use',false);
+			$template_list[$k]->set_opt('count',0);
+		}
 		foreach(self::classes() as $class_info){
 			$src = file_get_contents($class_info['filename']);
 			
 			foreach($template_list as $k => $info){
 				if(strpos($src,$info->name()) !== false){
 					$template_list[$k]->set_opt('use',true);
+					$template_list[$k]->set_opt('count',0);
+					
+					if($has_bh){
+						$template_list[$k]->set_opt(
+							'count',
+							\ebi\SmtpBlackholeDao::find_count(Q::eq('tcode',$info->opt('x_t_code')))
+						);
+					}
 				}
 			}
 		}
 		return [
+			'is_test'=>$has_bh,
 			'template_list'=>$template_list,
 		];
 	}
-				
+	/**
+	 * @automap
+	 */
+	public function mail_blackhole(){
+		$req = new \ebi\Request();
+		$paginator = \ebi\Paginator::request($req);
+		$list = \ebi\SmtpBlackholeDao::find_all(Q::eq('tcode',$req->in_vars('tcode')),$paginator);
+		
+		return $req->ar_vars([
+			'paginator'=>$paginator,
+			'object_list'=>$list,
+		]);
+	}
+	/**
+	 * @automap
+	 */
+	public function mail_view(){
+		$req = new \ebi\Request();
+		$obj = \ebi\SmtpBlackholeDao::find_get(
+			Q::eq('tcode',$req->in_vars('tcode')),
+			Q::eq('id',$req->in_vars('id'))
+		);
+		
+		return [
+			'object'=>$obj,
+		];		
+	}
+	
 	/**
 	 * ライブラリ一覧
-	 * composerの場合はcomposer.jsonで定義しているPSR-0のもののみ
 	 * @return array
 	 */
 	public static function classes($parent_class=null,$ignore=true){
@@ -267,15 +316,15 @@ class Dt{
 	
 		$valid_find_class_file = function($f){
 			if(strpos($f->getPathname(),DIRECTORY_SEPARATOR.'.') === false
-					&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'_') === false
-					&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'cmd'.DIRECTORY_SEPARATOR) === false
-					&& ctype_upper(substr($f->getFilename(),0,1))
-					&& substr($f->getFilename(),-4) == '.php'
-					){
-						try{
-							include_once($f->getPathname());
-						}catch(\Exeption $e){
-						}
+				&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'_') === false
+				&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'cmd'.DIRECTORY_SEPARATOR) === false
+				&& ctype_upper(substr($f->getFilename(),0,1))
+				&& substr($f->getFilename(),-4) == '.php'
+			){
+				try{
+					include_once($f->getPathname());
+				}catch(\Exeption $e){
+				}
 			}
 		};
 	
@@ -305,7 +354,6 @@ class Dt{
 			}
 		}
 		if(is_array($use_vendor)){
-				
 			foreach($use_vendor as $class){
 				$find_package = false;
 	
@@ -330,13 +378,13 @@ class Dt{
 	
 		$valid_find_class = function($r,$parent_class){
 			if(!$r->isInterface()
-					&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))
-					&& $r->getFileName() !== false
-					&& strpos($r->getName(),'_') === false
-					&& strpos($r->getName(),'Composer') === false
-					&& strpos($r->getName(),'cmdman') === false
-					&& strpos($r->getName(),'testman') === false
-					){
+				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))
+				&& $r->getFileName() !== false
+				&& strpos($r->getName(),'_') === false
+				&& strpos($r->getName(),'Composer') === false
+				&& strpos($r->getName(),'cmdman') === false
+				&& strpos($r->getName(),'testman') === false
+			){
 						return true;
 			}
 			return false;
@@ -360,8 +408,8 @@ class Dt{
 		
 		$urls = [];
 		foreach(new \RecursiveDirectoryIterator(
-				$dir,
-				\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
+			$dir,
+			\FilesystemIterator::CURRENT_AS_FILEINFO|\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::UNIX_PATHS
 		) as $f){
 			if(substr($f->getFilename(),-4) == '.php' && !preg_match('/\/[\._]/',$f->getPathname())){
 				$entry_name = substr($f->getFilename(),0,-4);
@@ -386,15 +434,14 @@ class Dt{
 	 * @param number $late_time sec
 	 * @return \ebi\SmtpBlackholeDao
 	 */
-	public static function find_mail($to,$keyword=null,$late_time=60){
-		if(empty($to)){
-			throw new \ebi\exception\NotFoundException('`to` not found');
-		}
-	
+	public static function find_mail($to,$keyword=null,$late_time=60){		
 		$q = new Q();
 		$q->add(Q::eq('to',$to));
 		$q->add(Q::gte('create_date',time()-$late_time));
-		if(!empty($subject)) $q->add(Q::contains('subject',$subject));
+		
+		if(!empty($subject)){
+			$q->add(Q::contains('subject',$subject));
+		}
 	
 		foreach(\ebi\SmtpBlackholeDao::find($q,Q::order('-id')) as $mail){
 			$value = $mail->subject().$mail->message();

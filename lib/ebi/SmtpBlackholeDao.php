@@ -10,6 +10,7 @@ namespace ebi;
  * @var string $subject
  * @var text $message
  * @var text $manuscript
+ * @var string $tcode
  * @var timestamp $create_date @['auto_now_add'=>true]
  */
 class SmtpBlackholeDao extends \ebi\Dao{
@@ -20,6 +21,7 @@ class SmtpBlackholeDao extends \ebi\Dao{
 	protected $bcc;
 	protected $subject;
 	protected $message;
+	protected $tcode;
 	protected $manuscript;
 	protected $create_date;
 	
@@ -29,13 +31,17 @@ class SmtpBlackholeDao extends \ebi\Dao{
 	 */
 	public function send_mail(\ebi\Mail $mail){
 		$data = $mail->get();
+		
+		$header = $data['header'];
+		
 		$self = new static();
 		$self->from($data['from']);
-		$self->to(implode("\n",array_keys($data['to'])));
-		$self->cc(implode("\n",array_keys($data['cc'])));
-		$self->bcc(implode("\n",array_keys($data['bcc'])));
+		$self->to(implode(PHP_EOL,array_keys($data['to'])));
+		$self->cc(implode(PHP_EOL,array_keys($data['cc'])));
+		$self->bcc(implode(PHP_EOL,array_keys($data['bcc'])));
 		$self->subject($data['subject']);
 		$self->message($data['message']);
+		$self->tcode(array_key_exists('X-T-Code',$header) ? $header['X-T-Code'] : null);
 		$self->manuscript($mail->manuscript());
 		$self->save();
 		

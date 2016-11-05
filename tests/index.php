@@ -171,7 +171,6 @@ include_once('bootstrap.php');
 		},
 	],
 	
-	'dt/find/(.+)'=>['action'=>'ebi.Dt::do_find'],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 

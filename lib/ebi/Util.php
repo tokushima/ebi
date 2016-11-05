@@ -428,10 +428,7 @@ class Util{
 			return $class_name;
 		}
 		$class_name = str_replace('.','\\',$class_name);
-	
-		if(substr($class_name,0,1) !== '\\'){
-			$class_name = '\\'.$class_name;
-		}
+		
 		if(!class_exists($class_name)){
 			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
 		}

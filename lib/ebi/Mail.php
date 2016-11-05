@@ -9,7 +9,7 @@ class Mail{
 	
 	private $attach;
 	private $media;
-
+	
 	private $from;
 	private $sender_name;
 	private $return_path;
@@ -22,7 +22,6 @@ class Mail{
 	private $message;
 	private $html;
 	
-	private $encode = 'jis';
 	private $eol = "\n";
 	private $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
 
@@ -139,10 +138,7 @@ class Mail{
 			$rtn .= $this->meta('plain');
 		}
 		return $rtn;
-	}
-	private function implode_address($list){
-		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
-	}
+	}	
 	private function body(){
 		$send = '';
 		$isattach = (!empty($this->attach));
@@ -156,7 +152,8 @@ class Mail{
 				$send .= $this->line();
 			}
 		}
-		$send .= (!$ishtml) ? (($isattach) ? $this->meta('plain').$this->line() : '').$this->line($this->encode($this->message)) : $this->alternative();
+		$send .= (!$ishtml) ? (($isattach) ? $this->meta('plain').$this->line() : '').$this->line($this->enc($this->message)) : $this->alternative();
+		
 		if($isattach){
 			foreach($this->attach as $attach){
 				$send .= $this->line('--'.$this->boundary['mixed']);
@@ -171,13 +168,13 @@ class Mail{
 		$send .= $this->line('--'.$this->boundary['alternative']);
 		$send .= $this->meta('plain');
 		$send .= $this->line();
-		$send .= $this->line($this->encode($this->message));
+		$send .= $this->line($this->enc($this->message));
 		$send .= $this->line('--'.$this->boundary['alternative']);
 		
 		if(empty($this->media)){
 			$send .= $this->meta('html');
 		}
-		$send .= $this->line($this->encode((empty($this->media)) ? $this->line().$this->html : $this->related()));
+		$send .= $this->line($this->enc((empty($this->media)) ? $this->line().$this->html : $this->related()));
 		$send .= $this->line('--'.$this->boundary['alternative'].'--');
 		return $send;
 	}
@@ -200,7 +197,7 @@ class Mail{
 			$send .= $this->line('--'.$this->boundary['related']);
 			$send .= $this->meta('html');
 			$send .= $this->line();
-			$send .= $this->line($this->encode($html));
+			$send .= $this->line($this->enc($html));
 
 			foreach($this->media as $name => $media){
 				$send .= $this->line('--'.$this->boundary['related']);
@@ -210,32 +207,27 @@ class Mail{
 		}
 		return $send;
 	}
+	
+	private function implode_address($list){
+		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
+	}
 	private function jis($str){
-		return sprintf('=?ISO-2022-JP?B?%s?=',base64_encode(mb_convert_encoding($str,'JIS',mb_detect_encoding($str))));
+		return sprintf(
+			'=?ISO-2022-JP?B?%s?=',
+			base64_encode(mb_convert_encoding($str,'JIS',mb_detect_encoding($str)))
+		);
 	}
 	private function meta($type){
-		switch(strtolower($type)){
-			case 'html': $type = 'text/html'; break;
-			default: $type = 'text/plain';
-		}
-		switch($this->encode){
-			case 'utf8':
-				return $this->line(sprintf('Content-Type: %s; charset="utf-8"',$type)).
-						$this->line('Content-Transfer-Encoding: 8bit');
-			case 'sjis':
-				return $this->line(sprintf('Content-Type: %s; charset="iso-2022-jp"',$type)).
-						$this->line('Content-Transfer-Encoding: base64');
-			default:
-				return $this->line(sprintf('Content-Type: %s; charset="iso-2022-jp"',$type)).
-						$this->line('Content-Transfer-Encoding: 7bit');
-		}
+		return $this->line(
+			sprintf(
+				'Content-Type: %s; charset="iso-2022-jp"',
+				(($type == 'html') ? 'text/html' : 'text/plain'),
+				(($type == 'html') ? 'text/html' : 'text/plain')
+			)).
+			$this->line('Content-Transfer-Encoding: 7bit');
 	}
-	private function encode($message){
-		switch($this->encode){
-			case 'utf8': return mb_convert_encoding($message,'UTF8',mb_detect_encoding($message));
-			case 'sjis': return mb_convert_encoding(base64_encode(mb_convert_encoding($message,'SJIS',mb_detect_encoding($message)),'JIS'));
-			default: return mb_convert_encoding($message,'JIS',mb_detect_encoding($message));
-		}
+	private function enc($message){
+		return mb_convert_encoding($message,'JIS',mb_detect_encoding($message));
 	}
 	private function line($value=''){
 		return $value.$this->eol;
@@ -273,6 +265,7 @@ class Mail{
 			}
 			return $result[$name];
 		}
+		unset($result['eol'],$result['boundary']);
 		return $result;
 	}
 	
@@ -289,6 +282,7 @@ class Mail{
 		$send = $this->message_header().$this->line().$this->body();
 		$this->bcc = $bcc;
 		$this->eol = $pre;
+		
 		return $send;
 	}
 
@@ -372,7 +366,7 @@ class Mail{
 			}
 			$template_code = self::create_code($template_path);
 			$this->header['X-T-Code'] = $template_code;
-			$vars['t_code'] = $template_code;
+			$vars['x_t_code'] = $template_code;
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();

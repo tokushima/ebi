@@ -38,7 +38,7 @@
 					<li class="{$t.match_package_method_switch('config_list','active','inactive')}">
 						<a href="{$t.package_method_url('config_list')}">Config</a>
 					</li>
-					<li class="{$t.match_package_method_switch('mail_list','active','inactive')}">
+					<li class="{$t.contains_pattern_switch('mail','active','inactive')}">
 						<a href="{$t.package_method_url('mail_list')}">Mail</a>
 					</li>
 				</ul>
