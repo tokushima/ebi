@@ -1,5 +1,4 @@
 <?php
-namespace test\ebi\Dao;
 \test\db\UniqueVerify::create_table();
 \test\db\UniqueVerify::find_delete();
 

@@ -210,6 +210,78 @@ class Dt{
 			'class_info_list'=>$list,
 		];
 	}
+	private function test_path(){
+		/**
+		 * @param string $val Test path root
+		 */
+		$testdir = \ebi\Conf::get('test_dir',getcwd().'/test/');
+		
+		return \ebi\Util::path_slash($testdir,null,true);
+	}
+	/**
+	 * @automap
+	 */
+	public function test_list(){
+		$testdir = $this->test_path();
+		$test_list = [];
+		try{
+			foreach(\ebi\Util::ls($testdir,true,'/\.php$/') as $f){
+				if(
+					strpos($f->getFilename(),'testman') === false && 
+					strpos($f->getPathname(),'/_') === false
+				){
+					$name = str_replace($testdir,'',$f->getPathname());
+					$src = file_get_contents($f->getPathname());
+					$pos = strpos($src,'*/');
+					
+					if($pos === false){
+						$info = new \ebi\Dt\DocInfo();
+						$info->name($name);
+					}else{
+						$info = \ebi\Dt\DocInfo::parse($name,$src,$pos+2);
+					}
+					$info->set_opt('short_name',$info->name());
+
+					if(strlen($info->name()) > 100){
+						$short = substr($info->name(),45).'...'.substr($info->name(),-45);
+						$info->set_opt('short_name',$short);
+					}
+					$test_list[] = $info;
+				}
+			}
+		}catch(\ebi\exception\InvalidArgumentException $e){
+		}
+		return [
+			'test_list'=>$test_list,
+		];
+	}
+	/**
+	 * @automap
+	 * @throws \ebi\exception\NotFoundException
+	 */
+	public function test_view(){
+		$req = new \ebi\Request();
+		$testdir = $this->test_path();
+		
+		$path = \ebi\Util::path_absolute($testdir,$req->in_vars('path'));
+		
+		if(strpos($path,$testdir) === false){
+			throw new \ebi\exception\NotFoundException($req->in_vars('path').' not found');
+		}
+		$src = str_replace('<?php','',file_get_contents($path));
+		
+		while($path != $testdir){
+			$path = dirname($path).'/';
+			
+			if(is_file($f=$path.'__setup__.php')){
+				$src = str_replace('<?php','',file_get_contents($f)).PHP_EOL.'// '.str_repeat('-',80).PHP_EOL.$src;
+			}
+		}
+		return [
+			'path'=>$req->in_vars('path'),
+			'src'=>'<?php'.PHP_EOL.$src,
+		];
+	}
 	
 	/**
 	 * Mail Templates

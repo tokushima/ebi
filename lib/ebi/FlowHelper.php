@@ -273,6 +273,14 @@ class FlowHelper{
 		return ($nl2br) ? nl2br($value,true) : $value;
 	}
 	/**
+	 * 特殊文字を HTML エンティティに変換する
+	 * @param string $val
+	 * @return string
+	 */
+	public function htmlspecialchars($val){
+		return htmlspecialchars($val);
+	}
+	/**
 	 * 改行文字の前に HTML の改行タグを挿入する
 	 * @param string $value
 	 * @return string
