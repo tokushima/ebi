@@ -170,7 +170,15 @@ include_once('bootstrap.php');
 			];
 		},
 	],
-	
+	'deprecated/method'=>[
+		'name'=>'deprecated_method',
+		'action'=>'test.flow.Action::deprecated',
+	],
+	'deprecated'=>[
+		'name'=>'deprecated',
+		'action'=>'\\test\\flow\\Action::abc',
+		'deprecated'=>true,
+	],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 

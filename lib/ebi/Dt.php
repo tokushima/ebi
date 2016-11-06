@@ -40,7 +40,8 @@ class Dt{
 	public function get_after_vars(){
 		$vars = [
 			'f'=>new \ebi\Dt\Helper(),
-			'appmode'=>constant('APPMODE')
+			'appmode'=>constant('APPMODE'),
+			'has_test'=>is_dir(self::test_path()),
 		];
 		return $vars;
 	}
@@ -85,6 +86,9 @@ class Dt{
 							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
 						}
+						if(!$m['deprecated'] && $info->opt('deprecated')){
+							$m['deprecated'] = $info->opt('deprecated');
+						}
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -126,6 +130,7 @@ class Dt{
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
+				$info->set_opt('map_deprecated',($info->opt('deprecated') || (isset($m['deprecated']) && $m['deprecated'])));
 				
 				foreach(['get_after_vars','get_after_vars_request'] as $mn){
 					try{
@@ -137,6 +142,8 @@ class Dt{
 					}catch(\ReflectionException $e){
 					}
 				}
+				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
+				
 				return ['action'=>$info];
 			}
 		}
@@ -218,39 +225,47 @@ class Dt{
 		
 		return \ebi\Util::path_slash($testdir,null,true);
 	}
-	/**
-	 * @automap
-	 */
-	public function test_list(){
+	private function test_file_list($entry=null){
 		$testdir = $this->test_path();
 		$test_list = [];
 		try{
 			foreach(\ebi\Util::ls($testdir,true,'/\.php$/') as $f){
 				if(
-					strpos($f->getFilename(),'testman') === false && 
+					strpos($f->getFilename(),'testman') === false &&
 					strpos($f->getPathname(),'/_') === false
 				){
 					$name = str_replace($testdir,'',$f->getPathname());
 					$src = file_get_contents($f->getPathname());
-					$pos = strpos($src,'*/');
 					
-					if($pos === false){
-						$info = new \ebi\Dt\DocInfo();
-						$info->name($name);
-					}else{
-						$info = \ebi\Dt\DocInfo::parse($name,$src,$pos+2);
+					if(empty($entry) || preg_match('/url\(([\'\"])'.preg_quote($entry,'/').'\\1/',$src)){
+						$pos = strpos($src,'*/');
+							
+						if($pos === false){
+							$info = new \ebi\Dt\DocInfo();
+							$info->name($name);
+						}else{
+							$info = \ebi\Dt\DocInfo::parse($name,$src,$pos+2);
+						}
+						$info->set_opt('short_name',$info->name());
+	
+						if(strlen($info->name()) > 100){
+							$short = substr($info->name(),45).' ... '.substr($info->name(),-45);
+							$info->set_opt('short_name',$short);
+						}
+						$test_list[] = $info;
 					}
-					$info->set_opt('short_name',$info->name());
-
-					if(strlen($info->name()) > 100){
-						$short = substr($info->name(),45).'...'.substr($info->name(),-45);
-						$info->set_opt('short_name',$short);
-					}
-					$test_list[] = $info;
 				}
 			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}
+		return $test_list;
+	}
+	/**
+	 * @automap
+	 */
+	public function test_list(){
+		$test_list = self::test_file_list();
+		
 		return [
 			'test_list'=>$test_list,
 		];
@@ -502,19 +517,18 @@ class Dt{
 	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
 	 * @param string $to
-	 * @param string $subject
-	 * @param number $late_time sec
+	 * @param string $tcode
+	 * @param string $keyword
 	 * @return \ebi\SmtpBlackholeDao
 	 */
-	public static function find_mail($to,$keyword=null,$late_time=60){		
+	public static function find_mail($to,$tcode='',$keyword=''){
 		$q = new Q();
 		$q->add(Q::eq('to',$to));
-		$q->add(Q::gte('create_date',time()-$late_time));
+		$q->add(Q::gte('create_date',time()-300));
 		
-		if(!empty($subject)){
-			$q->add(Q::contains('subject',$subject));
-		}
-	
+		if(!empty($tcode)){
+			$q->add(Q::eq('tcode',$tcode));
+		}	
 		foreach(\ebi\SmtpBlackholeDao::find($q,Q::order('-id')) as $mail){
 			$value = $mail->subject().$mail->message();
 				
@@ -522,6 +536,6 @@ class Dt{
 				return $mail;
 			}
 		}
-		throw new \ebi\exception\NotFoundException('指定のメールが飛んでいない > ['.$to.'] '.$keyword);
+		throw new \ebi\exception\NotFoundException('mail not found');
 	}
 }

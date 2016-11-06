@@ -354,19 +354,34 @@ class Util{
 	}
 	/**
 	 * 文字列からインスタンスを返す
-	 * @param string $package
+	 * @param string $class
 	 * @return object
 	 */
-	public static function strtoinstance($package){
-		if(is_object($package)){
-			return $package;
+	public static function strtoinstance($class){
+		if(is_object($class)){
+			return $class;
 		}
-		$package = str_replace(['.','/'],'\\',$package);
-		if($package[0] == '\\'){
-			$package = substr($package,1);
-		}
-		$r = new \ReflectionClass($package);
+		$class = str_replace(['.','/'],'\\',$class);
+		$r = new \ReflectionClass($class);
 		return $r->newInstance();
+	}
+	/**
+	 * クラス名
+	 * @param string $class_name
+	 * @throws \InvalidArgumentException
+	 * @return string
+	 */
+	public static function get_class_name($class_name){
+		if(class_exists($class_name)){
+			return $class_name;
+		}
+		$class_name = str_replace('.','\\',$class_name);
+	
+		if(!class_exists($class_name)){
+			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
+		}
+		$r = new \ReflectionClass($class_name);
+		return $r->getName();
 	}
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
@@ -416,23 +431,5 @@ class Util{
 			}
 		}
 		return array_unique($traits);
-	}
-	/**
-	 * クラス名
-	 * @param string $class_name
-	 * @throws \InvalidArgumentException
-	 * @return string
-	 */
-	public static function get_class_name($class_name){
-		if(class_exists($class_name)){
-			return $class_name;
-		}
-		$class_name = str_replace('.','\\',$class_name);
-		
-		if(!class_exists($class_name)){
-			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
-		}
-		$r = new \ReflectionClass($class_name);
-		return $r->getName();
 	}
 }

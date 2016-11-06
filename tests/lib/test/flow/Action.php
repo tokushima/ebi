@@ -98,12 +98,19 @@ class Action{
 	}
 	public function select_obj(){
 		return [
-				'data_value'=>20,
-				'data_list'=>[
-					new \test\model\Form(10,'AAA'),
-					new \test\model\Form(20,'BBB'),
-					new \test\model\Form(30,'CCC'),
-				]
+			'data_value'=>20,
+			'data_list'=>[
+				new \test\model\Form(10,'AAA'),
+				new \test\model\Form(20,'BBB'),
+				new \test\model\Form(30,'CCC'),
+			]
 		];
+	}
+	
+	/**
+	 * @deprecated
+	 */
+	public function deprecated(){
+		
 	}
 }
