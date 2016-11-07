@@ -366,17 +366,17 @@ class Mail{
 			}
 			
 			/**
-			 * @var string $mtc_length Template Code length
+			 * @var string $xtc_length Template Code length
 			 */
-			$template_code = self::create_code($template_path,\ebi\Conf::get('mtc_length',5));
+			$template_code = self::create_code($template_path,\ebi\Conf::get('xtc_length',5));
 			$this->header['X-T-Code'] = $template_code;
 			
 			/**
-			 * @var string $mtc_name mtc query key
+			 * @var string $xtc_name xtc query key
 			 */
-			$mtc_name = \ebi\Conf::get('mtc_name','mtc');
+			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
 			$vars['t'] = new \ebi\FlowHelper();
-			$vars['mtc'] = [$mtc_name=>$template_code];
+			$vars['xtc'] = [$xtc_name=>$template_code];
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
