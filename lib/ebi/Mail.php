@@ -376,7 +376,7 @@ class Mail{
 			 */
 			$mtc_name = \ebi\Conf::get('mtc_name','mtc');
 			$vars['t'] = new \ebi\FlowHelper();
-			$vars['mtcq'] = [$mtc_name=>$template_code];
+			$vars['mtc'] = [$mtc_name=>$template_code];
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
