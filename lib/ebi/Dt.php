@@ -539,4 +539,14 @@ class Dt{
 		}
 		throw new \ebi\exception\NotFoundException('mail not found');
 	}
+	/**
+	 * テーブルを削除後作成する
+	 */
+	public static function  reset_tables(){
+		foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
+			$class = \ebi\Util::get_class_name($class_info['class']);
+			call_user_func([$class,'drop_table']);
+			call_user_func([$class,'create_table']);
+		}
+	}
 }
