@@ -246,16 +246,17 @@ class Dt{
 						}else{
 							$info = \ebi\Dt\DocInfo::parse($name,$src,$pos+2);
 						}
-						$info->set_opt('short_name',$info->name());
-	
-						if(strlen($info->name()) > 100){
-							$short = substr($info->name(),45).' ... '.substr($info->name(),-45);
-							$info->set_opt('short_name',$short);
+						$short_name = substr($info->name(),0,-4);
+						
+						if(strlen($short_name) > 60){
+							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
 						}
-						$test_list[] = $info;
+						$info->set_opt('short_name',$short_name);
+						$test_list[$info->name()] = $info;
 					}
 				}
 			}
+			ksort($test_list);
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}
 		return $test_list;
