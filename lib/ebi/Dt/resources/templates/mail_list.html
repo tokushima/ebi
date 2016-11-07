@@ -13,14 +13,16 @@
 <tbody>
 <tr>
 	<td style="width:20%;">
-		{$info.name()}
+		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
+			{$info.name()}
+		</span>
 	</td>
 	<td>
 		{$info.summary()}
 	</td>
 	<td>
 		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
-		{$info.opt('x_t_code')}
+			{$info.opt('x_t_code')}
 		</span>
 		
 		<rt:if param="{$is_test}">
