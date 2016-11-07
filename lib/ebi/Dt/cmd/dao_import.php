@@ -6,7 +6,7 @@
 
 $drop = false;
 $model = null;
-include(__DIR__.'/create_table.php');
+include(__DIR__.'/dao_create_table.php');
 
 if(empty($file)){
 	$file = getcwd().'/dao.dump';
