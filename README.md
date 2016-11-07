@@ -9,12 +9,12 @@ __2012-12-25__
 PHP Library (PHP 5 >= 5.5.26)
 
 
-![ebi](sushi_ebi.png)
+![ebi](media/sushi_ebi.png)
 
 
 
 
-[![download](button_download2.png)](https://git.io/ebi.phar)
+[![download](media/button_download2.png)](https://git.io/ebi.phar)
 
 
 

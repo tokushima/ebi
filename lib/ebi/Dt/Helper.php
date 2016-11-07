@@ -1,0 +1,44 @@
+<?php
+namespace ebi\Dt;
+/**
+ * DT用のヘルパー
+ * @author tokushima
+ *
+ */
+class Helper{
+	/**
+	 * print_r
+	 * @param mixed $obj
+	 */
+	public function dump($obj){
+		$result = [];
+		
+		foreach($obj as $k => $v){
+			if(isset($obj[$k])){
+				if(!is_array($obj[$k]) || !empty($obj[$k])){
+					$result[$k] = $v;
+				}
+			}
+			if(is_bool($obj[$k])){
+				$result[$k] = ($result[$k]) ? 'true' : 'false';
+			}
+		}
+		if($result['class'] && is_string($result['class'])){
+			$result['class'] = \ebi\Util::get_class_name($result['class']);
+		}
+		$value = print_r($result,true);
+		
+		$value = str_replace('=>'.PHP_EOL,': ',trim($value));
+		$value = preg_replace('/\[\d+\]/','&nbsp;&nbsp;\\0',$value);
+		return implode(PHP_EOL,array_slice(explode(PHP_EOL,$value),2,-1));
+	}
+
+	/**
+	 * parse md
+	 * @param string $v
+	 */
+	public function md2html($v){
+		$md = new \ebi\Md();
+		return $md->html($v);
+	}
+}

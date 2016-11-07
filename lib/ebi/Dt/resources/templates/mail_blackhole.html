@@ -1,0 +1,33 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<h2>{$tcode}</h2>
+<table rt:param="{$object_list}" rt:var="obj" class="table table-condensed table-striped">
+<thead>
+<tr class="text-muted">
+	<th>From</th>
+	<th>To</th>
+	<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr style="{$t.cond_switch($info.has_opt('use'),'color: #aabbaa;','')}">
+	<td style="width:20%;">
+		{$obj.from()}
+	</td>
+	<td>
+		{$obj.to()}
+	</td>
+	<td>
+		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}">
+			{$obj.fm_create_date()}
+		</a>
+	</td>
+</tr>
+</tbody>
+</table>
+
+<rt:paginator />
+</rt:block>
+

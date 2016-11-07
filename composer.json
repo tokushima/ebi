@@ -12,8 +12,8 @@
 		"ext-mbstring": "*"
 	},
 	"autoload": {
-		"psr-0": {
-			"ebi": "src/"
+		"psr-4": {
+			"ebi\\": "lib/ebi/"
 		},
 		"files": [
 			"autoload.php"
@@ -21,11 +21,9 @@
 	},
 	"archive" :{
 		"exclude": [
-			"/test_app",
-			"/ebi.phar",
-			"/button_download2.png",
-			"/sushi_ebi.png",
-			"/README.md"			
+			"/tests",
+			"/media",
+			"/ebi.phar"
 		]
 	}
 }

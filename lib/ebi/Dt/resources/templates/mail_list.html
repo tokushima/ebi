@@ -1,0 +1,38 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<table rt:param="{$template_list}" rt:var="info" class="table table-condensed table-striped">
+<thead>
+<tr class="text-muted">
+	<th>Template</th>
+	<th>Subject</th>
+	<th>Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+	<td style="width:20%;">
+		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
+			{$info.name()}
+		</span>
+	</td>
+	<td>
+		{$info.summary()}
+	</td>
+	<td>
+		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
+			{$info.opt('x_t_code')}
+		</span>
+		
+		<rt:if param="{$is_test}">
+			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}">
+				<span class="badge">{$info.opt('count')}</span>
+			</a>
+		</rt:if>
+	</td>
+</tr>
+</tbody>
+</table>
+</rt:block>
+
