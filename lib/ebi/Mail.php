@@ -349,9 +349,9 @@ class Mail{
 		if(!is_file($path)){
 			throw new \ebi\exception\InvalidArgumentException($template_path.' not found');
 		}
+		$xml = \ebi\Xml::extract(file_get_contents($path),'mail');
+		
 		try{
-			$xml = \ebi\Xml::extract(file_get_contents($path),'mail');
-			
 			try{
 				$from = $xml->find_get('from');
 				$this->from($from->in_attr('address'),$from->in_attr('name'));
@@ -364,14 +364,39 @@ class Mail{
 				$this->return_path($xml->find_get('return_path')->in_attr('address'));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
-			$template_code = self::create_code($template_path);
+			
+			/**
+			 * @var string $mtc_length Template Code length
+			 */
+			$template_code = self::create_code($template_path,\ebi\Conf::get('mtc_length',5));
 			$this->header['X-T-Code'] = $template_code;
-			$vars['x_t_code'] = $template_code;
+			
+			/**
+			 * @var string $mtc_name mtc query key
+			 */
+			$mtc_name = \ebi\Conf::get('mtc_name','mtc');
+			$vars['t'] = new \ebi\FlowHelper();
+			$vars['mtcq'] = [$mtc_name=>$template_code];
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
 			$template->cp($vars);
-			$this->message(\ebi\Util::plain_text(PHP_EOL.$template->get($xml->find_get('body')->value()).PHP_EOL));
+			
+			$body_xml = $xml->find_get('body');		
+			$signature = $body_xml->in_attr('signature');
+			$signature_text = '';
+			
+			if(!empty($signature)){
+				$sig_path = \ebi\Util::path_absolute($resource_path,$signature);
+				
+				if(!is_file($sig_path)){
+					throw new \ebi\exception\InvalidArgumentException($signature.' not found');
+				}
+				$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
+				$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
+			}
+			$message = \ebi\Util::plain_text(PHP_EOL.$template->get($body_xml->value()).PHP_EOL);
+			$this->message($message.$signature_text);
 			$this->subject($template->get($subject));
 			
 			try{
@@ -380,7 +405,6 @@ class Mail{
 					$resource_path,
 					$html->in_attr('src',preg_replace('/^(.+)\.\w+$/','\\1',$path).'.html')
 				);
-				
 				foreach($html->find('media') as $media){
 					$file = \ebi\Util::path_absolute($resource_path,$media->in_attr('src'));
 					if(!is_file($file)){

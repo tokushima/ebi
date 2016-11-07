@@ -348,7 +348,11 @@ class Dt{
 	public function mail_blackhole(){
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
-		$list = \ebi\SmtpBlackholeDao::find_all(Q::eq('tcode',$req->in_vars('tcode')),$paginator);
+		$list = \ebi\SmtpBlackholeDao::find_all(
+			Q::eq('tcode',$req->in_vars('tcode')),
+			$paginator,
+			Q::order('-id')
+		);
 		
 		return $req->ar_vars([
 			'paginator'=>$paginator,

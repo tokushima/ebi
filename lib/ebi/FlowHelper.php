@@ -308,6 +308,28 @@ class FlowHelper{
 		return json_encode($value);
 	}
 	/**
+	 * クエリ文字列を生成する
+	 * @return string
+	 */
+	public function http_build_query(){
+		$args = func_get_args();
+		$list = [];
+		$url = array_shift($args);
+		
+		if(is_array($url)){
+			$list = $url;
+			$url = '';
+		}
+		foreach($args as $k => $v){
+			if(is_array($v)){
+				$list = array_merge($list,$v);
+			}
+		}
+		$query = http_build_query($list);
+		
+		return $url.((strpos($url,'?') === false) ? '?' : '&').$query;
+	}
+	/**
 	 * !=
 	 * @param mixed $a
 	 * @return boolean 

@@ -1,6 +1,6 @@
 <mail>
 <subject>テストサブジェクト</subject>
-<body>
+<body signature="signature.xml">
 123{$abc}456
 </body>
 </mail>

@@ -325,11 +325,14 @@ class Man{
 				$info = new \ebi\Dt\DocInfo();
 				$info->name(str_replace($path.'/','',$f->getPathname()));
 	
-				$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-				$info->document($xml->find_get('subject')->value());
+				try{
+					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
+					$info->document($xml->find_get('subject')->value());
 	
-				$info->set_opt('x_t_code',\ebi\Mail::create_code($info->name()));
-				$template_list[] = $info;
+					$info->set_opt('x_t_code',\ebi\Mail::create_code($info->name()));
+					$template_list[] = $info;
+				}catch(\ebi\exception\NotFoundException $e){
+				}
 			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}
