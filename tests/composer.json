@@ -1,0 +1,15 @@
+{
+	"name": "tokushima/ebi/test",
+	"autoload": {
+		"psr-0": {
+			"test": "lib/"
+		},
+		"psr-4": {
+			"ebi\\": "../lib/ebi/"
+		},
+		"files": [
+			"../autoload.php"
+	   	]
+	}
+}
+

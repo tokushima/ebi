@@ -1,0 +1,117 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+<h2 style="{$t.cond_switch($method_info.opt('deprecated'),'text-decoration: line-through;','')}">
+	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
+		{$method_info.opt('class')}
+	</a>
+	::
+	{$method_info.opt('method')}
+	<span class="label label-default">{$method_info.opt('http_method')}</span>
+</h2>
+
+<div class="alert alert-warning text-muted" style="margin-top: 30px;">
+	{$t.noop($f.md2html($method_info.document()))}
+</div>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
+<table rt:param="{$method_info.params()}" rt:var="param" class="table table-condensed table-condensed">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:30%;">
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Return</h4>
+
+<rt:if param="{$method_info.is_return()}">
+<table class="table table-condensed">
+<tr>
+	<td style="width:55%;">
+		<rt:if param="{$method_info.return().is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$method_info.return().fm_type())}">
+				{$method_info.return().fm_type()}
+			</a>
+		<rt:else />
+			{$method_info.return().fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:45%;">
+		{$t.html($method_info.return().summary())}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Mail</h4>
+<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-condensed table-striped">
+<tr>
+	<td style="width:20%;">
+		{$info.name()}
+	</td>
+	<td>
+		{$info.summary()}
+	</td>
+</tr>
+</table>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Throws</h4>
+<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-condensed table-condensed">
+<tr>
+	<td style="width:55%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>
+<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-condensed table-striped">
+<tr>
+	<td>
+		{$info.name()}
+	</td>
+	<td>
+		{$t.html($info.summary(),200,1)}
+	</td>
+	<td>
+		<rt:loop param="{$info.opt('added')}" var="class_name">
+			<div>
+				<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
+					{$class_name}
+				</a>
+			</div>
+		</rt:loop>
+	</td>
+
+</tr>
+</table>
+
+</rt:block>
+

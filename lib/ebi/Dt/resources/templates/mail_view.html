@@ -1,0 +1,44 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<table class="table table-condensed table-striped">
+<tr>
+	<th>Date</th>
+	<td style="word-break: break-all; padding-left: 20px;">
+		{$object.fm_create_date()}
+	</td>
+</tr>
+<tr>
+	<th>XTC</th>
+	<td style="word-break: break-all; padding-left: 20px;">
+		{$object.tcode()}
+	</td>
+</tr>
+<tr>
+	<th>Template</th>
+	<td style="word-break: break-all; padding-left: 20px;">
+		{$mail_info.name()}
+	</td>
+</tr>
+<tr>
+	<th>Subject</th>
+	<td style="word-break: break-all; padding-left: 20px;">
+		{$object.subject()}
+	</td>
+</tr>
+<tr>
+	<th>Message</th>
+	<td style="word-break: break-all; padding: 20px;">
+		<pre>{$object.message()}</pre>
+	</td>
+</tr>
+<tr>
+	<th>Source</th>
+	<td  style="word-break: break-all; padding: 20px;">
+		<pre>{$object.manuscript()}</pre>
+	</td>
+</tr>
+</table>
+</rt:block>
+
