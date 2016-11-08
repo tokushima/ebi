@@ -309,7 +309,7 @@ class Dt{
 		$has_bh = false;
 		
 		try{
-			\ebi\SmtpBlackholeDao::find_count();			
+			\ebi\SmtpBlackholeDao::find_count();
 			$has_bh = true;
 		}catch(\ebi\exception\InvalidQueryException $e){			
 		}
@@ -369,7 +369,16 @@ class Dt{
 			Q::eq('id',$req->in_vars('id'))
 		);
 		
+		$mail_info = new \ebi\Dt\DocInfo();
+		foreach(\ebi\Dt\Man::mail_template_list() as $info){
+			if($info->opt('x_t_code') == $obj->tcode()){
+				$mail_info = $info;
+				break;
+			}
+		}
+		
 		return [
+			'mail_info'=>$mail_info,
 			'object'=>$obj,
 		];		
 	}
