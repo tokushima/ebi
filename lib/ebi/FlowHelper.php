@@ -323,6 +323,8 @@ class FlowHelper{
 		foreach($args as $k => $v){
 			if(is_array($v)){
 				$list = array_merge($list,$v);
+			}else if(is_string($v)){
+				$url = $url.$v;
 			}
 		}
 		$query = http_build_query($list);
