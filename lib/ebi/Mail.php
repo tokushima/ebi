@@ -366,7 +366,7 @@ class Mail{
 			}
 			
 			/**
-			 * @var string $xtc_name xtc query key
+			 * @param string $xtc_name xtc query key
 			 */
 			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
 			$xtc = self::xtc($template_path);
@@ -451,7 +451,7 @@ class Mail{
 	 */
 	public static function xtc($template_path){
 		/**
-		 * @var string $xtc_length Template Code length
+		 * @param string $xtc_length Template Code length
 		 */
 		$length = \ebi\Conf::get('xtc_length',5);
 		return strtoupper(substr(sha1(md5(str_repeat($template_path,5))),0,$length));

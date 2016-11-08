@@ -10,25 +10,21 @@ namespace ebi;
  */
 class LogMailSender{
 	/**
-	 * @plugin \ebi\Log
 	 * @param \ebi\Log $log
 	 */
 	public function log_output(\ebi\Log $log){
 		$mail = new \ebi\Mail();			
 		
 		/**
-		 * メールにバインドする変数
-		 * @param mixed{} $arg1
+		 * @param mixed{} $arg1 メールにバインドする変数
 		 */
 		$vars = \ebi\Conf::gets('vars');
 		/**
-		 * fromのメールアドレス
-		 * @param string $arg1
+		 * @param string $arg1 fromのメールアドレス
 		 */
 		$from = \ebi\Conf::get('from');
 		/**
-		 * toのメールアドレス
-		 * @param string $arg1
+		 * @param string $arg1 toのメールアドレス
 		 */
 		$to = \ebi\Conf::get('to');
 		
