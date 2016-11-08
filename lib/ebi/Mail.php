@@ -368,15 +368,18 @@ class Mail{
 			/**
 			 * @var string $xtc_length Template Code length
 			 */
-			$template_code = self::create_code($template_path,\ebi\Conf::get('xtc_length',5));
-			$this->header['X-T-Code'] = $template_code;
+			$length = \ebi\Conf::get('xtc_length',5);
+			$xtc = strtoupper(substr(sha1(md5(str_repeat($template_path,5))),0,$length));
 			
 			/**
 			 * @var string $xtc_name xtc query key
 			 */
 			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
+			
+			$this->header['X-T-Code'] = $xtc;
+			
 			$vars['t'] = new \ebi\FlowHelper();
-			$vars['xtc'] = [$xtc_name=>$template_code];
+			$vars['xtc'] = [$xtc_name=>$xtc];
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
@@ -446,15 +449,5 @@ class Mail{
 	 */
 	public function media($filename,$src,$type='application/octet-stream'){
 		$this->media[$filename] = [basename($filename),$src,$type];
-	}
-	
-	/**
-	 * Get Template Code
-	 * @param string $name
-	 * @param integer $len
-	 * @return string
-	 */
-	public static function create_code($val,$len=5){
-		return strtoupper(substr(sha1(md5(str_repeat($val,5))),0,$len));
 	}
 }
