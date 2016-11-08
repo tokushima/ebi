@@ -38,14 +38,12 @@ class Db implements \Iterator{
 		if(empty($encode)){
 			$encode = 'utf8';
 		}
-		$type = str_replace('.','\\',$type);
-		if($type[0] !== '\\'){
-			$type = '\\'.$type;
+		try{
+			$type = \ebi\Util::get_class_name($type);
+		}catch(\InvalidArgumentException $e){
+			throw new \ebi\exception\ConnectionException('could not find connector `'.$type.'`');
 		}
 		
-		if(empty($type) || !class_exists($type)){
-			throw new \ebi\exception\ConnectionException('could not find connector `'.((substr($s=str_replace("\\",'.',$type),0,1) == '.') ? substr($s,1) : $s).'`');
-		}
 		$r = new \ReflectionClass($type);
 		$this->dbname = $dbname;
 		$this->connector = $r->newInstanceArgs([$encode,$timezone]);
