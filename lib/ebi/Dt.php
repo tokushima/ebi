@@ -309,9 +309,10 @@ class Dt{
 		$has_bh = false;
 		
 		try{
-			\ebi\SmtpBlackholeDao::find_count();
-			$has_bh = true;
-		}catch(\ebi\exception\InvalidQueryException $e){			
+			if(\ebi\SmtpBlackholeDao::find_count() > 0){
+				$has_bh = true;
+			}
+		}catch(\Exception $e){			
 		}
 			
 		$template_list = \ebi\Dt\Man::mail_template_list();
