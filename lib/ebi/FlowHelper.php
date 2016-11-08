@@ -311,7 +311,7 @@ class FlowHelper{
 	 * クエリ文字列を生成する
 	 * @return string
 	 */
-	public function http_build_query(){
+	public function build_url(){
 		$args = func_get_args();
 		$list = [];
 		$url = array_shift($args);
