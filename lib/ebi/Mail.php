@@ -395,8 +395,8 @@ class Mail{
 				$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
 				$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
 			}
-			$message = \ebi\Util::plain_text(PHP_EOL.$template->get($body_xml->value()).PHP_EOL);
-			$this->message($message.$signature_text);
+			$message = \ebi\Util::plain_text((PHP_EOL.$template->get($body_xml->value()).PHP_EOL).$signature_text);
+			$this->message($message);
 			$this->subject($template->get($subject));
 			
 			try{
