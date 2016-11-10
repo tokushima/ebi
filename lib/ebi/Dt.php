@@ -278,14 +278,22 @@ class Dt{
 	public function test_view(){
 		$req = new \ebi\Request();
 		$testdir = $this->test_path();
-		
-		$path = \ebi\Util::path_absolute($testdir,$req->in_vars('path'));
+		$req_path = $req->in_vars('path');		
+		$path = \ebi\Util::path_absolute($testdir,$req_path);
 		
 		if(strpos($path,$testdir) === false){
 			throw new \ebi\exception\NotFoundException($req->in_vars('path').' not found');
 		}
 		$src = str_replace('<?php','',file_get_contents($path));
 		
+		$pos = strpos($src,'*/');
+		
+		if($pos === false){
+			$info = new \ebi\Dt\DocInfo();
+			$info->name($req_path);
+		}else{
+			$info = \ebi\Dt\DocInfo::parse($req_path,$src,$pos+2);
+		}
 		while($path != $testdir){
 			$path = dirname($path).'/';
 			
@@ -294,7 +302,7 @@ class Dt{
 			}
 		}
 		return [
-			'path'=>$req->in_vars('path'),
+			'info'=>$info,
 			'src'=>'<?php'.PHP_EOL.$src,
 		];
 	}

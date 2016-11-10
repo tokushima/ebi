@@ -3,7 +3,9 @@
 <rt:block name="content">
 
 
-<h2>{$path}</h2>
+<h2>{$info.name()}</h2>
+
+<div class="alert alert-warning">{$t.html($info.document())}</div>
 
 <pre>{$t.htmlspecialchars($src)}</pre>
 </rt:block>
