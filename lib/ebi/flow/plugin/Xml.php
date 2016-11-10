@@ -60,6 +60,9 @@ class Xml{
 				$xml->add($message);
 			}
 			\ebi\HttpHeader::send('Content-Type','application/xml');
+			/**
+			 * @param string $encoding XML宣言のencoding
+			 */
 			print($xml->get(\ebi\Conf::get('encoding')));
 		}
 	}

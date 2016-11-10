@@ -172,9 +172,7 @@ class Flow{
 		}
 		
 		/**
-		 * @param string $val アプリケーションURL 
-		 * 
-		 * 末尾が「*」で実行エントリに、「**」でエントリファイル名(*.php)に変換される
+		 * @param string $val アプリケーションURL、末尾が * = 実行エントリ, ** = エントリファイル名(*.php)
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 		
@@ -223,8 +221,7 @@ class Flow{
 		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
 		
 		/**
-		 * falseの場合、mapのsecureフラグもすべてfalseとなる
-		 * @param boolean $val HTTPSを有効にするか
+		 * @param boolean $val HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
 		 */
 		self::$conf_secure = (\ebi\Conf::get('secure',true) === true);
 		self::$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);

@@ -14,8 +14,7 @@ class Loader{
 	 */
 	public static function phar($path,$namespace=null){
 		/**
-		 * pahrが格納されているディレクトリ
-		 * @param string $arg1
+		 * @param string $arg1 pahrが格納されているディレクトリ
 		 */
 		$base = \ebi\Conf::get('path',getcwd());
 		$path = realpath(\ebi\Util::path_absolute($base,$path));

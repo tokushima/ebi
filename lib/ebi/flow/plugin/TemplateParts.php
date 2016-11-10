@@ -12,7 +12,7 @@ class TemplateParts{
 	 */
 	public function before_template($src){
 		/**
-		 * テンプレートパーツのファイルがあるディレクトリ
+		 * @param string $path テンプレートパーツのファイルがあるディレクトリ
 		 */
 		$path = \ebi\Util::path_slash(\ebi\Conf::get('path',\ebi\Conf::resource_path('parts')),null,true);
 		

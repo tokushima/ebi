@@ -7,6 +7,9 @@ namespace ebi\flow\plugin;
  */
 class SimpleAuth{
 	public function login_condition(\ebi\flow\Request $req){
+		/**
+		 * @var string{} $users ユーザ=>パスワードの連想配列
+		 */
 		$users = \ebi\Conf::gets('users');
 		
 		foreach($users as $user_name => $password){

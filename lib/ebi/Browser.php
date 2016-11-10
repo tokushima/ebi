@@ -364,7 +364,7 @@ class Browser{
 			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
 		}
 		/**
-		 * SSL証明書を確認するかの真偽値
+		 * @param boolean $ssl_verify SSL証明書を確認するかの真偽値
 		 */
 		if(\ebi\Conf::get('ssl-verify',true) === false){
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);

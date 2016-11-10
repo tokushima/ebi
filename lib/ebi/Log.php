@@ -26,8 +26,7 @@ class Log{
 	private static function cur_level(){
 		if(self::$current_level === null){
 			/**
-			 * @param string $level エラーレベル
-			 * 'emergency','alert','critical','error','warning','notice','info','debug'
+			 * @param string $level エラーレベル emergency/alert/critical/error/warning/notice/info/debug
 			 */
 			self::$current_level = array_search(\ebi\Conf::get('level','critical'),self::$level_strs);
 		}
