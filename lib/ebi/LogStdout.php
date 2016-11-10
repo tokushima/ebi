@@ -14,6 +14,9 @@ class LogStdout{
 	public function log_output(\ebi\Log $log){
 		$msg = ((string)$log);
 		
+		/**
+		 * @param boolean $color 出力にカラーコードを適用する
+		 */
 		if(\ebi\Conf::get('color',true) === true){
 			
 			$color = [-1=>0,0=>'1;35',1=>'1;35',2=>'0;31',3=>'0;31',4=>'0;33',5=>'0;36',6=>'0;36',7=>0];

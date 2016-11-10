@@ -8,7 +8,6 @@ namespace ebi\flow\plugin;
 class Cors{
 	public function before_flow_action(){
 		/**
-		 * 許可するURL
 		 * @param string $origin 許可するURL
 		 */
 		$origin = \ebi\Conf::get('origin');
