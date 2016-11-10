@@ -50,11 +50,12 @@ class DocInfo extends \ebi\Object{
 
 		if($docendpos > 0){
 			$doc = trim(substr($src,0,$docendpos));
+			
 			$startpos = strrpos($doc,'/**');
 			
 			if($startpos !== false){
-				$doc = substr($doc,$startpos - 3);
-
+				$doc = substr($doc,$startpos);
+				
 				if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
 					$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
 				}else{
