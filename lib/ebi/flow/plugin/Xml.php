@@ -18,7 +18,7 @@ class Xml{
 			
 			\ebi\HttpHeader::send('Content-Type','application/xml');
 			/**
-			 * @param string XMLのencodingに指定するエンコード名
+			 * @param string $encoding XMLのencodingに指定するエンコード名
 			 */
 			print($xml->get(\ebi\Conf::get('encoding')));
 		}
