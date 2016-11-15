@@ -16,10 +16,10 @@ class Flow{
 	private static $url_pattern = [];
 	private static $selected_class_pattern = [];
 	private static $workgroup;
-	private static $conf_secure = false;
+	private static $conf_secure;
+	private static $map_secure;
 	
 	private static $is_get_map = false;
-	private static $map_secure = false;
 	private static $map = [];
 	
 	private static $template;
@@ -215,7 +215,7 @@ class Flow{
 		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		
 		$automap_idx = 1;
-		self::$map['patterns'] = self::expand_patterns('',$map['patterns'], [], $automap_idx);
+		self::$map = ['patterns'=>self::expand_patterns('',$map['patterns'], [], $automap_idx)];
 		unset($map['patterns']);
 		self::$map = array_merge(self::$map,$map);
 		self::$workgroup = (array_key_exists('workgroup',self::$map)) ? self::$map['workgroup'] : basename($entry_file,'.php');
@@ -223,7 +223,7 @@ class Flow{
 		/**
 		 * @param boolean $val HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
 		 */
-		self::$conf_secure = (\ebi\Conf::get('secure',true) === true);
+		self::$conf_secure = \ebi\Conf::get('secure');
 		self::$map_secure = (array_key_exists('secure',self::$map) && self::$map['secure'] === true);
 		
 		$https = str_replace('http://','https://',self::$app_url);
@@ -540,7 +540,13 @@ class Flow{
 		return self::terminate();
 	}
 	private static function is_secure_pattern($pattern){
-		return (self::$conf_secure && (array_key_exists('secure',$pattern) ? ($pattern['secure'] === true) : self::$map_secure));
+		if(self::$conf_secure === false){
+			return false;
+		}
+		if(array_key_exists('secure',$pattern)){
+			return ($pattern['secure'] === true);
+		}
+		return (self::$map_secure == true);
 	}
 	private static function terminate(){
 		\ebi\FlowInvalid::clear();

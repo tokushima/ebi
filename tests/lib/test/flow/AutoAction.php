@@ -32,4 +32,11 @@ class AutoAction{
 		unset($a,$b,$c);
 		return ['aaaa'=>'jkl'];
 	}
+	
+	/**
+	 * @automap @['secure'=>false]
+	 */
+	public function nosecure(){
+		
+	}
 }

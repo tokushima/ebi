@@ -12,7 +12,7 @@
 	'ebi.Flow'=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
-		'secure'=>false,
+// 		'secure'=>false,
 		'accept_debug'=>true,
 	],
 	\ebi\flow\plugin\Cors::class=>[
