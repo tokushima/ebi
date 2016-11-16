@@ -6,7 +6,7 @@ ebi
 
 __2012-12-25__
 
-PHP Library (PHP 5 >= 5.5.26)
+PHP Library (PHP 7)
 
 
 ![ebi](media/sushi_ebi.png)
