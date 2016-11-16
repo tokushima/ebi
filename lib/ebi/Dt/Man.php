@@ -323,7 +323,7 @@ class Man{
 		try{
 			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
 				$info = new \ebi\Dt\DocInfo();
-				$info->name(str_replace($path.'/','',$f->getPathname()));
+				$info->name(str_replace(\ebi\Util::path_slash($path,null,true),'',$f->getPathname()));
 	
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
