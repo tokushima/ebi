@@ -432,4 +432,18 @@ class Util{
 		}
 		return array_unique($traits);
 	}
+	
+	public function image_jpeg_resize($filename,$out_filename,$width,$height,$quality=100){
+		// TODO
+		$src_image = imagecreatefromjpeg($filename);
+		$src_width = imagesx($src_image);
+		$src_height = imagesy($src_image);
+
+		$dst_image = imagecreatetruecolor($width,$height);
+		imagecopyresampled($dst_image,$src_image,0,0,0,0,$width,$height,$src_width,$src_height);
+		
+		imagedestroy($src_image);
+		imagejpeg($dst_image,$out_filename,$quality);
+		imagedestroy($dst_image);
+	}
 }
