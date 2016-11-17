@@ -1,5 +1,5 @@
 <?php
-namespace ebi\flow\plugin;
+namespace ebi\Dt;
 /**
  * 拡張タグをTwitter BootstrapのCSSに変換するTemaplteプラグイン
  * @author tokushima

@@ -34,7 +34,7 @@ class Dt{
 	}
 	public function get_flow_plugins(){
 		return [
-			\ebi\flow\plugin\TwitterBootstrap3Helper::class,
+			\ebi\Dt\TwitterBootstrap3Helper::class,
 		];
 	}
 	public function get_after_vars(){
