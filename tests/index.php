@@ -84,17 +84,6 @@ include_once('bootstrap.php');
 		],
 		'plugins'=>['ebi.flow.plugin.HtmlFilter']
 	],
-	'csrf'=>[
-		'name'=>'csrf',
-		'action'=>'ebi.flow.Request::noop',
-		'plugins'=>['ebi.flow.plugin.Csrf'],
-	],
-	'csrf_template'=>[
-		'name'=>'csrf_template',
-		'action'=>'ebi.flow.Request::noop',
-		'plugins'=>['ebi.flow.plugin.Csrf'],
-		'template'=>'csrf.html',
-	],
 	'log'=>[
 		'name'=>'log',
 		'action'=>'test.flow.Action::log',

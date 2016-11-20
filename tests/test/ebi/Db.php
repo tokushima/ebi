@@ -14,13 +14,17 @@ $db->query(sprintf('select id,value from `%s`',$table_name));
 
 $i = 1;
 foreach($db as $data){
-	if($i != $data['value']) notice($i.': '.$data['value']);
+	if($i != $data['value']){
+		fail($i.': '.$data['value']);
+	}
 	$i++;
 }
 eq($max,$i);
 
 $time = microtime(true) - $start;
-if($time > 1) notice($time);
+if($time > 1){
+	fail($time);
+}
 
 
 $db->query(sprintf('select id,value from `%s` where id=?',$table_name),1);

@@ -177,16 +177,16 @@ class Xml implements \IteratorAggregate{
 		$value = ($this->value === null || $this->value === '') ? null : (string)$this->value;
 		
 		if($format && !empty($value)){
-			$value = PHP_EOL.self::format($value,$indent_str,1);
+			$value = "\n".self::format($value,$indent_str,1);
 		}
 		foreach(array_keys($this->attr) as $k){
 			$attr .= ' '.$k.'="'.($this->esc ? htmlentities($this->in_attr($k),ENT_QUOTES,'UTF-8') : $this->in_attr($k)).'"';
 		}
-		return ((empty($encoding)) ? '' : '<?xml version="1.0" encoding="'.$encoding.'" ?'.'>'.PHP_EOL)
+		return ((empty($encoding)) ? '' : '<?xml version="1.0" encoding="'.$encoding.'" ?'.'>'."\n")
 				.('<'.$this->name.$attr.(implode(' ',$this->plain_attr)).(($this->close_empty && !isset($value)) ? ' /' : '').'>')
 				.$value
 				.((!$this->close_empty || isset($value)) ? sprintf('</%s>',$this->name) : '')
-				.($format ? PHP_EOL : '');
+				.($format ? "\n" : '');
 	}
 	public function __toString(){
 		return $this->get();
@@ -374,7 +374,7 @@ class Xml implements \IteratorAggregate{
 				$src = str_replace($s,str_replace('><','>'.$c.'<',$s),$src);
 			}
 		}
-		foreach(explode(PHP_EOL,preg_replace('/>\s*</','>'.PHP_EOL.'<',$src)) as $k => $line){
+		foreach(explode("\n",preg_replace('/>\s*</','>'."\n".'<',$src)) as $k => $line){
 			$indent = 0;
 			$lc = substr_count($line,'<');
 		
@@ -392,7 +392,7 @@ class Xml implements \IteratorAggregate{
 			}else if($lc == 0){
 				$indent = 2;
 			}
-			$rtn .= (($indent != 2 && ($i+$depth) > 0) ? str_repeat($indent_str,$i+$depth) : '').$line.PHP_EOL;
+			$rtn .= (($indent != 2 && ($i+$depth) > 0) ? str_repeat($indent_str,$i+$depth) : '').$line."\n";
 		
 			if($indent == 1){
 				$i++;
