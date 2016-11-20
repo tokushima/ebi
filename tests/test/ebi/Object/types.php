@@ -120,7 +120,7 @@ $obj->jj(array("jkl","mno"));
 try{
 	$obj->kk("Abc@example.com");
 }catch(\ebi\exception\InvalidArgumentException $e){
-	notice();
+	fail();
 }
 try{
 	$obj->kk(" Abc@example.com ");
@@ -257,7 +257,7 @@ try{
 try{
 	$obj->oo("123.0");
 }catch(\ebi\exception\InvalidArgumentException $e){
-	notice();
+	fail();
 }
 	
 try{
