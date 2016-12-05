@@ -192,11 +192,12 @@ class Man{
 		
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			$document = '';
+			
 			if($is_request_flow){
 				try{
-					$ref = new \ReflectionMethod(self::get_class_name($class),'__before__');
-			
-					if(preg_match_all('/@.+$/',self::get_method_document($ref),$m)){
+					$before_ref = new \ReflectionMethod(self::get_class_name($class),'__before__');
+					
+					if(preg_match_all('/@.+$/',self::get_method_document($before_ref),$m)){
 						foreach($m[0] as $a){
 							$document = $a.PHP_EOL.$document;
 						}

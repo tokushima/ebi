@@ -4,7 +4,17 @@ namespace test\flow;
 
 class RequestFlow extends \ebi\flow\Request{
 	/**
+	 * 前処理
+	 * @request integer $zzz 前処理のリクエスト
+	 */
+	protected function __before__(){
+		
+	}
+	
+	/**
 	 * aaa
+	 * bbb
+	 * 
 	 * @request string $abc @['require'=>true]
 	 * @request string $def @['require'=>true]
 	 * @request integer $ghi

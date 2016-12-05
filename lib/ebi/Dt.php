@@ -177,6 +177,54 @@ class Dt{
 	}
 	
 	/**
+	 * class list
+	 * @automap
+	 */
+	public function class_list(){
+		$req = new \ebi\Request();
+		$parent = $req->in_vars('parent');
+		$select = 'other';
+
+		if(!empty($parent)){
+			$parent = \ebi\Util::get_class_name($parent);
+
+			switch($parent){
+				case '\ebi\Dao':
+					$select = 'model';
+					break;
+				case '\ebi\flow\Request':
+					$select = 'request';
+					break;
+				default:
+					$select = 'other';
+			}
+		}
+		$list = [];
+		foreach(self::classes($parent) as $info){
+			$bool = true;
+			
+			if($select == 'other'){
+				if(
+					is_subclass_of($info['class'],'\ebi\Dao') ||
+					is_subclass_of($info['class'],'\ebi\flow\Request')
+				){
+					$bool = false;
+				}
+			}
+			if($bool){
+				$class_info = \ebi\Dt\Man::class_info($info['class']);
+				$list[$class_info->name()] = $class_info;
+			}
+		}
+		ksort($list);
+	
+		return [
+			'class_info_list'=>$list,
+			'select'=>$select,
+			'parent'=>$parent,
+		];
+	}
+	/**
 	 * Config
 	 * @automap
 	 */
@@ -396,10 +444,9 @@ class Dt{
 	 * ライブラリ一覧
 	 * @return array
 	 */
-	public static function classes($parent_class=null,$ignore=true){
+	public static function classes($parent_class=null){
 		$result = [];
 		$include_path = [];
-		$ignore_class = [];
 	
 		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
 			$include_path[] = realpath(getcwd().DIRECTORY_SEPARATOR.'lib');
@@ -536,7 +583,7 @@ class Dt{
 			}
 		}
 		return $urls;
-	}	
+	}
 	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
 	 * @param string $to

@@ -38,6 +38,9 @@
 					<li class="{$t.match_package_method_switch('config_list','active','inactive')}">
 						<a href="{$t.package_method_url('config_list')}">Config</a>
 					</li>
+					<li class="{$t.contains_pattern_switch('class_list','active','inactive')}">
+						<a href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">Class</a>
+					</li>					
 					<li class="{$t.contains_pattern_switch('mail','active','inactive')}">
 						<a href="{$t.package_method_url('mail_list')}">Mail</a>
 					</li>
