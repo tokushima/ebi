@@ -328,8 +328,12 @@ class Man{
 	
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-					$info->document($xml->find_get('subject')->value());
-	
+					try{
+						$info->document(trim($xml->find_get('summary')->value()));
+					}catch(\ebi\exception\NotFoundException $e){
+					}
+					
+					$info->set_opt('subject',$xml->find_get('subject')->value());	
 					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
 					$template_list[] = $info;
 				}catch(\ebi\exception\NotFoundException $e){

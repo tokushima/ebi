@@ -7,7 +7,9 @@
 <tr class="text-muted">
 	<th>Template</th>
 	<th>Subject</th>
+	<th>Summary</th>
 	<th>Code</th>
+	<th></th>
 </tr>
 </thead>
 <tbody>
@@ -18,18 +20,25 @@
 		</span>
 	</td>
 	<td>
+		{$info.opt('subject')}
+	</td>
+	
+	<td>
 		{$info.summary()}
 	</td>
-	<td>
-		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
-			{$info.opt('x_t_code')}
-		</span>
-		
+	<td style="width:70px;">
+		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','text-muted')}">
+				{$info.opt('x_t_code')}
+			</span>
+		</a>
+	</td>
+	<td style="text-align:right; width:50px;">
 		<rt:if param="{$is_test}">
 			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}">
-				<span class="badge">{$info.opt('count')}</span>
+				{$info.opt('count')}
 			</a>
-		</rt:if>
+		</rt:if>	
 	</td>
 </tr>
 </tbody>

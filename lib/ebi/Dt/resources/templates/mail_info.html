@@ -1,0 +1,35 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<h2>{$mail_info.opt('x_t_code')}</h2>
+
+<div class="alert alert-warning" role="alert">
+	{$t.html($mail_info.document())}
+</div>
+
+
+<table class="table table-condensed table-striped">
+<tr>
+	<th style="width:  150px;">Template</th>
+	<td>
+		{$mail_info.name()}
+	</td>
+</tr>
+<tr>
+	<th>Subject</th>
+	<td>
+		{$mail_info.opt('subject')}
+	</td>
+</tr>
+<tr>
+	<th>Body</th>
+	<td>
+		{$t.html($mail_info.opt('body'))}
+	</td>
+</tr>
+
+</table>
+
+</rt:block>
+
