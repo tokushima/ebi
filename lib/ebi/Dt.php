@@ -450,6 +450,12 @@ class Dt{
 				}
 				$mail_info->set_opt('body',\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text);
 				
+				try{
+					$html_xml = $xml->find_get('html');
+					$mail_info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
+				}catch(\ebi\exception\NotFoundException $e){
+				}
+				
 				break;
 			}
 		}

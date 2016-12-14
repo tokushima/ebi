@@ -56,6 +56,20 @@
 </tr>
 </table>
 
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Static Methods</h4>
+<table rt:param="{$class_info.opt('static_methods')}" rt:var="info" class="table table-condensed table-striped">
+<tr>
+	<td>
+		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
+			{$info.name()}
+		</a>
+	</td>
+	<td>
+		{$t.html($info.summary())}
+	</td>
+</tr>
+</table>
+
 
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>

@@ -25,10 +25,18 @@
 <tr>
 	<th>Body</th>
 	<td>
-		{$t.html($mail_info.opt('body'))}
+		<pre>{$t.html($mail_info.opt('body'),0,0,null,false)}</pre>
 	</td>
 </tr>
 
+<rt:if param="{$mail_info.opt('html')}">
+<tr>
+	<th>HTML</th>
+	<td>
+		<pre style="background-color: white;">{$t.html($mail_info.opt('html'),0,0,null,false)}</pre>
+	</td>
+</tr>
+</rt:if>
 </table>
 
 </rt:block>
