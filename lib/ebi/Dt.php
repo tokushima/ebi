@@ -244,7 +244,7 @@ class Dt{
 			'class_info_list'=>$list,
 		];
 	}
-	
+		
 	/**
 	 * Plugins
 	 * @automap
@@ -264,6 +264,25 @@ class Dt{
 		return [
 			'class_info_list'=>$list,
 		];
+	}
+	/**
+	 * @automap
+	 */
+	public function plugin_doc($class,$plugin){
+		$class_info = \ebi\Dt\Man::class_info($class);
+		$plugins = $class_info->opt('plugins');
+
+		if(!empty($plugins)){
+			foreach($plugins as $p){
+				if($p->name() == $plugin){
+					return [
+						'plugin_info'=>$p,
+						'class_info'=>$class_info,
+					];
+				}
+			}
+		}
+		throw new \ebi\exception\NotFoundException();
 	}
 	private function test_path(){
 		/**

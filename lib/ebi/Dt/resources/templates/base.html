@@ -32,10 +32,10 @@
 					<li class="{$t.match_package_method_switch('index','active','inactive')}">
 						<a href="{$t.package_method_url('index')}">Urls</a>
 					</li>
-					<li class="{$t.match_package_method_switch('plugin_list','active','inactive')}">
+					<li class="{$t.contains_pattern_switch('plugin','active','inactive')}">
 						<a href="{$t.package_method_url('plugin_list')}">Plugin</a>
 					</li>
-					<li class="{$t.match_package_method_switch('config_list','active','inactive')}">
+					<li class="{$t.contains_pattern_switch('config','active','inactive')}">
 						<a href="{$t.package_method_url('config_list')}">Config</a>
 					</li>
 					<li class="{$t.contains_pattern_switch('class_list','active','inactive')}">

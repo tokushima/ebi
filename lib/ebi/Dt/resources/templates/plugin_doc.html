@@ -1,0 +1,64 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<h2>
+	{<a href="{$t.package_method_url('class_doc',$class_info.name())}">
+		{$class_info.name()}
+	</a>}
+	
+	{$plugin_info.name()}
+</h2>
+
+
+<div class="alert alert-warning text-muted" style="margin-top: 30px;">
+	{$t.noop($f.md2html($plugin_info.document()))}
+</div>
+
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
+<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-condensed table-condensed">
+<tr>
+	<td style="width:25%;">
+		<rt:if param="{$param.is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+				{$param.fm_type()}
+			</a>
+		<rt:else />
+			{$param.fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:30%;">
+		{$param.name()}
+	</td>
+	<td style="width:45%;">
+		{$t.html($param.summary())}
+	</td>
+</tr>
+</table>
+
+<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Return</h4>
+
+<rt:if param="{$plugin_info.is_return()}">
+<table class="table table-condensed">
+<tr>
+	<td style="width:55%;">
+		<rt:if param="{$plugin_info.return().is_type_class()}">
+			<a href="{$t.package_method_url('class_doc',$plugin_info.return().fm_type())}">
+				{$plugin_info.return().fm_type()}
+			</a>
+		<rt:else />
+			{$plugin_info.return().fm_type()}
+		</rt:if>
+	</td>
+	<td style="width:45%;">
+		{$t.html($plugin_info.return().summary())}
+	</td>
+</tr>
+</table>
+</rt:if>
+
+
+
+</rt:block>
+
