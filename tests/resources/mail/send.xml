@@ -3,4 +3,13 @@
 <body signature="signature.xml">
 123{$abc}456
 </body>
+
+<html src="send.html" />
+
+<summary>
+	テストサブジェクトの説明１
+	テストサブジェクトの説明２
+	テストサブジェクトの説明３
+</summary>
 </mail>
+

@@ -105,10 +105,12 @@
 		{$info.name()}
 	</td>
 	<td>
-		{$info.summary()}
+		{$info.opt('subject')}
 	</td>
-	<td>		
-		{$info.opt('x_t_code')}
+	<td>
+		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+			{$info.opt('x_t_code')}
+		</a>
 	</td>
 </tr>
 </table>

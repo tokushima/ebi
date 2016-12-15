@@ -244,7 +244,7 @@ class Dt{
 			'class_info_list'=>$list,
 		];
 	}
-	
+		
 	/**
 	 * Plugins
 	 * @automap
@@ -264,6 +264,25 @@ class Dt{
 		return [
 			'class_info_list'=>$list,
 		];
+	}
+	/**
+	 * @automap
+	 */
+	public function plugin_doc($class,$plugin){
+		$class_info = \ebi\Dt\Man::class_info($class);
+		$plugins = $class_info->opt('plugins');
+
+		if(!empty($plugins)){
+			foreach($plugins as $p){
+				if($p->name() == $plugin){
+					return [
+						'plugin_info'=>$p,
+						'class_info'=>$class_info,
+					];
+				}
+			}
+		}
+		throw new \ebi\exception\NotFoundException();
 	}
 	private function test_path(){
 		/**
@@ -411,9 +430,56 @@ class Dt{
 			Q::order('-id')
 		);
 		
+		$mail_info = new \ebi\Dt\DocInfo();
+		foreach(\ebi\Dt\Man::mail_template_list() as $info){
+			if($info->opt('x_t_code') == $req->in_vars('tcode')){
+				$mail_info = $info;
+				break;
+			}
+		}
 		return $req->ar_vars([
+			'mail_info'=>$mail_info,
 			'paginator'=>$paginator,
 			'object_list'=>$list,
+		]);
+	}
+	/**
+	 * @automap
+	 */
+	public function mail_info(){
+		$req = new \ebi\Request();
+		
+		$mail_info = new \ebi\Dt\DocInfo();
+		foreach(\ebi\Dt\Man::mail_template_list() as $info){
+			if($info->opt('x_t_code') == $req->in_vars('tcode')){
+				$mail_info = $info;
+				
+				$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
+				$xml = \ebi\Xml::extract(\ebi\Util::file_read(\ebi\Util::path_absolute($path,$info->name())),'mail');
+				$body_xml = $xml->find_get('body');
+				
+				$signature = $body_xml->in_attr('signature');
+				$signature_text = '';
+					
+				if(!empty($signature)){
+					$sig_path = \ebi\Util::path_absolute($path,$signature);
+					
+					$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
+					$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
+				}
+				$mail_info->set_opt('body',\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text);
+				
+				try{
+					$html_xml = $xml->find_get('html');
+					$mail_info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
+				}catch(\ebi\exception\NotFoundException $e){
+				}
+				
+				break;
+			}
+		}
+		return $req->ar_vars([
+			'mail_info'=>$mail_info,
 		]);
 	}
 	/**
@@ -437,7 +503,7 @@ class Dt{
 		return [
 			'mail_info'=>$mail_info,
 			'object'=>$obj,
-		];		
+		];
 	}
 	
 	/**

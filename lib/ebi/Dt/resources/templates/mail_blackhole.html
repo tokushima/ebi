@@ -2,7 +2,12 @@
 
 <rt:block name="content">
 
-<h2>{$tcode}</h2>
+<h2>{$mail_info.opt('x_t_code')} ({$mail_info.name()})</h2>
+
+<div class="alert alert-warning" role="alert">
+	{$t.html($mail_info.document())}
+</div>
+
 <table rt:param="{$object_list}" rt:var="obj" class="table table-condensed table-striped">
 <thead>
 <tr class="text-muted">

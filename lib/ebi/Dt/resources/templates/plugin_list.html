@@ -23,9 +23,11 @@
 		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-striped table-bordered table-condensed">
 		<tr>
 			<td style="width:25%;">
-				<span class="{$t.cond_switch($info.has_opt('added'),'text-success','')}">
-					{$info.name()}
-				</span>
+				<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">
+					<span class="{$t.cond_switch($info.has_opt('added'),'text-success','text-muted')}">
+						{$info.name()}
+					</span>
+				</a>
 			</td>
 			<td style="width:75%;">
 				{$info.summary()}
