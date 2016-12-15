@@ -17,9 +17,11 @@ if(empty($model)){
 
 foreach($model_list as $m){
 	if($drop === true){
-		call_user_func([$m,'drop_table']);
-		\cmdman\Std::println('dropped '.$m);
+		if(call_user_func([$m,'drop_table'])){
+			\cmdman\Std::println('dropped '.$m);
+		}
 	}
-	call_user_func([$m,'create_table']);
-	\cmdman\Std::println('created '.$m);
+	if(call_user_func([$m,'create_table'])){
+		\cmdman\Std::println('created '.$m);
+	}
 }
