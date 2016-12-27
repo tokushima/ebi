@@ -18,10 +18,12 @@ if(empty($model)){
 foreach($model_list as $m){
 	if($drop === true){
 		if(call_user_func([$m,'drop_table'])){
-			\cmdman\Std::println('dropped '.$m);
+			\cmdman\Std::println_danger('drop table '.$m);
 		}
 	}
 	if(call_user_func([$m,'create_table'])){
-		\cmdman\Std::println('created '.$m);
+		\cmdman\Std::println_success('create table '.$m);
+	}else{
+		\cmdman\Std::println_info('ignore '.$m);
 	}
 }
