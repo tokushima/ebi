@@ -112,7 +112,7 @@ abstract class Dao extends \ebi\Object{
 			}
 			return;
 		}
-		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);		
+		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);
 		$anon = [
 			null // con name
 			,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
@@ -1126,7 +1126,11 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public static function create_table(){
 		$dao = new static();
-		if(!self::$_co_anon_[get_class($dao)][2]){
+		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		
+		if(!self::$_co_anon_[get_class($dao)][2] && 
+			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)
+		){
 			$daq = new \ebi\Daq(self::$_con_[get_called_class()]->exists_table_sql($dao));
  			$count = current($dao->func_query($daq));
 			
@@ -1143,7 +1147,11 @@ abstract class Dao extends \ebi\Object{
 	 */
 	public static function drop_table(){
 		$dao = new static();
-		if(!self::$_co_anon_[get_class($dao)][2]){
+		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		
+		if(!self::$_co_anon_[get_class($dao)][2] &&
+			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)
+		){
 			$daq = new \ebi\Daq(self::$_con_[get_called_class()]->exists_table_sql($dao));
 			$count = current($dao->func_query($daq));
 			
