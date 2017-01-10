@@ -77,7 +77,9 @@ class Q{
 		if(is_string($this->arg1)){
 			$result = [];
 			foreach(explode(',',$this->arg1) as $arg){
-				if(!empty($arg)) $result[] = $arg;
+				if(!empty($arg)){
+					$result[] = $arg;
+				}
 			}
 			return $result;
 		}else if($this->arg1 instanceof \ebi\Column){
@@ -375,10 +377,15 @@ class Q{
 		if(!empty($columns) && !is_array($columns)){
 			$columns = explode(',',$columns);
 		}
-		if(sizeof($columns) == 1){
-			return self::contains(implode('',$columns),explode(' ',str_replace('　',' ',trim($dict))));
+		$values = array_unique(explode(',',str_replace(['　',' '],',',trim($dict))));
+		
+		if(empty($values)){
+			return new self();
 		}
-		return new self(self::MATCH,str_replace(['　',' '],',',trim($dict)),$columns);
+		if(sizeof($columns) == 1){
+			return self::contains(implode('',$columns),$values);
+		}
+		return new self(self::MATCH,implode(',',$values),$columns);
 	}
 	/**
 	 * OR条件ブロック

@@ -363,6 +363,7 @@ abstract class DbConnector{
 							$and[] = Q::eq($cn,$cond,$op);
 							break;
 						case 'string':
+						case 'text':
 						case 'email':
 						case 'alnum':
 							$and[] = Q::contains($cn,$cond,$op);
@@ -376,8 +377,11 @@ abstract class DbConnector{
 					$ob[] = call_user_func_array(['\ebi\Q','b'],$and);
 				}
 			}
-			$query->add(call_user_func_array(['\ebi\Q','ob'],$ob));
-			
+			if(sizeof($ob) == 1){
+				$query->add($ob[0]);
+			}else{
+				$query->add(call_user_func_array(['\ebi\Q','ob'],$ob));
+			}			
 			return $this->where_sql($dao,$from,$query,$self_columns,null,$alias);
 		}
 		
