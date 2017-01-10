@@ -381,8 +381,7 @@ abstract class DbConnector{
 				$query->add($ob[0]);
 			}else{
 				$query->add(call_user_func_array(['\ebi\Q','ob'],$ob));
-			}
-			
+			}			
 			return $this->where_sql($dao,$from,$query,$self_columns,null,$alias);
 		}
 		
