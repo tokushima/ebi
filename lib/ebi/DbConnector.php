@@ -363,6 +363,7 @@ abstract class DbConnector{
 							$and[] = Q::eq($cn,$cond,$op);
 							break;
 						case 'string':
+						case 'text':
 						case 'email':
 						case 'alnum':
 							$and[] = Q::contains($cn,$cond,$op);
