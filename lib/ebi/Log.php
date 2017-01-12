@@ -68,7 +68,7 @@ class Log{
 		$this->time = ($time === null) ? time() : $time;
 		$this->message = (is_object($message)) ? 
 		(
-			($message instanceof \Exception) ? 
+			(($message instanceof \Exception) || ($message instanceof \Error)) ?
 			(string)$message : clone($message)
 		) : $message;
 		
