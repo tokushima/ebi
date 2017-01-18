@@ -16,6 +16,19 @@ class Util{
 		return file_get_contents($filename);
 	}
 	/**
+	 * CSVファイルから１行ずつ配列で取得する
+	 * @param string $filename
+	 * @return array
+	 */
+	public static function file_read_csv($filename){
+		$file = new \SplFileObject($filename);
+		$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY | \SplFileObject::DROP_NEW_LINE);
+		
+		foreach($file as $line){
+			yield $line;
+		}
+	}
+	/**
 	 * ファイルに書き出す
 	 * @param string $filename ファイルパス
 	 * @param string $src 内容
