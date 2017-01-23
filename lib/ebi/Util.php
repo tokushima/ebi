@@ -29,6 +29,21 @@ class Util{
 		}
 	}
 	/**
+	 * CSVファイルとして配列を書き出す
+	 * @param \SplFileObject $file
+	 * @param array $arr
+	 * @return \SplFileObject 
+	 */
+	public static function file_append_csv($file,array $arr=[]){
+		if(is_string($file)){
+			$file = new \SplFileObject($file,'w');
+		}
+		if(!empty($arr)){
+			$file->fputcsv($arr);
+		}
+		return $file;
+	}
+	/**
 	 * ファイルに書き出す
 	 * @param string $filename ファイルパス
 	 * @param string $src 内容
@@ -46,7 +61,7 @@ class Util{
 		if(!$b){
 			chmod($filename,0777);
 		}
-	}
+	}	
 	/**
 	 * ファイルに追記する
 	 * @param string $filename ファイルパス
