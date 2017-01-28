@@ -3,7 +3,7 @@ namespace ebi;
 /**
  * Server-sent events
  * ```
- * var es = new EventSource('ssedemo.php');
+ * var es = new EventSource('aerver_sent_events.php');
  * es.addEventListener('close', function (event) {
  * 	es.close();
  * });
