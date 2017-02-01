@@ -15,8 +15,9 @@ if(!is_file($f=$path.'/test/testman.phar')){
 if(!is_file($f=$path.'/test/testman.settings.php')){
 	file_put_contents($f,<<< '_C'
 <?php
-\ebi\Conf::set(ebi.Db::class,'autocommit',true);
+\ebi\Conf::set(\ebi\Db::class,'autocommit',true);
 \testman\Conf::set('urls',\ebi\Dt::get_urls());
+
 _C
 	);
 	\cmdman\Std::println_success('Created '.$f);
@@ -25,6 +26,7 @@ _C
 if(!is_file($f=$path.'/test/testman.fixture.php')){
 	file_put_contents($f,<<< '_C'
 <?php
+
 _C
 	);
 	\cmdman\Std::println_success('Created '.$f);
@@ -34,6 +36,7 @@ if(!is_file($f=$path.'/test/__setup__.php')){
 		file_put_contents($f,<<< '_C'
 <?php
 \ebi\Exceptions::clear();
+
 _C
 	);
 	\cmdman\Std::println_success('Created '.$f);
