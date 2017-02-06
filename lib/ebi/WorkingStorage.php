@@ -14,7 +14,7 @@ class WorkingStorage{
 		foreach($this->list as $f){
 			$p = \ebi\Conf::work_path($f);
 			
-			if(is_file($p)){
+			if(is_file($p) || is_dir($p)){
 				\ebi\Util::rm($p);
 			}
 		}
@@ -34,6 +34,15 @@ class WorkingStorage{
 		
 		return \ebi\Conf::work_path($path);
 	}
+	
+	/**
+	 * フォルダの作成
+	 * @param string $path
+	 */
+	public static function mkdir($path){
+		\ebi\Util::mkdir(self::path($path));
+	}
+	
 	/**
 	 * ワーキングファイルに書き出し
 	 * @param string $path
