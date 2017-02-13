@@ -38,9 +38,13 @@ class WorkingStorage{
 	/**
 	 * フォルダの作成
 	 * @param string $path
+	 * @reutrn string
 	 */
 	public static function mkdir($path){
-		\ebi\Util::mkdir(self::path($path));
+		$p = self::path($path);
+		\ebi\Util::mkdir($p);
+		
+		return $p;
 	}
 	
 	/**
