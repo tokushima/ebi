@@ -1068,11 +1068,18 @@ abstract class Dao extends \ebi\Object{
 			$this->validate();
 			$args = func_get_args();
 			$query = new \ebi\Q();
+			$target = [];
 			
 			if(!empty($args)){
-				call_user_func_array([$query,'add'],$args);
+				foreach($args as $arg){
+					if(is_string($arg)){
+						$target[] = $arg;
+					}else if($arg instanceof \ebi\Q){
+						$query->add($arg);
+					}
+				}
 			}
-			$daq = self::$_con_[get_called_class()]->update_sql($this,$query);
+			$daq = self::$_con_[get_called_class()]->update_sql($this,$query,$target);
 			$affected_rows = $this->update_query($daq);
 			
 			if($affected_rows === 0 && !empty($args)){
