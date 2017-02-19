@@ -1,6 +1,5 @@
 <?php
 namespace test\db;
-use ebi\Q;
 /**
  * create table はされるはず
  * @var serial $id

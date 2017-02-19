@@ -56,11 +56,12 @@ abstract class DbConnector{
 	}
 	/**
 	 * update文を生成する
-	 * @param Dao $dao
-	 * @param Q $query
+	 * @param \ebi\Dao $dao
+	 * @param \ebi\Q $query
+	 * @param string[] $target
 	 * @return Daq
 	 */
-	public function update_sql(\ebi\Dao $dao,\ebi\Q $query){
+	public function update_sql(\ebi\Dao $dao,\ebi\Q $query,$target){
 		$where = $update = $wherevars = $updatevars = $from = [];
 		
 		foreach($dao->primary_columns() as $column){
@@ -68,16 +69,18 @@ abstract class DbConnector{
 			$wherevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 		}
 		if(empty($where)){
-			throw new \ebi\exception\LogicException('primary not found');
+			throw new \ebi\exception\InvalidQueryException('primary not found');
 		}
+		
+		$target_all = empty($target);
 		foreach($dao->columns(true) as $column){
-			if(!$column->primary()){
+			if(!$column->primary() && ($target_all || in_array($column->name(),$target))){
 				$update[] = $this->quotation($column->column()).' = ?';
 				$updatevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
-		if(empty($update)){
-			throw new \ebi\exception\BadMethodCallException('no update column');
+		if(empty($update) || (!$target_all && sizeof($target) != sizeof($update))){
+			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
 		$vars = array_merge($updatevars,$wherevars);
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
