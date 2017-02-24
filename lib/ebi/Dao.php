@@ -1011,8 +1011,12 @@ abstract class Dao extends \ebi\Object{
 		if(!$new && $self::find_count($q) === 0){
 			$new = true;
 		}
+		
+		$auto_update_prop = [];
 		foreach($this->columns(true) as $column){
 			if($this->prop_anon($column->name(),'auto_now') === true){
+				$auto_update_prop[] = $column->name();
+				
 				switch($this->prop_anon($column->name(),'type')){
 					case 'timestamp':
 					case 'date':
@@ -1071,6 +1075,8 @@ abstract class Dao extends \ebi\Object{
 			$target = [];
 			
 			if(!empty($args)){
+				$args = array_merge($args,$auto_update_prop);
+				
 				foreach($args as $arg){
 					if(is_string($arg)){
 						$target[] = $arg;
