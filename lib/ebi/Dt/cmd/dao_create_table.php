@@ -23,10 +23,10 @@ foreach($model_list as $m){
 
 		if(!empty($connector)){
 			$connector_inst = \ebi\Util::strtoinstance($connector);
-			\cmdman\Std::println($connector_inst->create_table_sql($dao));
+			print($connector_inst->create_table_sql($dao).PHP_EOL);
 		}else{
 			$con = \ebi\Dao::connection(get_class($dao));
-			\cmdman\Std::println($con->connector()->create_table_sql($dao));
+			print($con->connector()->create_table_sql($dao).PHP_EOL);
 		}
 	}else{
 		if($drop === true){
