@@ -95,10 +95,16 @@ class Request extends \ebi\Request{
 			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
 		if(!$this->is_user_logged_in()){
-			// TODO tokenでログイン: UserLongLivedToken, $req->user($obj)時にtoken保存
-			// login_requiredにいく前にログインさせる
-			
-			if(isset($this->login_anon) || $this->has_object_plugin('login_condition')){
+			if($this->has_object_plugin('remember_me')){
+				/**
+				 * Remember me
+				 * @param \ebi\flow\Request $arg1
+				 */
+				if($this->call_object_plugin_funcs('remember_me',$this) === true){
+					$this->after_user_logged_in();
+				}
+			}
+			if(!$this->is_user_logged_in() && (isset($this->login_anon) || $this->has_object_plugin('login_condition'))){
 				$this->login_required();
 			}
 		}
@@ -187,14 +193,17 @@ class Request extends \ebi\Request{
 	public function user(){
 		if(func_num_args() > 0){
 			$user = func_get_arg(0);
+			
 			if(isset($this->login_anon) && isset($this->login_anon['type'])){
 				$class = str_replace('.',"\\",$this->login_anon['type']);
-				if($class[0] != "\\") $class= "\\".$class;
+				
+				if($class[0] != "\\"){
+					$class= "\\".$class;
+				}
 				if(!($user instanceof $class)){
 					throw new \ebi\exception\UnauthorizedTypeException();
 				}
 			}
-			// TODO UserLongLivedTokenに保存する
 			$this->sessions($this->login_id.'USER',$user);
 		}
 		return $this->in_sessions($this->login_id.'USER');
@@ -207,6 +216,15 @@ class Request extends \ebi\Request{
 		return ($this->in_sessions($this->login_id) !== null);
 	}
 	
+	private function after_user_logged_in(){
+		$this->sessions($this->login_id,$this->login_id);
+		session_regenerate_id(true);
+		/**
+		 * ログイン後処理
+		 * @param \ebi\flow\Request $arg1
+		 */
+		$this->call_object_plugin_funcs('after_login',$this);
+	}
 	/**
 	 * ログイン
 	 * ログインに必要なパラメータはPluginによる
@@ -227,18 +245,12 @@ class Request extends \ebi\Request{
 		$pattern = $this->get_selected_pattern();
 		
 		if(!$this->is_user_logged_in()){
-			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) === false){
+			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) !== true){
 				$this->call_object_plugin_func('login_invalid',$this);
 			}else{
-				$this->sessions($this->login_id,$this->login_id);
-				session_regenerate_id(true);
-				/**
-				 * ログイン後処理
-				 * @param \ebi\flow\Request $arg1
-				 */
-				$this->call_object_plugin_funcs('after_login',$this);
+				$this->after_user_logged_in();
 			}
-		}		
+		}
 		$rtn_vars = ['login'=>$this->is_user_logged_in()];
 		
 		if($this->is_user_logged_in()){
