@@ -94,11 +94,13 @@ class Request extends \ebi\Request{
 			 */
 			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
-		if(
-			!$this->is_user_logged_in() && 
-			((isset($this->login_anon)) || $this->has_object_plugin('login_condition'))
-		){
-			$this->login_required();
+		if(!$this->is_user_logged_in()){
+			// TODO tokenでログイン: UserLongLivedToken, $req->user($obj)時にtoken保存
+			// login_requiredにいく前にログインさせる
+			
+			if(isset($this->login_anon) || $this->has_object_plugin('login_condition')){
+				$this->login_required();
+			}
 		}
 		if($this->is_user_logged_in() && (isset($annon['user_role']) || isset($this->login_anon['user_role']))){
 			if(
@@ -192,6 +194,7 @@ class Request extends \ebi\Request{
 					throw new \ebi\exception\UnauthorizedTypeException();
 				}
 			}
+			// TODO UserLongLivedTokenに保存する
 			$this->sessions($this->login_id.'USER',$user);
 		}
 		return $this->in_sessions($this->login_id.'USER');
