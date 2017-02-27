@@ -85,13 +85,13 @@ class PgsqlConnector extends \ebi\DbConnector{
 	 */
 	public function create_table_sql(\ebi\Dao $dao){
 		$columndef = $primary = [];
-		$sql = 'create table '.$this->quotation($dao->table()).'('.PHP_EOL;
+		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
 		
 		foreach($dao->columns(true) as $prop_name => $column){
 			$type = $dao->prop_anon($prop_name,'type');
 			
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$this->to_column_type($dao,$type,$column->column()).($type != 'serial' ? ' null ' : '');
+				$column_str = '  '.$this->to_column_type($dao,$type,$column->column()).($type != 'serial' ? ' NULL ' : '');
 				$columndef[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $type != 'serial'){
@@ -101,7 +101,7 @@ class PgsqlConnector extends \ebi\DbConnector{
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
 		if(!empty($primary)){
-			$sql .= ' ,primary key ( '.implode(',',$primary).' ) '.PHP_EOL;
+			$sql .= ' ,PRIMARY KEY ( '.implode(',',$primary).' ) '.PHP_EOL;
 		}
 		$sql .= ' );'.PHP_EOL;
 		return $sql;
