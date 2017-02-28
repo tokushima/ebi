@@ -53,13 +53,6 @@ class Request implements \IteratorAggregate{
 					$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
 				}
 			}
-			if(isset($_COOKIE) && is_array($_COOKIE)){
-				foreach($_COOKIE as $k => $v){
-					if(ctype_alpha($k[0]) && $k != \ebi\Conf::session_name()){
-						$this->vars[$k] = $v;
-					}
-				}
-			}
 			if(array_key_exists('_method',$this->vars)){
 				if(empty($this->_method)){
 					$this->_method = strtoupper($this->vars['_method']);
@@ -221,31 +214,36 @@ class Request implements \IteratorAggregate{
 	 * @param string $name 書き込む変数名
 	 * @param int $expire 有効期限(秒) (+ time)
 	 */
-	public function write_cookie($name,$expire=null){
+	public static function write_cookie($name,$value,$expire=null){
 		$cookie_params = \ebi\Conf::cookie_params();
 		
-		if($expire === null){
-			$expire = $cookie_params['cookie_lifetime'];
-			
-			if($expire > 0){
-				$expire = $expire + time();
-			}
+		if(empty($expire)){
+			$expire = time() + $cookie_params['cookie_lifetime'];
 		}
 		setcookie(
 			$name,
-			$this->in_vars($name),
-			(time() + $expire),
+			$value,
+			$expire,
 			$cookie_params['cookie_path'],
 			$cookie_params['cookie_domain'],
 			$cookie_params['cookie_secure']
 		);
 	}
 	/**
+	 * クッキーから取得
+	 * @param string $name
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public static function read_cookie($name,$default=null){
+		return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
+	}
+	/**
 	 * クッキーから削除
 	 * 登録時と同条件のものが削除される
 	 * @param string $name クッキー名
 	 */
-	public function delete_cookie($name){
+	public static function delete_cookie($name){
 		$cookie_params = \ebi\Conf::cookie_params();
 		
 		setcookie(
@@ -256,16 +254,6 @@ class Request implements \IteratorAggregate{
 			$cookie_params['cookie_domain'],
 			$cookie_params['cookie_secure']
 		);
-
-		$this->rm_vars($name);
-	}
-	/**
-	 * クッキーから呼び出された値か
-	 * @param string $name
-	 * @return boolean
-	 */
-	public function is_cookie($name){
-		return (isset($_COOKIE[$name]));
 	}
 	/**
 	 * pathinfo または argv
