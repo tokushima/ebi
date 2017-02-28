@@ -246,6 +246,8 @@ class Request implements \IteratorAggregate{
 	 * @param string $name クッキー名
 	 */
 	public function delete_cookie($name){
+		$cookie_params = \ebi\Conf::cookie_params();
+		
 		setcookie(
 			$name,
 			null,

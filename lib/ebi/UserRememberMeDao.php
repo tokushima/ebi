@@ -33,7 +33,7 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self = new static();
 				$self->user_id($req->user()->id());
 			}
-			$lifetime = time() + \ebi\Conf::get('lifetime',5184000); // 60day
+			$expire = time() + \ebi\Conf::get('lifetime',5184000); // 60day
 			$codebase = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#%&@.';
 			
 			for($i=0;$i<100;$i++){
@@ -48,11 +48,26 @@ class UserRememberMeDao extends \ebi\Dao{
 			if(!empty($token)){
 				$self->token($token);
 				$self->key($key);
-				$self->expire_date(time() + $lifetime);
+				$self->expire_date($expire);
 				$self->save();
-			
-				$req->write_cookie('_lt',$self->token(),$lifetime);
-				$req->write_cookie('_sk',$self->key().'/'.self::encrypt($self->user_id()),$lifetime);
+				
+				$cookie_params = \ebi\Conf::cookie_params();
+				setcookie(
+					'_lt',
+					$self->token(),
+					$expire,
+					$cookie_params['cookie_path'],
+					$cookie_params['cookie_domain'],
+					$cookie_params['cookie_secure']
+				);
+				setcookie(
+					'_sk',
+					$self->key().'/'.self::encrypt($self->user_id()),
+					$expire,
+					$cookie_params['cookie_path'],
+					$cookie_params['cookie_domain'],
+					$cookie_params['cookie_secure']
+				);
 			}
 		}
 	}
