@@ -1075,14 +1075,15 @@ abstract class Dao extends \ebi\Object{
 			$target = [];
 			
 			if(!empty($args)){
-				$args = array_merge($args,$auto_update_prop);
-				
 				foreach($args as $arg){
 					if(is_string($arg)){
 						$target[] = $arg;
 					}else if($arg instanceof \ebi\Q){
 						$query->add($arg);
 					}
+				}
+				if(!empty($target)){
+					$target = array_merge($target,$auto_update_prop);
 				}
 			}
 			$daq = self::$_con_[get_called_class()]->update_sql($this,$query,$target);
