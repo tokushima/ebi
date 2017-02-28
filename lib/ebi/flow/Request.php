@@ -293,6 +293,12 @@ class Request extends \ebi\Request{
 	 * @automap
 	 */
 	public function do_logout(){
+		/**
+		 * ログアウト処理の前処理
+		 * @param \ebi\flow\Request $arg1
+		 */
+		$vars = $this->call_object_plugin_funcs('before_do_logout',$this);
+		
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
 		session_regenerate_id(true);
