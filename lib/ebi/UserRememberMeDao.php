@@ -4,7 +4,7 @@ use \ebi\Q;
 /**
  * Remember me
  * @var serial $id
- * @var integer $user_id
+ * @var string $user_id @['max'=>255]
  * @var string $token @['auto_code_add'=>true,'max'=>80]
  * @var string $key @['auto_code_add'=>true,'max'=>45]
  * @var timestamp $expire_date
