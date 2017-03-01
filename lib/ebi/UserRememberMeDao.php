@@ -25,10 +25,10 @@ class UserRememberMeDao extends \ebi\Dao{
 	}
 	
 	/**
-	 * login_conditionで利用しtokenをセットする
+	 * login_condition/remember_meで利用しtokenをセットする
 	 * @param \ebi\flow\Request $req
 	 */
-	public static function exec_login_condition(\ebi\flow\Request $req){
+	public static function set(\ebi\flow\Request $req){
 		if($req->user() instanceof \ebi\User){
 			try{
 				$self = static::find_get(Q::eq('user_id',$req->user()->id()));
@@ -65,7 +65,7 @@ class UserRememberMeDao extends \ebi\Dao{
 	 * @throws \ebi\exception\NotFoundException
 	 * @return string
 	 */
-	public static function exec_remember_me(\ebi\flow\Request $req){
+	public static function get(\ebi\flow\Request $req){
 		if(isset($_COOKIE['_lt'])){
 			if(rand(1,10) == 5){
 				foreach(static::find(Q::lt('expire_date',time()),new Paginator(10)) as $obj){
@@ -99,7 +99,7 @@ class UserRememberMeDao extends \ebi\Dao{
 	 * before_do_logoutで利用する
 	 * @param \ebi\flow\Request $req
 	 */
-	public static function exec_before_do_logout(\ebi\flow\Request $req){
+	public static function delete(\ebi\flow\Request $req){
 		\ebi\Request::delete_cookie(self::name($req,'token'));
 		\ebi\Request::delete_cookie(self::name($req,'key'));
 	}
