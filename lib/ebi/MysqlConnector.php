@@ -111,7 +111,7 @@ class MysqlConnector extends \ebi\DbConnector{
 		if(!empty($primary)){
 			$sql .= ' ,PRIMARY KEY ( '.implode(',',$primary).' ) '.PHP_EOL;
 		}
-		$sql .= ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'.PHP_EOL;
+		$sql .= ' ) ROW_FORMAT=DYNAMIC ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'.PHP_EOL;
 		return $sql;
 	}
 	public function exists_table_sql(\ebi\Dao $dao){
