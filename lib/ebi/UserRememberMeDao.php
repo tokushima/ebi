@@ -21,7 +21,7 @@ class UserRememberMeDao extends \ebi\Dao{
 		return hash('sha256',(\ebi\Conf::get('salt',static::class).$user_id),false);
 	}
 	private static function name(\ebi\flow\Request $req,$k){
-		return '_'.sha1($req->user_logged_in_identifier().static::class.$k);
+		return '_'.md5($req->user_logged_in_identifier().static::class.$k);
 	}
 	
 	/**
@@ -66,13 +66,14 @@ class UserRememberMeDao extends \ebi\Dao{
 	 * @return string
 	 */
 	public static function read_cookie(\ebi\flow\Request $req){
-		if(isset($_COOKIE['_lt'])){
+		$token = \ebi\Request::read_cookie(self::name($req,'token'));
+		
+		if(!empty($token)){
 			if(rand(1,10) == 5){
 				foreach(static::find(Q::lt('expire_date',time()),new Paginator(10)) as $obj){
 					$obj->delete();
 				}
 			}
-			$token = \ebi\Request::read_cookie(self::name($req,'token'));
 			$sk = explode('/',\ebi\Request::read_cookie(self::name($req,'key')));
 			
 			if(isset($sk[1])){
