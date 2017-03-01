@@ -84,16 +84,7 @@ class Request extends \ebi\Request{
 		}
 		\ebi\Exceptions::throw_over();
 		
-		if(method_exists($this,'__before__')){
-			$this->__before__();
-		}
-		if($this->has_object_plugin('before_flow_action_request')){
-			/**
-			 * 前処理
-			 * @param \ebi\flow\Request $arg1
-			 */
-			$this->call_object_plugin_funcs('before_flow_action_request',$this);
-		}
+		// TODO
 		if(!$this->is_user_logged_in()){
 			if($this->has_object_plugin('remember_me')){
 				/**
@@ -101,13 +92,41 @@ class Request extends \ebi\Request{
 				 * @param \ebi\flow\Request $arg1
 				 */
 				if($this->call_object_plugin_funcs('remember_me',$this) === true){
-					$this->after_user_logged_in();
+					$this->after_user_login();
 				}
 			}
+			
+			// ログインが必要な条件
 			if(!$this->is_user_logged_in() && (isset($this->login_anon) || $this->has_object_plugin('login_condition'))){
-				$this->login_required();
+				$selected_pattern = $this->get_selected_pattern();
+				
+				if(!$this->is_user_logged_in()
+					&& array_key_exists('action',$selected_pattern)
+					&& strpos($selected_pattern['action'],'::do_login') === false
+				){
+					if($this->has_object_plugin('before_login_redirect')){
+						/**
+						 * ログイン機能へのリダイレクト前処理
+						 * @param \ebi\flow\Request $arg1
+						 */
+						$this->call_object_plugin_funcs('before_login_redirect',$this);
+					}
+					if(strpos($selected_pattern['action'],'::do_logout') === false){
+						$this->sessions('logged_in_redirect_to',\ebi\Request::current_url().\ebi\Request::request_string(true));
+					}
+					$req = new \ebi\Request();
+					$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
+						
+					if(array_key_exists('@',$selected_pattern)){
+						$this->set_before_redirect('do_login');
+					}else{
+						$this->set_before_redirect('login');
+					}
+				}
 			}
 		}
+		
+		// ロールの確認
 		if($this->is_user_logged_in() && (isset($annon['user_role']) || isset($this->login_anon['user_role']))){
 			if(
 				!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) || 
@@ -116,6 +135,16 @@ class Request extends \ebi\Request{
 			){
 				throw new \ebi\exception\NotPermittedException();
 			}
+		}
+		if(method_exists($this,'__before__')){
+			$this->__before__();
+		}
+		if($this->has_object_plugin('before_flow_action_request')){
+			/**
+			 * アクション前処理
+			 * @param \ebi\flow\Request $arg1
+			 */
+			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
 	}
 	/**
@@ -128,14 +157,14 @@ class Request extends \ebi\Request{
 		}
 		if($this->has_object_plugin('after_flow_action_request')){
 			/**
-			 * 後処理
+			 * アクション後処理
 			 * @param \ebi\flow\Request $arg1
 			 */
 			$this->call_object_plugin_funcs('after_flow_action_request',$this);
 		}
 		if($this->has_object_plugin('get_after_vars_request')){
 			/**
-			 * Flowの結果に返却値を追加する
+			 * アクションに連想配列を追加する
 			 * @return mixed{} 
 			 */
 			foreach($this->get_object_plugin_funcs('get_after_vars_request') as $o){
@@ -155,36 +184,6 @@ class Request extends \ebi\Request{
 	public function get_after_vars(){
 		return $this->after_vars;
 	}
-	/**
-	 * ログインしていない場合にログイン処理を実行する
-	 */
-	private function login_required(){
-		$selected_pattern = $this->get_selected_pattern();
-		
-		if(!$this->is_user_logged_in() 
-			&& array_key_exists('action',$selected_pattern)
-			&& strpos($selected_pattern['action'],'::do_login') === false
-		){
-			if($this->has_object_plugin('before_login_required')){
-				/**
-				 * ログイン処理の前処理
-				 * @param \ebi\flow\Request $arg1
-				 */
-				$this->call_object_plugin_funcs('before_login_required',$this);
-			}
-			if(strpos($selected_pattern['action'],'::do_logout') === false){
-				$this->sessions('logged_in_redirect_to',\ebi\Request::current_url().\ebi\Request::request_string(true));
-			}
-			$req = new \ebi\Request();
-			$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
-			
-			if(array_key_exists('@',$selected_pattern)){
-				$this->set_before_redirect('do_login');
-			}else{
-				$this->set_before_redirect('login');
-			}
-		}
-	}	
 
 	/**
 	 * ログインしているユーザのモデル
@@ -223,7 +222,7 @@ class Request extends \ebi\Request{
 		return ($this->in_sessions($this->login_id) !== null);
 	}
 	
-	private function after_user_logged_in(){
+	private function after_user_login(){
 		$this->sessions($this->login_id,$this->login_id);
 		session_regenerate_id(true);
 		/**
@@ -252,10 +251,13 @@ class Request extends \ebi\Request{
 		$pattern = $this->get_selected_pattern();
 		
 		if(!$this->is_user_logged_in()){
-			if(!$this->has_object_plugin('login_condition') || $this->call_object_plugin_func('login_condition',$this) !== true){
-				$this->call_object_plugin_func('login_invalid',$this);
-			}else{
-				$this->after_user_logged_in();
+			/**
+			 * ログイン条件処理
+			 * @param \ebi\flow\Request $arg1
+			 * @return boolean ログイン成功時にはtrueを返す
+			 */
+			if($this->call_object_plugin_func('login_condition',$this) === true){
+				$this->after_user_login();
 			}
 		}
 		$rtn_vars = ['login'=>$this->is_user_logged_in()];
@@ -269,10 +271,10 @@ class Request extends \ebi\Request{
 			$this->rm_sessions('logged_in_redirect_to');
 			
 			/**
-			 * ログイン処理の後処理
+			 * ログイン処理後にアクションに連想配列を追加する
 			 * @param \ebi\flow\Request $arg1
 			 */
-			$vars = $this->call_object_plugin_funcs('after_do_login',$this);
+			$vars = $this->call_object_plugin_funcs('get_after_vars_login',$this);
 			
 			if(!empty($vars) && is_array($vars)){
 				$rtn_vars = array_merge($rtn_vars,$vars);
@@ -301,10 +303,10 @@ class Request extends \ebi\Request{
 	 */
 	public function do_logout(){
 		/**
-		 * ログアウト処理の前処理
+		 * ログアウトの前処理
 		 * @param \ebi\flow\Request $arg1
 		 */
-		$vars = $this->call_object_plugin_funcs('before_do_logout',$this);
+		$this->call_object_plugin_funcs('before_logout',$this);
 		
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
