@@ -4,7 +4,7 @@ use \ebi\Q;
 /**
  * Daoでセッションを扱うモジュール
  * @author tokushima
- * @var string $id @['primary'=>true]
+ * @var string $id @['primary'=>true,'max'=>128]
  * @var text $data
  * @var number $expires
  */

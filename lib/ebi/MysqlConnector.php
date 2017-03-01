@@ -42,7 +42,7 @@ class MysqlConnector extends \ebi\DbConnector{
 			if(!$autocommit){
 				$this->prepare_execute($con,'set autocommit=0');
 				$this->prepare_execute($con,'set session transaction isolation level read committed');
-			}			
+			}
 			if(!empty($this->encode)){
 				$this->prepare_execute($con,'set names \''.$this->encode.'\'');
 			}
@@ -86,7 +86,7 @@ class MysqlConnector extends \ebi\DbConnector{
 			case 'intdate':
 			case 'integer': return $this->quotation($name).' int';
 			case 'email': return $this->quotation($name).' varchar(255)';
-			default: 
+			default:
 				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 		}
 	}
@@ -95,11 +95,11 @@ class MysqlConnector extends \ebi\DbConnector{
 	 */
 	public function create_table_sql(\ebi\Dao $dao){
 		$columndef = $primary = [];
-		$sql = 'create table '.$this->quotation($dao->table()).'('.PHP_EOL;
-				
+		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
+
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' null ';
+				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
 				$columndef[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
@@ -109,19 +109,19 @@ class MysqlConnector extends \ebi\DbConnector{
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
 		if(!empty($primary)){
-			$sql .= ' ,primary key ( '.implode(',',$primary).' ) '.PHP_EOL;
+			$sql .= ' ,PRIMARY KEY ( '.implode(',',$primary).' ) '.PHP_EOL;
 		}
-		$sql .= ' ) engine = InnoDB character set utf8 collate utf8_general_ci;'.PHP_EOL;
+		$sql .= ' ) ROW_FORMAT=DYNAMIC ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'.PHP_EOL;
 		return $sql;
 	}
 	public function exists_table_sql(\ebi\Dao $dao){
-		$dbc = \ebi\Dao::connection(get_class($dao));		
+		$dbc = \ebi\Dao::connection(get_class($dao));
 		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->table(),$dbc->name());
 	}
 	protected function date_format($column_map,$dao,$column,$require){
 		$fmt = [];
 		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%i','s'=>'%s'];
-	
+		
 		foreach(['Y'=>'2000','m'=>'01','d'=>'01','H'=>'00','i'=>'00','s'=>'00'] as $f => $d){
 			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
 		}

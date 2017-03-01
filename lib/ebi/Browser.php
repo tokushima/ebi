@@ -151,6 +151,13 @@ class Browser{
 		return ($this->body === null || is_bool($this->body)) ? '' : $this->body;
 	}
 	/**
+	 * Cookieを取得
+	 * @return mixed{}
+	 */
+	public function cookie(){
+		return $this->cookie;
+	}
+	/**
 	 * 結果のURLを取得
 	 * @return string
 	 */
@@ -376,13 +383,18 @@ class Browser{
 		if(!isset($this->request_header['Expect'])){
 			$this->request_header['Expect'] = null;
 		}
-		if(!isset($this->request_header['Cookie'])){
+		if(!empty($this->cookie)){
 			$cookies = '';
+			$now = time();
 			
-			foreach($this->cookie as $domain => $cookie_value){
+			foreach($this->cookie as $domain => $cookieval){
 				if(strpos($cookie_base_domain,$domain) === 0 || strpos($cookie_base_domain,(($domain[0] == '.') ? $domain : '.'.$domain)) !== false){
-					foreach($cookie_value as $k => $v){
-						if(!$v['secure'] || ($v['secure'] && substr($url,0,8) == 'https://')) $cookies .= sprintf('%s=%s; ',$k,$v['value']);
+					foreach($cookieval as $k => $v){
+						if(!empty($v['expires']) && $v['expires'] < $now){
+							unset($this->cookie[$domain][$k]);
+						}else if(!$v['secure'] || ($v['secure'] && substr($url,0,8) == 'https://')){
+							$cookies .= sprintf('%s=%s; ',$k,$v['value']);
+						}
 					}
 				}
 			}

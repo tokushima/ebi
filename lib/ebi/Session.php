@@ -4,8 +4,6 @@ namespace ebi;
  * セッションを操作する
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
  * @author tokushima
- * @see http://php.net/manual/ja/session.configuration.php#ini.session.cache-limiter キャッシュリミッタ nocache,private,private_no_expire,public
- * @see http://php.net/manual/ja/session.configuration.php#ini.session.cache-expire キャッシュの有効期限
  */
 class Session{
 	use \ebi\Plugin;
@@ -24,17 +22,18 @@ class Session{
 			$cookie_params = \ebi\Conf::cookie_params();
 			
 			session_name($cookie_params['session_name']);
-			session_cache_expire($cookie_params['session_expire']);
-			session_cache_limiter($cookie_params['session_limiter']);
-
+			
+			if($cookie_params['session_maxlifetime'] > 0){
+				ini_set('session.gc_maxlifetime',$cookie_params['session_maxlifetime']);
+			}
 			if(
-				$cookie_params['cookie_lifetime'] > 0 || 
+				$cookie_params['session_lifetime'] > 0 || 
 				$cookie_params['cookie_path'] != '/' ||
 				!empty($cookie_params['cookie_domain']) ||
 				$cookie_params['cookie_secure'] !== false
 			){
 				session_set_cookie_params(
-					$cookie_params['cookie_lifetime'],
+					$cookie_params['session_lifetime'],
 					$cookie_params['cookie_path'],
 					$cookie_params['cookie_domain'],
 					$cookie_params['cookie_secure']

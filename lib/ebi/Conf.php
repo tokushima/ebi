@@ -254,23 +254,27 @@ class Conf{
 		$session_name = self::get_self_conf_get('session_name','SID');
 		
 		/**
-		 * デフォルトは、180 です
-		 * @param integer $val キャッシュの有効期限 (分)
+		 * @param integer $val ブラウザに送信するセッションIDの有効期間(秒)
+		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
+		 * デフォルトは、0 です
 		 */
-		$session_expire = self::get_self_conf_get('session_expire',180);
+		$session_lifetime = self::get_self_conf_get('session_lifetime',0);
 		
 		/**
-		 * public / private_no_expire / private / nocache
-		 * デフォルトは、nocache です
-		 * @param string $val キャッシュリミッタの名前
-		 * @see http://jp2.php.net/manual/ja/function.session-cache-limiter.php
+		 * 生存期間、デフォルトは1440です
+		 * cookie_lifetimeが大きい場合、cookie_lifetimeで上書きされます
+		 * セッション開始時にガベージコレクションが実行されるのでアプリが共存している場合は注意が必要です
+		 * @param string $val 消去されるまでの秒数を指定します。
 		 */
-		$session_limiter = self::get_self_conf_get('session_limiter','nocache');
-		
+		$session_maxlifetime = self::get_self_conf_get('session_maxlifetime',1440);
+
+		if($session_maxlifetime < $session_lifetime){
+			$session_maxlifetime = $session_lifetime;
+		}
 		return [
 			'session_name'=>$session_name,
-			'session_expire'=>$session_expire,
-			'session_limiter'=>$session_limiter,
+			'session_maxlifetime'=>$session_maxlifetime,
+			'session_lifetime'=>$session_lifetime,
 			'cookie_lifetime'=>$cookie_lifetime,
 			'cookie_path'=>$cookie_path,
 			'cookie_domain'=>$cookie_domain,

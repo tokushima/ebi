@@ -550,11 +550,11 @@ abstract class DbConnector{
 	}
 	public function create_table_sql(\ebi\Dao $dao){
 		$columndef = $primary = [];
-		$sql = 'create table '.$this->quotation($dao->table()).'('.PHP_EOL;
+		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
 		
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
-				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' null ';
+				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
 				$columndef[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){

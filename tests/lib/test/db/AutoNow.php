@@ -10,4 +10,6 @@ class AutoNow extends \ebi\Dao{
 	protected $ts;
 	protected $date;
 	protected $idate;
+	protected $value1;
+	protected $value2;
 }
