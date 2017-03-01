@@ -84,7 +84,6 @@ class Request extends \ebi\Request{
 		}
 		\ebi\Exceptions::throw_over();
 		
-		// TODO
 		if(!$this->is_user_logged_in()){
 			if($this->has_object_plugin('remember_me')){
 				/**
@@ -100,10 +99,7 @@ class Request extends \ebi\Request{
 			if(!$this->is_user_logged_in() && (isset($this->login_anon) || $this->has_object_plugin('login_condition'))){
 				$selected_pattern = $this->get_selected_pattern();
 				
-				if(!$this->is_user_logged_in()
-					&& array_key_exists('action',$selected_pattern)
-					&& strpos($selected_pattern['action'],'::do_login') === false
-				){
+				if(array_key_exists('action',$selected_pattern) && strpos($selected_pattern['action'],'::do_login') === false){
 					if($this->has_object_plugin('before_login_redirect')){
 						/**
 						 * ログイン機能へのリダイレクト前処理
