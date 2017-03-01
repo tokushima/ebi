@@ -20,12 +20,15 @@ class UserRememberMeDao extends \ebi\Dao{
 	private static function encrypt($user_id){
 		return hash('sha256',(\ebi\Conf::get('salt',static::class).$user_id),false);
 	}
+	private static function name(\ebi\flow\Request $req,$k){
+		return '_'.sha1($req->user_logged_in_identifier().static::class.$k);
+	}
 	
 	/**
-	 * Userをセットする
+	 * login_conditionで利用しtokenをセットする
 	 * @param \ebi\flow\Request $req
 	 */
-	public static function set(\ebi\flow\Request $req){
+	public static function exec_login_condition(\ebi\flow\Request $req){
 		if($req->user() instanceof \ebi\User){
 			try{
 				$self = static::find_get(Q::eq('user_id',$req->user()->id()));
@@ -50,42 +53,27 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->key($key);
 				$self->expire_date($expire);
 				$self->save();
-				
-				$cookie_params = \ebi\Conf::cookie_params();
-				setcookie(
-					'_lt',
-					$self->token(),
-					$expire,
-					$cookie_params['cookie_path'],
-					$cookie_params['cookie_domain'],
-					$cookie_params['cookie_secure']
-				);
-				setcookie(
-					'_sk',
-					$self->key().'/'.self::encrypt($self->user_id()),
-					$expire,
-					$cookie_params['cookie_path'],
-					$cookie_params['cookie_domain'],
-					$cookie_params['cookie_secure']
-				);
+
+				\ebi\Request::write_cookie(self::name($req,'token'),$self->token(),$expire);
+				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::encrypt($self->user_id()),$expire);
 			}
 		}
 	}
 	/**
-	 * user_idを取得する
+	 * remember_meで利用しuser_idを取得する
 	 * @param \ebi\flow\Request $req
 	 * @throws \ebi\exception\NotFoundException
 	 * @return string
 	 */
-	public static function get(\ebi\flow\Request $req){
+	public static function exec_remember_me(\ebi\flow\Request $req){
 		if(isset($_COOKIE['_lt'])){
 			if(rand(1,10) == 5){
 				foreach(static::find(Q::lt('expire_date',time()),new Paginator(10)) as $obj){
 					$obj->delete();
 				}
 			}
-			$token = $_COOKIE['_lt'];
-			$sk = explode('/',isset($_COOKIE['_sk']) ? $_COOKIE['_sk'] : null);
+			$token = \ebi\Request::read_cookie(self::name($req,'token'));
+			$sk = explode('/',\ebi\Request::read_cookie(self::name($req,'key')));
 			
 			if(isset($sk[1])){
 				list($key,$id) = $sk;
@@ -105,5 +93,14 @@ class UserRememberMeDao extends \ebi\Dao{
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
+	}
+	
+	/**
+	 * before_do_logoutで利用する
+	 * @param \ebi\flow\Request $req
+	 */
+	public static function exec_before_do_logout(\ebi\flow\Request $req){
+		\ebi\Request::delete_cookie(self::name($req,'token'));
+		\ebi\Request::delete_cookie(self::name($req,'key'));
 	}
 }

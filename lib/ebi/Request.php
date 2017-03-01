@@ -212,7 +212,8 @@ class Request implements \IteratorAggregate{
 	/**
 	 * クッキーへの書き出し
 	 * @param string $name 書き込む変数名
-	 * @param int $expire 有効期限(秒) (+ time)
+	 * @param mixed $value
+	 * @param int $expire 有効期限(秒)
 	 */
 	public static function write_cookie($name,$value,$expire=null){
 		$cookie_params = \ebi\Conf::cookie_params();

@@ -209,6 +209,13 @@ class Request extends \ebi\Request{
 		return $this->in_sessions($this->login_id.'USER');
 	}
 	/**
+	 * ログインセッション識別子
+	 * @return string
+	 */
+	public function user_logged_in_identifier(){
+		return $this->login_id;
+	}
+	/**
 	 * ログイン済みか
 	 * @return boolean
 	 */
