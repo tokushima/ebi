@@ -17,8 +17,8 @@ class UserRememberMeDao extends \ebi\Dao{
 	protected $key;
 	protected $expire_date;
 	
-	private static function encrypt($user_id){
-		return hash('sha256',(\ebi\Conf::get('salt',static::class).$user_id),false);
+	private static function crypt($user_id){
+		return sha1(\ebi\Conf::get('salt',static::class).$user_id);
 	}
 	private static function name(\ebi\flow\Request $req,$k){
 		return '_'.md5($req->user_login_session_id().static::class.$k);
@@ -55,7 +55,7 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->save();
 
 				\ebi\Request::write_cookie(self::name($req,'token'),$self->token(),$expire);
-				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::encrypt($self->user_id()),$expire);
+				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::crypt($self->user_id()),$expire);
 			}
 		}
 	}
@@ -86,7 +86,7 @@ class UserRememberMeDao extends \ebi\Dao{
 						Q::gt('expire_date',time())
 					);
 					
-					if(self::encrypt($self->user_id()) === $id){
+					if(self::crypt($self->user_id()) === $id){
 						return $self->user_id();
 					}
 				}catch(\ebi\exception\NotFoundException $e){

@@ -149,11 +149,11 @@ class Request implements \IteratorAggregate{
 			$port = $_SERVER['SERVER_PORT'];
 		}
 		$server = preg_replace("/^(.+):\d+$/","\\1",isset($_SERVER['HTTP_X_FORWARDED_HOST']) ?
-				$_SERVER['HTTP_X_FORWARDED_HOST'] :
-				(
-						isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] :
-						(isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '')
-				));
+			$_SERVER['HTTP_X_FORWARDED_HOST'] :
+			(
+				isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] :
+				(isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '')
+			));
 		if($port != $port_http && $port != $port_https) $server = $server.':'.$port;
 		if(empty($server)) return null;
 		return (($port == $port_https) ? 'https' : 'http').'://'.preg_replace("/^(.+?)\?.*/","\\1",$server);

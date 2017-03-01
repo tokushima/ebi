@@ -1,7 +1,7 @@
 <?php
 namespace ebi\flow;
 /**
- * リクエストやセッションを処理するactionベース
+ * リクエストやセッションを処理する
  * @author tokushima
  *
  */
@@ -87,8 +87,9 @@ class Request extends \ebi\Request{
 		if(!$this->is_user_logged_in()){
 			if($this->has_object_plugin('remember_me')){
 				/**
-				 * Remember me
+				 * remember meの条件処理
 				 * @param \ebi\flow\Request $arg1
+				 * @return boolean ログイン成功時にはtrueを返す
 				 */
 				if($this->call_object_plugin_funcs('remember_me',$this) === true){
 					$this->after_user_login();
