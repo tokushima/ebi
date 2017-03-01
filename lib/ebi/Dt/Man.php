@@ -178,6 +178,7 @@ class Man{
 					}
 				}
 			}
+			ksort($call_plugins);
 		}
 		$info->set_opt('plugins',$call_plugins);
 		
