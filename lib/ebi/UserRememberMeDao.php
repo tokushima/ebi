@@ -21,7 +21,7 @@ class UserRememberMeDao extends \ebi\Dao{
 		return hash('sha256',(\ebi\Conf::get('salt',static::class).$user_id),false);
 	}
 	private static function name(\ebi\flow\Request $req,$k){
-		return '_'.md5($req->user_logged_in_identifier().static::class.$k);
+		return '_'.md5($req->user_login_session_id().static::class.$k);
 	}
 	
 	/**

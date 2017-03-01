@@ -212,7 +212,7 @@ class Request extends \ebi\Request{
 	 * ログインセッション識別子
 	 * @return string
 	 */
-	public function user_logged_in_identifier(){
+	public function user_login_session_id(){
 		return $this->login_id;
 	}
 	/**
