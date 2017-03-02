@@ -2,7 +2,10 @@
 include_once('bootstrap.php');
 
 \ebi\Flow::app([
-	'plugins'=>'test.flow.plugin.Login3',
+	'plugins'=>[
+		'test.flow.plugin.Login4',
+		\ebi\flow\plugin\UnauthorizedThrow::class,
+	],
 	'patterns'=>[
 		'login_url'=>[
 			'name'=>'login',

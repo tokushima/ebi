@@ -59,7 +59,7 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->key($key);
 				$self->expire_date($expire);
 				$self->save();
-
+				
 				\ebi\Request::write_cookie(self::name($req,'token'),$self->token(),$expire);
 				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::crypt($self->user_id()),$expire);
 			}
