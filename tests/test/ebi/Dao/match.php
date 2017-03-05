@@ -19,3 +19,26 @@ eq(1,\test\db\Match::find_count(Q::match(30)));
 eq(1,\test\db\Match::find_count(Q::match('BB　CC'))); // 全角スペース
 
 eq(1,\test\db\Match::find_count(Q::match('BBB CCC',['data3'])));
+
+
+$result = [10,20,30,40];
+$i = 0;
+foreach(\test\db\Match::find(Q::match('BBB',['data3','data2']),Q::order('data1')) as $o){
+	eq($result[$i],$o->data1());
+	$i++;
+}
+
+
+$result = [10,40];
+$i = 0;
+foreach(\test\db\Match::find(Q::match('AAA BBB',['data3','data2']),Q::order('data1')) as $o){
+	eq($result[$i],$o->data1());
+	$i++;
+}
+
+$result = [40];
+$i = 0;
+foreach(\test\db\Match::find(Q::match('AAA BBB',['data2']),Q::order('data1')) as $o){
+	eq($result[$i],$o->data1());
+	$i++;
+}

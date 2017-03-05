@@ -140,8 +140,15 @@ class Browser{
 	 * 結果のヘッダを取得
 	 * @return string
 	 */
-	public function head(){
+	public function response_headers(){
 		return $this->head;
+	}
+	/**
+	 * クッキーを取得
+	 * @return mixed{}
+	 */
+	public function cookies(){
+		return $this->cookie;
 	}
 	/**
 	 * 結果の本文を取得
@@ -149,13 +156,6 @@ class Browser{
 	 */
 	public function body(){
 		return ($this->body === null || is_bool($this->body)) ? '' : $this->body;
-	}
-	/**
-	 * Cookieを取得
-	 * @return mixed{}
-	 */
-	public function cookie(){
-		return $this->cookie;
 	}
 	/**
 	 * 結果のURLを取得
@@ -262,7 +262,7 @@ class Browser{
 	 * @param string $data
 	 * @return number
 	 */
-	public function callback_head($resource,$data){
+	private function callback_head($resource,$data){
 		$this->head .= $data;
 		return strlen($data);
 	}
@@ -272,7 +272,7 @@ class Browser{
 	 * @param string $data
 	 * @return number
 	 */
-	public function callback_body($resource,$data){
+	private function callback_body($resource,$data){
 		$this->body .= $data;
 		return strlen($data);
 	}

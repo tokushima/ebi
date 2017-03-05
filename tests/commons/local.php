@@ -26,7 +26,8 @@
 		],
 		'use_vendor'=>[
 			\ebi\SmtpBlackholeDao::class,
-			\ebi\SessionDao::class,				
+			\ebi\SessionDao::class,
+			\ebi\UserRememberMeDao::class,
 		],
 //		'phpinfo'=>false,
 //		'config'=>false,

@@ -369,16 +369,19 @@ class Q{
 	}
 	/**
 	 * 検索文字列による検索条件
-	 * @param string $dict 検索文字列 スペース区切り
+	 * @param string $val 検索文字列 スペース区切り
 	 * @param string[] $param 対象のカラム
 	 * @return \ebi\Q
 	 */
-	public static function match($dict,$columns=[]){
+	public static function match($val,$columns=[]){
 		if(!empty($columns) && !is_array($columns)){
 			$columns = explode(',',$columns);
 		}
-		$values = array_unique(explode(',',str_replace(['　',' '],',',trim($dict))));
+		$values = trim(str_replace(['　',' '],' ',$val));
 		
+		if(!empty($values)){
+			$values = array_unique(explode(' ',$values));
+		}
 		if(empty($values)){
 			return new self();
 		}

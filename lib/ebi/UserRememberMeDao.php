@@ -18,6 +18,9 @@ class UserRememberMeDao extends \ebi\Dao{
 	protected $expire_date;
 	
 	private static function crypt($user_id){
+		/**
+		 * @param string $salt user_idのハッシュ用salt
+		 */
 		return sha1(\ebi\Conf::get('salt',static::class).$user_id);
 	}
 	private static function name(\ebi\flow\Request $req,$k){
@@ -36,6 +39,9 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self = new static();
 				$self->user_id($req->user()->id());
 			}
+			/**
+			 * @param integer $lifetime クッキーの保存期間
+			 */
 			$expire = time() + \ebi\Conf::get('lifetime',5184000); // 60day
 			$codebase = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#%&@.';
 			
@@ -53,7 +59,7 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->key($key);
 				$self->expire_date($expire);
 				$self->save();
-
+				
 				\ebi\Request::write_cookie(self::name($req,'token'),$self->token(),$expire);
 				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::crypt($self->user_id()),$expire);
 			}
@@ -89,6 +95,9 @@ class UserRememberMeDao extends \ebi\Dao{
 					if(self::crypt($self->user_id()) === $id){
 						return $self->user_id();
 					}
+					
+					// 無効なら削除
+					$self->delete();
 				}catch(\ebi\exception\NotFoundException $e){
 				}
 			}
