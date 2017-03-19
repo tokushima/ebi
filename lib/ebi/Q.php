@@ -25,8 +25,6 @@ class Q{
 	const OR_BLOCK = 16;
 	const AND_BLOCK = 17;
 	const DATE_FORMAT = 18;
-
-	const DISCORD = 19;
 	
 	const IGNORE = 2;
 	const NOT = 4;
@@ -273,7 +271,7 @@ class Q{
 		try{
 			return new self(self::START_WITH,$column_str,self::words_array($words),$param);
 		}catch(\ebi\exception\EmptyException $e){
-			return new self(self::DISCORD,$column_str);
+			return new self();
 		}
 	}
 	/**
@@ -287,7 +285,7 @@ class Q{
 		try{
 			return new self(self::END_WITH,$column_str,self::words_array($words),$param);
 		}catch(\ebi\exception\EmptyException $e){
-			return new self(self::DISCORD,$column_str);
+			return new self();
 		}
 	}
 	/**
@@ -301,7 +299,7 @@ class Q{
 		try{
 			return new self(self::CONTAINS,$column_str,self::words_array($words),$param);
 		}catch(\ebi\exception\EmptyException $e){
-			return new self(self::DISCORD,$column_str);
+			return new self();
 		}
 	}
 	/**
@@ -315,7 +313,7 @@ class Q{
 		try{
 			return new self(self::IN,$column_str,($words instanceof \ebi\Daq) ? $words : [self::words_array($words)],$param);
 		}catch(\ebi\exception\EmptyException $e){
-			return new self(self::DISCORD,$column_str);
+			return new self();
 		}
 	}
 	private static function words_array($words){
