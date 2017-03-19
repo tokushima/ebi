@@ -108,9 +108,23 @@ class Action{
 	}
 	
 	/**
-	 * @deprecated
+	 * 推奨しない
+	 * @deprecated 2017-03-05 aaaa
 	 */
 	public function deprecated(){
 		
+	}
+	
+	/**
+	 * @request string $hoge @deprecated 2017-03-04 早めに
+	 */
+	public function request_deprecated(){
+		$this->in_vars('hoge');
+	}
+	/**
+	 * @context string $hoge @deprecated 2017-03-04 早めに
+	 */
+	public function context_deprecated(){
+		return ['hoge'=>1];
 	}
 }

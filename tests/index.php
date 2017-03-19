@@ -163,6 +163,15 @@ include_once('bootstrap.php');
 		'name'=>'deprecated_method',
 		'action'=>'test.flow.Action::deprecated',
 	],
+	'deprecated/request'=>[
+		'name'=>'deprecated_request',
+		'action'=>'test.flow.Action::request_deprecated',
+	],
+	'deprecated/context'=>[
+		'name'=>'context_deprecated',
+		'action'=>'test.flow.Action::context_deprecated',
+	],
+	
 	'deprecated'=>[
 		'name'=>'deprecated',
 		'action'=>'\\test\\flow\\Action::abc',
