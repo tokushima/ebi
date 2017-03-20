@@ -1,7 +1,7 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2 style="{$t.cond_switch($method_info.opt('is_deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
+<h2 style="{$t.cond_switch($method_info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
 		{$method_info.opt('class')}
 	</a>

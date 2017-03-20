@@ -237,29 +237,33 @@ class Man{
 			$method_deprecated = [new \ebi\Dt\DocParam('deprecated','')];
 			
 			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
-				$info->set_opt('is_deprecated',$m[1]);
-				$method_deprecated[0]->summary('deprecated '.$m[0]);
+				$method_deprecated[0]->summary($m[0]);
 			}
-			$deprecated_list = [];
+			$deprecated_date = null;
 			foreach([1=>$method_deprecated,2=>$requests,3=>$contexts] as $t => $v){
 				foreach($v as $k => $r){
 					if(strpos($r->summary(),'deprecated') !== false){
-						$r->set_opt('is_deprecated',true);
 						$s = str_replace(['@deprecated','deprecated'],'',$r->summary());
-						$d = null;
+						$d = time();
 						
 						if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
-							$d = $m[0];
-							$s = str_replace($d,'',$s);
+							$d = strtotime($m[0]);
+							$s = str_replace($m[0],'',$s);
 						}
-						$deprecated_list[] = ['type'=>$t,'date'=>$d,'summary'=>trim($s)];
+						$r->summary(trim($s));
+						$r->set_opt('deprecated',$d);
+						
+						if(empty($deprecated_date) || $deprecated_date > $d){
+							$deprecated_date = $d;
+						}
 					}
 				}
 			}
+			$info->set_opt('deprecated',$method_deprecated[0]->opt('deprecated'));
+			$info->set_opt('deprecated_date',$deprecated_date);
 			$info->set_opt('requests',$requests);
 			$info->set_opt('contexts',$contexts);
 			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
-			$info->set_opt('deprecated_list',$deprecated_list);
 			
 			if($deep){
 				$call_plugins = [];
