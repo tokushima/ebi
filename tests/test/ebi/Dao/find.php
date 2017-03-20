@@ -146,6 +146,19 @@ foreach(\test\db\Find::find(Q::neq('value1','abc')) as $obj){
 	neq('abc',$obj->value1());
 }
 
+
+// like 
+
+// 対象が空の場合は無視
+eq(8,\test\db\Find::find_count(Q::startswith('value1',[])));
+
+// 対象が空の場合は無視
+eq(8,\test\db\Find::find_count(Q::endswith('value1',[])));
+
+// 対象が空の場合は無視
+eq(8,\test\db\Find::find_count(Q::contains('value1',[])));
+
+
 $i = 0;
 $r = array('aaa','bbb','ccc');
 foreach(\test\db\Find::find(Q::startswith('value1,value2',array('aa'),Q::IGNORE)) as $obj){
@@ -178,6 +191,12 @@ foreach(\test\db\Find::find(Q::endswith('value1,value2',array('C'),Q::IGNORE)) a
 	$t[] = $obj->value1();
 }
 eq(3,$i);
+
+
+// in 
+
+// 対象が空の場合は無視
+eq(8,\test\db\Find::find_count(Q::in('value1',[])));
 
 $i = 0;
 foreach(\test\db\Find::find(Q::in('value1',array('abc'))) as $obj){

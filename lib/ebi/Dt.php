@@ -58,6 +58,7 @@ class Dt{
 		foreach($patterns as $k => $m){
 			foreach([
 				'deprecated'=>false,
+				'deprecated_date'=>null,
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
@@ -86,8 +87,11 @@ class Dt{
 							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
 						}
-						if(!$m['deprecated'] && $info->opt('deprecated')){
-							$m['deprecated'] = $info->opt('deprecated');
+						if($m['deprecated'] || $info->opt('deprecated')){
+							$m['deprecated'] = true;
+						}
+						if($m['deprecated'] || !empty($info->opt('deprecated_date'))){
+							$m['deprecated_date'] = $info->opt('deprecated_date', time());
 						}
 					}
 				}catch(\Exception $e){

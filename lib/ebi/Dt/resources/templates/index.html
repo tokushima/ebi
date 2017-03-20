@@ -38,7 +38,7 @@
 	</tr>
 	</thead>
 	<tbody>
-	<tr class="even" style="{$t.cond_switch($map['deprecated'],'color: #cc6666; text-decoration: line-through;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
+	<tr class="even" style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')} {$t.cond_switch($map['deprecated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 		<td>
 			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -69,7 +69,9 @@
 			</rt:if>
 		</td>
 		<td>
-			<span>{$t.html($map['summary'])}</span>
+			<span>
+				{$t.html($map['summary'])}
+			</span>
 			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 		</td>
 		<td>
@@ -83,6 +85,9 @@
 						<div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 							<h4 class="modal-title">{$map['name']}</h4>
+							<div class="text-muted" style="font-size: small;">
+								{$map['summary']}
+							</div>
 						</div>
 						<div class="modal-body">
 							<form name="linkdata{$count}">

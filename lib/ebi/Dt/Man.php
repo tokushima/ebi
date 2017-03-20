@@ -216,7 +216,6 @@ class Man{
 			$src = self::method_src($ref);
 
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
-			$info->set_opt('deprecated',(strpos($document,'@deprecated') !== false));
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
 				$info->set_opt('http_method',strtoupper(trim($match[1])));
@@ -228,13 +227,43 @@ class Man{
 			}
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
-			$info->set_opt('requests',\ebi\Dt\DocParam::parse('request',$document));
-			$info->set_opt('contexts',\ebi\Dt\DocParam::parse('context',$document));
-			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
-
+			
 			if(!$info->is_return() && $info->has_opt('contexts')){
 				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
 			}
+			
+			$requests = \ebi\Dt\DocParam::parse('request',$document);
+			$contexts = \ebi\Dt\DocParam::parse('context',$document);
+			$method_deprecated = [new \ebi\Dt\DocParam('deprecated','')];
+			
+			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
+				$method_deprecated[0]->summary($m[0]);
+			}
+			$deprecated_date = null;
+			foreach([1=>$method_deprecated,2=>$requests,3=>$contexts] as $t => $v){
+				foreach($v as $k => $r){
+					if(strpos($r->summary(),'deprecated') !== false){
+						$s = str_replace(['@deprecated','deprecated'],'',$r->summary());
+						$d = time();
+						
+						if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
+							$d = strtotime($m[0]);
+							$s = str_replace($m[0],'',$s);
+						}
+						$r->summary(trim($s));
+						$r->set_opt('deprecated',$d);
+						
+						if(empty($deprecated_date) || $deprecated_date > $d){
+							$deprecated_date = $d;
+						}
+					}
+				}
+			}
+			$info->set_opt('deprecated',$method_deprecated[0]->opt('deprecated'));
+			$info->set_opt('deprecated_date',$deprecated_date);
+			$info->set_opt('requests',$requests);
+			$info->set_opt('contexts',$contexts);
+			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
 			
 			if($deep){
 				$call_plugins = [];
@@ -302,7 +331,7 @@ class Man{
 				foreach($throws as $n => $t){				
 					try{
 						$ref = new \ReflectionClass($n);
-						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];				
+						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
 						$throw_param[$n] = new \ebi\Dt\DocParam(
 							$ref->getName(),
 							$ref->getName(),
@@ -319,7 +348,7 @@ class Man{
 					}
 				}
 				$info->set_opt('mail_list',$mail_list);
-			}			
+			}
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();

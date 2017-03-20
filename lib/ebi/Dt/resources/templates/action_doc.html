@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<h2 style="{$t.cond_switch($action.opt('map_deprecated'),'text-decoration: line-through;','')}">
+<h2 style="{$t.cond_switch($action.opt('map_deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	{$action.opt('name')}
 	
 	<span class="label label-default">{$action.opt('http_method')}</span>
@@ -12,10 +12,14 @@
 	{$action.opt('url')}
 </div>
 
-
+<rt:if param="{$action.opt('deprecated')}">
+	<div style="margin-left: 20px; color: #cc6666;" class="text-muted">
+		@deprecated {$t.date_format('Y-m-d',$action.opt('deprecated'))}
+	</div>
+</rt:if>
 
 <div style="margin-top: 30px;">
-	<div style="{$t.cond_switch($action.opt('deprecated'),'text-decoration: line-through;','')}">
+	<div style="{$t.cond_switch($action.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 		<a href="{$t.package_method_url('class_doc',$action.opt('class'))}">
 			{$action.opt('class')}
 		</a>
@@ -32,7 +36,7 @@
 <rt:if param="{$action.is_params()}">
 	<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
 	<table rt:param="{$action.params()}" rt:var="param" class="table table-condensed table-striped">
-	<tr>
+	<tr style="{$t.cond_switch($param.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 		<td style="width:25%;">
 			<rt:if param="{$param.is_type_class()}">
 				<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
@@ -56,7 +60,7 @@
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Request</h4>
 <table rt:param="{$action.opt('requests')}" rt:var="param" class="table table-condensed table-striped">
-<tr>
+<tr style="{$t.cond_switch($param.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
 			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
@@ -71,6 +75,11 @@
 	</td>
 	<td style="width:45%;">
 		{$t.html($param.summary())}
+	</td>
+	<td nowrap="nowrap">
+		<rt:if param="{$param.opt('deprecated')}">
+			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+		</rt:if>
 	</td>
 </tr>
 </table>
@@ -78,7 +87,7 @@
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Context</h4>
 <table rt:param="{$action.opt('contexts')}" rt:var="param" class="table table-condensed table-striped">
-<tr>
+<tr style="{$t.cond_switch($param.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	<td style="width:25%;">
 		<rt:if param="{$param.is_type_class()}">
 			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
@@ -93,6 +102,11 @@
 	</td>
 	<td style="width:45%;">
 		{$t.html($param.summary())}
+	</td>
+	<td nowrap="nowrap">
+		<rt:if param="{$param.opt('deprecated')}">
+			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+		</rt:if>
 	</td>
 </tr>
 </table>
