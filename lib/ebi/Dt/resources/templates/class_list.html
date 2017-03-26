@@ -33,7 +33,7 @@
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr style="{$t.cond_switch($class_info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	<td style="width:20%;">
 		<a href="{$t.package_method_url('class_doc',$class_info.name())}">
 			{$class_info.name()}

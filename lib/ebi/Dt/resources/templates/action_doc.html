@@ -12,12 +12,6 @@
 	{$action.opt('url')}
 </div>
 
-<rt:if param="{$action.opt('deprecated')}">
-	<div style="margin-left: 20px; color: #cc6666;" class="text-muted">
-		@deprecated {$t.date_format('Y-m-d',$action.opt('deprecated'))}
-	</div>
-</rt:if>
-
 <div style="margin-top: 30px;">
 	<div style="{$t.cond_switch($action.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 		<a href="{$t.package_method_url('class_doc',$action.opt('class'))}">
@@ -31,6 +25,13 @@
 		{$t.noop($f.md2html($action.document()))}
 	</div>
 </div>
+
+<rt:if param="{$action.opt('deprecated')}">
+	<div style="color: #cc6666;" class="text-muted">
+		@deprecated {$t.date_format('Y-m-d',$action.opt('deprecated'))}
+	</div>
+</rt:if>
+
 
 
 <rt:if param="{$action.is_params()}">

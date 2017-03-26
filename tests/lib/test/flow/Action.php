@@ -110,6 +110,7 @@ class Action{
 	/**
 	 * 推奨しない
 	 * @deprecated 2017-03-05 aaaa
+	 * @context \test\model\DeprecatedModel $model 
 	 */
 	public function deprecated(){
 		

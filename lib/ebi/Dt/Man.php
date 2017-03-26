@@ -51,6 +51,14 @@ class Man{
 		$info->name($r->getName());
 		$info->document(trim(preg_replace('/@.+/','',$document)));
 		
+		
+		$class_deprecated = new \ebi\Dt\DocParam('deprecated','');
+		if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
+			$class_deprecated->summary($m[0]);
+		}
+		$class_deprecated->summary(self::find_deprecate($class_deprecated->summary(),$class_deprecated));		
+		$info->set_opt('deprecated',$class_deprecated->opt('deprecated'));
+		
 		$info->set_opt('filename',$r->getFileName());
 		$info->set_opt('extends',(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()));
 		$info->set_opt('abstract',$r->isAbstract());
@@ -61,7 +69,7 @@ class Man{
 				$v = trim($v);
 				
 				if(strpos($v,'://') !== false){
-					$see[$v] = ['type'=>'url','url'=>$v];					
+					$see[$v] = ['type'=>'url','url'=>$v];
 				}else if(strpos($v,'::') !== false){
 					list($class,$method) = explode('::',2);
 					$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
@@ -78,11 +86,11 @@ class Man{
 				
 				if(!in_array($method->getName(),$ignore)){
 					$method_document = self::get_method_document($method);
-					list($desc) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
+					list($desc) = explode(PHP_EOL,$method_document);
 					
 					$method_info = new \ebi\Dt\DocInfo();
 					$method_info->name($method->getName());
-					$method_info->document($desc);
+					$method_info->document(preg_replace('/@.+/','',self::find_deprecate($desc,$method_info)));
 					
 					if($method->isStatic()){
 						$static_methods[] = $method_info;
@@ -102,13 +110,22 @@ class Man{
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
 				
+				
 				if($name[0] != '_' && !$prop->isStatic()){
 					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
-						(isset($anon[$name]['type']) ? $anon[$name]['type'] : 'mixed'),
-						(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
-						['hash'=>($prop->isPublic() || !(isset($anon[$name]['hash']) && $anon[$name]['hash'] === false))]
+						(isset($anon[$name]['type']) ? $anon[$name]['type'] : 'mixed')
 					);
+					$properties[$name]->summary(
+						self::find_deprecate(
+							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
+							$properties[$name]
+						)
+					);
+					$properties[$name]->set_opt(
+						'hash',
+						($prop->isPublic() || !(isset($anon[$name]['hash']) && $anon[$name]['hash'] === false))
+					);					
 				}
 			}
 		}
@@ -187,6 +204,21 @@ class Man{
 	private static function get_class_name($class){
 		return str_replace(['.','/'],['\\','\\'],$class);
 	}
+	
+	private static function find_deprecate($summary,$obj){
+		if(strpos($summary,'deprecated') !== false){
+			$s = str_replace(['@deprecated','deprecated'],'',$summary);
+			$d = time();
+		
+			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
+				$d = strtotime($m[0]);
+				$s = str_replace($m[0],'',$s);
+			}
+			$summary = trim($s);
+			$obj->set_opt('deprecated',$d);
+		}
+		return $summary;
+	}
 	/**
 	 * クラスドメソッドのキュメント
 	 * @param string $class
@@ -239,28 +271,12 @@ class Man{
 			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
 				$method_deprecated[0]->summary($m[0]);
 			}
-			$deprecated_date = null;
 			foreach([1=>$method_deprecated,2=>$requests,3=>$contexts] as $t => $v){
 				foreach($v as $k => $r){
-					if(strpos($r->summary(),'deprecated') !== false){
-						$s = str_replace(['@deprecated','deprecated'],'',$r->summary());
-						$d = time();
-						
-						if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
-							$d = strtotime($m[0]);
-							$s = str_replace($m[0],'',$s);
-						}
-						$r->summary(trim($s));
-						$r->set_opt('deprecated',$d);
-						
-						if(empty($deprecated_date) || $deprecated_date > $d){
-							$deprecated_date = $d;
-						}
-					}
+					$r->summary(self::find_deprecate($r->summary(),$r));
 				}
 			}
 			$info->set_opt('deprecated',$method_deprecated[0]->opt('deprecated'));
-			$info->set_opt('deprecated_date',$deprecated_date);
 			$info->set_opt('requests',$requests);
 			$info->set_opt('contexts',$contexts);
 			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));

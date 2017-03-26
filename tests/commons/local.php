@@ -28,6 +28,7 @@
 			\ebi\SmtpBlackholeDao::class,
 			\ebi\SessionDao::class,
 			\ebi\UserRememberMeDao::class,
+			\test\model\DeprecatedClass::class,
 		],
 //		'phpinfo'=>false,
 //		'config'=>false,
