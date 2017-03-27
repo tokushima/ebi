@@ -38,7 +38,7 @@
 	</tr>
 	</thead>
 	<tbody>
-	<tr class="even" style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')} {$t.cond_switch($map['deprecated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
+	<tr style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')} {$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 		<td>
 			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
@@ -63,7 +63,7 @@
 		</td>
 		<td nowrap>
 			<rt:if param="{$map['class']}">
-				<a href="{$t.package_method_url('action_doc',$map['name'])}">{$map['name']}</a>
+				<a href="{$t.package_method_url('action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
 			<rt:else />
 				{$map['name']}
 			</rt:if>

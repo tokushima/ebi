@@ -15,6 +15,14 @@
 </div>
 
 
+<rt:if param="{$method_info.opt('deprecated')}">
+	<div style="color: #cc6666;" class="text-muted">
+		<span class="glyphicon glyphicon-ban-circle"></span>
+		{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
+	</div>
+</rt:if>
+
+
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Params</h4>
 <table rt:param="{$method_info.params()}" rt:var="param" class="table table-condensed table-condensed">
 <tr>

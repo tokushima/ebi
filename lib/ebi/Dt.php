@@ -57,8 +57,7 @@ class Dt{
 	
 		foreach($patterns as $k => $m){
 			foreach([
-				'deprecated'=>false,
-				'deprecated_date'=>null,
+				'deprecated'=>null,
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
@@ -90,8 +89,8 @@ class Dt{
 						if($m['deprecated'] || $info->opt('deprecated')){
 							$m['deprecated'] = true;
 						}
-						if($m['deprecated'] || !empty($info->opt('deprecated_date'))){
-							$m['deprecated_date'] = $info->opt('deprecated_date', time());
+						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
+							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
 					}
 				}catch(\Exception $e){
@@ -134,8 +133,15 @@ class Dt{
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
-				$info->set_opt('map_deprecated',($info->opt('deprecated') || (isset($m['deprecated']) && $m['deprecated'])));
 				
+				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
+					if(isset($m['deprecated'])){
+						$deprecated = is_bool($m['deprecated']) ? time() : strtotime($m['deprecated']);
+					}else{
+						$deprecated = $info->opt('deprecated');
+					}
+					$info->set_opt('deprecated',$deprecated);
+				}
 				foreach(['get_after_vars','get_after_vars_request'] as $mn){
 					try{
 						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn);

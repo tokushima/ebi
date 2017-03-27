@@ -20,7 +20,8 @@
 
 <rt:if param="{$class_info.opt('deprecated')}">
 	<div style="color: #cc6666;" class="text-muted">
-		@deprecated {$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
+		<span class="glyphicon glyphicon-ban-circle"></span>
+		{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
 	</div>
 </rt:if>
 
@@ -52,6 +53,7 @@
 	</td>
 	<td nowrap="nowrap" style="text-align: right;">
 		<rt:if param="{$param.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 		</rt:if>
 	</td>
@@ -72,6 +74,7 @@
 	</td>
 	<td nowrap="nowrap" style="text-align: right;">
 		<rt:if param="{$info.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
 		</rt:if>
 	</td>	
@@ -91,6 +94,7 @@
 	</td>
 	<td nowrap="nowrap" style="text-align: right;">
 		<rt:if param="{$info.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
 		</rt:if>
 	</td>

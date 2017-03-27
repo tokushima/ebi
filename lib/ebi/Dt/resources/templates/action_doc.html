@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<h2 style="{$t.cond_switch($action.opt('map_deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
+<h2 style="{$t.cond_switch($action.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	{$action.opt('name')}
 	
 	<span class="label label-default">{$action.opt('http_method')}</span>
@@ -28,7 +28,8 @@
 
 <rt:if param="{$action.opt('deprecated')}">
 	<div style="color: #cc6666;" class="text-muted">
-		@deprecated {$t.date_format('Y-m-d',$action.opt('deprecated'))}
+		<span class="glyphicon glyphicon-ban-circle"></span>
+		{$t.date_format('Y-m-d',$action.opt('deprecated'))}
 	</div>
 </rt:if>
 
@@ -79,6 +80,7 @@
 	</td>
 	<td nowrap="nowrap">
 		<rt:if param="{$param.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 		</rt:if>
 	</td>
@@ -106,6 +108,7 @@
 	</td>
 	<td nowrap="nowrap">
 		<rt:if param="{$param.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 		</rt:if>
 	</td>
