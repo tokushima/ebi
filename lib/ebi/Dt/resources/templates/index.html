@@ -30,22 +30,28 @@
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
-		<th style="width: 3%;"></th>
-		<th style="width: 29%;">Url</th>
-		<th style="width: 20%;">Name</th>	
-		<th style="width: 45%;">Summary</th>
-		<th style="width: 3%;"></th>
+		<th style="width: 30px;"></th>
+		<th style="width: 250px;">Url</th>
+		<th style="width: 250px;">Name</th>	
+		<th>Summary</th>
+		<th style="width: 50px;"></th>
 	</tr>
 	</thead>
 	<tbody>
-	<tr style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')} {$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
-		<td>
+	<tr style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
+		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
 					<div class="modal-content">
 						<div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{$map['name']}</h4>
+							<h4 class="modal-title">
+								{$map['name']}
+	
+								<rt:if param="{$map['deprecated']}">
+									(Deprecated)
+								</rt:if>
+							</h4>
 						</div>
 						<div class="modal-body" style="word-break: break-all; padding: 5px;">
 							{$t.html($f.dump($map))}
@@ -54,31 +60,40 @@
 				</div>
 			</div>
 		
-			<a data-toggle="modal" data-target="#info{$count}">
+			<a data-toggle="modal" data-target="#info{$count}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">
 				<span class="glyphicon glyphicon-info-sign"></span>
 			</a>
 		</td>
-		<td>
+		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			{$map['url']}
 		</td>
-		<td nowrap>
+		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			<rt:if param="{$map['class']}">
 				<a href="{$t.package_method_url('action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
 			<rt:else />
 				{$map['name']}
 			</rt:if>
 		</td>
-		<td>
+		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<span>
 				{$t.html($map['summary'])}
 			</span>
 			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 		</td>
-		<td>
-
+		<td style="text-align: right;">
+		
+			<rt:if param="{$map['first_depricated_date']}">
+				<rt:if param="{$map['deprecated']}">
+					<span class="glyphicon glyphicon-ban-circle"></span>
+				<rt:else />
+					<span class="glyphicon glyphicon-exclamation-sign"></span>
+				</rt:if>
+			</rt:if>
+			
 			<a href="#" data-toggle="modal" data-target="#link{$count}">
 				<span class="glyphicon glyphicon-globe"></span>
 			</a>
+			
 			<div class="modal fade" id="link{$count}">
 				<div class="modal-dialog">
 					<div class="modal-content">
@@ -102,6 +117,7 @@
 					</div>
 				</div>
 			</div>
+			
 		</td>
 	</tr>
 	</tbody>
@@ -109,4 +125,12 @@
 	
 	<form id="linkform">
 	</form>
+	
+	
+	<hr />
+<div style="text-align: right;" class="text-muted">
+	<span class="glyphicon glyphicon-exclamation-sign"></span>Deprecated items
+	<span class="glyphicon glyphicon-ban-circle"></span>Deprecated Action
+</div>
+	
 </rt:block>

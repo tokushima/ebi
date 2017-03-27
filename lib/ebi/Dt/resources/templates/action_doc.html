@@ -79,6 +79,10 @@
 		{$t.html($param.summary())}
 	</td>
 	<td nowrap="nowrap">
+		<rt:if param="{$param.opt('require')}">
+			<span class="glyphicon glyphicon-record"></span>
+		</rt:if>		
+	
 		<rt:if param="{$param.opt('deprecated')}">
 			<span class="glyphicon glyphicon-ban-circle"></span>
 			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
@@ -212,6 +216,14 @@
 </tr>
 </table>
 </rt:if>
+
+
+
+<hr />
+<div style="text-align: right;" class="text-muted">
+	<span class="glyphicon glyphicon-record"></span> Require
+	<span class="glyphicon glyphicon-ban-circle"></span> Deprecated
+</div>
 
 </rt:block>
 
