@@ -60,7 +60,7 @@
 				</div>
 			</div>
 		
-			<a data-toggle="modal" data-target="#info{$count}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">
+			<a data-toggle="modal" data-target="#info{$count}">
 				<span class="glyphicon glyphicon-info-sign"></span>
 			</a>
 		</td>
@@ -81,7 +81,6 @@
 			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 		</td>
 		<td style="text-align: right;">
-		
 			<rt:if param="{$map['first_depricated_date']}">
 				<rt:if param="{$map['deprecated']}">
 					<span class="glyphicon glyphicon-ban-circle"></span>
@@ -94,7 +93,7 @@
 				<span class="glyphicon glyphicon-globe"></span>
 			</a>
 			
-			<div class="modal fade" id="link{$count}">
+			<div class="modal fade" id="link{$count}" style="text-align: left;">
 				<div class="modal-dialog">
 					<div class="modal-content">
 						<div class="modal-header">
