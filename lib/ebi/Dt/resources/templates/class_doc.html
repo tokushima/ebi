@@ -1,7 +1,7 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2>
+<h2 style="{$t.cond_switch($class_info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	{$class_info.name()}
 </h2>
 
@@ -18,11 +18,19 @@
 	{$t.noop($f.md2html($class_info.document()))}
 </div>
 
+<rt:if param="{$class_info.opt('deprecated')}">
+	<div style="color: #cc6666;" class="text-muted">
+		<span class="glyphicon glyphicon-ban-circle"></span>
+		{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
+	</div>
+</rt:if>
+
+
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Properties</h4>
 
 <table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-condensed table-striped">
-<tr class="{$t.cond_switch($param.opt('hash'),'hash_on','hash_off')}">
+<tr style="{$t.cond_switch($param.opt('hash'),'','color: #cccccc;')} {$t.cond_switch($param.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
 	<td style="width: 25%;">
 		<rt:if param="{$param.is_type_class()}">
 			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
@@ -34,9 +42,20 @@
 	</td>
 	<td style="width: 20%;">
 		{$param.name()}
+		
+		<rt:if param="{$t.not($param.opt('hash'))}">
+			&nbsp;<span class="glyphicon glyphicon-eye-close"></span>
+		</rt:if>
+		
 	</td>
 	<td style="width: 55%;">
-		{$param.summary()}
+		{$t.html($param.summary())}
+	</td>
+	<td nowrap="nowrap" style="text-align: right;">
+		<rt:if param="{$param.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
+			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+		</rt:if>
 	</td>
 </tr>
 </table>
@@ -44,8 +63,8 @@
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Methods</h4>
 <table rt:param="{$class_info.opt('methods')}" rt:var="info" class="table table-condensed table-striped">
-<tr>
-	<td>
+<tr style="{$t.cond_switch($info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
+	<td style="width: 400px;">
 		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
 			{$info.name()}
 		</a>
@@ -53,19 +72,31 @@
 	<td>
 		{$t.html($info.summary())}
 	</td>
+	<td nowrap="nowrap" style="text-align: right;">
+		<rt:if param="{$info.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
+			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
+		</rt:if>
+	</td>	
 </tr>
 </table>
 
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Static Methods</h4>
 <table rt:param="{$class_info.opt('static_methods')}" rt:var="info" class="table table-condensed table-striped">
 <tr>
-	<td>
+	<td style="width: 200px;">
 		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
 			{$info.name()}
 		</a>
 	</td>
-	<td>
+	<td style="width: 90%;">
 		{$t.html($info.summary())}
+	</td>
+	<td nowrap="nowrap" style="text-align: right;">
+		<rt:if param="{$info.opt('deprecated')}">
+			<span class="glyphicon glyphicon-ban-circle"></span>
+			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
+		</rt:if>
 	</td>
 </tr>
 </table>
