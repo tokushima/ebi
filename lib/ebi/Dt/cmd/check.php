@@ -74,10 +74,14 @@ foreach(\ebi\Dt::classes() as $info){
 
 
 \cmdman\Std::println();
-\cmdman\Std::println_danger('Fail: '.
-	'Database('.(!empty($failure['db']) ? $failure['db'] : '0').') '.
-	'Entry('.(!empty($failure['entry']) ? $failure['entry'] : '0').') '
-);
 
+if(empty($failure['db']) && empty($failure['entry'])){
+	\cmdman\Std::println_success('Success');
+}else{
+	\cmdman\Std::println_danger('Failure: '.
+		'Database('.(!empty($failure['db']) ? $failure['db'] : '0').') '.
+		'Entry('.(!empty($failure['entry']) ? $failure['entry'] : '0').') '
+	);
+}
 
 
