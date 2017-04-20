@@ -69,16 +69,41 @@
 <h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Mail</h4>
 <table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-condensed table-striped">
 <tr>
-	<td style="width:20%;">
-		{$info.name()}
-	</td>
-	<td>
-		{$info.opt('subject')}
-	</td>
 	<td>
 		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 			{$info.opt('x_t_code')}
 		</a>
+	</td>
+	<td style="width:20%;">
+		{$info.name()}
+	</td>
+	<td>
+		<div class="panel panel-info">
+			<div class="panel-heading">
+				<h3 class="panel-title">{$t.html($info.document())}</h3>
+			</div>
+			<div class="panel-body">
+				<table rt:param="{$info.params()}" rt:var="param" class="table table-condensed table-condensed">
+				<tr>
+					<td style="width:25%;">
+						<rt:if param="{$param.is_type_class()}">
+							<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+								{$param.fm_type()}
+							</a>
+						<rt:else />
+							{$param.fm_type()}
+						</rt:if>
+					</td>
+					<td style="width:30%;">
+						{$param.name()}
+					</td>
+					<td style="width:45%;">
+						{$t.html($param.summary())}
+					</td>
+				</tr>	
+				</table>
+			</div>
+		</div>
 	</td>
 </tr>
 </table>

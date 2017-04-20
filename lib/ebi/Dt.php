@@ -130,7 +130,7 @@ class Dt{
 			if($m['name'] == $name){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
 				
-				$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
 				

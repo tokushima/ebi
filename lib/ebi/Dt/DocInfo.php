@@ -50,14 +50,19 @@ class DocInfo extends \ebi\Object{
 
 		if($docendpos > 0){
 			$doc = trim(substr($src,0,$docendpos));
-			
-			$startpos = strrpos($doc,'/**');
-			
-			if($startpos !== false){
-				$doc = substr($doc,$startpos);
+
+			// 直上のコメントのみ有効
+			if(substr_count(substr($doc,strrpos($doc,'*/')),PHP_EOL) == 1){
+				$startpos = strrpos($doc,'/**');
 				
-				if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
-					$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
+				if($startpos !== false){
+					$doc = substr($doc,$startpos);
+					
+					if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
+						$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
+					}else{
+						$doc = '';
+					}
 				}else{
 					$doc = '';
 				}
