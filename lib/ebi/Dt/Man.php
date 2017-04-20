@@ -338,9 +338,12 @@ class Man{
 						
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
-								$mail_template_list[$k]->set_opt('use',true);
+								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
 								
-								foreach(\ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1])->params() as $p){
+								$mail_template_list[$k]->set_opt('use',true);
+								$mail_template_list[$k]->set_opt('description',$doc->document());
+								
+								foreach($doc->params() as $p){
 									$mail_template_list[$k]->add_params($p);
 								}
 							}

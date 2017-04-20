@@ -74,13 +74,14 @@
 			{$info.opt('x_t_code')}
 		</a>
 	</td>
-	<td style="width:20%;">
-		{$info.name()}
+	<td>
+		<div>{$info.name()}</div>
+		<div class="text-muted">{$t.html($info.document())}</div>
 	</td>
 	<td>
 		<div class="panel panel-info">
 			<div class="panel-heading">
-				<h3 class="panel-title">{$t.html($info.document())}</h3>
+				<h3 class="panel-title">{$t.html($info.opt('description'))}</h3>
 			</div>
 			<div class="panel-body">
 				<table rt:param="{$info.params()}" rt:var="param" class="table table-condensed table-condensed">
