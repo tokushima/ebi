@@ -20,11 +20,6 @@ class Request extends \ebi\Request{
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
-		
-		if(method_exists($this,'__init__')){
-			$args = func_get_args();
-			call_user_func_array([$this,'__init__'],$args);
-		}
 	}
 	
 	/**

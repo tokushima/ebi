@@ -49,10 +49,6 @@ class Object implements \IteratorAggregate{
 		if(!isset(self::$_m[$c])){
 			self::$_m[$c] = \ebi\Annotation::get_class($c,'var',null,__CLASS__);
 		}
-		if(method_exists($this,'__init__')){
-			$args = func_get_args();
-			call_user_func_array([$this,'__init__'],$args);
-		}
 	}
 	public function __call($n,$args){
 		if($n[0] != '_'){
@@ -69,12 +65,6 @@ class Object implements \IteratorAggregate{
 			}
 		}
 		throw new \ebi\exception\BadMethodCallException(get_class($this).'::'.$n.' method not found');
-	}
-	public function __destruct(){
-		if(method_exists($this,'__del__')) $this->__del__();
-	}
-	public function __toString(){
-		return (method_exists($this,'__str__')) ? (string)$this->__str__() : get_class($this);
 	}
 	/**
 	 * アクセス可能なプロパティを取得する
