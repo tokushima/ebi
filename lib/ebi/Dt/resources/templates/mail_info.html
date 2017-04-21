@@ -17,6 +17,46 @@
 	</td>
 </tr>
 <tr>
+	<th>Method</th>
+	<td>
+		<rt:loop param="{$method_list}" var="info">
+			<span style="{$t.cond_switch($info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
+				<a href="{$t.package_method_url('method_doc',$info.opt('class'),$info.opt('method'))}">
+					{$info.name()}
+				</a>
+				
+				<br />
+			</span>
+		</rt:loop>
+	</td>
+</tr>
+<tr>
+	<th>Vars</th>
+	<td>
+		<rt:if param="{$mail_info.params()}">
+			<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-condensed table-condensed">
+			<tr>
+				<td style="width:25%;">
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>
+				<td style="width:30%;">
+					{$param.name()}
+				</td>
+				<td style="width:45%;">
+					{$t.html($param.summary())}
+				</td>
+			</tr>	
+			</table>
+		</rt:if>
+	</td>
+</tr>
+<tr>
 	<th>Subject</th>
 	<td>
 		{$mail_info.opt('subject')}

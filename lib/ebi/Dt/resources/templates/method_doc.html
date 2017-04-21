@@ -79,32 +79,40 @@
 		<div class="text-muted">{$t.html($info.document())}</div>
 	</td>
 	<td>
-		<div class="panel panel-info">
-			<div class="panel-heading">
-				<h3 class="panel-title">{$t.html($info.opt('description'))}</h3>
-			</div>
-			<div class="panel-body">
-				<table rt:param="{$info.params()}" rt:var="param" class="table table-condensed table-condensed">
-				<tr>
-					<td style="width:25%;">
-						<rt:if param="{$param.is_type_class()}">
-							<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
-								{$param.fm_type()}
-							</a>
-						<rt:else />
-							{$param.fm_type()}
-						</rt:if>
-					</td>
-					<td style="width:30%;">
-						{$param.name()}
-					</td>
-					<td style="width:45%;">
-						{$t.html($param.summary())}
-					</td>
-				</tr>	
-				</table>
-			</div>
-		</div>
+		<rt:if param="{$multiple_method}">
+			<span class="text-muted">
+				Multiple method
+			</span>
+		<rt:else />
+			<rt:if param="{$info.params()}">
+				<div class="panel panel-info">
+					<div class="panel-heading">
+						<h3 class="panel-title">{$t.html($info.opt('description'))}</h3>
+					</div>
+					<div class="panel-body">
+						<table rt:param="{$info.params()}" rt:var="param" class="table table-condensed table-condensed">
+						<tr>
+							<td style="width:25%;">
+								<rt:if param="{$param.is_type_class()}">
+									<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+										{$param.fm_type()}
+									</a>
+								<rt:else />
+									{$param.fm_type()}
+								</rt:if>
+							</td>
+							<td style="width:30%;">
+								{$param.name()}
+							</td>
+							<td style="width:45%;">
+								{$t.html($param.summary())}
+							</td>
+						</tr>	
+						</table>
+					</div>
+				</div>
+			</rt:if>
+		</rt:if>
 	</td>
 </tr>
 </table>

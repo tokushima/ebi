@@ -249,7 +249,7 @@ class Man{
 			}
 			$document = $document.self::get_method_document($ref);
 			$src = self::method_src($ref);
-
+			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -340,17 +340,19 @@ class Man{
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
 								
-								$mail_template_list[$k]->set_opt('use',true);
-								$mail_template_list[$k]->set_opt('description',$doc->document());
+								$mail_info->set_opt('use',true);
+								$mail_info->set_opt('description',$doc->document());
 								
 								foreach($doc->params() as $p){
-									$mail_template_list[$k]->add_params($p);
+									$mail_info->add_params($p);
 								}
+								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 							}
 						}
 					}catch(\ReflectionException $e){
 					}
 				}
+				$info->set_opt('mail_list',$mail_list);
 				
 				foreach($throws as $n => $t){				
 					try{
@@ -365,13 +367,6 @@ class Man{
 					}
 				}
 				$info->set_opt('throws',$throw_param);
-				
-				foreach($mail_template_list as $mail_info){
-					if($mail_info->opt('use') === true){
-						$mail_list[] = $mail_info;
-					}
-				}
-				$info->set_opt('mail_list',$mail_list);
 			}
 			return $info;
 		}
@@ -406,7 +401,7 @@ class Man{
 		return $template_list;
 	}
 
-	private static function method_src(\ReflectionMethod $ref){
+	public static function method_src(\ReflectionMethod $ref){
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
 		}

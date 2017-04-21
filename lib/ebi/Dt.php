@@ -484,12 +484,39 @@ class Dt{
 					$mail_info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
 				}catch(\ebi\exception\NotFoundException $e){
 				}
-				
+	
+				$method_list = $method_mail_info_list = [];
+				foreach(self::classes() as $class){
+					if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name())){
+						$ref_class = new \ReflectionClass($class['class']);
+						
+						foreach($ref_class->getMethods() as $ref_method){
+							if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name())){
+								$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+								
+								foreach($method_info->opt('mail_list') as $x_t_code => $method_mail_info){
+									if($x_t_code == $method_mail_info->opt('x_t_code')){
+										$method_list[] = $method_info;
+										$method_mail_info_list[] = $method_mail_info;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if(sizeof($method_mail_info_list) == 1){
+					foreach($method_mail_info_list[0]->params() as $p){
+						$mail_info->add_params($p);
+					}
+				}
 				break;
 			}
 		}
 		return $req->ar_vars([
 			'mail_info'=>$mail_info,
+			'method_list'=>$method_list,
+			'multiple_method'=>(sizeof($method_list) > 1),
 		]);
 	}
 	/**
