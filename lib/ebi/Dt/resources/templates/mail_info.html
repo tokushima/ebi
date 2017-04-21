@@ -75,7 +75,7 @@
 <tr>
 	<th>Body</th>
 	<td>
-		<pre>{$t.html($mail_info.opt('body'),0,0,null,false)}</pre>
+		<pre style="white-space: pre-wrap;">{$t.html($mail_info.opt('body'),0,0,null,false)}</pre>
 	</td>
 </tr>
 
@@ -83,7 +83,7 @@
 <tr>
 	<th>HTML</th>
 	<td>
-		<pre style="background-color: white;">{$t.html($mail_info.opt('html'),0,0,null,false)}</pre>
+		<pre style="white-space: pre-wrap;">{$t.html($mail_info.opt('html'),0,0,null,false)}</pre>
 	</td>
 </tr>
 </rt:if>
