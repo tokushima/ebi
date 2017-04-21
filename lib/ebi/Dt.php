@@ -506,7 +506,12 @@ class Dt{
 					}
 				}
 				if(sizeof($method_mail_info_list) == 1){
-					$mail_info->set_opt('description',$method_mail_info_list[0]->opt('description'));
+					$desc = $method_mail_info_list[0]->opt('description');
+					
+					if(empty(trim($desc))){
+						$desc = $method_list[0]->document();
+					}
+					$mail_info->set_opt('description',$desc);
 					
 					foreach($method_mail_info_list[0]->params() as $p){
 						$mail_info->add_params($p);
