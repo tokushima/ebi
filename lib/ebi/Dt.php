@@ -495,7 +495,7 @@ class Dt{
 								$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
 								
 								foreach($method_info->opt('mail_list') as $x_t_code => $method_mail_info){
-									if($x_t_code == $method_mail_info->opt('x_t_code')){
+									if($x_t_code == $mail_info->opt('x_t_code')){
 										$method_list[] = $method_info;
 										$method_mail_info_list[] = $method_mail_info;
 										break;
@@ -506,6 +506,8 @@ class Dt{
 					}
 				}
 				if(sizeof($method_mail_info_list) == 1){
+					$mail_info->set_opt('description',$method_mail_info_list[0]->opt('description'));
+					
 					foreach($method_mail_info_list[0]->params() as $p){
 						$mail_info->add_params($p);
 					}
