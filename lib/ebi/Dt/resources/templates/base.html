@@ -9,6 +9,8 @@
 	<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+	
+	<link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -29,7 +31,7 @@
 			
 			<div id="navbar" class="collapse navbar-collapse">
 				<ul class="nav navbar-nav">
-					<li class="{$t.match_package_method_switch('index','active','inactive')}">
+					<li class="{$t.contains_pattern_switch('index','active','inactive')}">
 						<a href="{$t.package_method_url('index')}">Urls</a>
 					</li>
 					<li class="{$t.contains_pattern_switch('plugin','active','inactive')}">
@@ -38,7 +40,7 @@
 					<li class="{$t.contains_pattern_switch('config','active','inactive')}">
 						<a href="{$t.package_method_url('config_list')}">Config</a>
 					</li>
-					<li class="{$t.contains_pattern_switch('class_list','active','inactive')}">
+					<li class="{$t.contains_pattern_switch('class','active','inactive')}">
 						<a href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">Class</a>
 					</li>					
 					<li class="{$t.contains_pattern_switch('mail','active','inactive')}">

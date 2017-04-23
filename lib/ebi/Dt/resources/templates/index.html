@@ -33,6 +33,7 @@
 		<th style="width: 30px;"></th>
 		<th style="width: 250px;">Url</th>
 		<th style="width: 250px;">Name</th>	
+		<th>Version</th>
 		<th>Summary</th>
 		<th style="width: 50px;"></th>
 	</tr>
@@ -69,10 +70,13 @@
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			<rt:if param="{$map['class']}">
-				<a href="{$t.package_method_url('action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
+				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
 			<rt:else />
 				{$map['name']}
 			</rt:if>
+		</td>
+		<td style="opacity: 0.6">
+			{$map['version']}
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<span>

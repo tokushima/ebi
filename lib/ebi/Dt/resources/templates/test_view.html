@@ -5,8 +5,10 @@
 
 <h2>{$info.name()}</h2>
 
-<div class="alert alert-warning">{$t.html($info.document())}</div>
+<blockquote>
+{$t.noop($f.md2html($info.document()))}
+</blockquote>
 
-<pre>{$t.htmlspecialchars($src)}</pre>
+<pre style="white-space: pre-wrap;">{$t.htmlspecialchars($src)}</pre>
 </rt:block>
 

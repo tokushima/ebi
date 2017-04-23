@@ -1,0 +1,44 @@
+.deprecated {
+	color: #cc6666;
+	text-decoration: line-through;
+}
+
+.deprecated-mark{
+	font-size: x-small;
+	text-align: right;
+}
+
+.panel-body{
+	padding: 10px;
+}
+
+.panel-body-table{
+	margin: 0;
+}
+
+.panel-body-table tr th{
+	width: 180px;
+}
+
+.panel-body-table .t1{
+	width: 180px;
+}
+.panel-body-table .t1s{
+	width: 80px;
+}
+
+.panel-body-table .t2{
+	width: 350px;
+}
+
+.panel-body-table .t1_2{
+	width: 530px;
+}
+
+.panel-body-table .t3{
+	word-break: break-all;
+}
+
+.panel-body-table .t4{
+	width: 30px;
+}

@@ -81,19 +81,28 @@ class Man{
 				$ignore = ['getIterator'];
 				
 				if(!in_array($method->getName(),$ignore)){
-					$method_info = new \ebi\Dt\DocInfo();
-					$method_info->name($method->getName());
+					$bool = true;
 					
-					$method_document = self::get_method_document($method);
-					$method_document = self::find_deprecate($method_document,$method_info,$info);
-					list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
-
-					$method_info->document($summary);
-					
-					if($method->isStatic()){
-						$static_methods[] = $method_info;
-					}else{
-						$methods[] = $method_info;
+					foreach([\ebi\Object::class,\ebi\Dao::class,\ebi\flow\Request::class,\ebi\Request::class] as $ignore_class){
+						if($r->getName() != $ignore_class && $method->getDeclaringClass()->getName() == $ignore_class){
+							$bool = false;
+						}
+					}
+					if($bool){
+						$method_info = new \ebi\Dt\DocInfo();
+						$method_info->name($method->getName());
+						
+						$method_document = self::get_method_document($method);
+						$method_document = self::find_deprecate($method_document,$method_info,$info);
+						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
+	
+						$method_info->document($summary);
+						
+						if($method->isStatic()){
+							$static_methods[] = $method_info;
+						}else{
+							$methods[] = $method_info;
+						}
 					}
 				}
 			}
@@ -260,18 +269,20 @@ class Man{
 					(strpos($src,'!$this->is_post()') === false)
 				) ? ' POST' : null);
 			}
+			if(preg_match("/@version\s+([^\s]+)/",$document,$match)){
+				$info->set_opt('version',trim($match[1]));
+			}else{
+				$info->set_opt('version',date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
+			}
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			
-			if(!$info->is_return() && $info->has_opt('contexts')){
-				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
-			}
 			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
 				self::find_deprecate($m[0],$info,$info);
 			}
 			$requests = \ebi\Dt\DocParam::parse('request',$document);
 			$contexts = \ebi\Dt\DocParam::parse('context',$document);
-						
+			
 			foreach([$requests,$contexts] as $v){
 				foreach($v as $r){
 					$r->summary(self::find_deprecate($r->summary(),$r,$info));
@@ -279,7 +290,10 @@ class Man{
 			}
 			$info->set_opt('requests',$requests);
 			$info->set_opt('contexts',$contexts);
-			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
+			
+			if(!$info->is_return() && $info->has_opt('contexts')){
+				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
+			}
 			
 			if($deep){
 				$call_plugins = [];

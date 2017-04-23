@@ -81,6 +81,7 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],false);
+						$m['version'] = $info->opt('version');
 
 						if(empty($m['summary'])){
 							list($summary) = explode(PHP_EOL,$info->document());
@@ -123,7 +124,7 @@ class Dt{
 	 * @context \ebi\man\DocInfo $method
 	 * @automap
 	 */
-	public function action_doc($name){
+	public function index_action_doc($name){
 		$map = \ebi\Flow::get_map($this->entry);
 		
 		foreach($map['patterns'] as $m){
@@ -133,6 +134,7 @@ class Dt{
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
+				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
 				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
 					if(isset($m['deprecated'])){
@@ -146,7 +148,7 @@ class Dt{
 					try{
 						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn);
 						
-						foreach(['requests','contexts','args'] as $k){
+						foreach(['requests','contexts'] as $k){
 							$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
 						}
 					}catch(\ReflectionException $e){
@@ -154,7 +156,7 @@ class Dt{
 				}
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
-				return ['action'=>$info];
+				return ['method_info'=>$info];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
@@ -178,7 +180,7 @@ class Dt{
 	 * @param string $method
 	 * @automap
 	 */
-	public function method_doc($class,$method){
+	public function class_method_doc($class,$method){
 		$info = \ebi\Dt\Man::method_info($class,$method,true);
 		
 		return [

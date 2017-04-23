@@ -33,8 +33,8 @@ class Action{
 	 * @param \ebi\Dao $bbb いいい
 	 * @request string $ccc メメメめ
 	 * @context \ebi\Dao $ssss カカカカか
-	 * @arg string $arg あぐ
 	 * @throws \LogicException 常に例外
+	 * @version 20160102
 	 */
 	public function raise(){
 		throw new \LogicException('raise test');

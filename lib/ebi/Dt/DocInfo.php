@@ -23,6 +23,9 @@ class DocInfo extends \ebi\Object{
 	public function add_params(\ebi\Dt\DocParam $p){
 		$this->params[] = $p;
 	}
+	public function reset_params($new=[]){
+		$this->params = $new;
+	}
 	public function has_params(){
 		return !empty($this->params);
 	}
