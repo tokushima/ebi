@@ -460,73 +460,106 @@ class Dt{
 	 */
 	public function mail_info(){
 		$req = new \ebi\Request();
+		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
+	
+		$method_list = [];
+		$method_mail_info = null;
 		
-		$mail_info = new \ebi\Dt\DocInfo();
-		foreach(\ebi\Dt\Man::mail_template_list() as $info){
-			if($info->opt('x_t_code') == $req->in_vars('tcode')){
-				$mail_info = $info;
+		foreach(self::classes() as $class){
+			if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name())){
+				$ref_class = new \ReflectionClass($class['class']);
 				
+				foreach($ref_class->getMethods() as $ref_method){
+					if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name())){
+						$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+						
+						foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
+							if($x_t_code == $mail_info->opt('x_t_code')){
+								$method_list[] = $method_info;
+								$method_mail_info = $mmi;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		if(sizeof($method_list) == 1){
+			$desc = $method_mail_info->opt('description');
+			
+			if(empty(trim($desc))){
+				$desc = $method_list[0]->document();
+			}
+			$mail_info->set_opt('method_summary',$desc);
+			
+			foreach($method_mail_info->params() as $p){
+				$mail_info->add_params($p);
+			}
+		}
+		return [
+			'mail_info'=>$mail_info,
+			'method_list'=>$method_list,
+			'multiple_method'=>(sizeof($method_list) > 1),
+		];
+	}
+	/**
+	 * @automap
+	 */
+	public function mail_info_method(){
+		$req = new \ebi\Request();
+		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
+		$method_info = \ebi\Dt\Man::method_info($req->in_vars('class'),$req->in_vars('method'),true);
+		$method_mail_info = null;
+		
+		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
+			if($x_t_code == $mail_info->opt('x_t_code')){
+				$desc = $mmi->opt('description');
+			
+				if(empty(trim($desc))){
+					$desc = $method_info->document();
+				}
+				$mail_info->set_opt('method_summary',$desc);
+			
+				foreach($mmi->params() as $p){
+					$mail_info->add_params($p);
+				}
+				break;
+			}
+		}
+		return [
+			'mail_info'=>$mail_info,
+			'method_info'=>$method_info,
+		];
+	}
+	private function find_mail_template_info($tcode){
+		foreach(\ebi\Dt\Man::mail_template_list() as $info){
+			if($info->opt('x_t_code') == $tcode){
+				$mail_info = $info;
+		
 				$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
 				$xml = \ebi\Xml::extract(\ebi\Util::file_read(\ebi\Util::path_absolute($path,$info->name())),'mail');
 				$body_xml = $xml->find_get('body');
-				
+		
 				$signature = $body_xml->in_attr('signature');
 				$signature_text = '';
 					
 				if(!empty($signature)){
 					$sig_path = \ebi\Util::path_absolute($path,$signature);
-					
+						
 					$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
 					$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
 				}
-				$mail_info->set_opt('body',\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text);
-				
+				$info->set_opt('body',\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text);
+		
 				try{
 					$html_xml = $xml->find_get('html');
-					$mail_info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
+					$info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
 				}catch(\ebi\exception\NotFoundException $e){
 				}
-	
-				$method_list = $method_mail_info_list = [];
-				foreach(self::classes() as $class){
-					if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name())){
-						$ref_class = new \ReflectionClass($class['class']);
-						
-						foreach($ref_class->getMethods() as $ref_method){
-							if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name())){
-								$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
-								
-								foreach($method_info->opt('mail_list') as $x_t_code => $method_mail_info){
-									if($x_t_code == $mail_info->opt('x_t_code')){
-										$method_list[] = $method_info;
-										$method_mail_info_list[] = $method_mail_info;
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-				if(sizeof($method_mail_info_list) == 1){
-					$desc = $method_mail_info_list[0]->opt('description');
-					
-					if(empty(trim($desc))){
-						$desc = $method_list[0]->document();
-					}
-					$mail_info->set_opt('description',$desc);
-					
-					foreach($method_mail_info_list[0]->params() as $p){
-						$mail_info->add_params($p);
-					}
-				}
-				break;
+				return $info;
 			}
 		}
-		return $req->ar_vars([
-			'mail_info'=>$mail_info,
-			'method_list'=>$method_list,
-			'multiple_method'=>(sizeof($method_list) > 1),
-		]);
+		throw new \ebi\exception\NotFoundException();
 	}
 	/**
 	 * @automap

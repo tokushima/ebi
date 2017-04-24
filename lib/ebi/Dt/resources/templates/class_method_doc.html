@@ -141,13 +141,13 @@
 		<div class="panel-body">
 			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
 			<tr>
-				<td class="t1">
-					<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+				<td class="t1">				
+					<a href="{$t.package_method_url('mail_info_method')}?tcode={$info.opt('x_t_code')}&class={$method_info.opt('class')}&method={$method_info.opt('method')}">
 						{$info.opt('x_t_code')}
 					</a>
 				</td>
 				<td class="t2">
-					{$info.name()}				
+					{$info.name()}	
 				</td>
 				<td class="t3">
 					{$t.html($info.document())}
