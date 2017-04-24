@@ -50,7 +50,9 @@
 			</rt:if>
 		</td>
 		<td style="opacity: 0.6">
-			{$map['version']}
+			<a href="{$t.package_method_url('index')}?version={$map['version']}">
+				{$map['version']}
+			</a>
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<span>

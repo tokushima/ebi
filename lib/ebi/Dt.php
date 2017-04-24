@@ -50,21 +50,23 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
-		$req = new \ebi\Request();
-		$version = $req->in_vars('version');
-		
 		$flow_output_maps = [];
 	
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
-	
+
+		$req = new \ebi\Request();
+		$target_version = $req->in_vars('version');
+		$file_version = date('Ymd',filemtime($this->entry));
+		
 		foreach($patterns as $k => $m){
 			foreach([
 				'deprecated'=>null,
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
+				'version'=>$file_version,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -98,10 +100,6 @@ class Dt{
 						}
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
-						}
-					}else{
-						if(!isset($m['version'])){
-							$m['version'] = date('Ymd',filemtime($this->entry));
 						}
 					}
 				}catch(\Exception $e){
