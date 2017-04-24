@@ -227,6 +227,7 @@ class Request extends \ebi\Request{
 	 * ログイン
 	 * ログインに必要なパラメータはPluginによる
 	 * @automap
+	 * @version 1.2.11
 	 */
 	public function do_login(){
 		if($this->sess->is_vars(__CLASS__.'_login_vars')){
@@ -292,6 +293,7 @@ class Request extends \ebi\Request{
 	/**
 	 * ログアウト
 	 * @automap
+	 * @version 1.2.11
 	 */
 	public function do_logout(){
 		/**
