@@ -3,7 +3,7 @@
  * Check
  */
 
-$failure = ['db'=>0,'entry'=>0];
+$failure = ['db'=>0,'entry'=>0,'mail'=>0];
 
 \cmdman\Std::println_info('Database:');
 
@@ -69,18 +69,56 @@ foreach(\ebi\Dt::classes() as $info){
 	}
 }
 
+\cmdman\Std::println();
+\cmdman\Std::println_info('Mail:');
+
+
+$mail_template = \ebi\Dt\Man::mail_template_list();
+
+foreach(\ebi\Dt::classes() as $class){
+	$class_src = \ebi\Util::file_read($class['filename']);
+	
+	foreach($mail_template as $mail_info){
+		if(strpos($class_src,$mail_info->name()) !== false){
+			$ref_class = new \ReflectionClass($class['class']);
+
+			foreach($ref_class->getMethods() as $ref_method){
+				if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name()) !== false){
+					$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+
+					foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
+						$label = $ref_class->getName().'::'.$ref_method->getName()
+									.' ('.$method_info->opt('version').') '
+									.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->opt('version').')';
+						
+						if($mmi->opt('version') == $method_info->opt('version')){
+							cmdman\Std::println_success(' OK '.$label);
+						}else{
+							$failure['mail']++;
+							\cmdman\Std::println_danger(' NG '.$label);
+						}
+					}
+					break;
+				}
+			}
+			break;
+		}
+	}
+}
+
 
 
 
 
 \cmdman\Std::println();
 
-if(empty($failure['db']) && empty($failure['entry'])){
+if(empty($failure['db']) && empty($failure['entry']) && empty($failure['mail'])){
 	\cmdman\Std::println_success('Success');
 }else{
 	\cmdman\Std::println_danger('Failure: '.
 		'Database('.(!empty($failure['db']) ? $failure['db'] : '0').') '.
-		'Entry('.(!empty($failure['entry']) ? $failure['entry'] : '0').') '
+		'Entry('.(!empty($failure['entry']) ? $failure['entry'] : '0').') '.
+		'Mail('.(!empty($failure['mail']) ? $failure['mail'] : '0').') '
 	);
 }
 

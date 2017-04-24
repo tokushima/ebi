@@ -394,18 +394,23 @@ class Man{
 			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
 				$info = new \ebi\Dt\DocInfo();
 				$info->name(str_replace(\ebi\Util::path_slash($path,null,true),'',$f->getPathname()));
-	
+				
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
+					$info->set_opt('version',$xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
+					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
 					
 					try{
-						$info->document(trim($xml->find_get('summary')->value()));
+						$subject = trim($xml->find_get('subject')->value());
+						$info->document($subject);
+						$info->set_opt('subject',$subject);
 					}catch(\ebi\exception\NotFoundException $e){
-						$info->document(trim($xml->find_get('subject')->value()));
 					}
-					
-					$info->set_opt('subject',$xml->find_get('subject')->value());
-					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
+					try{
+						$summary = trim($xml->find_get('summary')->value());
+						$info->document($summary);
+					}catch(\ebi\exception\NotFoundException $e){
+					}
 					$template_list[] = $info;
 				}catch(\ebi\exception\NotFoundException $e){
 				}

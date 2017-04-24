@@ -2,6 +2,9 @@
 	color: #cc6666;
 	text-decoration: line-through;
 }
+.text-deprecated {
+	color: #cc6666;
+}
 
 .deprecated-mark{
 	font-size: x-small;
@@ -20,25 +23,26 @@
 	width: 180px;
 }
 
-.panel-body-table .t1{
+.t1{
 	width: 180px;
 }
-.panel-body-table .t1s{
+.t1s{
 	width: 80px;
 }
 
-.panel-body-table .t2{
+.t2{
 	width: 350px;
 }
 
-.panel-body-table .t1_2{
+.t1_2{
 	width: 530px;
 }
 
-.panel-body-table .t3{
+.t3{
 	word-break: break-all;
 }
 
-.panel-body-table .t4{
-	width: 30px;
+.t4{
+	text-align:right;
+	width: 50px;
 }

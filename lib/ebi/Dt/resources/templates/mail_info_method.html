@@ -23,12 +23,31 @@
 			</td>
 		</tr>
 		<tr>
+			<th>Version</th>
+			<td>
+				<rt:if param="{$t.eq($mail_info.opt('version'),$method_info.opt('version'))}">
+					{$mail_info.opt('version')}
+				<rt:else />
+					<span class="text-danger">{$mail_info.opt('version')}</span>
+				
+					<div class="alert alert-danger" role="alert">
+						<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+						Version do not match
+					</div>
+				</rt:if>
+			</td>
+		</tr>		
+		<tr>
 			<th>Method</th>
 			<td>
 				<div class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated','')}">
 					<a href="{$t.package_method_url('class_method_doc',$method_info.opt('class'),$method_info.opt('method'))}">
 						{$method_info.name()}
 					</a>
+					
+					<span class="text-muted">
+						( <span style="font-size: x-small;">Version: {$method_info.opt('version')}</span> )
+					</span>
 				</div>
 				
 				<rt:if param="{$mail_info.opt('method_summary')}">

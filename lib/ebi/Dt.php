@@ -445,44 +445,20 @@ class Dt{
 	/**
 	 * @automap
 	 */
-	public function mail_blackhole(){
-		$req = new \ebi\Request();
-		$paginator = \ebi\Paginator::request($req);
-		$list = \ebi\SmtpBlackholeDao::find_all(
-			Q::eq('tcode',$req->in_vars('tcode')),
-			$paginator,
-			Q::order('-id')
-		);
-		
-		$mail_info = new \ebi\Dt\DocInfo();
-		foreach(\ebi\Dt\Man::mail_template_list() as $info){
-			if($info->opt('x_t_code') == $req->in_vars('tcode')){
-				$mail_info = $info;
-				break;
-			}
-		}
-		return $req->ar_vars([
-			'mail_info'=>$mail_info,
-			'paginator'=>$paginator,
-			'object_list'=>$list,
-		]);
-	}
-	/**
-	 * @automap
-	 */
 	public function mail_info(){
 		$req = new \ebi\Request();
 		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
 	
 		$method_list = [];
 		$method_mail_info = null;
+		$method_info = null;
 		
 		foreach(self::classes() as $class){
-			if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name())){
+			if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name()) !== false){
 				$ref_class = new \ReflectionClass($class['class']);
 				
 				foreach($ref_class->getMethods() as $ref_method){
-					if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name())){
+					if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name()) !== false){
 						$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
 						
 						foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
@@ -572,6 +548,31 @@ class Dt{
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
+	}
+	/**
+	 * @automap
+	 */
+	public function mail_blackhole(){
+		$req = new \ebi\Request();
+		$paginator = \ebi\Paginator::request($req);
+		$list = \ebi\SmtpBlackholeDao::find_all(
+				Q::eq('tcode',$req->in_vars('tcode')),
+				$paginator,
+				Q::order('-id')
+				);
+	
+		$mail_info = new \ebi\Dt\DocInfo();
+		foreach(\ebi\Dt\Man::mail_template_list() as $info){
+			if($info->opt('x_t_code') == $req->in_vars('tcode')){
+				$mail_info = $info;
+				break;
+			}
+		}
+		return $req->ar_vars([
+			'mail_info'=>$mail_info,
+			'paginator'=>$paginator,
+			'object_list'=>$list,
+		]);
 	}
 	/**
 	 * @automap
