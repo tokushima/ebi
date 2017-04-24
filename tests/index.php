@@ -4,7 +4,10 @@ include_once('bootstrap.php');
  * テストエントリ
  */
 \ebi\Flow::app([
-	'ABC'=>['action'=>'test.flow.AutoAction'],
+	'ABC'=>[
+		'action'=>'test.flow.AutoAction',
+		'version'=>'20161123'
+	],
 	'DEF/(.+)/(.+)'=>['action'=>'test.flow.AutoAction::jkl'],
 	'template_abc'=>['name'=>'template_abc','template'=>'abc.html'],
 	'template_abc/def'=>['name'=>'template_def','template'=>'abc.html'],
@@ -170,12 +173,14 @@ include_once('bootstrap.php');
 	'deprecated/context'=>[
 		'name'=>'context_deprecated',
 		'action'=>'test.flow.Action::context_deprecated',
+		'version'=>'20161111',
 	],
 	
 	'deprecated'=>[
 		'name'=>'deprecated',
 		'action'=>'\\test\\flow\\Action::abc',
 		'deprecated'=>true,
+		'version'=>'20161112',
 	],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);

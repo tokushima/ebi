@@ -66,7 +66,6 @@ class Dt{
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
-				'version'=>$file_version,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -114,8 +113,10 @@ class Dt{
 						}
 					}
 				}
-				
-				if(empty($version) || $m['version'] == $version){
+				if(!isset($m['version'])){
+					$m['version'] = $file_version;
+				}
+				if(empty($target_version) || $m['version'] == $target_version){
 					$flow_output_maps[$m['name']] = $m;
 				}
 			}
