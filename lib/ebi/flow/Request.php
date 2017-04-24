@@ -308,6 +308,7 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * 何も処理をせずに、varsを返す
+	 * @version 1.2.11
 	 */
 	public function noop(){
 		return $this->ar_vars();
