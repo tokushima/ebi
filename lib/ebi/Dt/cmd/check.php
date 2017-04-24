@@ -74,41 +74,38 @@ foreach(\ebi\Dt::classes() as $info){
 
 
 $mail_template = \ebi\Dt\Man::mail_template_list();
+$class_list = [];
 
-foreach(\ebi\Dt::classes() as $class){
-	$class_src = \ebi\Util::file_read($class['filename']);
+foreach(\ebi\Dt::classes() as $class_info){
+	$class_src = \ebi\Util::file_read($class_info['filename']);
 	
 	foreach($mail_template as $mail_info){
 		if(strpos($class_src,$mail_info->name()) !== false){
-			$ref_class = new \ReflectionClass($class['class']);
-
-			foreach($ref_class->getMethods() as $ref_method){
-				if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name()) !== false){
-					$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
-
-					foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-						$label = $ref_class->getName().'::'.$ref_method->getName()
-									.' ('.$method_info->opt('version').') '
-									.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->opt('version').')';
-						
-						if($mmi->opt('version') == $method_info->opt('version')){
-							cmdman\Std::println_success(' OK '.$label);
-						}else{
-							$failure['mail']++;
-							\cmdman\Std::println_danger(' NG '.$label);
-						}
-					}
-					break;
-				}
-			}
+			$class_list[] = $class_info['class'];
 			break;
 		}
 	}
 }
-
-
-
-
+foreach($class_list as $class){
+	$ref_class = new \ReflectionClass($class);
+			
+	foreach($ref_class->getMethods() as $ref_method){
+		$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+				
+		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
+			$label = $ref_class->getName().'::'.$ref_method->getName()
+						.' ('.$method_info->opt('version').') '
+						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->opt('version').')';
+			
+			if($mmi->opt('version') == $method_info->opt('version')){
+				cmdman\Std::println_success(' OK '.$label);
+			}else{
+				$failure['mail']++;
+				\cmdman\Std::println_danger(' NG '.$label);
+			}
+		}
+	}
+}
 
 \cmdman\Std::println();
 
