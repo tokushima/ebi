@@ -11,6 +11,32 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
 	
 	<link rel="stylesheet" href="style.css" />
+	
+	<script type="text/javascript">
+		function submit_linkform(datafrm,method){
+			linkform.action = datafrm.url.value;
+			linkform.method = method;
+			
+			try{
+				data = [];
+				datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
+				
+				if(datafrm.query.value){
+					data = $.parseJSON(datafrm.query.value);
+				}				
+				for(key in data){
+					$('<input />')
+						.attr('type','hidden')
+						.attr('name',key)
+						.attr('value',data[key])
+					.appendTo('#linkform');
+				}
+				linkform.submit();
+			}catch(e){
+				alert('query invalid: ' + e);
+			}
+		}
+	</script>	
 </head>
 
 <body>
@@ -69,5 +95,7 @@
 	</div>
 </div>
 
+
+<form id="linkform"></form>
 </body>
 </html>

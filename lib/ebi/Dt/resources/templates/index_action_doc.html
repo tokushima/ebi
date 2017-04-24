@@ -26,6 +26,34 @@
 			<th>URL</th>
 			<td>
 				{$method_info.opt('url')}
+				
+				<a href="#" data-toggle="modal" data-target="#link">
+					<span class="glyphicon glyphicon-globe"></span>
+				</a>
+				
+				<div class="modal fade" id="link" style="text-align: left;">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+								<h4 class="modal-title">{$method_info.opt('name')}</h4>
+								<div class="text-muted" style="font-size: small;">
+									{$t.noop($f.md2html($method_info.document()))}
+								</div>
+							</div>
+							<div class="modal-body">
+								<form name="linkdata">
+									<input type="text" name="url" value="{$method_info.opt('url')}" class="form-control" />
+									<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata,'post')">POST</button>
+								<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata,'get')">GET</button>
+							</div>
+						</div>
+					</div>
+				</div>
 			</td>
 		</tr>		
 		<tr>

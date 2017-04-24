@@ -1,32 +1,6 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-	<script type="text/javascript">
-		function submit_linkform(datafrm,method){
-			linkform.action = datafrm.url.value;
-			linkform.method = method;
-			
-			try{
-				data = [];
-				datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
-				
-				if(datafrm.query.value){
-					data = $.parseJSON(datafrm.query.value);
-				}				
-				for(key in data){
-					$('<input />')
-						.attr('type','hidden')
-						.attr('name',key)
-						.attr('value',data[key])
-					.appendTo('#linkform');
-				}
-				linkform.submit();
-			}catch(e){
-				alert('query invalid: ' + e);
-			}
-		}
-	</script>
-
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
@@ -125,9 +99,6 @@
 	</tr>
 	</tbody>
 	</table>
-	
-	<form id="linkform">
-	</form>
 	
 	
 	<hr />
