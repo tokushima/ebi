@@ -1,6 +1,7 @@
 <?php
 namespace ebi;
 use \ebi\Q;
+use test\db\UpdateModel;
 /**
  * 開発支援ツール
  * @author tokushima
@@ -49,6 +50,9 @@ class Dt{
 	 * @automap
 	 */
 	public function index(){
+		$req = new \ebi\Request();
+		$version = $req->in_vars('version');
+		
 		$flow_output_maps = [];
 	
 		$map = \ebi\Flow::get_map($this->entry);
@@ -81,8 +85,10 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],false);
-						$m['version'] = $info->opt('version');
-
+						
+						if(!isset($m['version'])){
+							$m['version'] = $info->opt('version');
+						}
 						if(empty($m['summary'])){
 							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
@@ -92,6 +98,10 @@ class Dt{
 						}
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
+						}
+					}else{
+						if(!isset($m['version'])){
+							$m['version'] = date('Ymd',filemtime($this->entry));
 						}
 					}
 				}catch(\Exception $e){
@@ -106,7 +116,10 @@ class Dt{
 						}
 					}
 				}
-				$flow_output_maps[$m['name']] = $m;
+				
+				if(empty($version) || $m['version'] == $version){
+					$flow_output_maps[$m['name']] = $m;
+				}
 			}
 		}
 		$entry_desc = (preg_match('/\/\*\*.+?\*\//s',\ebi\Util::file_read($this->entry),$m)) ?
