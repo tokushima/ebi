@@ -6,6 +6,7 @@ namespace ebi\Dt;
  * @var text $document
  * @var \ebi\Dt\DocParam[] $params
  * @var \ebi\Dt\DocParam $return
+ * @var string $version
  * @author tokushima
  *
  */
@@ -14,6 +15,7 @@ class DocInfo extends \ebi\Object{
 	protected $document;
 	protected $params = [];
 	protected $return;
+	protected $version;
 	private $opt = [];
 	
 	public function summary(){
@@ -22,6 +24,9 @@ class DocInfo extends \ebi\Object{
 	}
 	public function add_params(\ebi\Dt\DocParam $p){
 		$this->params[] = $p;
+	}
+	public function reset_params($new=[]){
+		$this->params = $new;
 	}
 	public function has_params(){
 		return !empty($this->params);
@@ -50,14 +55,19 @@ class DocInfo extends \ebi\Object{
 
 		if($docendpos > 0){
 			$doc = trim(substr($src,0,$docendpos));
-			
-			$startpos = strrpos($doc,'/**');
-			
-			if($startpos !== false){
-				$doc = substr($doc,$startpos);
+
+			// 直上のコメントのみ有効
+			if(substr_count(substr($doc,strrpos($doc,'*/')),PHP_EOL) == 1){
+				$startpos = strrpos($doc,'/**');
 				
-				if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
-					$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
+				if($startpos !== false){
+					$doc = substr($doc,$startpos);
+					
+					if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
+						$doc = preg_replace('/^[\s]*\*[\s]{0,1}/m','',$m[1]);
+					}else{
+						$doc = '';
+					}
 				}else{
 					$doc = '';
 				}
@@ -79,6 +89,9 @@ class DocInfo extends \ebi\Object{
 				$m[1],
 				$m[2]
 			));
+		}
+		if(preg_match("/@version\s+([^\s]+)/",$doc,$match)){
+			$info->version(trim($match[1]));
 		}
 		$info->document(
 			trim(preg_replace('/@.+/','',

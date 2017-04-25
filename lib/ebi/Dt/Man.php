@@ -18,7 +18,7 @@ class Man{
 		
 		if($method_document === false){
 			$p = $method->getDeclaringClass()->getParentClass();
-				
+			
 			while($p !== false){
 				try{
 					$method_document = $p->getMethod($method->getName())->getDocComment();
@@ -49,15 +49,13 @@ class Man{
 		$document = self::trim_doc($r->getDocComment());
 		
 		$info->name($r->getName());
-		$info->document(trim(preg_replace('/@.+/','',$document)));
+		$info->document(trim(preg_replace('/\n*@.+/','',PHP_EOL.$document)));
 		
 		$info->set_opt('filename',$r->getFileName());
 		$info->set_opt('extends',(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()));
 		$info->set_opt('abstract',$r->isAbstract());
 		
-		if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
-			self::find_deprecate($m[0],$info,$info);
-		}
+		self::find_deprecate($document,$info);
 		
 		$see = [];
 		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
@@ -73,7 +71,7 @@ class Man{
 					$see[$v] = ['type'=>'class','class'=>$class];
 				}
 			}
-		}		
+		}
 		
 		$methods = $static_methods = [];
 		foreach($r->getMethods() as $method){
@@ -81,19 +79,28 @@ class Man{
 				$ignore = ['getIterator'];
 				
 				if(!in_array($method->getName(),$ignore)){
-					$method_info = new \ebi\Dt\DocInfo();
-					$method_info->name($method->getName());
+					$bool = true;
 					
-					$method_document = self::get_method_document($method);
-					$method_document = self::find_deprecate($method_document,$method_info,$info);
-					list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
-
-					$method_info->document($summary);
-					
-					if($method->isStatic()){
-						$static_methods[] = $method_info;
-					}else{
-						$methods[] = $method_info;
+					foreach([\ebi\Object::class,\ebi\Dao::class,\ebi\flow\Request::class,\ebi\Request::class] as $ignore_class){
+						if($r->getName() != $ignore_class && $method->getDeclaringClass()->getName() == $ignore_class){
+							$bool = false;
+						}
+					}
+					if($bool){
+						$method_info = new \ebi\Dt\DocInfo();
+						$method_info->name($method->getName());
+						
+						$method_document = self::get_method_document($method);
+						$method_document = self::find_deprecate($method_document,$method_info);
+						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
+	
+						$method_info->document($summary);
+						
+						if($method->isStatic()){
+							$static_methods[] = $method_info;
+						}else{
+							$methods[] = $method_info;
+						}
 					}
 				}
 			}
@@ -118,7 +125,8 @@ class Man{
 						self::find_deprecate(
 							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
 							$properties[$name],
-							$info
+							$info,
+							true
 						)
 					);
 					$properties[$name]->set_opt(
@@ -204,30 +212,29 @@ class Man{
 		return str_replace(['.','/'],['\\','\\'],$class);
 	}
 	
-	private static function find_deprecate($summary,$obj,$rootobj){
-		if(strpos($summary,'deprecated') !== false){
-			$s = str_replace(['@deprecated','deprecated'],'',$summary);
+	private static function find_deprecate($summary,$obj,$rootobj=null,$containt=false){
+		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
 			$d = time();
-		
-			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
-				$d = strtotime($m[0]);
-				$s = str_replace($m[0],'',$s);
+			
+			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$m[1],$mm)){
+				$d = strtotime($mm[0]);
 			}
-			$summary = trim($s);
 			$obj->set_opt('deprecated',$d);
 			
-			if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
-				$rootobj->set_opt('first_depricated_date',$d);
+			if(isset($rootobj)){
+				if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
+					$rootobj->set_opt('first_depricated_date',$d);
+				}
 			}
 		}
-		return $summary;
+		return trim(preg_replace('/@.+/','',$summary));
 	}
 	/**
 	 * クラスドメソッドのキュメント
 	 * @param string $class
 	 * @param string $method
 	 */
-	public static function method_info($class,$method,$deep=true){
+	public static function method_info($class,$method,$detail=false,$deep=false){
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -249,7 +256,7 @@ class Man{
 			}
 			$document = $document.self::get_method_document($ref);
 			$src = self::method_src($ref);
-
+			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -260,31 +267,33 @@ class Man{
 					(strpos($src,'!$this->is_post()') === false)
 				) ? ' POST' : null);
 			}
+			if(!$info->is_version()){
+				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
+			}
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			
-			if(!$info->is_return() && $info->has_opt('contexts')){
-				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
-			}
-			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
-				self::find_deprecate($m[0],$info,$info);
-			}
+			self::find_deprecate($document,$info);
+			
 			$requests = \ebi\Dt\DocParam::parse('request',$document);
 			$contexts = \ebi\Dt\DocParam::parse('context',$document);
-						
+			
 			foreach([$requests,$contexts] as $v){
 				foreach($v as $r){
-					$r->summary(self::find_deprecate($r->summary(),$r,$info));
+					$r->summary(self::find_deprecate($r->summary(),$r,$info,true));
 				}
 			}
 			$info->set_opt('requests',$requests);
 			$info->set_opt('contexts',$contexts);
-			$info->set_opt('args',\ebi\Dt\DocParam::parse('arg',$document));
 			
-			if($deep){
-				$call_plugins = [];
-				$plugins = [];
-				
+			if(!$info->is_return() && $info->has_opt('contexts')){
+				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
+			}
+			
+			$call_plugins = $plugins = [];
+			$throws = $throw_param = $mail_list = [];
+			
+			if($detail){
 				foreach([
 					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
@@ -306,9 +315,10 @@ class Man{
 						$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
 					}
 				}
-				$info->set_opt('plugins',$call_plugins);
+			}
+			$info->set_opt('plugins',$call_plugins);
 	
-				
+			if($deep){
 				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
 				$use_method_list = array_merge($use_method_list,[$method_fullname]);
 				
@@ -317,9 +327,13 @@ class Man{
 						$use_method_list[] = $class_name.'::'.$plugin_info->name();
 					}
 				}
-				
+			}else{
+				$use_method_list = [$method_fullname];
+			}
+			$use_method_list = array_unique($use_method_list);
+			
+			if($detail){
 				$mail_template_list = self::mail_template_list();
-				$throws = $throw_param = $mail_list = [];
 				
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
@@ -336,15 +350,22 @@ class Man{
 						}
 						
 						foreach($mail_template_list as $k => $mail_info){
-							if(preg_match('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src)){
-								$mail_template_list[$k]->set_opt('use',true);
+							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
+								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
+								
+								$mail_info->set_opt('use',true);
+								$mail_info->set_opt('description',$doc->document());
+								
+								foreach($doc->params() as $p){
+									$mail_info->add_params($p);
+								}
+								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 							}
 						}
 					}catch(\ReflectionException $e){
 					}
 				}
-				
-				foreach($throws as $n => $t){				
+				foreach($throws as $n => $t){
 					try{
 						$ref = new \ReflectionClass($n);
 						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
@@ -356,15 +377,10 @@ class Man{
 					}catch(\ReflectionException $e){
 					}
 				}
-				$info->set_opt('throws',$throw_param);
-				
-				foreach($mail_template_list as $mail_info){
-					if($mail_info->opt('use') === true){
-						$mail_list[] = $mail_info;
-					}
-				}
-				$info->set_opt('mail_list',$mail_list);
 			}
+			$info->set_opt('mail_list',$mail_list);
+			$info->set_opt('throws',$throw_param);
+			
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();
@@ -377,17 +393,23 @@ class Man{
 			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
 				$info = new \ebi\Dt\DocInfo();
 				$info->name(str_replace(\ebi\Util::path_slash($path,null,true),'',$f->getPathname()));
-	
+				
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-					try{
-						$info->document(trim($xml->find_get('summary')->value()));
-					}catch(\ebi\exception\NotFoundException $e){
-						$info->document(trim($xml->find_get('subject')->value()));
-					}
-					
-					$info->set_opt('subject',$xml->find_get('subject')->value());
+					$info->version($xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
 					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
+					
+					try{
+						$subject = trim($xml->find_get('subject')->value());
+						$info->document($subject);
+						$info->set_opt('subject',$subject);
+					}catch(\ebi\exception\NotFoundException $e){
+					}
+					try{
+						$summary = trim($xml->find_get('summary')->value());
+						$info->document($summary);
+					}catch(\ebi\exception\NotFoundException $e){
+					}
 					$template_list[] = $info;
 				}catch(\ebi\exception\NotFoundException $e){
 				}
@@ -397,7 +419,7 @@ class Man{
 		return $template_list;
 	}
 
-	private static function method_src(\ReflectionMethod $ref){
+	public static function method_src(\ReflectionMethod $ref){
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
 		}

@@ -58,6 +58,11 @@ class RequestFlow extends \ebi\flow\Request{
 		$vars = ['abc'=>'ABC'];
 		$mail = new \ebi\Mail();
 		$mail->to("test@email.address");
+		
+		/**
+		 * 
+		 * @param string $abc ABCが出せる
+		 */
 		$mail->send_template('send.xml',$vars);
 		
 		/**

@@ -1,0 +1,327 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<h2 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+	{$method_info.opt('name')}
+</h2>
+
+<blockquote>
+{$t.noop($f.md2html($method_info.document()))}
+</blockquote>
+
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Infomation</h3>
+	</div>
+	<div class="panel-body">
+		<table class="table table-bordered table-striped panel-body-table">
+		<tr>
+			<th>Version</th>
+			<td>
+				<a href="{$t.package_method_url('index')}?version={$method_info.version()}">
+					{$method_info.version()}
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<th>URL</th>
+			<td>
+				{$method_info.opt('url')}
+				
+				<a href="#" data-toggle="modal" data-target="#link">
+					<span class="glyphicon glyphicon-globe"></span>
+				</a>
+				
+				<div class="modal fade" id="link" style="text-align: left;">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+								<h4 class="modal-title">{$method_info.opt('name')}</h4>
+								<div class="text-muted" style="font-size: small;">
+									{$t.noop($f.md2html($method_info.document()))}
+								</div>
+							</div>
+							<div class="modal-body">
+								<form name="linkdata">
+									<input type="text" name="url" value="{$method_info.opt('url')}" class="form-control" />
+									<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata,'post')">POST</button>
+								<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata,'get')">GET</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</td>
+		</tr>		
+		<tr>
+			<th>Action</th>
+			<td>
+				<div class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated','')}">
+					<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
+						{$method_info.opt('class')}
+					</a>
+					::
+					<a href="{$t.package_method_url('class_method_doc',$method_info.opt('class'),$method_info.opt('method'))}">
+						{$method_info.opt('method')}
+					</a>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<th>HTTP Method</th>
+			<td>
+				<rt:if param="{$method_info.opt('http_method')}">
+					{$method_info.opt('http_method')}
+				<rt:else/>
+					GET / POST
+				</rt:if>
+			</td>
+		</tr>
+		
+		<rt:if param="{$method_info.opt('deprecated')}">
+			<tr>
+				<th>Deprecated</th>
+				<td>
+					<div class="deprecated">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
+					</div>
+				</td>
+			</tr>
+		</rt:if>		
+		</table>
+	</div>
+</div>
+
+
+<rt:if param="{$method_info.params()}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h2 class="panel-title">Params</h2>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1">
+					{$param.name()}
+				</td>
+				<td class="t2">
+					<rt:if param="{$method_info.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$method_info.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>				
+				<td class="t3">
+					{$t.html($param.summary())}
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+<rt:if param="{$method_info.opt('requests')}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h3 class="panel-title">Request</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+				<td class="t1">
+					{$param.name()}
+					
+					<rt:if param="{$param.opt('require')}">
+						<span class="glyphicon glyphicon-asterisk" style="color: #ffbbbb;"></span>
+					</rt:if>
+				</td>
+				<td class="t2">
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>
+				<td class="t3">
+					{$t.html($param.summary())}
+					
+					<rt:if param="{$param.opt('deprecated')}">
+						<div class="deprecated-mark">
+							<span class="glyphicon glyphicon-ban-circle"></span>
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</div>
+					</rt:if>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+
+<rt:if param="{$method_info.opt('contexts')}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h3 class="panel-title">Context</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+				<td class="t1">
+					{$param.name()}
+				</td>
+				<td class="t2">
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>
+				<td class="t3">
+					{$t.html($param.summary())}
+
+					<rt:if param="{$param.opt('deprecated')}">
+						<div class="deprecated-mark">
+							<span class="glyphicon glyphicon-ban-circle"></span>
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</div>
+					</rt:if>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+
+<rt:if param="{$method_info.opt('throws')}">
+	<div class="panel panel-danger">
+		<div class="panel-heading">
+			<h3 class="panel-title">Throws</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1_2">
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>
+				<td class="t3">
+					{$t.html($param.summary())}
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+
+<rt:if param="{$method_info.opt('mail_list')}">
+	<div class="panel panel-warning">
+		<div class="panel-heading">
+			<h3 class="panel-title">Mail</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1">
+					<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+						{$info.opt('x_t_code')}
+					</a>
+				</td>
+				<td class="t2">
+					{$info.name()}				
+				</td>
+				<td class="t1">
+					{$info.version()}				
+				</td>
+				<td class="t3">
+					{$t.html($info.document())}
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+
+<rt:if param="{$method_info.opt('plugins')}">
+	<div class="panel panel-primary">
+		<div class="panel-heading">
+			<h3 class="panel-title">Plugins</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1">
+					<a href="{$t.package_method_url('plugin_doc',$method_info.opt('class'),$info.name())}">
+						{$info.name()}
+					</a>
+				</td>
+
+				<td class="t3">
+					{$t.html($info.summary(),200,1)}
+				</td>				
+				<td class="t3">
+					<rt:loop param="{$info.opt('added')}" var="class_name">
+						<div>
+							<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
+								{$class_name}
+							</a>
+						</div>
+					</rt:loop>
+				</td>			
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+<rt:if param="{$method_info.opt('test_list')}">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Tests</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1_2">
+					<a href="{$t.package_method_url('test_view')}?path={$info.name()}">
+						{$info.opt('short_name')}
+					</a>
+				</td>
+				<td class="t3">
+					{$info.summary()}
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
+
+
+
+</rt:block>

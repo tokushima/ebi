@@ -5,7 +5,6 @@ class Login4{
 	public function login_condition(\ebi\flow\Request $req){
 		if($req->in_vars('user') == 'tokushima' && $req->in_vars('password') == 'hogehoge'){
 			$req->user(new \test\model\Member1(987));
-\ebi\Log::trace(__METHOD__);
 			\ebi\UserRememberMeDao::write_cookie($req);
 			return true;
 		}

@@ -25,17 +25,17 @@
 </form>
 
 
-<table rt:param="{$class_info_list}" rt:var="class_info" class="table table-condensed">
+<table rt:param="{$class_info_list}" rt:var="class_info" class="table table-condensed table-striped">
 <thead>
 <tr class="text-muted">
-	<th style="width:20%;">Class</th>
-	<th style="width:60%;">Summary</th>
+	<th class="t2">Class</th>
+	<th class="t3">Summary</th>
 </tr>
 </thead>
 <tbody>
-<tr style="{$t.cond_switch($class_info.opt('deprecated'),'text-decoration: line-through;','')} {$t.cond_switch($class_info.opt('first_depricated_date'),'color: #cc6666;','')}">
+<tr class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated','')} {$t.cond_switch($class_info.opt('first_depricated_date'),'text-deprecated','')}">
 	<td style="width:20%;">
-		<a href="{$t.package_method_url('class_doc',$class_info.name())}" style="{$t.cond_switch($class_info.opt('first_depricated_date'),'color: #cc6666;','')}">
+		<a href="{$t.package_method_url('class_doc',$class_info.name())}" class="{$t.cond_switch($class_info.opt('first_depricated_date'),'text-deprecated','')}">
 			{$class_info.name()}
 		</a>
 	</td>

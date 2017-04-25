@@ -11,6 +11,7 @@ namespace ebi;
 class LogMailSender{
 	/**
 	 * @param \ebi\Log $log
+	 * @version 1.3.4
 	 */
 	public function log_output(\ebi\Log $log){
 		$mail = new \ebi\Mail();			
@@ -51,46 +52,81 @@ class LogMailSender{
 		if(!is_array($vars)){
 			$vars = [];
 		}
-		$template = '';
-		
-		switch($log->level()){
-			case 0:
-				$template = 'logs/emergency.xml';
-				break;
-			case 1:
-				$template = 'logs/alert.xml';
-				break;
-			case 2:
-				$template = 'logs/critical.xml';
-				break;
-			case 3:
-				$template = 'logs/error.xml';
-				break;
-			case 4:
-				$template = 'logs/warning.xml';
-				break;
-			case 5:
-				$template = 'logs/notice.xml';
-				break;
-			case 6:
-				$template = 'logs/info.xml';
-				break;
-			case 7:
-				$template = 'logs/debug.xml';
-				break;					
-		}
+		$vars = array_merge(
+			$vars,
+			[
+				'log'=>$log,
+				'env'=>new \ebi\Env(),
+			]
+		);
 		
 		try{
-			$mail->send_template(
-				$template,
-				array_merge(
-					$vars,
-					[
-						'log'=>$log,
-						'env'=>new \ebi\Env(),
-					]
-				)
-			);
+			switch($log->level()){
+				case 0:
+					/**
+					 * Sending Emergency Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/emergency.xml',$vars);
+					break;
+				case 1:
+					/**
+					 * Sending Alert Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/alert.xml',$vars);
+					break;
+				case 2:
+					/**
+					 * Sending Critical Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/critical.xml',$vars);
+					break;
+				case 3:
+					/**
+					 * Sending Error Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/error.xml',$vars);
+					break;
+				case 4:
+					/**
+					 * Sending Warning Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/warning.xml',$vars);
+					break;
+				case 5:
+					/**
+					 * Sending Notice Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/notice.xml',$vars);
+					break;
+				case 6:
+					/**
+					 * Sending Infomation Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/info.xml',$vars);
+					break;
+				case 7:
+					/**
+					 * Sending Debug Mail
+					 * @param \ebi\Log $log
+					 * @param \ebi\Env $env
+					 */
+					$mail->send_template('logs/debug.xml',$vars);
+					break;					
+			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}
 	}

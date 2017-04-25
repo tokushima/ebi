@@ -20,11 +20,6 @@ class Request extends \ebi\Request{
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
-		
-		if(method_exists($this,'__init__')){
-			$args = func_get_args();
-			call_user_func_array([$this,'__init__'],$args);
-		}
 	}
 	
 	/**
@@ -232,6 +227,7 @@ class Request extends \ebi\Request{
 	 * ログイン
 	 * ログインに必要なパラメータはPluginによる
 	 * @automap
+	 * @version 1.2.11
 	 */
 	public function do_login(){
 		if($this->sess->is_vars(__CLASS__.'_login_vars')){
@@ -297,6 +293,7 @@ class Request extends \ebi\Request{
 	/**
 	 * ログアウト
 	 * @automap
+	 * @version 1.2.11
 	 */
 	public function do_logout(){
 		/**
@@ -311,6 +308,7 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * 何も処理をせずに、varsを返す
+	 * @version 1.2.11
 	 */
 	public function noop(){
 		return $this->ar_vars();

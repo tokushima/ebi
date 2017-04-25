@@ -1,144 +1,205 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-<h2 style="{$t.cond_switch($class_info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
+
+<h2 class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated;','')}">
 	{$class_info.name()}
 </h2>
 
-<rt:if param="{$class_info.has_opt('extends')}">
-	extends 
-	
-	<a href="{$t.package_method_url('class_doc',$class_info.opt('extends'))}">
-		{$class_info.opt('extends')}
-	</a>
-</rt:if>
+<blockquote>
+{$t.noop($f.md2html($class_info.document()))}
+</blockquote>
 
 
-<div class="alert alert-warning text-muted" style="margin-top: 30px;">
-	{$t.noop($f.md2html($class_info.document()))}
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Infomation</h3>
+	</div>
+	<div class="panel-body">
+		<table class="table table-bordered table-striped panel-body-table">
+		<tr>
+			<th>Extends</th>
+			<td>
+				<a href="{$t.package_method_url('class_doc',$class_info.opt('extends'))}">
+					{$class_info.opt('extends')}
+				</a>
+			</td>
+		</tr>
+		
+		<rt:if param="{$class_info.opt('deprecated')}">
+			<tr>
+				<th>Deprecated</th>
+				<td>
+					<div class="deprecated">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+						{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
+					</div>
+				</td>
+			</tr>
+		</rt:if>		
+		
+
+		</table>
+	</div>
 </div>
 
-<rt:if param="{$class_info.opt('deprecated')}">
-	<div style="color: #cc6666;" class="text-muted">
-		<span class="glyphicon glyphicon-ban-circle"></span>
-		{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
+
+
+<rt:if param="{$class_info.opt('properties')}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h2 class="panel-title">Properties</h2>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+				<td class="t1">
+					{$param.name()}
+				</td>
+				<td class="t2">
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+							{$param.fm_type()}
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>				
+				<td class="t3">
+					{$t.html($param.summary())}
+					
+					<rt:if param="{$param.opt('deprecated')}">
+						<div class="deprecated-mark">
+							<span class="glyphicon glyphicon-ban-circle"></span>
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</div>
+					</rt:if>					
+				</td>
+				<td class="t4">
+					<rt:if param="{$t.not($param.opt('hash'))}">
+						<span class="glyphicon glyphicon-eye-close"></span>
+					</rt:if>
+				</td>
+			</tr>
+			</table>
+		</div>
 	</div>
 </rt:if>
 
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Properties</h4>
 
-<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-condensed table-striped">
-<tr style="{$t.cond_switch($param.opt('hash'),'','color: #cccccc;')} {$t.cond_switch($param.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
-	<td style="width: 25%;">
-		<rt:if param="{$param.is_type_class()}">
-			<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
-				{$param.fm_type()}
-			</a>
-		<rt:else />
-			{$param.fm_type()}
-		</rt:if>
-	</td>
-	<td style="width: 20%;">
-		{$param.name()}
-		
-		<rt:if param="{$t.not($param.opt('hash'))}">
-			&nbsp;<span class="glyphicon glyphicon-eye-close"></span>
-		</rt:if>
-		
-	</td>
-	<td style="width: 55%;">
-		{$t.html($param.summary())}
-	</td>
-	<td nowrap="nowrap" style="text-align: right;">
-		<rt:if param="{$param.opt('deprecated')}">
-			<span class="glyphicon glyphicon-ban-circle"></span>
-			{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-		</rt:if>
-	</td>
-</tr>
-</table>
+<rt:if param="{$class_info.opt('methods')}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h2 class="panel-title">Methods</h2>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$class_info.opt('methods')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+				<td class="t1">
+					<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
+						{$param.name()}
+					</a>
+				</td>
+				<td class="t3">
+					{$t.html($param.summary())}
+					
+					<rt:if param="{$param.opt('deprecated')}">
+						<div class="deprecated-mark">
+							<span class="glyphicon glyphicon-ban-circle"></span>
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</div>
+					</rt:if>					
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Methods</h4>
-<table rt:param="{$class_info.opt('methods')}" rt:var="info" class="table table-condensed table-striped">
-<tr style="{$t.cond_switch($info.opt('deprecated'),'color: #cc6666; text-decoration: line-through;','')}">
-	<td style="width: 400px;">
-		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
-			{$info.name()}
-		</a>
-	</td>
-	<td>
-		{$t.html($info.summary())}
-	</td>
-	<td nowrap="nowrap" style="text-align: right;">
-		<rt:if param="{$info.opt('deprecated')}">
-			<span class="glyphicon glyphicon-ban-circle"></span>
-			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
-		</rt:if>
-	</td>	
-</tr>
-</table>
-
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Static Methods</h4>
-<table rt:param="{$class_info.opt('static_methods')}" rt:var="info" class="table table-condensed table-striped">
-<tr>
-	<td style="width: 200px;">
-		<a href="{$t.package_method_url('method_doc',$class_info.name(),$info.name())}">
-			{$info.name()}
-		</a>
-	</td>
-	<td style="width: 90%;">
-		{$t.html($info.summary())}
-	</td>
-	<td nowrap="nowrap" style="text-align: right;">
-		<rt:if param="{$info.opt('deprecated')}">
-			<span class="glyphicon glyphicon-ban-circle"></span>
-			{$t.date_format('Y-m-d',$info.opt('deprecated'))}
-		</rt:if>
-	</td>
-</tr>
-</table>
+<rt:if param="{$class_info.opt('static_methods')}">
+	<div class="panel panel-success">
+		<div class="panel-heading">
+			<h2 class="panel-title">Static Methods</h2>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$class_info.opt('static_methods')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+				<td class="t1">
+					<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
+						{$param.name()}
+					</a>
+				</td>
+				<td class="t3">
+					{$t.html($param.summary())}
+					
+					<rt:if param="{$param.opt('deprecated')}">
+						<div class="deprecated-mark">
+							<span class="glyphicon glyphicon-ban-circle"></span>
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</div>
+					</rt:if>					
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
 
 
+<rt:if param="{$class_info.opt('plugins')}">
+	<div class="panel panel-primary">
+		<div class="panel-heading">
+			<h3 class="panel-title">Plugins</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1">
+					<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">
+						{$info.name()}
+					</a>
+				</td>
+				<td class="t3">
+					{$t.html($info.summary(),200,1)}
+				</td>
+				<td class="t3">
+					<rt:loop param="{$info.opt('added')}" var="class_name">
+						<div>
+							<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
+								{$class_name}
+							</a>
+						</div>
+					</rt:loop>
+				</td>			
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Plugins</h4>
-<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-condensed table-striped">
-<tr>
-	<td>
-		{$info.name()}
-	</td>
-	<td>
-		{$t.html($info.summary(),200,1)}
-	</td>
-	<td>
-		<rt:loop param="{$info.opt('added')}" var="class_name">
-			<div>
-				<a href="{$t.package_method_url('method_doc',$class_name,$info.name())}">
-					{$class_name}
-				</a>
-			</div>
-		</rt:loop>
-	</td>
-
-</tr>
-</table>
 
 
-<h4 class="text-muted" style="text-decoration: underline; margin-top: 50px;">Conf</h4>
-<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-condensed table-striped">
-<tr>
-	<td>
-		<a href="{$t.package_method_url('conf_doc',$name,$info.name())}">
-			{$info.name()}
-		</a>
-	</td>
-	<td>
-		{$t.html($info.summary(),200,1)}
-	</td>
-</tr>
-</table>
-
+<rt:if param="{$class_info.opt('conf_list')}">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Conf</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td class="t1">
+					{$info.name()}
+				</td>
+				<td class="t3">
+					{$t.html($info.summary(),200,1)}
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
 
 </rt:block>

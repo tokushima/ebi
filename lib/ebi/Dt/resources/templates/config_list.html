@@ -16,7 +16,9 @@
 <tbody>
 	<tr>
 		<td style="width:20%;">
-			{$class_info.name()}
+			<a href="{$t.package_method_url('class_doc',$class_info.name())}">
+				{$class_info.name()}
+			</a>
 			
 			<div class="text-muted" style="margin-left: 10px; margin-top: 5px; font-size: small;">
 				{$class_info.summary()}

@@ -25,70 +25,50 @@
 		<tr>
 			<th>Version</th>
 			<td>
-				{$mail_info.version()}
+				<rt:if param="{$t.eq($mail_info.version(),$method_info.version())}">
+					{$mail_info.version()}
+				<rt:else />
+					<span class="text-danger">{$mail_info.version()}</span>
+				
+					<div class="alert alert-danger" role="alert">
+						<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+						Version do not match
+					</div>
+				</rt:if>
 			</td>
 		</tr>		
-		
-		<rt:if param="{$multiple_method}">
-		<rt:else />
-			<tr>
-				<th>Methods</th>
-				<td>
-					<rt:loop param="{$method_list}" var="method_info">
-						<div class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated','')}">
-							<a href="{$t.package_method_url('class_method_doc',$method_info.opt('class'),$method_info.opt('method'))}">
-								{$method_info.name()}
-							</a>
-							
-							<rt:if param="{$t.eq($mail_info.version(),$method_info.version())}">
-								<span class="text-muted">
-									( <span style="font-size: small;">Version: {$method_info.version()}</span> )
-								</span>
-							<rt:else />
-								<span class="text-danger">
-									( <span style="font-size: small;">
-										<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-										Version: {$method_info.version()}
-									</span> )
-								</span>							
-							</rt:if>
-						</div>
-					</rt:loop>
+		<tr>
+			<th>Method</th>
+			<td>
+				<div class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated','')}">
+					<a href="{$t.package_method_url('class_method_doc',$method_info.opt('class'),$method_info.opt('method'))}">
+						{$method_info.name()}
+					</a>
 					
-					<rt:if param="{$multiple_method}">
-					<rt:else />
-						<rt:if param="{$mail_info.opt('method_summary')}">
-							<blockquote>
-								{$t.html($mail_info.opt('method_summary'))}
-							</blockquote>
-						</rt:if>
-					</rt:if>
-				</td>
-			</tr>		
-		</rt:if>
-		
-		
+					<span class="text-muted">
+						( <span style="font-size: x-small;">Version: {$method_info.version()}</span> )
+					</span>
+				</div>
+				
+				<rt:if param="{$mail_info.opt('method_summary')}">
+					<blockquote>
+						{$t.html($mail_info.opt('method_summary'))}
+					</blockquote>
+				</rt:if>
+			</td>
+		</tr>
 		</table>
 	</div>
 </div>
 
 
-<rt:if param="{$multiple_method}">
+<rt:if param="{$mail_info.params()}">
 	<div class="panel panel-success">
 		<div class="panel-heading">
 			<h3 class="panel-title">Vars</h3>
 		</div>
 		<div class="panel-body">
-			Multiple method
-		</div>
-	</div>
-<rt:else />
-	<rt:if param="{$mail_info.params()}">
-		<div class="panel panel-success">
-			<div class="panel-heading">
-				<h3 class="panel-title">Vars</h3>
-			</div>
-			<div class="panel-body">
+			<rt:if param="{$mail_info.params()}">
 				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
 				<tr>
 					<td  class="t1">
@@ -109,9 +89,9 @@
 					</td>
 				</tr>	
 				</table>
-			</div>
+			</rt:if>
 		</div>
-	</rt:if>
+	</div>
 </rt:if>
 
 

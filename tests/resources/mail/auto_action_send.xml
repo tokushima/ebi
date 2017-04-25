@@ -1,0 +1,13 @@
+<mail version="1.2">
+<subject>テストサブジェクト</subject>
+<body signature="signature.xml">
+123{$abc}456
+</body>
+
+<summary>
+	テストサブジェクトの説明１
+	テストサブジェクトの説明２
+	テストサブジェクトの説明３
+</summary>
+</mail>
+

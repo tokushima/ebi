@@ -8,33 +8,44 @@
 	<th>Template</th>
 	<th>Summary</th>
 	<th>Code</th>
-	<th></th>
+	<th>Version</th>
+	
+	<rt:if param="{$is_test}">
+		<th>Test</th>
+	</rt:if>
 </tr>
 </thead>
 <tbody>
 <tr>
-	<td style="width:20%;">
-		<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
-			{$info.name()}
-		</span>
+	<td class="t2">
+		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
+				{$info.name()}
+			</span>
+		</a>
 	</td>
-	<td>
+	<td class="t3">
 		{$info.summary()}
 	</td>
-	<td style="width:70px;">
+	<td class="t1s">
 		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','text-muted')}">
 				{$info.opt('x_t_code')}
 			</span>
 		</a>
 	</td>
-	<td style="text-align:right; width:50px;">
-		<rt:if param="{$is_test}">
+	
+	<td class="t1s">
+		{$info.version()}
+	</td>
+	
+	<rt:if param="{$is_test}">
+		<td class="t4">
 			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}">
 				{$info.opt('count')}
 			</a>
-		</rt:if>	
-	</td>
+		</td>
+	</rt:if>
 </tr>
 </tbody>
 </table>

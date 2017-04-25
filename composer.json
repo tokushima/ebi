@@ -18,13 +18,6 @@
 		"files": [
 			"autoload.php"
 	   	]
-	},
-	"archive" :{
-		"exclude": [
-			"/tests",
-			"/media",
-			"/ebi.phar"
-		]
 	}
 }
 

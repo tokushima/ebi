@@ -1,0 +1,48 @@
+.deprecated {
+	color: #cc6666;
+	text-decoration: line-through;
+}
+.text-deprecated {
+	color: #cc6666;
+}
+
+.deprecated-mark{
+	font-size: x-small;
+	text-align: right;
+}
+
+.panel-body{
+	padding: 10px;
+}
+
+.panel-body-table{
+	margin: 0;
+}
+
+.panel-body-table tr th{
+	width: 180px;
+}
+
+.t1{
+	width: 180px;
+}
+.t1s{
+	width: 80px;
+}
+
+.t2{
+	width: 350px;
+}
+
+.t1_2{
+	width: 530px;
+}
+
+.t3{
+	word-break: break-all;
+}
+
+.t4{
+	text-align:right;
+	width: 50px;
+}
