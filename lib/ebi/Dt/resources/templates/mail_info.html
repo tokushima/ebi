@@ -25,7 +25,7 @@
 		<tr>
 			<th>Version</th>
 			<td>
-				{$mail_info.opt('version')}
+				{$mail_info.version()}
 			</td>
 		</tr>		
 		
@@ -40,15 +40,15 @@
 								{$method_info.name()}
 							</a>
 							
-							<rt:if param="{$t.eq($mail_info.opt('version'),$method_info.opt('version'))}">
+							<rt:if param="{$t.eq($mail_info.version(),$method_info.version())}">
 								<span class="text-muted">
-									( <span style="font-size: small;">Version: {$method_info.opt('version')}</span> )
+									( <span style="font-size: small;">Version: {$method_info.version()}</span> )
 								</span>
 							<rt:else />
 								<span class="text-danger">
 									( <span style="font-size: small;">
 										<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-										Version: {$method_info.opt('version')}
+										Version: {$method_info.version()}
 									</span> )
 								</span>							
 							</rt:if>

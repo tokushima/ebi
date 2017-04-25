@@ -5,6 +5,7 @@ class RequestPlugin{
 	/**
 	 * メールの拡張
 	 * @param string $address
+	 * @version 1.3.4
 	 */
 	public function plguin_sendmail($address){
 		if(true){

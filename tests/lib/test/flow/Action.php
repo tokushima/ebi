@@ -117,13 +117,14 @@ class Action{
 	}
 	
 	/**
-	 * @request string $hoge @deprecated 2017-03-04 早めに
+	 * リクエストだけdeprecated
+	 * @request string $hoge 使わない @deprecated 2017-03-04 早めに
 	 */
 	public function request_deprecated(){
 		$this->in_vars('hoge');
 	}
 	/**
-	 * @context string $hoge @deprecated 2017-03-04 早めに
+	 * @context string $hoge 使わない　@deprecated 2017-03-04 早めに
 	 */
 	public function context_deprecated(){
 		return ['hoge'=>1];

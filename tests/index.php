@@ -176,12 +176,12 @@ include_once('bootstrap.php');
 		'version'=>'20161111',
 	],
 	
-	'deprecated'=>[
+	'deprecated/entry'=>[
 		'name'=>'deprecated',
 		'action'=>'\\test\\flow\\Action::abc',
 		'deprecated'=>true,
 		'version'=>'20161112',
-	],
+	],	
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 

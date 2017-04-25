@@ -6,6 +6,7 @@ namespace ebi\Dt;
  * @var text $document
  * @var \ebi\Dt\DocParam[] $params
  * @var \ebi\Dt\DocParam $return
+ * @var string $version
  * @author tokushima
  *
  */
@@ -14,6 +15,7 @@ class DocInfo extends \ebi\Object{
 	protected $document;
 	protected $params = [];
 	protected $return;
+	protected $version;
 	private $opt = [];
 	
 	public function summary(){
@@ -87,6 +89,9 @@ class DocInfo extends \ebi\Object{
 				$m[1],
 				$m[2]
 			));
+		}
+		if(preg_match("/@version\s+([^\s]+)/",$doc,$match)){
+			$info->version(trim($match[1]));
 		}
 		$info->document(
 			trim(preg_replace('/@.+/','',

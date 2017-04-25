@@ -85,10 +85,10 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-						
+					
 						if(!isset($m['version'])){
-							$m['version'] = $info->opt('version');
-						}
+							$m['version'] = $info->version();
+						}					
 						if(empty($m['summary'])){
 							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;

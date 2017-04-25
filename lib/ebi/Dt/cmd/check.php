@@ -94,10 +94,10 @@ foreach($class_list as $class){
 				
 		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
 			$label = $ref_class->getName().'::'.$ref_method->getName()
-						.' ('.$method_info->opt('version').') '
-						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->opt('version').')';
+						.' ('.$method_info->version().') '
+						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->version().')';
 			
-			if($mmi->opt('version') == $method_info->opt('version')){
+			if($mmi->version() == $method_info->version()){
 				cmdman\Std::println_success(' OK '.$label);
 			}else{
 				$failure['mail']++;

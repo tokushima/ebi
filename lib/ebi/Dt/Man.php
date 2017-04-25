@@ -49,15 +49,13 @@ class Man{
 		$document = self::trim_doc($r->getDocComment());
 		
 		$info->name($r->getName());
-		$info->document(trim(preg_replace('/@.+/','',$document)));
+		$info->document(trim(preg_replace('/\n*@.+/','',PHP_EOL.$document)));
 		
 		$info->set_opt('filename',$r->getFileName());
 		$info->set_opt('extends',(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()));
 		$info->set_opt('abstract',$r->isAbstract());
 		
-		if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
-			self::find_deprecate($m[0],$info,$info);
-		}
+		self::find_deprecate($document,$info);
 		
 		$see = [];
 		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
@@ -93,7 +91,7 @@ class Man{
 						$method_info->name($method->getName());
 						
 						$method_document = self::get_method_document($method);
-						$method_document = self::find_deprecate($method_document,$method_info,$info);
+						$method_document = self::find_deprecate($method_document,$method_info);
 						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 	
 						$method_info->document($summary);
@@ -127,7 +125,8 @@ class Man{
 						self::find_deprecate(
 							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
 							$properties[$name],
-							$info
+							$info,
+							true
 						)
 					);
 					$properties[$name]->set_opt(
@@ -213,23 +212,22 @@ class Man{
 		return str_replace(['.','/'],['\\','\\'],$class);
 	}
 	
-	private static function find_deprecate($summary,$obj,$rootobj){
-		if(strpos($summary,'deprecated') !== false){
-			$s = str_replace(['@deprecated','deprecated'],'',$summary);
+	private static function find_deprecate($summary,$obj,$rootobj=null,$containt=false){
+		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
 			$d = time();
-		
-			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$s,$m)){
-				$d = strtotime($m[0]);
-				$s = str_replace($m[0],'',$s);
+			
+			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$m[1],$mm)){
+				$d = strtotime($mm[0]);
 			}
-			$summary = trim($s);
 			$obj->set_opt('deprecated',$d);
 			
-			if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
-				$rootobj->set_opt('first_depricated_date',$d);
+			if(isset($rootobj)){
+				if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
+					$rootobj->set_opt('first_depricated_date',$d);
+				}
 			}
 		}
-		return $summary;
+		return trim(preg_replace('/@.+/','',$summary));
 	}
 	/**
 	 * クラスドメソッドのキュメント
@@ -269,23 +267,20 @@ class Man{
 					(strpos($src,'!$this->is_post()') === false)
 				) ? ' POST' : null);
 			}
-			if(preg_match("/@version\s+([^\s]+)/",$document,$match)){
-				$info->set_opt('version',trim($match[1]));
-			}else{
-				$info->set_opt('version',date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
+			if(!$info->is_version()){
+				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			
-			if(preg_match('/^@deprecated(.*)$/m',$document,$m)){
-				self::find_deprecate($m[0],$info,$info);
-			}
+			self::find_deprecate($document,$info);
+			
 			$requests = \ebi\Dt\DocParam::parse('request',$document);
 			$contexts = \ebi\Dt\DocParam::parse('context',$document);
 			
 			foreach([$requests,$contexts] as $v){
 				foreach($v as $r){
-					$r->summary(self::find_deprecate($r->summary(),$r,$info));
+					$r->summary(self::find_deprecate($r->summary(),$r,$info,true));
 				}
 			}
 			$info->set_opt('requests',$requests);
@@ -401,7 +396,7 @@ class Man{
 				
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-					$info->set_opt('version',$xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
+					$info->version($xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
 					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
 					
 					try{
