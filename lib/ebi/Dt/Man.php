@@ -236,7 +236,7 @@ class Man{
 	 * @param string $class
 	 * @param string $method
 	 */
-	public static function method_info($class,$method,$deep=true){
+	public static function method_info($class,$method,$detail=false,$deep=false){
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -295,10 +295,10 @@ class Man{
 				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
 			}
 			
-			if($deep){
-				$call_plugins = [];
-				$plugins = [];
-				
+			$call_plugins = $plugins = [];
+			$throws = $throw_param = $mail_list = [];
+			
+			if($detail){
 				foreach([
 					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
@@ -320,9 +320,10 @@ class Man{
 						$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
 					}
 				}
-				$info->set_opt('plugins',$call_plugins);
+			}
+			$info->set_opt('plugins',$call_plugins);
 	
-				
+			if($deep){
 				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
 				$use_method_list = array_merge($use_method_list,[$method_fullname]);
 				
@@ -331,10 +332,13 @@ class Man{
 						$use_method_list[] = $class_name.'::'.$plugin_info->name();
 					}
 				}
-				$use_method_list = array_unique($use_method_list);
-				
+			}else{
+				$use_method_list = [$method_fullname];
+			}
+			$use_method_list = array_unique($use_method_list);
+			
+			if($detail){
 				$mail_template_list = self::mail_template_list();
-				$throws = $throw_param = $mail_list = [];
 				
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
@@ -366,9 +370,7 @@ class Man{
 					}catch(\ReflectionException $e){
 					}
 				}
-				$info->set_opt('mail_list',$mail_list);
-				
-				foreach($throws as $n => $t){				
+				foreach($throws as $n => $t){
 					try{
 						$ref = new \ReflectionClass($n);
 						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
@@ -380,8 +382,10 @@ class Man{
 					}catch(\ReflectionException $e){
 					}
 				}
-				$info->set_opt('throws',$throw_param);
 			}
+			$info->set_opt('mail_list',$mail_list);
+			$info->set_opt('throws',$throw_param);
+			
 			return $info;
 		}
 		throw new \ebi\exception\NotFoundException();

@@ -1,7 +1,6 @@
 <?php
 namespace ebi;
 use \ebi\Q;
-use test\db\UpdateModel;
 /**
  * 開発支援ツール
  * @author tokushima
@@ -85,7 +84,7 @@ class Dt{
 					$m['url'] = $k;
 	
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],false);
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 						
 						if(!isset($m['version'])){
 							$m['version'] = $info->opt('version');
@@ -143,7 +142,7 @@ class Dt{
 			if($m['name'] == $name){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
 				
-				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
+				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
@@ -158,7 +157,7 @@ class Dt{
 				}
 				foreach(['get_after_vars','get_after_vars_request'] as $mn){
 					try{
-						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn);
+						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
 						
 						foreach(['requests','contexts'] as $k){
 							$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
@@ -193,7 +192,7 @@ class Dt{
 	 * @automap
 	 */
 	public function class_method_doc($class,$method){
-		$info = \ebi\Dt\Man::method_info($class,$method,true);
+		$info = \ebi\Dt\Man::method_info($class,$method,true,true);
 		
 		return [
 			'method_info'=>$info,
@@ -700,7 +699,7 @@ class Dt{
 				&& strpos($r->getName(),'cmdman') === false
 				&& strpos($r->getName(),'testman') === false
 			){
-						return true;
+				return true;
 			}
 			return false;
 		};
