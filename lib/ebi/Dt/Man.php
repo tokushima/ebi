@@ -396,21 +396,27 @@ class Man{
 				
 				try{
 					$xml = \ebi\Xml::extract(file_get_contents($f->getPathname()),'mail');
-					$info->version($xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
-					$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
 					
 					try{
-						$subject = trim($xml->find_get('subject')->value());
-						$info->document($subject);
-						$info->set_opt('subject',$subject);
+						// signatureは無視
+						$xml->find_get('signature');
 					}catch(\ebi\exception\NotFoundException $e){
+						$info->version($xml->in_attr('version',date('Ymd',filemtime($f->getPathname()))));
+						$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
+						
+						try{
+							$subject = trim($xml->find_get('subject')->value());
+							$info->document($subject);
+							$info->set_opt('subject',$subject);
+						}catch(\ebi\exception\NotFoundException $e){
+						}
+						try{
+							$summary = trim($xml->find_get('summary')->value());
+							$info->document($summary);
+						}catch(\ebi\exception\NotFoundException $e){
+						}
+						$template_list[] = $info;
 					}
-					try{
-						$summary = trim($xml->find_get('summary')->value());
-						$info->document($summary);
-					}catch(\ebi\exception\NotFoundException $e){
-					}
-					$template_list[] = $info;
 				}catch(\ebi\exception\NotFoundException $e){
 				}
 			}
