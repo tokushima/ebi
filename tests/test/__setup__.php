@@ -1,2 +1,2 @@
 <?php
-\ebi\Exceptions::clear();
+//\ebi\Exceptions::clear();
