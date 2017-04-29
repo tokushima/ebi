@@ -342,6 +342,8 @@ class Dt{
 							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
 						}
 						$info->set_opt('short_name',$short_name);
+						$info->set_opt('has_mail',(boolean)preg_match('/Dt::find_mail/',$src));
+						
 						$test_list[$info->name()] = $info;
 					}
 				}

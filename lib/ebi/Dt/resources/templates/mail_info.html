@@ -25,7 +25,9 @@
 		<tr>
 			<th>Version</th>
 			<td>
-				{$mail_info.version()}
+				<a href="{$t.package_method_url('index')}?version={$mail_info.version()}">
+					{$mail_info.version()}
+				</a>
 			</td>
 		</tr>		
 		
