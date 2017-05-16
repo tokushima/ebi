@@ -329,12 +329,13 @@ class Dt{
 					
 					if(empty($entry) || preg_match('/url\(([\'\"])'.preg_quote($entry,'/').'\\1/',$src)){
 						$pos = strpos($src,'*/');
-							
+						
 						if($pos === false){
 							$info = new \ebi\Dt\DocInfo();
 							$info->name($name);
 						}else{
-							$info = \ebi\Dt\DocInfo::parse($name,$src,$pos+2);
+							$start_pos = strpos($src,'/**');
+							$info = \ebi\Dt\DocInfo::parse($name,substr($src,$start_pos+2,$pos-$start_pos));
 						}
 						$short_name = substr($info->name(),0,-4);
 						
@@ -384,7 +385,8 @@ class Dt{
 			$info = new \ebi\Dt\DocInfo();
 			$info->name($req_path);
 		}else{
-			$info = \ebi\Dt\DocInfo::parse($req_path,$src,$pos+2);
+			$start_pos = strpos($src,'/**');
+			$info = \ebi\Dt\DocInfo::parse($req_path,substr($src,$start_pos+2,$pos-$start_pos));
 		}
 		while($path != $testdir){
 			$path = dirname($path).'/';
