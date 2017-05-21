@@ -17,6 +17,11 @@
 	<td style="word-break: break-all;">
 		{$info.summary()}
 	</td>
+	<td style="width: 30px; text-align: right;">
+		<rt:if param="{$info.opt('has_mail')}">
+			<span class="glyphicon glyphicon-envelope"></span>
+		</rt:if>
+	</td>
 </tr>
 </tbody>
 </table>

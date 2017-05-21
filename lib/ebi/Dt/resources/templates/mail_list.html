@@ -35,8 +35,10 @@
 		</a>
 	</td>
 	
-	<td class="t1s">
-		{$info.version()}
+	<td class="t1s" style="opacity: 0.6">
+		<a href="{$t.package_method_url('index')}?version={$info.version()}">
+			{$info.version()}
+		</a>
 	</td>
 	
 	<rt:if param="{$is_test}">

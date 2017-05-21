@@ -254,7 +254,9 @@
 					{$info.name()}				
 				</td>
 				<td class="t1">
-					{$info.version()}				
+					<a href="{$t.package_method_url('index')}?version={$info.version()}">
+						{$info.version()}
+					</a>
 				</td>
 				<td class="t3">
 					{$t.html($info.document())}
