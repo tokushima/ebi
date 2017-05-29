@@ -400,6 +400,11 @@ class Xml implements \IteratorAggregate{
 		}
 		$rtn = str_replace($c,'',$rtn);
 		
+		if(preg_match_all('/\s+<!\[CDATA\[(.+)\]\]>\s+/',$rtn,$m)){
+			foreach($m[0] as $s){
+				$rtn = str_replace($s,trim($s),$rtn);
+			}
+		}
 		return $rtn;
 	}
 	/**
