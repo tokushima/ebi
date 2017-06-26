@@ -80,5 +80,14 @@ class Code{
 			$r = $r.$codebase[mt_rand(0,$cl)];
 		}
 		return $r;
-	}	
+	}
+	
+	/**
+	 * token68
+	 * @param integer $length
+	 * @return string
+	 */
+	public static function token68($length){
+		return self::rand('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~+/',$length);
+	}
 }

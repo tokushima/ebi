@@ -23,6 +23,7 @@ class Browser{
 	
 	private $user;
 	private $password;
+	private $bearer_token;
 	
 	private $raw;
 	
@@ -71,6 +72,14 @@ class Browser{
 		$this->password = $password;
 		return $this;
 	}
+	/**
+	 * Bearer token
+	 * @param string $token
+	 */
+	public function bearer_token($token){
+		$this->bearer_token = $token;
+	}
+	
 	public function __toString(){
 		return $this->body();
 	}
@@ -379,6 +388,8 @@ class Browser{
 		}
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
+		}else if(!empty($this->bearer_token)){
+			$this->request_header['Authorization'] = 'Bearer '.$this->bearer_token;
 		}
 		if(!isset($this->request_header['Expect'])){
 			$this->request_header['Expect'] = null;
