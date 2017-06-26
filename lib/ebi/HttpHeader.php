@@ -125,14 +125,4 @@ class HttpHeader{
 			self::send('Access-Control-Allow-Credentials','true');
 		}
 	}
-	/**
-	 * Bearer tokenの取得
-	 * @return string
-	 */
-	public static function bearer_token(){
-		if(isset($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/((?i)Bearer(?-i)(\s)+)(.*)/',$_SERVER['HTTP_AUTHORIZATION'],$m)){
-			return trim($m[3]);
-		}
-		return null;
-	}
 }
