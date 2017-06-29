@@ -80,5 +80,5 @@ class Code{
 			$r = $r.$codebase[mt_rand(0,$cl)];
 		}
 		return $r;
-	}	
+	}
 }

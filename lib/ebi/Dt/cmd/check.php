@@ -5,7 +5,7 @@
 
 $failure = ['db'=>0,'entry'=>0,'mail'=>0];
 
-\cmdman\Std::println_info('Database:');
+\cmdman\Std::println_info('Database (Check Existence):');
 
 foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 	$class_name = \ebi\Util::get_class_name($class_info['class']);
@@ -24,7 +24,7 @@ foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 }
 
 \cmdman\Std::println();
-\cmdman\Std::println_info('Entry (mapping):');
+\cmdman\Std::println_info('Entry (Check mapping):');
 
 foreach(\ebi\Util::ls(getcwd()) as $f){
 	$src = file_get_contents($f->getPathname());
@@ -51,7 +51,7 @@ foreach(\ebi\Util::ls(getcwd()) as $f){
 
 
 \cmdman\Std::println();
-\cmdman\Std::println_info('Config:');
+\cmdman\Std::println_info('Config (Check the definition):');
 
 foreach(\ebi\Dt::classes() as $info){
 	$class_info = \ebi\Dt\Man::class_info($info['class']);
@@ -61,7 +61,7 @@ foreach(\ebi\Dt::classes() as $info){
 			$key = '\\'.$class_info->name().'@'.$info->name();
 			
 			if($info->opt('def')){
-				cmdman\Std::println_success('x '.$key);
+				cmdman\Std::println_success('o '.$key);
 			}else{
 				cmdman\Std::println_info('- '.$key);
 			}
@@ -70,7 +70,7 @@ foreach(\ebi\Dt::classes() as $info){
 }
 
 \cmdman\Std::println();
-\cmdman\Std::println_info('Mail:');
+\cmdman\Std::println_info('Mail (Check version):');
 
 
 $mail_template = \ebi\Dt\Man::mail_template_list();
