@@ -282,7 +282,7 @@ class Request implements \IteratorAggregate{
 		}else if(is_file($file)){
 			$this->files[$key] = [
 				'name'=>basename($file),
-				'tmp_name'=>$filepath,
+				'tmp_name'=>$file,
 				'size'=>filesize($file),
 			];
 		}
