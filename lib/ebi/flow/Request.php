@@ -214,6 +214,17 @@ class Request extends \ebi\Request{
 		return ($this->in_sessions($this->login_id) !== null);
 	}
 	
+	/**
+	 * 	User情報がセットされている場合のみ、do_loginを使わず強制的にログインしていることにする
+	 */
+	protected function force_user_login(){
+		if(empty($this->user())){
+			throw new \ebi\exception\UnauthorizedException();
+		}
+		$this->sessions($this->login_id,$this->login_id);
+		session_regenerate_id(true);
+	}
+	
 	private function after_user_login(){
 		$this->sessions($this->login_id,$this->login_id);
 		session_regenerate_id(true);
