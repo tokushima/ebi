@@ -65,7 +65,7 @@ class Man{
 				if(strpos($v,'://') !== false){
 					$see[$v] = ['type'=>'url','url'=>$v];
 				}else if(strpos($v,'::') !== false){
-					list($class,$method) = explode('::',2);
+					list($class,$method) = explode('::',$v,2);
 					$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
 				}else if(substr($v,-1) != ':'){
 					$see[$v] = ['type'=>'class','class'=>$class];
