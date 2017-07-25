@@ -68,10 +68,11 @@ class Man{
 					list($class,$method) = explode('::',$v,2);
 					$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
 				}else if(substr($v,-1) != ':'){
-					$see[$v] = ['type'=>'class','class'=>$class];
+					$see[$v] = ['type'=>'class','class'=>$v];
 				}
 			}
 		}
+		$info->set_opt('see_list',$see);
 		
 		$methods = $static_methods = [];
 		foreach($r->getMethods() as $method){
@@ -270,6 +271,23 @@ class Man{
 			if(!$info->is_version()){
 				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}
+			$see = [];
+			if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
+				foreach($m[1] as $v){
+					$v = trim($v);
+			
+					if(strpos($v,'://') !== false){
+						$see[$v] = ['type'=>'url','url'=>$v];
+					}else if(strpos($v,'::') !== false){
+						list($class,$method) = explode('::',$v,2);
+						$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
+					}else if(substr($v,-1) != ':'){
+						$see[$v] = ['type'=>'class','class'=>$v];
+					}
+				}
+			}
+			$info->set_opt('see_list',$see);
+			
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			

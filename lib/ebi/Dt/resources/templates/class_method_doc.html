@@ -191,6 +191,30 @@
 	</div>
 </rt:if>
 
+<rt:if param="{$method_info.opt('see_list')}">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">See</h3>
+		</div>
+		<div class="panel-body">
+			<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-bordered table-striped panel-body-table">
+			<tr>
+				<td>
+					<rt:if param="{$t.eq($see['type'],'url')}">
+						<a href="{$see['url']}">{$see['url']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'method')}">
+						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'class')}">
+						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
+					</rt:if>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</rt:if>
 
 </rt:block>
 
