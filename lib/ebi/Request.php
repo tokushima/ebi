@@ -33,7 +33,7 @@ class Request implements \IteratorAggregate{
 						}else{
 							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));
 							$eval = 'if(isset($files[\'tmp_name\']'.$ks.') && !empty($files[\'tmp_name\']'.$ks.')){ ';
-								foreach(['name','type','tmp_name','tmp_name','size'] as $k){
+								foreach(['name','tmp_name','size'] as $k){
 									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.';';
 								}
 							eval($eval.'}');
@@ -270,6 +270,22 @@ class Request implements \IteratorAggregate{
 	 */
 	public function vars($key,$value){
 		$this->vars[$key] = $value;
+	}
+	/**
+	 * ファイルの設定
+	 * @param string $key
+	 * @param mixed $file
+	 */
+	public function file_vars($key,$file){
+		if(is_array($file)){
+			$this->files[$key] = $file;
+		}else if(is_file($file)){
+			$this->files[$key] = [
+				'name'=>basename($file),
+				'tmp_name'=>$file,
+				'size'=>filesize($file),
+			];
+		}
 	}
 	/**
 	 * 変数の取得
