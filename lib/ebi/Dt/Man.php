@@ -470,12 +470,12 @@ class Man{
 			if(is_file($ref->getDeclaringClass()->getFileName())){
 				$src = self::method_src($ref);
 				$vars = ['$this'=>$class];
-	
+				
 				foreach($ref->getParameters() as $param){
-					\ebi\Log::trace($param->getName());
-						
-					if($param->getType() !== null){
-						$vars['$'.$param->getName()] = $param->getType()->getName();
+					if($param->getType() instanceof \ReflectionNamedType){
+						if(class_exists($param->getType()->getName())){
+							$vars['$'.$param->getName()] = $param->getType()->getName();
+						}
 					}
 				}
 				if(preg_match_all('/(\$\w+)\s*=\s*new\s+([\\\\\w]+)/',$src,$m)){
