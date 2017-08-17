@@ -353,6 +353,13 @@ class Man{
 			if($detail){
 				$mail_template_list = self::mail_template_list();
 				
+				$get_class_name_func = function($class_name){
+					if(class_exists($class_name)){
+						$r = new \ReflectionClass($class_name);
+						return $r->getName();
+					}
+					return false;
+				};
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
 					
@@ -361,12 +368,36 @@ class Man{
 						$use_method_src = self::method_src($ref);
 						$use_method_doc = self::trim_doc($ref->getDocComment());
 						
+						// TODO 
 						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
 							foreach($m[1] as $k => $n){
-								$throws[$n] = [$n,$m[2][$k]];
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(isset($throws[$class_name])){
+										$throws[$class_name] = [$class_name,$throws[$class_name][1].trim(PHP_EOL.$m[2][$k])];
+									}else{
+										$throws[$class_name] = [$class_name,$m[2][$k]];
+									}
+								}
 							}
 						}
-						
+						if(preg_match_all("/throw new([\w\\\\]+)/",$use_method_doc,$m)){
+							foreach($m[1] as $k => $n){
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(!isset($throws[$class_name])){
+										$throws[$n] = [$n,''];
+									}
+								}
+							}
+						}
+						if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$use_method_doc,$m)){
+							foreach($m[1] as $k => $n){
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(array_key_exists($class_name,$throws)){
+										unset($throws[$class_name]);
+									}
+								}
+							}
+						}
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
@@ -388,15 +419,11 @@ class Man{
 						$ref = new \ReflectionClass($n);
 						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
 						
-						if(!isset($throw_param[$n])){
-							$throw_param[$n] = new \ebi\Dt\DocParam(
-								$ref->getName(),
-								$ref->getName(),
-								$doc
-							);
-						}else{
-							$throw_param[$n]->summary($throw_param[$n]->summary().PHP_EOL.$doc);
-						}
+						$throw_param[$n] = new \ebi\Dt\DocParam(
+							$ref->getName(),
+							$ref->getName(),
+							trim($doc)
+						);
 					}catch(\ReflectionException $e){
 					}
 				}
