@@ -466,6 +466,13 @@ class Man{
 				$src = self::method_src($ref);
 				$vars = ['$this'=>$class];
 	
+				foreach($ref->getParameters() as $param){
+					\ebi\Log::trace($param->getName());
+						
+					if($param->getType() !== null){
+						$vars['$'.$param->getName()] = $param->getType()->getName();
+					}
+				}
 				if(preg_match_all('/(\$\w+)\s*=\s*new\s+([\\\\\w]+)/',$src,$m)){
 					foreach($m[1] as $k => $v){
 						$vars[$v] = $m[2][$k];
