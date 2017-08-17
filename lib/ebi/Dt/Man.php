@@ -387,11 +387,16 @@ class Man{
 					try{
 						$ref = new \ReflectionClass($n);
 						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
-						$throw_param[$n] = new \ebi\Dt\DocParam(
-							$ref->getName(),
-							$ref->getName(),
-							$doc
-						);
+						
+						if(!isset($throw_param[$n])){
+							$throw_param[$n] = new \ebi\Dt\DocParam(
+								$ref->getName(),
+								$ref->getName(),
+								$doc
+							);
+						}else{
+							$throw_param[$n]->summary($throw_param[$n]->summary().PHP_EOL.$doc);
+						}
 					}catch(\ReflectionException $e){
 					}
 				}
