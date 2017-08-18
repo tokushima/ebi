@@ -505,9 +505,11 @@ class Man{
 				$vars = ['$this'=>$class];
 				
 				foreach($ref->getParameters() as $param){
-					if($param->getType() instanceof \ReflectionNamedType){
-						if(class_exists($param->getType()->getName())){
-							$vars['$'.$param->getName()] = $param->getType()->getName();
+					if($param->hasType()){
+						$type_class = (string)$param->getType();
+				
+						if(class_exists($type_class)){
+							$vars['$'.$param->getName()] = $type_class;
 						}
 					}
 				}
