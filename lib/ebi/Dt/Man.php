@@ -349,7 +349,8 @@ class Man{
 				$use_method_list = [$method_fullname];
 			}
 			$use_method_list = array_unique($use_method_list);
-			
+			arsort($use_method_list);
+						
 			if($detail){
 				$mail_template_list = self::mail_template_list();
 				
@@ -368,7 +369,6 @@ class Man{
 						$use_method_src = self::method_src($ref);
 						$use_method_doc = self::trim_doc($ref->getDocComment());
 						
-						// TODO 
 						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
 							foreach($m[1] as $k => $n){
 								if(false !== ($class_name = $get_class_name_func($n))){
@@ -380,7 +380,7 @@ class Man{
 								}
 							}
 						}
-						if(preg_match_all("/throw new([\w\\\\]+)/",$use_method_doc,$m)){
+						if(preg_match_all("/throw new\s([\w\\\\]+)/",$use_method_src,$m)){
 							foreach($m[1] as $k => $n){
 								if(false !== ($class_name = $get_class_name_func($n))){
 									if(!isset($throws[$class_name])){
@@ -389,7 +389,7 @@ class Man{
 								}
 							}
 						}
-						if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$use_method_doc,$m)){
+						if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$use_method_src,$m)){
 							foreach($m[1] as $k => $n){
 								if(false !== ($class_name = $get_class_name_func($n))){
 									if(array_key_exists($class_name,$throws)){
