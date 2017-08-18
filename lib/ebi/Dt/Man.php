@@ -116,7 +116,6 @@ class Man{
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
 				
-				
 				if($name[0] != '_' && !$prop->isStatic()){
 					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
@@ -138,7 +137,6 @@ class Man{
 			}
 		}
 		$info->set_opt('properties',$properties);
-
 		
 		$config_list = [];		
 		foreach([
@@ -163,7 +161,6 @@ class Man{
 		}
 		ksort($config_list);
 		$info->set_opt('config_list',$config_list);
-		
 		
 		$call_plugins = [];
 		foreach([
@@ -237,7 +234,7 @@ class Man{
 	 */
 	public static function method_info($class,$method,$detail=false,$deep=false){
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
-		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
+		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
 		
 		if(is_file($ref->getDeclaringClass()->getFileName())){
@@ -256,8 +253,7 @@ class Man{
 				}
 			}
 			$document = $document.self::get_method_document($ref);
-			$src = self::method_src($ref);
-			
+			$src = self::method_src($ref);			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -287,7 +283,6 @@ class Man{
 				}
 			}
 			$info->set_opt('see_list',$see);
-			
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			
