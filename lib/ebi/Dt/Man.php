@@ -349,18 +349,24 @@ class Man{
 				$use_method_list = [$method_fullname];
 			}
 			$use_method_list = array_unique($use_method_list);
-			arsort($use_method_list);
-						
+			krsort($use_method_list);
+			
 			if($detail){
 				$mail_template_list = self::mail_template_list();
 				
 				$get_class_name_func = function($class_name){
 					if(class_exists($class_name)){
 						$r = new \ReflectionClass($class_name);
-						return $r->getName();
+						$name = $r->getName();
+						
+						if(substr($name,0,1) !== '\\'){
+							$name = '\\'.$name;
+						}
+						return $name;
 					}
 					return false;
 				};
+				
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
 					
