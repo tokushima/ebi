@@ -396,7 +396,6 @@ class Util{
 	/**
 	 * クラス名
 	 * @param string $class_name
-	 * @throws \InvalidArgumentException
 	 * @return string
 	 */
 	public static function get_class_name($class_name){
@@ -406,7 +405,7 @@ class Util{
 		$class_name = str_replace('.','\\',$class_name);
 	
 		if(!class_exists($class_name)){
-			throw new \InvalidArgumentException('Class `'.$class_name.'` not found');
+			throw new \ebi\exception\InvalidArgumentException('Class `'.$class_name.'` not found');
 		}
 		$r = new \ReflectionClass($class_name);
 		return $r->getName();

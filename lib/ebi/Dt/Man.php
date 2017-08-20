@@ -116,7 +116,6 @@ class Man{
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
 				
-				
 				if($name[0] != '_' && !$prop->isStatic()){
 					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
@@ -138,7 +137,6 @@ class Man{
 			}
 		}
 		$info->set_opt('properties',$properties);
-
 		
 		$config_list = [];		
 		foreach([
@@ -163,7 +161,6 @@ class Man{
 		}
 		ksort($config_list);
 		$info->set_opt('config_list',$config_list);
-		
 		
 		$call_plugins = [];
 		foreach([
@@ -237,7 +234,7 @@ class Man{
 	 */
 	public static function method_info($class,$method,$detail=false,$deep=false){
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
-		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf('\ebi\flow\Request');
+		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
 		
 		if(is_file($ref->getDeclaringClass()->getFileName())){
@@ -256,8 +253,7 @@ class Man{
 				}
 			}
 			$document = $document.self::get_method_document($ref);
-			$src = self::method_src($ref);
-			
+			$src = self::method_src($ref);			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -287,7 +283,6 @@ class Man{
 				}
 			}
 			$info->set_opt('see_list',$see);
-			
 			$info->set_opt('class',$ref->getDeclaringClass()->getName());
 			$info->set_opt('method',$ref->getName());
 			
@@ -349,9 +344,23 @@ class Man{
 				$use_method_list = [$method_fullname];
 			}
 			$use_method_list = array_unique($use_method_list);
+			krsort($use_method_list);
 			
 			if($detail){
 				$mail_template_list = self::mail_template_list();
+				
+				$get_class_name_func = function($class_name){
+					if(class_exists($class_name)){
+						$r = new \ReflectionClass($class_name);
+						$name = $r->getName();
+						
+						if(substr($name,0,1) !== '\\'){
+							$name = '\\'.$name;
+						}
+						return $name;
+					}
+					return false;
+				};
 				
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
@@ -363,10 +372,33 @@ class Man{
 						
 						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
 							foreach($m[1] as $k => $n){
-								$throws[$n] = [$n,$m[2][$k]];
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(isset($throws[$class_name])){
+										$throws[$class_name] = [$class_name,$throws[$class_name][1].trim(PHP_EOL.$m[2][$k])];
+									}else{
+										$throws[$class_name] = [$class_name,$m[2][$k]];
+									}
+								}
 							}
 						}
-						
+						if(preg_match_all("/throw new\s([\w\\\\]+)/",$use_method_src,$m)){
+							foreach($m[1] as $k => $n){
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(!isset($throws[$class_name])){
+										$throws[$n] = [$n,''];
+									}
+								}
+							}
+						}
+						if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$use_method_src,$m)){
+							foreach($m[1] as $k => $n){
+								if(false !== ($class_name = $get_class_name_func($n))){
+									if(array_key_exists($class_name,$throws)){
+										unset($throws[$class_name]);
+									}
+								}
+							}
+						}
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
@@ -387,10 +419,11 @@ class Man{
 					try{
 						$ref = new \ReflectionClass($n);
 						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
+						
 						$throw_param[$n] = new \ebi\Dt\DocParam(
 							$ref->getName(),
 							$ref->getName(),
-							$doc
+							trim($doc)
 						);
 					}catch(\ReflectionException $e){
 					}
@@ -465,7 +498,16 @@ class Man{
 			if(is_file($ref->getDeclaringClass()->getFileName())){
 				$src = self::method_src($ref);
 				$vars = ['$this'=>$class];
-	
+				
+				foreach($ref->getParameters() as $param){
+					if($param->hasType()){
+						$type_class = (string)$param->getType();
+				
+						if(class_exists($type_class)){
+							$vars['$'.$param->getName()] = $type_class;
+						}
+					}
+				}
 				if(preg_match_all('/(\$\w+)\s*=\s*new\s+([\\\\\w]+)/',$src,$m)){
 					foreach($m[1] as $k => $v){
 						$vars[$v] = $m[2][$k];
