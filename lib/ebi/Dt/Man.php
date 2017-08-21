@@ -110,8 +110,9 @@ class Man{
 		$info->set_opt('methods',$methods);
 		
 		$properties = [];
-		$anon = \ebi\Annotation::get_class(self::get_class_name($class),'var','summary');
+		$anon = \ebi\Annotation::get_class($info->name(),'var','summary');
 		$is_obj = $r->isSubclassOf(\ebi\Object::class);
+		
 		foreach($r->getProperties() as $prop){
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
