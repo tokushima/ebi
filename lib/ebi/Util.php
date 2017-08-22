@@ -11,7 +11,7 @@ class Util{
 	 */
 	public static function file_read($filename){
 		if(!is_readable($filename) || !is_file($filename)){
-			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 		return file_get_contents($filename);
 	}
@@ -50,13 +50,13 @@ class Util{
 	 */
 	public static function file_write($filename,$src=null,$lock=true){
 		if(empty($filename)){
-			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 		$b = is_file($filename);
 		self::mkdir(dirname($filename));
 		
 		if(false === file_put_contents($filename,(string)$src,($lock ? LOCK_EX : 0))){
-			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 		if(!$b){
 			chmod($filename,0777);
@@ -72,7 +72,7 @@ class Util{
 		self::mkdir(dirname($filename));
 		
 		if(false === file_put_contents($filename,(string)$src,FILE_APPEND|(($lock) ? LOCK_EX : 0))){
-			throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$filename));
+			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 	}
 	/**
@@ -95,7 +95,7 @@ class Util{
 					}
 				}
 			}catch(\ErrorException $e){
-				throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
+				throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$source));
 			}
 		}
 		return $bool;
@@ -110,7 +110,7 @@ class Util{
 			self::mkdir(dirname($dest));
 			return rename($source,$dest);
 		}
-		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
+		throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * 削除
@@ -170,7 +170,7 @@ class Util{
 			copy($source,$dest);
 			return;
 		}
-		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$source));
+		throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$source));
 	}
 	/**
 	 * ディレクトリ名の一覧
@@ -338,6 +338,7 @@ class Util{
 	 * @param mixed $date
 	 * @return number
 	 * @see http://jp2.php.net/manual/ja/datetime.formats.relative.php
+	 * @throws \ebi\exception\InvalidArgumentException 日付フォーマットが異常
 	 */
 	public static function add_date($time,$date=null){
 		if(!isset($date)){
@@ -405,7 +406,7 @@ class Util{
 		$class_name = str_replace('.','\\',$class_name);
 	
 		if(!class_exists($class_name)){
-			throw new \ebi\exception\InvalidArgumentException('Class `'.$class_name.'` not found');
+			throw new \ebi\exception\ClassNotFoundException('Class `'.$class_name.'` not found');
 		}
 		$r = new \ReflectionClass($class_name);
 		return $r->getName();
