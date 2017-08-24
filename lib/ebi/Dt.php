@@ -102,7 +102,7 @@ class Dt{
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
-						$m['login'] = ($this->get_login_annotation($m['class'],$m['method']) === null) ? false : true;
+						list($m['login']) = $this->get_login_annotation($m['class'],$m['method']);
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -145,11 +145,12 @@ class Dt{
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
+				list($login,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
 				
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
-				$info->set_opt('login',$this->get_login_annotation($m['class'],$m['method']));
+				$info->set_opt('user_model',$user_model);
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
 				
@@ -205,14 +206,16 @@ class Dt{
 	
 	private function get_login_annotation($class,$method){		
 		$class = \ebi\Util::get_class_name($class);
-		
-		if($method != 'do_login' || !($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){
-			$login_anon = \ebi\Annotation::get_class($class,'login');
-			if(isset($login_anon)){
-				return $login_anon['type'];
+		$login_anon = \ebi\Annotation::get_class($class,'login');
+
+		if(isset($login_anon)){
+			if($method == 'do_login' && !($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){	
+				return [false,$login_anon['type']];
+			}else{
+				return [true,$login_anon['type']];
 			}
 		}
-		return null;
+		return [false,null];
 	}
 	
 	/**
