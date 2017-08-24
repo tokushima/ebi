@@ -209,7 +209,7 @@ class Dt{
 		$login_anon = \ebi\Annotation::get_class($class,'login');
 
 		if(isset($login_anon)){
-			if($method == 'do_login' && !($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){	
+			if($method == 'do_login' && ($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){	
 				return [false,$login_anon['type']];
 			}else{
 				return [true,$login_anon['type']];
