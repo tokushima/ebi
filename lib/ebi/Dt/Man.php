@@ -110,8 +110,9 @@ class Man{
 		$info->set_opt('methods',$methods);
 		
 		$properties = [];
-		$anon = \ebi\Annotation::get_class(self::get_class_name($class),'var','summary');
+		$anon = \ebi\Annotation::get_class($info->name(),'var','summary');
 		$is_obj = $r->isSubclassOf(\ebi\Object::class);
+		
 		foreach($r->getProperties() as $prop){
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
@@ -482,7 +483,7 @@ class Man{
 		}
 		return '';
 	}
-	private static function trim_doc($doc){
+	public static function trim_doc($doc){
 		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){

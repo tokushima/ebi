@@ -61,10 +61,13 @@ class Dt{
 		
 		foreach($patterns as $k => $m){
 			foreach([
-				'deprecated'=>null,
+				'deprecated'=>false,
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
+				'version'=>null,
+				'error'=>null,
+				'login'=>false,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -85,7 +88,7 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-					
+						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
 						}					
@@ -99,6 +102,7 @@ class Dt{
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
+						list($m['login']) = $this->get_login_annotation($m['class'],$m['method']);
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -141,11 +145,14 @@ class Dt{
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
+				list($login,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
 				
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
+				$info->set_opt('user_model',$user_model);
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
+				
 				
 				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
 					if(isset($m['deprecated'])){
@@ -165,12 +172,50 @@ class Dt{
 					}catch(\ReflectionException $e){
 					}
 				}
+				
+				// ログイン プラグイン情報をマージ
+				foreach($info->opt('plugins') as $plugin){
+					if($plugin->name() == 'login_condition'){
+						foreach($m['plugins'] as $map_plugin){
+							$plugin_class = \ebi\Util::get_class_name($map_plugin);							
+							$ref = new \ReflectionClass($plugin_class);
+							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
+							$info->document(trim($info->document().PHP_EOL.$document));
+							
+							foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
+								if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
+									$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+
+									foreach(['requests','contexts'] as $k){
+										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
+									}
+								}
+							}
+						}
+						break;
+					}
+				}
+				
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
 				return ['method_info'=>$info];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
+	}
+	
+	private function get_login_annotation($class,$method){		
+		$class = \ebi\Util::get_class_name($class);
+		$login_anon = \ebi\Annotation::get_class($class,'login');
+
+		if(isset($login_anon)){
+			if($method == 'do_login' && ($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){	
+				return [false,$login_anon['type']];
+			}else{
+				return [true,$login_anon['type']];
+			}
+		}
+		return [false,null];
 	}
 	
 	/**

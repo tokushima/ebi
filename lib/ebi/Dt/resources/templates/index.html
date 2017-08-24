@@ -7,6 +7,7 @@
 		<th style="width: 30px;"></th>
 		<th style="width: 250px;">Url</th>
 		<th style="width: 250px;">Name</th>	
+		<th style="width: 30px;"></th>		
 		<th>Version</th>
 		<th>Summary</th>
 		<th style="width: 50px;"></th>
@@ -49,7 +50,12 @@
 				{$map['name']}
 			</rt:if>
 		</td>
-		<td style="opacity: 0.6">
+		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
+			<rt:if param="{$map['login']}">
+				<span class="glyphicon glyphicon-user"></span>
+			</rt:if>
+		</td>
+		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<a href="{$t.package_method_url('index')}?version={$map['version']}">
 				{$map['version']}
 			</a>
@@ -105,8 +111,9 @@
 	
 	<hr />
 <div style="text-align: right;" class="text-muted">
-	<span class="glyphicon glyphicon-exclamation-sign"></span>Deprecated items
-	<span class="glyphicon glyphicon-ban-circle"></span>Deprecated Action
+	<span class="glyphicon glyphicon-user"></span> Login required
+	<span class="glyphicon glyphicon-exclamation-sign"></span> Deprecated items
+	<span class="glyphicon glyphicon-ban-circle"></span> Deprecated Action
 </div>
 	
 </rt:block>
