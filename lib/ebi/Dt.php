@@ -102,7 +102,7 @@ class Dt{
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
-						$m['login'] = ($this->get_login_annotation($m['class']) === null) ? false : true;
+						$m['login'] = ($this->get_login_annotation($m['class'],$m['method']) === null) ? false : true;
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -149,7 +149,7 @@ class Dt{
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
-				$info->set_opt('login',$this->get_login_annotation($m['class']));
+				$info->set_opt('login',$this->get_login_annotation($m['class'],$m['method']));
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
 				
@@ -171,6 +171,30 @@ class Dt{
 					}catch(\ReflectionException $e){
 					}
 				}
+				
+				// ログイン プラグイン情報をマージ
+				foreach($info->opt('plugins') as $plugin){
+					if($plugin->name() == 'login_condition'){
+						foreach($m['plugins'] as $map_plugin){
+							$plugin_class = \ebi\Util::get_class_name($map_plugin);							
+							$ref = new \ReflectionClass($plugin_class);
+							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
+							$info->document(trim($info->document().PHP_EOL.$document));
+							
+							foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
+								if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
+									$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+
+									foreach(['requests','contexts'] as $k){
+										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
+									}
+								}
+							}
+						}
+						break;
+					}
+				}
+				
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
 				return ['method_info'=>$info];
@@ -178,10 +202,15 @@ class Dt{
 		}
 		throw new \ebi\exception\NotFoundException();
 	}
-	private function get_login_annotation($class){
-		$login_anon = \ebi\Annotation::get_class(\ebi\Util::get_class_name($class),'login');
-		if(isset($login_anon)){
-			return $login_anon['type'];
+	
+	private function get_login_annotation($class,$method){		
+		$class = \ebi\Util::get_class_name($class);
+		
+		if($method != 'do_login' || !($class == \ebi\flow\Request::class || is_subclass_of($class, \ebi\flow\Request::class))){
+			$login_anon = \ebi\Annotation::get_class($class,'login');
+			if(isset($login_anon)){
+				return $login_anon['type'];
+			}
 		}
 		return null;
 	}

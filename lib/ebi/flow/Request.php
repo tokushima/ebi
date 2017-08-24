@@ -235,8 +235,8 @@ class Request extends \ebi\Request{
 		$this->call_object_plugin_funcs('after_login',$this);
 	}
 	/**
-	 * ログイン
-	 * ログインに必要なパラメータはPluginによる
+	 * ログイン処理
+	 * 
 	 * @automap
 	 * @version 1.2.11
 	 */
