@@ -61,10 +61,13 @@ class Dt{
 		
 		foreach($patterns as $k => $m){
 			foreach([
-				'deprecated'=>null,
+				'deprecated'=>false,
 				'mode'=>null,
 				'summary'=>null,
 				'template'=>null,
+				'version'=>null,
+				'error'=>null,
+				'login'=>false,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -85,7 +88,7 @@ class Dt{
 	
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
-					
+						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
 						}					
@@ -99,6 +102,7 @@ class Dt{
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
+						$m['login'] = ($this->get_login_annotation($m['class']) === null) ? false : true;
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -145,7 +149,9 @@ class Dt{
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
+				$info->set_opt('login',$this->get_login_annotation($m['class']));
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
+				
 				
 				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
 					if(isset($m['deprecated'])){
@@ -171,6 +177,13 @@ class Dt{
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
+	}
+	private function get_login_annotation($class){
+		$login_anon = \ebi\Annotation::get_class(\ebi\Util::get_class_name($class),'login');
+		if(isset($login_anon)){
+			return $login_anon['type'];
+		}
+		return null;
 	}
 	
 	/**

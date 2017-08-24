@@ -83,6 +83,19 @@
 			</td>
 		</tr>
 		
+		<tr>
+			<th>Login</th>
+			<td>
+				<rt:if param="{$method_info.opt('login')}">
+					<a href="{$t.package_method_url('class_doc',$method_info.opt('login'))}">
+						{$method_info.opt('login')}
+					</a>
+				<rt:else/>
+					-
+				</rt:if>
+			</td>
+		</tr>		
+		
 		<rt:if param="{$method_info.opt('deprecated')}">
 			<tr>
 				<th>Deprecated</th>
