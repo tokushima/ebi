@@ -21,10 +21,10 @@ class UserRememberMeDao extends \ebi\Dao{
 		/**
 		 * @param string $salt user_idのハッシュ用salt
 		 */
-		return sha1(\ebi\Conf::get('salt',static::class).$user_id);
+		return sha1(\ebi\Conf::get('salt',__FILE__).$user_id);
 	}
 	private static function name(\ebi\flow\Request $req,$k){
-		return '_'.md5($req->user_login_session_id().static::class.$k);
+		return '_'.md5($req->user_login_session_id().__FILE__.$k);
 	}
 	
 	/**
@@ -76,7 +76,7 @@ class UserRememberMeDao extends \ebi\Dao{
 		
 		if(!empty($token)){
 			if(rand(1,10) == 5){
-				foreach(static::find(Q::lt('expire_date',time()),new Paginator(10)) as $obj){
+				foreach(static::find(Q::lt('expire_date',time()),new \ebi\Paginator(10)) as $obj){
 					$obj->delete();
 				}
 			}
