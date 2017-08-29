@@ -174,8 +174,12 @@ class Archive{
 	 * @param string $outpath 展開先のファイルパス
 	 */
 	public static function untar($inpath,$outpath){
-		if(substr($outpath,-1) != '/') $outpath = $outpath.'/';
-		if(!is_dir($outpath)) Util::mkdir($outpath,0777);
+		if(substr($outpath,-1) != '/'){
+			$outpath = $outpath.'/';
+		}
+		if(!is_dir($outpath)){
+			\ebi\Util::mkdir($outpath,0777);
+		}
 		$fr = fopen($inpath,'rb');
 
 		while(!feof($fr)){
@@ -193,7 +197,7 @@ class Archive{
 						$size = base_convert($data['size'],8,10);
 						$cur = ftell($fr);
 						if(!is_dir(dirname($f))){
-							Util::mkdir(dirname($f),0777);
+							\ebi\Util::mkdir(dirname($f),0777);
 						}
 						$fw = fopen($f,'wb');
 							for($i=0;$i<=$size;$i+=512){
@@ -204,7 +208,9 @@ class Archive{
 						fseek($fr,$skip,SEEK_SET);
 						break;
 					case 5:
-						if(!is_dir($f)) Util::mkdir($f,0777);
+						if(!is_dir($f)){
+							\ebi\Util::mkdir($f,0777);
+						}
 						break;
 				}
 			}
@@ -234,7 +240,7 @@ class Archive{
 	public static function unzip($zipfile,$outpath){
 		$zip = new \ZipArchive();
 		if($zip->open($zipfile) !== true){
-			throw new \ebi\exception\InvalidArgumentException('failed to open stream');
+			throw new \ebi\exception\AccessDeniedException('failed to open stream');
 		}
 		if(substr($outpath,-1) != '/'){
 			$outpath = $outpath.'/';
