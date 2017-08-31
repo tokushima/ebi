@@ -474,7 +474,7 @@ class Flow{
 					 * @param string[] $val ログに記録しない例外クラス名
 					 */
 					if(!in_array(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
-						\ebi\Log::warning($e);
+						\ebi\Log::notice($e);
 					}				
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
