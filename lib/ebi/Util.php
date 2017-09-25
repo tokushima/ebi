@@ -468,6 +468,7 @@ class Util{
 	 * @param integer $width
 	 * @param integer $height
 	 * @param integer $quality
+	 * @return integer[] dst_width,dst_height
 	 */
 	public static function image_jpeg_resize($filename,$out_filename,$width,$height,$quality=100){
 		$src_image = imagecreatefromjpeg($filename);
@@ -495,6 +496,8 @@ class Util{
 		imagedestroy($src_image);
 		imagejpeg($dst_image,$out_filename,$quality);
 		imagedestroy($dst_image);
+		
+		return [$dst_width,$dst_height];
 	}
 	/**
 	 * 改行付きで出力
