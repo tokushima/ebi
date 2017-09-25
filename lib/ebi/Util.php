@@ -469,7 +469,7 @@ class Util{
 	 * @param integer $height
 	 * @param integer $quality
 	 */
-	public function image_jpeg_resize($filename,$out_filename,$width,$height,$quality=100){
+	public static function image_jpeg_resize($filename,$out_filename,$width,$height,$quality=100){
 		$src_image = imagecreatefromjpeg($filename);
 		$src_width = imagesx($src_image);
 		$src_height = imagesy($src_image);
@@ -495,5 +495,12 @@ class Util{
 		imagedestroy($src_image);
 		imagejpeg($dst_image,$out_filename,$quality);
 		imagedestroy($dst_image);
+	}
+	/**
+	 * 改行付きで出力
+	 * @param string $val
+	 */
+	public static function println($val){
+		print(((string)$val).PHP_EOL);
 	}
 }
