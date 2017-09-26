@@ -29,33 +29,32 @@ class Query{
 	 * @param boolean $array 配列を表現するか
 	 */
 	public static function expand_vars(&$vars,$value,$name=null,$array=true){
-		if(!is_array($vars)) $vars = [];
-		if($value instanceof \ebi\File){
-			$vars[] = [$name,$value];
-		}else{
-			$ar = [];
-			if(is_object($value)){
-				if($value instanceof \Traversable){
-					foreach($value as $k => $v){
-						$ar[$k] = $v;
-					}
-				}else{
-					foreach(get_object_vars($value) as $k => $v){
-						$ar[$k] = $v;
-					}
-				}
-				$value = $ar;
-			}
-			if(is_array($value)){
+		if(!is_array($vars)){
+		    $vars = [];
+		}
+		
+		$ar = [];
+		if(is_object($value)){
+			if($value instanceof \Traversable){
 				foreach($value as $k => $v){
-					self::expand_vars($vars,$v,(isset($name) ? $name.(($array) ? '['.$k.']' : '') : $k),$array);
+					$ar[$k] = $v;
 				}
-			}else if(!is_numeric($name)){
-				if(is_bool($value)){
-					$value = ($value) ? 'true' : 'false';
+			}else{
+				foreach(get_object_vars($value) as $k => $v){
+					$ar[$k] = $v;
 				}
-				$vars[] = [$name,(string)$value];
 			}
+			$value = $ar;
+		}
+		if(is_array($value)){
+			foreach($value as $k => $v){
+				self::expand_vars($vars,$v,(isset($name) ? $name.(($array) ? '['.$k.']' : '') : $k),$array);
+			}
+		}else if(!is_numeric($name)){
+			if(is_bool($value)){
+				$value = ($value) ? 'true' : 'false';
+			}
+			$vars[] = [$name,(string)$value];
 		}
 		return $vars;
 	}
