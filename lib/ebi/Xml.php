@@ -27,7 +27,7 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * (non-PHPdoc)
-	 * @see IteratorAggregate::getIterator()
+	 * @see \IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
 		return new \ArrayIterator($this->attr);

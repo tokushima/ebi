@@ -109,7 +109,7 @@ class Db implements \Iterator{
 	/**
 	 * 文を実行する準備を行う
 	 * @param string $sql
-	 * @return PDOStatement
+	 * @return \PDOStatement
 	 */
 	public function prepare($sql){
 		return $this->connection->prepare($sql);

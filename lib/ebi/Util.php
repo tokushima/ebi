@@ -78,7 +78,7 @@ class Util{
 	/**
 	 * フォルダを作成する
 	 * @param string $source 作成するフォルダパス
-	 * @param oct $permission
+	 * @param integer $permission
 	 */
 	public static function mkdir($source,$permission=0775){
 		$bool = true;
@@ -191,7 +191,7 @@ class Util{
 	 * @param string $directory  検索対象のファイルパス
 	 * @param boolean $recursive 階層を潜って取得するか
 	 * @param string $pattern 検索するパターンを表す文字列
-	 * @return RecursiveDirectoryIterator
+	 * @return \RecursiveDirectoryIterator
 	 */
 	public static function ls($directory,$recursive=false,$pattern=null){
 		$directory = self::parse_filename($directory);

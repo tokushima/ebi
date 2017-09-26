@@ -78,14 +78,14 @@ class Mail{
 	}
 	/**
 	 * Set message body
-	 * @param text $message
+	 * @param string $message
 	 */
 	public function message($message){
 		$this->message = $message;
 	}
 	/**
 	 * Set HTML message body
-	 * @param text $message
+	 * @param string $message
 	 */
 	public function html($message){
 		$this->html = $message;
@@ -105,7 +105,7 @@ class Mail{
 	
 	/**
 	 * Get message header
-	 * @return text
+	 * @return string
 	 */
 	public function message_header(){
 		$rtn = '';
@@ -272,7 +272,7 @@ class Mail{
 	/**
 	 * Get message 
 	 * @param boolean $eol
-	 * @return text
+	 * @return string
 	 */
 	public function manuscript($eol=true){
 		$pre = $this->eol;

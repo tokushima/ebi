@@ -82,7 +82,7 @@ class Man{
 				if(!in_array($method->getName(),$ignore)){
 					$bool = true;
 					
-					foreach([\ebi\Object::class,\ebi\Dao::class,\ebi\flow\Request::class,\ebi\Request::class] as $ignore_class){
+					foreach([\ebi\Obj::class,\ebi\Dao::class,\ebi\flow\Request::class,\ebi\Request::class] as $ignore_class){
 						if($r->getName() != $ignore_class && $method->getDeclaringClass()->getName() == $ignore_class){
 							$bool = false;
 						}
@@ -111,7 +111,7 @@ class Man{
 		
 		$properties = [];
 		$anon = \ebi\Annotation::get_class($info->name(),'var','summary');
-		$is_obj = $r->isSubclassOf(\ebi\Object::class);
+		$is_obj = $r->isSubclassOf(\ebi\Obj::class);
 		
 		foreach($r->getProperties() as $prop){
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){

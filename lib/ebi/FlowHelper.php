@@ -176,7 +176,7 @@ class FlowHelper{
 	/**
 	 * ゼロを桁数分前に埋める
 	 * @param integer $int 対象の値
-	 * @param $dig 0埋めする桁数
+	 * @param integer $dig 0埋めする桁数
 	 * @return string
 	 */
 	public function zerofill($int,$dig=0){
@@ -442,7 +442,7 @@ class FlowHelper{
 	 * 引数が空ではないか
 	 * 一つまたは複数の値で一つでも空でなければtrue
 	 * @param mixed $arg
-	 * @return bolean
+	 * @return boolean
 	 */
 	public function has($arg){
 		foreach(func_get_args() as $arg){

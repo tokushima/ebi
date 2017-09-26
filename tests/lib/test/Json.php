@@ -7,7 +7,7 @@ namespace test;
  * @author tokushima
  *
  */
-class Json extends \ebi\Object{
+class Json extends \ebi\Obj{
 	protected $abc = 123;
 	protected $def = 'aaa';
 	protected $ghi = 100;

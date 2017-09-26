@@ -12,7 +12,7 @@ namespace test\object;
  * 
  * 
  */
-class Call extends \ebi\Object{
+class Call extends \ebi\Obj{
 	public $aaa;
 	public $bbb;
 	public $ccc;

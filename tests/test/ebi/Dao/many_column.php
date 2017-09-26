@@ -1,5 +1,4 @@
 <?php
-use \ebi\Q;
 \test\db\ManyColumn::create_table();
 \test\db\ManyColumn::find_delete();
 

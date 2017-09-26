@@ -8,7 +8,7 @@ class TemplateParts{
 	/**
 	 * @plugin ebi.Temaplte
 	 * @param string $src
-	 * @return Ambigous <string, string, mixed>|string
+	 * @return string
 	 */
 	public function before_template($src){
 		/**

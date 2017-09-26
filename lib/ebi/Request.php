@@ -112,7 +112,7 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * varsを返す
-	 * @see IteratorAggregate::getIterator()
+	 * @see \IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
 		return new \ArrayIterator($this->vars);

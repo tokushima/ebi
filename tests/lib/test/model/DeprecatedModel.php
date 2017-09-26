@@ -10,7 +10,7 @@ namespace test\model;
  * @author tokushima
  *
  */
-class DeprecatedModel extends \ebi\Object{
+class DeprecatedModel extends \ebi\Obj{
 	protected $aaa;
 	protected $bbb;
 	protected $ccc;

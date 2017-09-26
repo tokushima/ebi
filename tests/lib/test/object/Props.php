@@ -5,7 +5,7 @@ namespace test\object;
  * @author tokushima
  *
  */
-class Props extends \ebi\Object{
+class Props extends \ebi\Obj{
 	public $aaa = 1;
 	protected $bbb = 2;
 	private $ccc = 3;
