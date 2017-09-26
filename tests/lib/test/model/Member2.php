@@ -1,7 +1,7 @@
 <?php
 namespace test\model;
 
-class Member2 extends \ebi\Object{
+class Member2 extends \ebi\Obj{
 	protected $id;
 	protected $name;
 }

@@ -7,7 +7,7 @@ namespace ebi\Dt;
  * @var string $type
  * @var string $summary
  */
-class DocParam extends \ebi\Object{
+class DocParam extends \ebi\Obj{
 	protected $name;
 	protected $type;
 	protected $summary;

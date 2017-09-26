@@ -1,6 +1,5 @@
 <?php
 namespace ebi;
-use ebi\exception\EmptyException;
 /**
  * Where query
  * @author tokushima

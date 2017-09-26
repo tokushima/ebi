@@ -103,7 +103,7 @@ class AutoAction{
 	/**
 	 * @automap
 	 * @param string $a
-	 * @param strgin $b
+	 * @param string $b
 	 * @param string $c
 	 */
 	public function jkl($a,$b,$c=null){

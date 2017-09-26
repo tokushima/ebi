@@ -1,6 +1,5 @@
 <?php
 namespace test\db;
-use ebi\Q;
 /**
  * @var serial $id
  * @var boolean $value

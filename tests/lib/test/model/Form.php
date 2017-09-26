@@ -1,7 +1,7 @@
 <?php
 namespace test\model;
 
-class Form extends \ebi\Object{
+class Form extends \ebi\Obj{
 	protected $id;
 	protected $value;
 	protected $category_id;

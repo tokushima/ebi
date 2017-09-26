@@ -20,7 +20,7 @@ namespace test\object;
  * @var text $pp
  * @var number $qq @["decimal_places"=>2]		
 */
-class Types extends \ebi\Object{
+class Types extends \ebi\Obj{
 	protected $aa;
 	protected $aaa;
 	protected $bb;

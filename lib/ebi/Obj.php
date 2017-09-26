@@ -4,7 +4,7 @@ namespace ebi;
  * 基底クラス
  * @author tokushima
  */
-class Object implements \IteratorAggregate{
+class Obj implements \IteratorAggregate{
 	private static $_m = [];
 	protected $_;
 
@@ -27,7 +27,7 @@ class Object implements \IteratorAggregate{
 	}
 	/**
 	 * プロパティの一覧を取得する、アノテーション hash=false のものは含まない
-	 * @see IteratorAggregate::getIterator()
+	 * @see \IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
 		$r = [];

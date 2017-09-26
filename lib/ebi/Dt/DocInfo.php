@@ -10,7 +10,7 @@ namespace ebi\Dt;
  * @author tokushima
  *
  */
-class DocInfo extends \ebi\Object{
+class DocInfo extends \ebi\Obj{
 	protected $name;
 	protected $document;
 	protected $params = [];

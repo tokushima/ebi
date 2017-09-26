@@ -6,7 +6,7 @@ namespace test\object;
  * @var integer $ccc 数値 @['hash'=>false]
  * @var timestamp $ddd 日付型
  */
-class Fm extends \ebi\Object{
+class Fm extends \ebi\Obj{
 	protected $aaa;
 	protected $bbb;
 	protected $ccc;

@@ -1,5 +1,4 @@
 <?php
-use \ebi\Q;
 \test\db\Validation::create_table();
 \test\db\Validation::find_delete();
 

@@ -9,7 +9,7 @@ namespace test\model;
  * @author tokushima
  * @deprecated 2017-04-01
  */
-class DeprecatedClass extends \ebi\Object{
+class DeprecatedClass extends \ebi\Obj{
 	protected $aaa;
 	protected $bbb;
 	protected $ccc;

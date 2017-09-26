@@ -4,7 +4,7 @@ namespace ebi;
  * O/R Mapper
  * @author tokushima
  */
-abstract class Dao extends \ebi\Object{	
+abstract class Dao extends \ebi\Obj{
 	private static $_dao_ = [];
 	private static $_cnt_ = 0;
 	private static $_con_ = [];

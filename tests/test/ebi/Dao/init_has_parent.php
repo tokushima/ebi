@@ -12,6 +12,6 @@ foreach($columns as $column){
 
 try{
 	$result = \test\db\ExtraInitHasParent::find_all();
-}catch(Excepton $e){
+}catch(Exception $e){
 	fail();
 }

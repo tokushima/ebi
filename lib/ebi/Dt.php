@@ -686,7 +686,7 @@ class Dt{
 			){
 				try{
 					include_once($f->getPathname());
-				}catch(\Exeption $e){
+				}catch(\Exception $e){
 				}
 			}
 		};

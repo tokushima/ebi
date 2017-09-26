@@ -27,7 +27,7 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * (non-PHPdoc)
-	 * @see IteratorAggregate::getIterator()
+	 * @see \IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
 		return new \ArrayIterator($this->attr);
@@ -198,7 +198,7 @@ class Xml implements \IteratorAggregate{
 	 * @param integer $length
 	 * @return \ebi\XmlIterator
 	 */
-	public function find($path,$offset=0,$length=0){
+	public function find($path=null,$offset=0,$length=0){
 		if(is_string($path) && strpos($path,'/') !== false){
 			list($name,$path) = explode('/',$path,2);
 			foreach(new \ebi\XmlIterator($name,$this->value(),0,0) as $t){
