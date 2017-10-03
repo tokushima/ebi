@@ -447,7 +447,7 @@ class Browser{
 		}
 		$this->request_header = $this->request_vars = [];
 		$this->head = $this->body = $this->raw = '';
-		$this->bearer_token = $this->user = null;
+		$this->bearer_token = $this->user = $this->password = null;
 		
 		curl_exec($this->resource);
 		
