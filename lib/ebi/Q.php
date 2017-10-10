@@ -47,7 +47,7 @@ class Q{
 			}
 			foreach($arg1 as $a){
 				if(!$a->is_block()){
-					throw new \ebi\exception\InvalidArgumentException('require multiple blocks');
+					$arg1[$k] = self::b($a);
 				}
 			}
 			$this->or_block = $arg1;
