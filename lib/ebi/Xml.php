@@ -103,8 +103,12 @@ class Xml implements \IteratorAggregate{
 	 * @return string
 	 */
 	public function value(){
-		if(func_num_args() > 0) $this->value = $this->get_value(func_get_arg(0));
-		if(strpos($this->value,'<![CDATA[') === 0) return substr($this->value,9,-3);
+		if(func_num_args() > 0){
+			$this->value = $this->get_value(func_get_arg(0));
+		}
+		if(strpos($this->value,'<![CDATA[') !== false){
+			return preg_replace('/<!\[CDATA\[(.+)\]\]>/s','\\1',$this->value);
+		}
 		return $this->value;
 	}
 	/**

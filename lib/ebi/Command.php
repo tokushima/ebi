@@ -119,7 +119,7 @@ class Command{
 	/**
 	 * コマンドを実行し結果を取得
 	 * @param string $command
-	 * @return unknown_type
+	 * @return mixed
 	 */
 	public static function out($command){
 		$self = new self($command);
