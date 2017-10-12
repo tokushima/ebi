@@ -45,12 +45,12 @@ class Q{
 			if(!is_array($arg1) || sizeof($arg1) < 2){
 				throw new \ebi\exception\InvalidArgumentException('require multiple blocks');
 			}
-			foreach($arg1 as $a){
+			foreach($arg1 as $k => $a){
 				if(!$a->is_block()){
 					$arg1[$k] = self::b($a);
 				}
 			}
-			$this->or_block = $arg1;
+			$this->or_block[] = $arg1;
 		}else{
 			$this->arg1 = $arg1;
 		}
@@ -96,6 +96,7 @@ class Q{
 	public function ar_and_block(){
 		return $this->ar_value($this->and_block);
 	}
+
 	public function ar_or_block(){
 		return $this->ar_value($this->or_block);
 	}
@@ -119,9 +120,13 @@ class Q{
 	 * @return boolean
 	 */
 	public function is_order_by_rand(){
-		if(empty($this->order_by)) return false;
+		if(empty($this->order_by)){
+			return false;
+		}
 		foreach($this->order_by as $q){
-			if($q->type() == self::ORDER_RAND) return true;
+			if($q->type() == self::ORDER_RAND){
+				return true;
+			}
 		}
 		return false;
 	}
@@ -131,6 +136,7 @@ class Q{
 	 */
 	public function add(){
 		$args = func_get_args();
+		
 		foreach($args as $arg){
 			if(!empty($arg)){
 				if($arg instanceof \ebi\Q){
@@ -147,14 +153,10 @@ class Q{
 					}else if($arg->type() == self::DATE_FORMAT){
 						$this->date_format[$arg->arg1] = $arg->arg2;
 					}else if($arg->type() == self::AND_BLOCK){
-						if(!$arg->none()){
-							call_user_func_array([$this,'add'],$arg->ar_and_block());
-							$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
-						}
+						call_user_func_array([$this,'add'],$arg->ar_and_block());
+						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 					}else if($arg->type() == self::OR_BLOCK){
-						if(!$arg->none()){
-							$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
-						}
+						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 					}else{
 						$this->and_block[] = $arg;
 					}	
