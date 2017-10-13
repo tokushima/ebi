@@ -767,7 +767,7 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * サブクエリを取得する
-	 * @param $name 対象のプロパティ
+	 * @param string $name 対象のプロパティ
 	 * @return Daq
 	 */
 	public static function find_sub($name){

@@ -1,0 +1,20 @@
+<?xml encoding="UTF-8"?>
+
+<!ELEMENT mail (summary?,subject?,(body|signature),html?)>
+<!ATTLIST mail
+  version CDATA #IMPLIED>
+
+<!ELEMENT summary (#PCDATA)>
+
+<!ELEMENT subject (#PCDATA)>
+
+<!ELEMENT body (#PCDATA)>
+<!ATTLIST body
+  signature NMTOKEN #IMPLIED>
+
+<!ELEMENT signature (#PCDATA)>
+  
+<!ELEMENT html EMPTY>
+<!ATTLIST html
+  src NMTOKEN #IMPLIED>
+

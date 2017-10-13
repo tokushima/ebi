@@ -309,25 +309,43 @@ abstract class DbConnector{
 	}
 	protected function where_sql(\ebi\Dao $dao,&$from,\ebi\Q $q,array $self_columns,$require_where=null,$alias=true){
 		if($q->is_block()){
-			$vars = $and_block_sql = $or_block_sql = [];
+			$vars = [];
 			$where_sql = '';
-
+			
+			$and_block_sql = [];
 			foreach($q->ar_and_block() as $qa){
 				list($where,$var) = $this->where_sql($dao,$from,$qa,$self_columns,null,$alias);
+				
 				if(!empty($where)){
 					$and_block_sql[] = $where;
 					$vars = array_merge($vars,$var);
 				}
 			}
-			if(!empty($and_block_sql)) $where_sql .= ' ('.implode(' and ',$and_block_sql).') ';
-			foreach($q->ar_or_block() as $or_block){
-				list($where,$var) = $this->where_sql($dao,$from,$or_block,$self_columns,null,$alias);
-				if(!empty($where)){
-					$or_block_sql[] = $where;
-					$vars = array_merge($vars,$var);
+			if(!empty($and_block_sql)){
+				$where_sql .= ' ('.implode(' and ',$and_block_sql).') ';
+			}
+			
+			
+			$or_blocks_sql = [];
+			foreach($q->ar_or_block() as $or_blocks){
+				$or_block_sql = [];
+				
+				foreach($or_blocks as $or_block){
+					list($where,$var) = $this->where_sql($dao,$from,$or_block,$self_columns,null,$alias);
+					
+					if(!empty($where)){
+						$or_block_sql[] = $where;
+						$vars = array_merge($vars,$var);
+					}
+				}
+				if(!empty($or_block_sql)){
+					$or_blocks_sql[] = ' ('.implode(' or ',$or_block_sql).') ';
 				}
 			}
-			if(!empty($or_block_sql)) $where_sql .= (empty($where_sql) ? '' : ' and ').' ('.implode(' or ',$or_block_sql).') ';
+			if(!empty($or_blocks_sql)){
+				$where_sql .= (empty($where_sql) ? '' : ' and ').' ('.implode(' and ',$or_blocks_sql).') ';
+			}
+			
 
 			if(empty($where_sql)){
 				$where_sql = $require_where;

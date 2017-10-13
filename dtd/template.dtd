@@ -1,0 +1,88 @@
+<?xml encoding="UTF-8"?>
+
+<!ELEMENT rt:extends EMPTY>
+<!ATTLIST rt:extends
+  href NMTOKEN #REQUIRED>
+  
+  
+<!ELEMENT rt:block ANY>
+<!ATTLIST rt:block
+  name CDATA #REQUIRED>
+
+<!ELEMENT rt:blockvar (#PCDATA)>
+<!ATTLIST rt:blockvar
+  name CDATA #REQUIRED>
+
+
+
+<!ELEMENT rt:if ANY>
+<!ATTLIST rt:if
+  param CDATA #REQUIRED>
+
+
+<!ELEMENT rt:else EMPTY>
+
+
+<!ELEMENT rt:loop ANY>
+<!ATTLIST rt:loop
+  param CDATA #REQUIRED
+  var CDATA #IMPLIED
+  key CDATA #IMPLIED
+  counter CDATA #IMPLIED
+>
+
+<!ELEMENT rt:comment (#PCDATA)>
+
+
+
+<!ATTLIST form
+  rt:param CDATA #IMPLIED
+  rt:aref CDATA #IMPLIED
+  rt:ref CDATA #IMPLIED
+>
+
+
+<!ATTLIST input
+  rt:multiple (true) #IMPLIED
+>
+
+
+<!ATTLIST select
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:null CDATA #IMPLIED
+  rt:multiple (true) #IMPLIED
+>
+
+
+<!ATTLIST table
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED
+>
+
+<!ATTLIST ul
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED
+>
+
+<!ATTLIST ol
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED
+>
+
+
+
+
+
+
+
+
+
+
