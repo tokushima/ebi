@@ -167,11 +167,7 @@ abstract class Dao extends \ebi\Obj{
 				$table_class = $parent_class;
 				$parent_class = get_parent_class($parent_class);
 			}
-			$table_class = preg_replace("/^.*\\\\(.+)$/","\\1",$table_class);
-			$anon[1] = strtolower($table_class[0]);
-			for($i=1;$i<strlen($table_class);$i++){
-				$anon[1] .= (ctype_lower($table_class[$i])) ? $table_class[$i] : '_'.strtolower($table_class[$i]);
-			}
+			$anon[1] = \ebi\Util::camel2snake($table_class);
 		}
 		$db_settings = self::get_db_settings($anon[0],$p);
 		$prefix = isset($db_settings['prefix']) ? $db_settings['prefix'] : '';
