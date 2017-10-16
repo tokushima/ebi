@@ -468,4 +468,24 @@ class Util{
 	public static function println($val){
 		print(((string)$val).PHP_EOL);
 	}
+	/**
+	 * camelcaseをsnakecaseへ変換する
+	 * namespace部は無視される
+	 * @param string $str
+	 * @return string
+	 */
+	public static function camel2snake($str){
+		if(empty($str)){
+			return '';
+		}
+		$str = preg_replace("/^.*\\\\(.+)$/","\\1",$str);	
+		
+		$name = strtolower($str[0]);
+		
+		for($i=1;$i<strlen($str);$i++){
+			$name .= (ctype_lower($str[$i]) || ctype_digit($str[$i])) ? $str[$i] : '_'.strtolower($str[$i]);
+		}
+		return $name;
+	}
+	
 }
