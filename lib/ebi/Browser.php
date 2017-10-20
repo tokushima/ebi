@@ -540,23 +540,8 @@ class Browser{
 	 * @return mixed{}
 	 */
 	public function json($name=null){
-		$array = json_decode($this->body(),true);
-			
-		if($array === false || $array === null){
-			throw new \ebi\exception\NotFoundException('Invalid data');
-		}
-		if(empty($name)){
-			return $array;
-		}
-		$names = explode('/',$name);
-		foreach($names as $key){
-			if(array_key_exists($key,$array)){
-				$array = $array[$key];
-			}else{
-				throw new \ebi\exception\NotFoundException($name.' not found');
-			}
-		}
-		return $array;
+		$json = new \ebi\Json($this->body());
+		return $json->find($name);
 	}
 	/**
 	 * bodyをクエリ文字列として解析し配列として返す

@@ -32,7 +32,7 @@ class Json{
 			if(is_array($arr) && array_key_exists($key,$arr)){
 				$arr = $arr[$key];
 			}else{
-				return null;
+				throw new \ebi\exception\NotFoundException();
 			}
 		}
 		return $arr;
