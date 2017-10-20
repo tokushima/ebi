@@ -542,7 +542,7 @@ class Browser{
 	public function json($name=null){
 		$array = json_decode($this->body(),true);
 			
-		if($array === false){
+		if($array === false || $array === null){
 			throw new \ebi\exception\NotFoundException('Invalid data');
 		}
 		if(empty($name)){
