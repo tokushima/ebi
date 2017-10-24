@@ -5,8 +5,14 @@ class RequestAction{
 	public function index(){
 		$req = new \ebi\Request();
 		$req->vars('get_file',$req->in_files('file'));
-		$req->vars('set_cookie',$req->in_vars('set_cookie') + 1);
-		$req->write_cookie('set_cookie');
+		
+		$req->vars('get_file_base64',$req->in_files('filebase64'));
+		$req->vars('get_file_base64_fail',$req->in_files('filebase64_fail'));
+		
+		$req->vars('get_cookie',$req->read_cookie('cookiedata',0));
+		
+		$req->write_cookie('cookiedata',$req->in_vars('get_cookie') + 1);
+		
 		return $req->ar_vars();
 	}
 	

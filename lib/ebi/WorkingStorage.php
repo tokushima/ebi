@@ -51,9 +51,12 @@ class WorkingStorage{
 	 * ワーキングファイルに書き出し
 	 * @param string $path
 	 * @param string $src
+	 * @return string ファイルパス
 	 */
 	public static function set($path,$src=null){
-		\ebi\Util::file_write(self::path($path),$src);
+		$p = self::path($path);
+		\ebi\Util::file_write($p,$src);
+		return $p;
 	}
 	/**
 	 * ワーキングファイルから取得
@@ -62,6 +65,23 @@ class WorkingStorage{
 	 */
 	public static function get($path){
 		return \ebi\Util::file_read(\ebi\Conf::work_path($path));
-	}	
+	}
+	
+	/**
+	 * テンポラリファイルとして作成する
+	 * @param string $src
+	 * @throws \ebi\exception\AccessDeniedException
+	 * @return string ファイルパス
+	 */
+	public static function tmpfile($src){
+		for($i=0;$i<100;$i++){
+			$uniq = uniqid();
+			
+			if(!file_exists(\ebi\Conf::work_path($uniq))){
+				return self::set($uniq,$src);
+			}
+		}
+		throw new \ebi\exception\RetryLimitOverException();
+	}
 }
 
