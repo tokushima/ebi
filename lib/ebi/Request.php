@@ -264,7 +264,7 @@ class Request implements \IteratorAggregate{
 		return $this->args;
 	}
 	/**
-	 * 変数の設定
+	 * 変数をセットする
 	 * @param string $key
 	 * @param mixed $value
 	 */
@@ -272,7 +272,7 @@ class Request implements \IteratorAggregate{
 		$this->vars[$key] = $value;
 	}
 	/**
-	 * ファイルの設定
+	 * ファイルをセットする
 	 * @param string $key
 	 * @param mixed $file
 	 */
@@ -287,6 +287,7 @@ class Request implements \IteratorAggregate{
 			];
 		}
 	}
+	
 	/**
 	 * 変数の取得
 	 * @param string $n
@@ -362,8 +363,23 @@ class Request implements \IteratorAggregate{
 			strpos($err['message'],'POST Content-Length of') !== false
 		){
 			throw new \ebi\exception\ContentLengthException();
-		}		
-		return array_key_exists($n,$this->files) ? $this->files[$n] :  null;
+		}
+		
+		if(array_key_exists($n,$this->files)){
+			return $this->files[$n];
+		}
+		if(array_key_exists($n,$this->vars)){
+			$value = base64_decode($this->vars[$n],true);
+
+			if($value !== false){
+				$path = \ebi\WorkingStorage::tmpfile($value);
+				$this->file_vars($n,$path);
+				$this->rm_vars($n);
+				
+				return $this->files[$n];
+			}
+		}
+		return null;
 	}
 	/**
 	 * 添付されたファイルがあるか
