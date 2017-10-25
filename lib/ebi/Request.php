@@ -374,7 +374,8 @@ class Request implements \IteratorAggregate{
 			if($value !== false){
 				$path = \ebi\WorkingStorage::tmpfile($value);
 				$this->file_vars($n,$path);
-				$this->rm_vars($n);
+				unset($this->vars[$n]);
+				unset($value);
 				
 				return $this->files[$n];
 			}

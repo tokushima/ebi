@@ -22,7 +22,7 @@ class Util{
 	 */
 	public static function file_read_csv($filename){
 		$file = new \SplFileObject($filename);
-		$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY | \SplFileObject::DROP_NEW_LINE);
+		$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
 		
 		foreach($file as $line){
 			yield $line;
