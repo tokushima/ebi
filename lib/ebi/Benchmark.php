@@ -9,16 +9,24 @@ class Benchmark{
 	private static $record_info = [];
 	private static $shutdowninfo = [];
 	
-	public static function register_shutdown($record_file){
+	/**
+	 * スクリプトの終了時に結果を書き出す
+	 * @param string $record_file 書き出し先ファイルパス
+	 * @param boolean $avg 平均にまとめる
+	 */
+	public static function register_shutdown($record_file,$avg=true){
 		if(empty(self::$shutdowninfo)){
-			\ebi\Util::file_append($record_file,'');
-			
+			if(!is_file($record_file)){
+				if($avg){
+					\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem'));
+				}
+			}
 			self::$shutdowninfo = [
 				'm'=>memory_get_usage(),
 				't'=>microtime(true),
 			];
 			
-			register_shutdown_function(function() use ($record_file){
+			register_shutdown_function(function() use ($record_file,$avg){
 				$mem = memory_get_usage() - self::$shutdowninfo['m'];
 				$path = (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '');
 				
@@ -26,16 +34,38 @@ class Benchmark{
 					$path = (isset($_SERVER['PHP_SELF']) ? $_SERVER['PHP_SELF'] : '');
 				}
 				$exe_time = round((microtime(true) - (float)self::$shutdowninfo['t']),4);
+				$values = [$path,$exe_time,$mem,memory_get_peak_usage()];
 				
-				$value = sprintf(
-					"%s\t%s\t%s\t%s".PHP_EOL,
-					$path,
-					$exe_time,
-					$mem,
-					memory_get_peak_usage()
-				);
-				
-				\ebi\Util::file_append($record_file,$value);
+				if($avg){
+					$report = [];
+					
+					foreach(file($record_file) as $line){
+						$exp = explode("\t",trim($line));
+						
+						if(sizeof($exp) == 5){
+							$report[$exp[0]] = $exp;
+						}
+					}
+					if(isset($report[$path])){
+						$report[$path] = [
+							$path,
+							(($values[1]+$report[$path][1])/2),
+							(($values[2]+$report[$path][2])/2),
+							(($values[3]+$report[$path][3])/2),
+							($report[$path][4]+1)
+						];
+					}else{
+						$report[$path] = [$path,$values[1],$values[2],$values[3],1];
+					}
+					\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem','Req'));
+					
+					unset($report['Path']);
+					foreach($report as $p => $v){
+						\ebi\Util::file_append($record_file,implode("\t",$v).PHP_EOL);
+					}
+				}else{
+					\ebi\Util::file_append($record_file,implode("\t",$values).PHP_EOL);
+				}
 			});
 		}		
 	}
