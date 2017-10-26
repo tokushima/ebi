@@ -16,7 +16,7 @@
 			"ebi\\": "lib/ebi/"
 		},
 		"files": [
-			"autoload.php"
+			"boot.php"
 	   	]
 	}
 }

@@ -312,4 +312,29 @@ class Conf{
 		 */
 		return self::get_self_conf_get('date_format','Y-m-d');
 	}
+	/**
+	 * メモリ使用量・実行時間をファイルに記録する
+	 * @param string $record_file 記録ファイルパス
+	 */
+	public static function record_benchmark($record_file){
+		\ebi\Util::file_append($record_file,'');
+		
+		if(!defined('EBI_BENCHMARK_ST_MEMORY')){
+			define('EBI_BENCHMARK_ST_MEMORY',memory_get_usage());
+		}
+		if(!defined('EBI_BENCHMARK_ST_TIME')){
+			define('EBI_BENCHMARK_ST_TIME',microtime(true));
+		}
+		register_shutdown_function(function() use ($record_file){
+			$mem = memory_get_usage() - constant('EBI_BENCHMARK_ST_MEMORY');
+			$path = (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '');
+			
+			if(empty($path)){
+				$path = (isset($_SERVER['PHP_SELF']) ? $_SERVER['PHP_SELF'] : '');
+			}
+			$exe_time = round((microtime(true) - (float)constant('EBI_BENCHMARK_ST_TIME')),4);
+			
+			\ebi\Util::file_append($record_file,$path."\t".$exe_time."\t".$mem."\t".memory_get_peak_usage().PHP_EOL);
+		});
+	}
 }
