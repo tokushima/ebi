@@ -3,6 +3,7 @@ include_once('bootstrap.php');
 /**
  * テストエントリ
  */
+
 \ebi\Flow::app([
 	'ABC'=>[
 		'action'=>'test.flow.AutoAction',
