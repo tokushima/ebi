@@ -454,10 +454,8 @@ abstract class Dao extends \ebi\Obj{
 	 * @return mixed[]
 	 */
 	public static function start_record(){
-		$query = self::$record_query;
 		self::$recording_query = true;
 		self::$record_query = [];
-		return $query;
 	}
 	/**
 	 * 発行したSQLの記録を終了する
