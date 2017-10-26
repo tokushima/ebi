@@ -23,4 +23,3 @@ spl_autoload_register(function($c){
 	return false;
 },true,false);
 
-include_once(__DIR__.'/boot.php');

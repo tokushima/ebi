@@ -16,7 +16,7 @@
 			"ebi\\": "lib/ebi/"
 		},
 		"files": [
-			"boot.php"
+			"main.php"
 	   	]
 	}
 }
