@@ -59,7 +59,7 @@ class Util{
 			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 		if(!$b){
-			chmod($filename,0777);
+			chmod($filename,0666);
 		}
 	}	
 	/**
