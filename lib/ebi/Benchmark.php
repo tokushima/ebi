@@ -16,10 +16,11 @@ class Benchmark{
 	 */
 	public static function register_shutdown($record_file,$avg=true){
 		if(empty(self::$shutdowninfo)){
-			if(!is_file($record_file)){
-				if($avg){
-					\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem'));
-				}
+			if(is_file($record_file) && filemtime($record_file) < (time() - 600)){
+				\ebi\Util::rm($record_file);
+			}
+			if(!$avg && !is_file($record_file)){
+				\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem'));
 			}
 			self::$shutdowninfo = [
 				'm'=>memory_get_usage(),
@@ -27,35 +28,39 @@ class Benchmark{
 			];
 			
 			register_shutdown_function(function() use ($record_file,$avg){
-				$mem = memory_get_usage() - self::$shutdowninfo['m'];
 				$path = (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '');
 				
 				if(empty($path)){
 					$path = (isset($_SERVER['PHP_SELF']) ? $_SERVER['PHP_SELF'] : '');
 				}
+				$mem = memory_get_usage() - self::$shutdowninfo['m'];
+				$peak = memory_get_peak_usage();
 				$exe_time = round((microtime(true) - (float)self::$shutdowninfo['t']),4);
-				$values = [$path,$exe_time,$mem,memory_get_peak_usage()];
+				$values = [$path,$exe_time,$mem,$peak];
 				
 				if($avg){
 					$report = [];
 					
-					foreach(file($record_file) as $line){
-						$exp = explode("\t",trim($line));
-						
-						if(sizeof($exp) == 5){
-							$report[$exp[0]] = $exp;
+					if(is_file($record_file)){
+						foreach(file($record_file) as $line){
+							$exp = explode("\t",trim($line));
+							
+							if(sizeof($exp) == 5){
+								$report[$exp[0]] = $exp;
+							}
 						}
 					}
 					if(isset($report[$path])){
 						$report[$path] = [
 							$path,
-							(($values[1]+$report[$path][1])/2),
-							(($values[2]+$report[$path][2])/2),
-							(($values[3]+$report[$path][3])/2),
+							round((($values[1]+$report[$path][1])/2),4),
+							ceil((($values[2]+$report[$path][2])/2)),
+							ceil((($values[3]+$report[$path][3])/2)),
 							($report[$path][4]+1)
 						];
 					}else{
-						$report[$path] = [$path,$values[1],$values[2],$values[3],1];
+						$report[$path] = $values;
+						$report[$path][4] = 1; // req
 					}
 					\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem','Req'));
 					
@@ -89,9 +94,10 @@ class Benchmark{
 		self::start_record();
 		
 		$info = [
-			'memory'=>(memory_get_usage() - self::$record_info['m']),
-			'memory_peak'=>memory_get_peak_usage(),
 			'time'=>round((microtime(true) - (float)self::$record_info['t']),4),
+			'memory'=>ceil(memory_get_usage() - self::$record_info['m']),
+			'memory_peak'=>ceil(memory_get_peak_usage()),
+
 		];
 		self::$record_info = [];
 		
