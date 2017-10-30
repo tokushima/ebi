@@ -60,7 +60,7 @@
 				</td>
 				<td class="t2">
 					<rt:if param="{$method_info.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$method_info.fm_type())}">
+						<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
 							{$param.fm_type()}
 						</a>
 					<rt:else />
@@ -88,7 +88,7 @@
 			<tr>
 				<td class="t2">
 					<rt:if param="{$method_info.return().is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$method_info.return().fm_type())}">
+						<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
 							{$method_info.return().fm_type()}
 						</a>
 					<rt:else />
@@ -116,7 +116,7 @@
 			<tr>
 				<td class="t1_2">
 					<rt:if param="{$param.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$param.fm_type())}">
+						<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 							{$param.fm_type()}
 						</a>
 					<rt:else />
