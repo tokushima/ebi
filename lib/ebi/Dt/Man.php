@@ -134,7 +134,7 @@ class Man{
 				if($name[0] != '_' && !$prop->isStatic()){
 					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
-						$get_type_format($anon[$name])
+							$get_type_format(isset($anon[$name]) ? $anon[$name] : 'mixed')
 					);
 					$properties[$name]->summary(
 						self::find_deprecate(
