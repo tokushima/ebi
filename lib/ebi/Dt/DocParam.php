@@ -38,18 +38,9 @@ class DocParam extends \ebi\Obj{
 	public function is_type_class(){
 		return (boolean)preg_match('/[A-Z]/',$this->type);
 	}
-	/**
-	 * 型の文字列表現を返す
-	 * @param string $class
-	 */
 	public function fm_type(){
 		if(preg_match('/[A-Z]/',$this->type)){
 			$type = $this->type;
-			
-			switch(substr($type,-2)){
-				case '{}':
-				case '[]': $type = substr($type,0,-2);
-			}
 			$type = str_replace('.','\\',$type);
 			
 			if(substr($type,0,1) != '\\'){
@@ -58,6 +49,15 @@ class DocParam extends \ebi\Obj{
 			return $type;
 		}
 		return $this->type;
+	}
+	public function plain_type(){
+		$type = $this->fm_type();
+		
+		switch(substr($type,-2)){
+			case '{}':
+			case '[]': $type = substr($type,0,-2);
+		}
+		return $type;
 	}
 	public static function parse($varname,$doc){
 		$result = [];

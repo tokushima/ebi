@@ -113,6 +113,20 @@ class Man{
 		$anon = \ebi\Annotation::get_class($info->name(),'var','summary');
 		$is_obj = $r->isSubclassOf(\ebi\Obj::class);
 		
+		$get_type_format = function($arr){
+			if(isset($arr['type'])){
+				if(isset($arr['attr'])){
+					if($arr['attr'] == 'a'){
+						return $arr['type'].'[]';
+					}else if($arr['attr'] == 'h'){
+						return $arr['type'].'{}';
+					}
+				}
+				return $arr['type'];
+			}else{
+				return 'mixed';
+			}
+		};
 		foreach($r->getProperties() as $prop){
 			if($prop->isPublic() || ($is_obj && $prop->isProtected())){
 				$name = $prop->getName();
@@ -120,7 +134,7 @@ class Man{
 				if($name[0] != '_' && !$prop->isStatic()){
 					$properties[$name] = new \ebi\Dt\DocParam(
 						$name,
-						(isset($anon[$name]['type']) ? $anon[$name]['type'] : 'mixed')
+						$get_type_format($anon[$name])
 					);
 					$properties[$name]->summary(
 						self::find_deprecate(

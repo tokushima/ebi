@@ -44,7 +44,7 @@
 				</td>
 				<td class="t2">
 					<rt:if param="{$plugin_info.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$plugin_info.fm_type())}">
+						<a href="{$t.package_method_url('class_doc',$plugin_info.plain_type())}">
 							{$param.fm_type()}
 						</a>
 					<rt:else />
@@ -72,7 +72,7 @@
 			<tr>
 				<td class="t2">
 					<rt:if param="{$plugin_info.return().is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$plugin_info.return().fm_type())}">
+						<a href="{$t.package_method_url('class_doc',$plugin_info.return().plain_type())}">
 							{$plugin_info.return().fm_type()}
 						</a>
 					<rt:else />
