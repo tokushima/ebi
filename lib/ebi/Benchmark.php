@@ -16,9 +16,6 @@ class Benchmark{
 	 */
 	public static function register_shutdown($record_file,$avg=true){
 		if(empty(self::$shutdowninfo)){
-			if(is_file($record_file) && filemtime($record_file) < (time() - 600)){
-				\ebi\Util::rm($record_file);
-			}
 			if(!$avg && !is_file($record_file)){
 				\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem'));
 			}
@@ -50,18 +47,9 @@ class Benchmark{
 							}
 						}
 					}
-					if(isset($report[$path])){
-						$report[$path] = [
-							$path,
-							round((($values[1]+$report[$path][1])/2),4),
-							ceil((($values[2]+$report[$path][2])/2)),
-							ceil((($values[3]+$report[$path][3])/2)),
-							($report[$path][4]+1)
-						];
-					}else{
-						$report[$path] = $values;
-						$report[$path][4] = 1; // req
-					}
+					$report[$path] = $values;
+					$report[$path][4] = 1 + (isset($report[$path][4]) ? $report[$path][4] : 0); // req
+					
 					\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem','Req'));
 					
 					unset($report['Path']);
