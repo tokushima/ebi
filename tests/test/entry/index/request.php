@@ -7,11 +7,17 @@ $b->file_vars('file',\testman\Resource::path('testdata.txt'));
 $b->do_post(url('index::request'));
 eq(200,$b->status());
 
-eq(null,$b->json('result/get_file_base64_fail/name')); // base64ではないのでファイルにならない
+eq(null,$b->json('result/get_file_base64_fail')); // base64ではないのでファイルにならない
 eq('#######',$b->json('result/filebase64_fail')); // ファイルに変化しなかったのでそのまま
 
 neq(null,$b->json('result/get_file_base64/name')); // ファイルに変化する
-eq(null,$b->json('result/filebase64')); // ファイルに変化するとなくなる
+
+try{
+	$b->json('result/filebase64');
+	fail('ファイルに変化するとなくなる');
+}catch(\testman\NotFoundException $e){
+	
+}
 
 eq('testdata.txt',$b->json('result/get_file/name'));
 eq(0,$b->json('result/get_cookie'));

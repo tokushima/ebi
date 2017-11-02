@@ -51,3 +51,5 @@
 ]);
 
 
+\ebi\Benchmark::register_shutdown(\ebi\Conf::work_path('benchmark.csv'));
+
