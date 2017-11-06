@@ -18,14 +18,20 @@ class Util{
 	/**
 	 * CSVファイルから１行ずつ配列で取得する
 	 * @param string $filename
+	 * @param string $delimiter 区切り文字
 	 * @return array
 	 */
-	public static function file_read_csv($filename){
-		$file = new \SplFileObject($filename);
-		$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
-		
-		foreach($file as $line){
-			yield $line;
+	public static function file_read_csv($filename,$delimiter=','){
+		try{
+			$file = new \SplFileObject($filename);
+			$file->setCsvControl($delimiter);
+			$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+			
+			foreach($file as $line){
+				yield $line;
+			}
+		}catch(\RuntimeException $e){
+			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
 	}
 	/**
