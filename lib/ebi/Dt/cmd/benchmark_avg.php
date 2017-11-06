@@ -40,7 +40,7 @@ foreach($avg as $path => $d){
 
 $head = ['Time','Mem','Peak Mem','Count','Path'];
 for($i=0;$i<=4;$i++){
-	print(str_pad($head[$i], $len[$i],' ',STR_PAD_RIGHT).'    ');
+	\cmdman\Std::p(str_pad($head[$i], $len[$i],' ',STR_PAD_RIGHT).'    ','36');
 }
 print(PHP_EOL);
 
