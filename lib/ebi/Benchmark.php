@@ -24,29 +24,17 @@ class Benchmark{
 				$report = [];
 				$path = $_SERVER['PATH_INFO'] ?? ($_SERVER['PHP_SELF'] ?? '');
 				
-				if(is_file($record_file)){
-					foreach(file($record_file) as $line){
-						$exp = explode("\t",trim($line));
-						
-						if(sizeof($exp) == 5){
-							$report[$exp[0]] = $exp;
-						}
-					}
-					if(isset($report['Path'])){
-						unset($report['Path']);
-					}
+				if(!is_file($record_file)){
+					\ebi\Util::file_write($record_file,implode("\t",['Path','Time','Mem','Peak Mem']).PHP_EOL);
 				}
-				$report[$path][0] = $path;
-				$report[$path][1] = round((microtime(true) - (float)self::$shutdowninfo['t']),4);
-				$report[$path][2] = memory_get_usage() - self::$shutdowninfo['m'];
-				$report[$path][3] = memory_get_peak_usage();
-				$report[$path][4] = 1 + ($report[$path][4] ?? 0);
+
+				$report[0] = $path;
+				$report[1] = round((microtime(true) - (float)self::$shutdowninfo['t']),4);
+				$report[2] = memory_get_usage() - self::$shutdowninfo['m'];
+				$report[3] = memory_get_peak_usage();
+				$report[4] = date('Y/m/d H:i:s');
 				
-				\ebi\Util::file_write($record_file,sprintf("%s\t%s\t%s\t%s\t%s".PHP_EOL,'Path','Time','Mem','Peak Mem','Req'));
-				
-				foreach($report as $p => $v){
-					\ebi\Util::file_append($record_file,implode("\t",$v).PHP_EOL);
-				}
+				\ebi\Util::file_append($record_file,implode("\t",$report).PHP_EOL);
 			});
 		}		
 	}
