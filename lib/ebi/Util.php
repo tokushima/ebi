@@ -42,7 +42,7 @@ class Util{
 	 */
 	public static function file_append_csv($file,array $arr=[]){
 		if(is_string($file)){
-			$file = new \SplFileObject($file,'w');
+			$file = new \SplFileObject($file,'a');
 		}
 		if(!empty($arr)){
 			$file->fputcsv($arr);
