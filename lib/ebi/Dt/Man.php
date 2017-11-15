@@ -359,7 +359,14 @@ class Man{
 				$use_method_list = [$method_fullname];
 			}
 			$use_method_list = array_unique($use_method_list);
+			
+			
+			foreach($use_method_list as $k => $c){
+				$use_method_list[$k] = '\\'.$use_method_list[$k];
+				$use_method_list[$k] = preg_replace('/\\\\+/','\\',$use_method_list[$k]);
+			}
 			krsort($use_method_list);
+			$use_method_list = array_unique($use_method_list);
 			
 			if($detail){
 				$mail_template_list = self::mail_template_list();
