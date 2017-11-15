@@ -42,7 +42,13 @@ class Util{
 	 */
 	public static function file_append_csv($file,array $arr=[]){
 		if(is_string($file)){
-			$file = new \SplFileObject($file,'w');
+			if(!is_file($file)){
+				self::file_write($file);
+			}
+			$file = new \SplFileObject($file,'a');
+		}
+		if(!($file instanceof \SplFileObject)){
+			throw new \ebi\exception\AccessDeniedException();
 		}
 		if(!empty($arr)){
 			$file->fputcsv($arr);
