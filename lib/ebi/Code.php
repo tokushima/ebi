@@ -81,4 +81,13 @@ class Code{
 		}
 		return $r;
 	}
+	
+	/**
+	 * コード文字列をトリムする
+	 * @param string $code
+	 * @return string
+	 */
+	public static function trim($code){
+		return str_replace(['-','ー','−','―','‐'],'',trim(mb_convert_kana($code,'as')));
+	}
 }
