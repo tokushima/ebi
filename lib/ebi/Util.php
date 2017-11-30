@@ -423,31 +423,6 @@ class Util{
 		$r = new \ReflectionClass($class_name);
 		return $r->getName();
 	}
-	
-	/**
-	 * クラス名配列にクラス名があるかチェックする
-	 * @param string $needle
-	 * @param string[] $haystack
-	 * @return boolean
-	 */
-	public static function in_class_name($needle,array $haystack){
-		$needle = str_replace('.','\\',$needle);
-		
-		if(substr($needle,0,1) === '\\'){
-			$needle = substr($needle,1);
-		}
-		foreach($haystack as $class){
-			$class = str_replace('.','\\',$class);
-			
-			if(substr($class,0,1) === '\\'){
-				$class = substr($class,1);
-			}
-			if($class == $needle){
-				return true;
-			}
-		}
-		return false;
-	}
 			
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue

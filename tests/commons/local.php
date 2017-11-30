@@ -15,7 +15,6 @@
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
-		'ignore_exceptions'=>['ebi.exception.UnauthorizedException','LogicException'],
 	],
 	\ebi\flow\plugin\Cors::class=>[
 		'origin'=>'http://localhost:8000',
