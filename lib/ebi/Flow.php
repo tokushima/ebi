@@ -281,22 +281,22 @@ class Flow{
 				}
 				self::$template = new \ebi\Template();
 				
+				$funcs = $class = $method = $template = $ins = null;
+				$exception = null;
+				$has_flow_plugin = false;
+				$result_vars = $plugins = [];
+				$accept_debug = (
+					/**
+					 * @param boolean $val Accept: application/debug を有効にする
+					 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
+					 * テンプレートやリダイレクト、出力プラグインを無視する
+					 */
+					\ebi\Conf::get('accept_debug',false) &&
+					strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
+				);
+				array_shift($param_arr);
+				
 				try{
-					$funcs = $class = $method = $template = $ins = null;
-					$exception = null;
-					$has_flow_plugin = false;
-					$result_vars = $plugins = [];
-					$accept_debug = (
-						/**
-						 * @param boolean $val Accept: application/debug を有効にする
-						 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
-						 * テンプレートやリダイレクト、出力プラグインを無視する
-						 */
-						\ebi\Conf::get('accept_debug',false) &&
-						strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
-					);
-					array_shift($param_arr);
-					
 					if(array_key_exists('action',$pattern)){
 						if(is_string($pattern['action'])){
 							list($class,$method) = explode('::',$pattern['action']);							
@@ -473,8 +473,19 @@ class Flow{
 					/**
 					 * @param string[] $val ログに記録しない例外クラス名
 					 */
-					if(!in_array(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
-						\ebi\Log::notice($e);
+					if(!\ebi\Util::in_class_name(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
+						if(self::has_class_plugin('flow_exception_log')){
+							/**
+							 * 例外発生時のログ
+							 * @param string $pathinfo PATH_INFO
+							 * @param mixed{} $pattern マッチしたパターン
+							 * @param mixed $ins 実行されたActionのインスタンス
+							 * @param \Exception $e 発生した例外
+							 */
+							self::call_class_plugin_funcs('flow_exception_log',$pathinfo,$pattern,$ins,$e);
+						}else{
+							\ebi\Log::notice($e);
+						}
 					}				
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);

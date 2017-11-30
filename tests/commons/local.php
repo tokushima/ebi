@@ -2,7 +2,7 @@
 \ebi\Conf::set([
 	\ebi\Conf::class=>[
 		'appmode_group'=>[
-			'dev'=>['local','mamp'],
+			'dev'=>['local'],
 		],
 		'session_lifetime'=>1,
 	],
@@ -15,6 +15,7 @@
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
+		'ignore_exceptions'=>['ebi.exception.UnauthorizedException','LogicException'],
 	],
 	\ebi\flow\plugin\Cors::class=>[
 		'origin'=>'http://localhost:8000',
@@ -48,6 +49,7 @@
 // 	'ebi.Log'=>[\ebi\LogMailSender::class],
 	'ebi.Log'=>['ebi.LogMailSender'],
 	\test\flow\RequestFlow::class=>[\test\plugin\RequestPlugin::class],
+	'ebi.Flow'=>[\test\flow\plugin\ErrorLog::class],
 ]);
 
 
