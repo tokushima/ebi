@@ -470,23 +470,17 @@ class Flow{
 					\ebi\FlowInvalid::set($e);
 					\ebi\Dao::rollback_all();
 					
-					/**
-					 * @param string[] $val ログに記録しない例外クラス名
-					 */
-					if(!\ebi\Util::in_class_name(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
-						if(self::has_class_plugin('flow_exception_log')){
-							/**
-							 * 例外発生時のログ
-							 * @param string $pathinfo PATH_INFO
-							 * @param mixed{} $pattern マッチしたパターン
-							 * @param mixed $ins 実行されたActionのインスタンス
-							 * @param \Exception $e 発生した例外
-							 */
-							self::call_class_plugin_funcs('flow_exception_log',$pathinfo,$pattern,$ins,$e);
-						}else{
-							\ebi\Log::notice($e);
-						}
-					}				
+					if(self::has_class_plugin('flow_exception_log')){
+						/**
+						 * 例外発生時のログ
+						 * @param string $pathinfo PATH_INFO
+						 * @param mixed{} $pattern マッチしたパターン
+						 * @param mixed $ins 実行されたActionのインスタンス
+						 * @param \Exception $e 発生した例外
+						 */
+						self::call_class_plugin_funcs('flow_exception_log',$pathinfo,$pattern,$ins,$e);
+					}
+
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
 					}else if(isset($selfmap['error_status'])){
