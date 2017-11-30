@@ -473,8 +473,8 @@ class Flow{
 					/**
 					 * @param string[] $val ログに記録しない例外クラス名
 					 */
-					if(!in_array(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
-						if(self::has_class_plugin('flow_exception')){
+					if(!\ebi\Util::in_class_name(get_class($e),\ebi\Conf::gets('ignore_exceptions'))){
+						if(self::has_class_plugin('flow_exception_log')){
 							/**
 							 * 例外発生時のログ
 							 * @param string $pathinfo PATH_INFO
