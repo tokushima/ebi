@@ -48,6 +48,7 @@
 // 	'ebi.Log'=>[\ebi\LogMailSender::class],
 	'ebi.Log'=>['ebi.LogMailSender'],
 	\test\flow\RequestFlow::class=>[\test\plugin\RequestPlugin::class],
+	'ebi.Flow'=>[\test\flow\plugin\ErrorLog::class],
 ]);
 
 
