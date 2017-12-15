@@ -23,3 +23,6 @@ eq('100110',\ebi\Code::encode('0123456789',100110));
 eq(100110,\ebi\Code::decode('0123456789','100110'));
 
 
+
+neq(null,\ebi\Code::password(10));
+eq(8,strlen(\ebi\Code::password(2)));

@@ -69,7 +69,7 @@ class Code{
 	 * @param integer $length
 	 * @return string
 	 */
-	public static function rand($codebase,$length){
+	public static function rand($codebase,$length=1){
 		if(empty($codebase)){
 			throw new \ebi\exception\InvalidArgumentException('codebase is empty');
 		}
@@ -89,5 +89,32 @@ class Code{
 	 */
 	public static function trim($code){
 		return str_replace(['-','ー','−','―','‐'],'',trim(mb_convert_kana($code,'as')));
+	}
+	
+	/**
+	 * パスワードの生成
+	 * @param integer $length
+	 * @return string
+	 */
+	public static function password($length=8){
+		if($length < 8){
+			$length = 8;
+		}
+		
+		$base = [
+			'ABCDEFGHJKLMNPQRSTUVWXY',
+			'abcdefghijkmnpqrstuvwxyz',
+			'23456789!#$%&=@+/<>?'
+		];
+		
+		$p = '';
+		$rand = [];
+		while(sizeof($rand) < 3){
+			for($i=0,$p='',$rand=[];$i<$length;$i++){
+				$rand[$r=rand(0,2)] = true;
+				$p .= self::rand($base[$r]);
+			}
+		}
+		return $p;
 	}
 }
