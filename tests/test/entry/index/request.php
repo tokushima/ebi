@@ -11,13 +11,7 @@ eq(null,$b->json('result/get_file_base64_fail')); // base64ではないのでフ
 eq('#######',$b->json('result/filebase64_fail')); // ファイルに変化しなかったのでそのまま
 
 neq(null,$b->json('result/get_file_base64/name')); // ファイルに変化する
-
-try{
-	$b->json('result/filebase64');
-	fail('ファイルに変化するとなくなる');
-}catch(\testman\NotFoundException $e){
-	
-}
+eq(null,$b->json('result/filebase64')); // ファイルに変化するとなくなる
 
 eq('testdata.txt',$b->json('result/get_file/name'));
 eq(0,$b->json('result/get_cookie'));
