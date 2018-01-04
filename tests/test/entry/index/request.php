@@ -15,8 +15,7 @@ neq(null,$b->json('result/get_file_base64/name')); // ファイルに変化す�
 try{
 	$b->json('result/filebase64');
 	fail('ファイルに変化するとなくなる');
-}catch(\testman\NotFoundException $e){
-	
+}catch(\testman\NotFoundException $e){	
 }
 
 eq('testdata.txt',$b->json('result/get_file/name'));
