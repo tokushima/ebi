@@ -11,19 +11,32 @@ class Image{
 	 * @param string $output 出力先ファイル名
 	 */
 	public static function cropping_jpeg($filename,$width,$height,$output=null){
-		list($original_w,$original_h) = getimagesize($filename);
-		$original_image = imagecreatefromjpeg($filename);
-		
-		$canvas = self::get_cropping_resource($original_image, $original_w, $original_h, $width, $height);		
-		
-		if(empty($output)){
-			header('Content-Type: image/jpeg');
-			imagejpeg($canvas);
+		if(extension_loaded('imagick')){
+			$canvas = new \Imagick($filename);
+			$canvas->cropThumbnailImage($width,$height);
+			
+			if(empty($output)){
+				header('Content-Type: image/jpeg');
+				print($canvas);
+			}else{
+				$canvas->writeImage($output);
+			}
+			$canvas->clear();
 		}else{
-			imagejpeg($canvas,$output);
-		}		
-		imagedestroy($original_image);
-		imagedestroy($canvas);
+			list($original_w,$original_h) = getimagesize($filename);
+			$original_image = imagecreatefromjpeg($filename);
+			
+			$canvas = self::get_gd_cropping_resource($original_image, $original_w, $original_h, $width, $height);		
+			
+			if(empty($output)){
+				header('Content-Type: image/jpeg');
+				imagejpeg($canvas);
+			}else{
+				imagejpeg($canvas,$output);
+			}
+			imagedestroy($original_image);
+			imagedestroy($canvas);
+		}
 	}
 	
 	/**
@@ -35,22 +48,36 @@ class Image{
 	 * @param string $output 出力先ファイル名
 	 */
 	public static function cropping_jpeg_from_string($string,$width,$height,$output=null){
-		list($original_w,$original_h) = getimagesizefromstring($string);
-		$original_image = imagecreatefromstring($string);
-		
-		$canvas = self::get_cropping_resource($original_image, $original_w, $original_h, $width, $height);
-		
-		if(empty($output)){
-			header('Content-Type: image/jpeg');
-			imagejpeg($canvas);
+		if(extension_loaded('imagick')){
+			$canvas = new \Imagick();
+			$canvas->readImageBlob($string);
+			$canvas->cropThumbnailImage($width,$height);
+			
+			if(empty($output)){
+				header('Content-Type: image/jpeg');
+				print($canvas);
+			}else{
+				$canvas->writeImage($output);
+			}
+			$canvas->clear();
 		}else{
-			imagejpeg($canvas,$output);
+			list($original_w,$original_h) = getimagesizefromstring($string);
+			$original_image = imagecreatefromstring($string);
+			
+			$canvas = self::get_gd_cropping_resource($original_image, $original_w, $original_h, $width, $height);
+			
+			if(empty($output)){
+				header('Content-Type: image/jpeg');
+				imagejpeg($canvas);
+			}else{
+				imagejpeg($canvas,$output);
+			}
+			imagedestroy($original_image);
+			imagedestroy($canvas);
 		}
-		imagedestroy($original_image);
-		imagedestroy($canvas);
 	}
 	
-	private static function get_cropping_resource($original_image,$original_w,$original_h,$width,$height){
+	private static function get_gd_cropping_resource($original_image,$original_w,$original_h,$width,$height){
 		$aw = $width / $original_w;
 		$ah = $height / $original_h;
 		$a = max($aw,$ah);
