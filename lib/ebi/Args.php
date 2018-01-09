@@ -2,8 +2,8 @@
 namespace ebi;
 
 class Args{
-	static private $opt = [];
-	static private $value = [];
+	static private $opt;
+	static private $value;
 
 	/**
 	 * 初期化
@@ -38,6 +38,9 @@ class Args{
 	 * @return string
 	 */
 	public static function opt($name,$default=false){
+		if(!isset(self::$value)){
+			self::init();
+		}
 		return array_key_exists($name,self::$opt) ? self::$opt[$name][0] : $default;
 	}
 	/**
@@ -46,6 +49,9 @@ class Args{
 	 * @return boolean
 	 */
 	public static function has_opt($name){
+		if(!isset(self::$value)){
+			self::init();
+		}
 		return array_key_exists($name,self::$opt);		
 	}
 	/**
@@ -54,6 +60,9 @@ class Args{
 	 * @return string
 	 */
 	public static function value($default=null){
+		if(!isset(self::$value)){
+			self::init();
+		}
 		return isset(self::$value[0]) ? self::$value[0] : $default;
 	}
 	/**
@@ -62,6 +71,9 @@ class Args{
 	 * @return multitype:
 	 */
 	public static function opts($name){
+		if(!isset(self::$value)){
+			self::init();
+		}
 		return array_key_exists($name,self::$opt) ? self::$opt[$name] : [];
 	}
 	/**
@@ -69,6 +81,9 @@ class Args{
 	 * @return string[]
 	 */
 	public static function values(){
+		if(!isset(self::$value)){
+			self::init();
+		}
 		return self::$value;
 	}
 }
