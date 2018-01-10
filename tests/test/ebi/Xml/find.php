@@ -67,3 +67,29 @@ foreach($x->find('a/b/c') as $f){
 eq(3,$i);
 
 
+$x = \ebi\Xml::anonymous("<a><b><data>a</data><data>b</data><data>c</data></b></a>");
+eq(['b'=>['a','b','c']],$x->find_get('a')->children());
+
+$j = new \ebi\Json('{"a":{"b":["a","b","c"]}}');
+eq(['b'=>['a','b','c']],$j->find('a'));
+
+
+$x = \ebi\Xml::anonymous("<xml> <a><b><Cc>a</Cc><Cc>b</Cc><Cc>c</Cc></b><b><Cc>A</Cc><Cc>B</Cc><Cc>C</Cc></b></a></xml>");
+eq(['b'=>[['a','b','c'],['A','B','C']]],$x->find_get('a')->children());
+
+
+$j = new \ebi\Json('{"a":{"b":[["a","b","c"],["A","B","C"]]}}');
+eq(['b'=>[['a','b','c'],['A','B','C']]],$j->find('a'));
+
+
+
+$x = \ebi\Xml::anonymous('<result><new_list><DataModel><id>1</id><no>100</no></DataModel><DataModel><id>2</id><no>200</no></DataModel></new_list></result>');
+eq([['id'=>1,'no'=>100],['id'=>2,'no'=>200]],$x->find_get('result/new_list')->children());
+
+
+$x = \ebi\Xml::anonymous('<result><new_list><DataModel><id>3</id><no>300</no></DataModel></new_list></result>');
+eq([['id'=>3,'no'=>300]],$x->find_get('result/new_list')->children());
+
+
+
+
