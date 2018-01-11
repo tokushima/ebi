@@ -9,11 +9,11 @@ $a->save();
 
 $b = b();
 $b->vars('value','B');
-$b->do_post(url('index::abc'));
+$b->do_post('index::abc');
 
 $b = b();
 $b->vars('value','C');
-$b->do_post(url('index::abc'));
+$b->do_post('index::abc');
 
 eq(3,\test\db\Abc::find_count('id'));
 

@@ -4,10 +4,10 @@
  */
 $b = b();
 
-$b->do_get(url('index::deprecated'));
+$b->do_get('index::deprecated');
 eq(200,$b->status());
 
-$b->do_get(url('index::deprecated_method'));
+$b->do_get('index::deprecated_method');
 eq(200,$b->status());
 
 

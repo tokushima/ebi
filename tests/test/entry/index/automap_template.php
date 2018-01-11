@@ -1,6 +1,6 @@
 <?php
 $b = b();
 
-$b->do_get(url('index::ABC/def'));
+$b->do_get('index::ABC/def');
 meq('DEF',$b->body());
 

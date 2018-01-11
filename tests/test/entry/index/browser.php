@@ -2,14 +2,14 @@
 $b = new \ebi\Browser();
 $b->vars('abc',123);
 $b->vars('def',456);
-$b->do_json(url('index::http_method_vars').'?xyz=789');
+$b->do_json(\testman\Util::url('index::http_method_vars').'?xyz=789');
 eq('{"abc":123,"def":456}',\ebi\Json::decode($b->body())['result']['raw']);
 
 
 $b = new \ebi\Browser();
 $b->vars('abc',123);
 $b->vars('def',456);
-$b->do_post(url('index::http_method_vars').'?xyz=789');
+$b->do_post(\testman\Util::url('index::http_method_vars').'?xyz=789');
 eq(123,$b->json('result/post/abc'));
 eq(456,$b->json('result/post/def'));
 
@@ -23,7 +23,7 @@ try{
 $b = new \ebi\Browser();
 $b->vars('abc',123);
 $b->vars('def',456);
-$b->do_get(url('index::http_method_vars').'?xyz=789');
+$b->do_get(\testman\Util::url('index::http_method_vars').'?xyz=789');
 eq(123,$b->json('result/get/abc'));
 eq(456,$b->json('result/get/def'));
 eq(789,$b->json('result/get/xyz'));
