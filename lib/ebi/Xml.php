@@ -205,6 +205,7 @@ class Xml implements \IteratorAggregate{
 	public function find($path=null,$offset=0,$length=0){
 		if(is_string($path) && strpos($path,'/') !== false){
 			list($name,$path) = explode('/',$path,2);
+			
 			foreach(new \ebi\XmlIterator($name,$this->value(),0,0) as $t){
 				try{
 					$it = $t->find($path,$offset,$length);
@@ -274,6 +275,43 @@ class Xml implements \IteratorAggregate{
 		$xml->escape(false)->value(str_replace($top->plain(),$parent->get(),$xml->value()));
 		return self::extract($xml->get(),$xml->name());
 	}
+	
+	/**
+	 * 子要素を展開する
+	 * @return mixed{}
+	 */
+	public function children(){
+		$children = $arr = [];
+		$bool = false;
+		
+		foreach($this->find() as $xml){
+			$bool = true;
+			$name = $xml->name();
+			
+			if(isset($children[$name])){
+				if(!isset($arr[$name])){
+					
+					$children[$name] = [$children[$name]];
+					$arr[$name] = true;
+				}
+				$children[$name][] = $xml->children();
+			}else{
+				$children[$name] = $xml->children();
+			}
+		}
+		if($bool){
+			if(sizeof(array_keys($children)) == 1){
+				foreach($children as $k => $v){
+					if($k == 'data' || preg_match('/^[\A-Z]/',$k)){
+						return !isset($v[0]) ? [$v] : $v;
+					}
+				}
+			}
+			return $children;
+		}
+		return $this->value();
+	}
+	
 	/**
 	 * 匿名タグとしてインスタンス生成
 	 * @param string $value

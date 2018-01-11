@@ -1,6 +1,6 @@
 <?php
 $b = new \ebi\Browser();
-$b->do_get(url('index::form1'));
+$b->do_get(\testman\Util::url('index::form1'));
 
 
 $b->vars('id1','abc');
@@ -16,11 +16,11 @@ $b->vars('id3','ghi');
 meq('ID3=ghi',$b->body());
 
 
-$b->do_get(url('index::form_select'));
+$b->do_get(\testman\Util::url('index::form_select'));
 meq('<select name="data_id"><option value="10">AAA</option><option value="20" selected="selected">BBB</option><option value="30">CCC</option></select>',$b->body());
 
 
-$b->do_get(url('index::form_select_obj'));
+$b->do_get(\testman\Util::url('index::form_select_obj'));
 meq('<select name="data_id"><option value="10">AAA</option>
 <option value="20" selected="selected">BBB</option>
 <option value="30">CCC</option>

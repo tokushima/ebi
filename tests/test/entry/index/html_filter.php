@@ -1,6 +1,6 @@
 <?php
 $b = b();
-$b->do_get(url('index::html_filter'));
+$b->do_get('index::html_filter');
 eq(200,$b->status());
 meq('PPPPP',$b->body());
 meq('&lt;tag&gt;QQQ&lt;/tag&gt;',$b->body());

@@ -4,7 +4,7 @@ $b = b();
 $b->vars('filebase64',base64_encode(\ebi\Util::file_read(\testman\Resource::path('testdata.txt'))));
 $b->vars('filebase64_fail','#######');
 $b->file_vars('file',\testman\Resource::path('testdata.txt'));
-$b->do_post(url('index::request'));
+$b->do_post('index::request');
 eq(200,$b->status());
 
 eq(null,$b->json('result/get_file_base64_fail')); // base64ではないのでファイルにならない
@@ -24,10 +24,10 @@ eq(0,$b->json('result/get_cookie'));
 
 
 
-$b->do_post(url('index::request'));
+$b->do_post('index::request');
 eq(1,$b->json('result/get_cookie'));
 
 
-$b->do_post(url('index::request'));
+$b->do_post('index::request');
 eq(2,$b->json('result/get_cookie'));
 
