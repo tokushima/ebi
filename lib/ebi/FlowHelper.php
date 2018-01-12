@@ -332,7 +332,7 @@ class FlowHelper{
 		return $url.((strpos($url,'?') === false) ? '?' : '&').$query;
 	}
 	/**
-	 * !=
+	 * !
 	 * @param mixed $a
 	 * @return boolean 
 	 */
@@ -346,7 +346,12 @@ class FlowHelper{
 	 * @return boolean
 	 */
 	public function eq($a,$b){
-		return ($a == $b);
+		$bool = ($a == $b);
+		
+		if($bool && ($a === '' || $b === '')){
+			return ($a === $b);
+		}
+		return $bool;
 	}
 	/**
 	 * !=
@@ -355,7 +360,7 @@ class FlowHelper{
 	 * @return boolean
 	 */
 	public function neq($a,$b){
-		return ($a != $b);
+		return !($this->eq($a,$b));
 	}
 	/**
 	 * aがbより小さい
