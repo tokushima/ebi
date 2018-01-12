@@ -351,7 +351,7 @@ class FlowHelper{
 		if($bool && ($a === '' || $b === '')){
 			return ($a === $b);
 		}
-		return ($a == $b);
+		return $bool;
 	}
 	/**
 	 * !=
