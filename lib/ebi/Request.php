@@ -413,6 +413,9 @@ class Request implements \IteratorAggregate{
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
 		}
+		if(!isset($file_info['tmp_name']) || !is_file($file_info['tmp_name']) || filesize($file_info['tmp_name']) == 0){
+			throw new \ebi\exception\UnknownFileException();
+		}
 		return isset($file_info['tmp_name']) ? $file_info['tmp_name'] : null;
 	}
 	/**
