@@ -182,7 +182,13 @@ include_once('bootstrap.php');
 		'action'=>'\\test\\flow\\Action::abc',
 		'deprecated'=>true,
 		'version'=>'20161112',
-	],	
+	],
+	
+	
+	'working'=>[
+		'name'=>'working_storage',
+		'action'=>'test.flow.Action::working_storage',
+	],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 
