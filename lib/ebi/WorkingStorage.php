@@ -11,11 +11,13 @@ class WorkingStorage{
 	
 	
 	public function __destruct(){
+		rsort($this->list);
+		
 		foreach($this->list as $f){
 			$p = \ebi\Conf::work_path($f);
 			
 			if(is_file($p) || is_dir($p)){
-				\ebi\Util::rm($p);
+				\ebi\Util::rm($p,true);
 			}
 		}
 	}
@@ -73,12 +75,27 @@ class WorkingStorage{
 	 * @throws \ebi\exception\AccessDeniedException
 	 * @return string ファイルパス
 	 */
-	public static function tmpfile($src){
+	public static function tmpfile($src=''){
 		for($i=0;$i<100;$i++){
 			$uniq = uniqid();
 			
 			if(!file_exists(\ebi\Conf::work_path($uniq))){
 				return self::set($uniq,$src);
+			}
+		}
+		throw new \ebi\exception\RetryLimitOverException();
+	}
+	/**
+	 * テンポラリディレクトリとして作成する
+	 * @throws \ebi\exception\AccessDeniedException
+	 * @return string ファイルパス
+	 */
+	public static function tmpdir(){
+		for($i=0;$i<100;$i++){
+			$uniq = uniqid();
+			
+			if(!file_exists(\ebi\Conf::work_path($uniq))){
+				return self::mkdir($uniq);
 			}
 		}
 		throw new \ebi\exception\RetryLimitOverException();

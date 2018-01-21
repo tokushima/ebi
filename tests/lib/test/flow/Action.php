@@ -129,4 +129,12 @@ class Action{
 	public function context_deprecated(){
 		return ['hoge'=>1];
 	}
+	
+	public function working_storage(){
+		\ebi\WorkingStorage::tmpfile('AAA');
+		$path = \ebi\WorkingStorage::tmpdir('TEMPDIR');
+		
+		\ebi\Util::file_write($path.'/BBB','BBB');
+	}
 }
+
