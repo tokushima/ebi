@@ -475,6 +475,38 @@ class Util{
 	}
 	
 	/**
+	 * 指定のクラスと同階層にあるクラスの一覧
+	 * @param string $base_class 基点となるクラス名
+	 * @param string $parent_class_name 指定したサブクラスに属するクラスに絞り込む
+	 * @param boolean $recursive 階層を潜って取得するか
+	 * @return string[]
+	 */
+	public static function ls_classes($base_class,$parent_class_name=null,$recursive=false){
+		$result = [];
+		$ref = new \ReflectionClass($base_class);
+		$namespace = $ref->getNamespaceName();
+		$dir = dirname($ref->getFileName());
+		
+		foreach(\ebi\Util::ls($dir,$recursive,'/\.php$/') as $f){
+			$subns = '';
+			
+			if($recursive){
+				$subns = str_replace([$dir,DIRECTORY_SEPARATOR],['','\\'],dirname($f->getPathname()));
+			}
+			$classname = $namespace.$subns.'\\'.basename($f->getFilename(),'.php');
+			
+			if(class_exists($classname)){
+				if(empty($parent_class_name) || is_subclass_of($classname, $parent_class_name)){
+					$result[] = $classname;
+				}
+			}
+		}
+		sort($result);
+		
+		return $result;
+	}
+	
+	/**
 	 * 改行付きで出力
 	 * @param string $val
 	 */

@@ -172,14 +172,17 @@ class Archive{
 	 * tarを解凍する
 	 * @param string $inpath 解凍するファイルパス
 	 * @param string $outpath 展開先のファイルパス
+	 * @return string 解凍先のファイルパス
 	 */
-	public static function untar($inpath,$outpath){
-		if(substr($outpath,-1) != '/'){
-			$outpath = $outpath.'/';
+	public static function untar($inpath,$outpath=null){
+		if(empty($outpath)){
+			$outpath = \ebi\WorkingStorage::tmpdir();
 		}
 		if(!is_dir($outpath)){
-			\ebi\Util::mkdir($outpath,0777);
+			\ebi\Util::mkdir($outpath);
 		}
+		$outpath = \ebi\Util::path_slash($outpath,null,false);
+		
 		$fr = fopen($inpath,'rb');
 
 		while(!feof($fr)){
@@ -191,7 +194,7 @@ class Archive{
 							$buf);
 			if(!empty($data['name'])){
 				if($data['name'][0] == '/') $data['name'] = substr($data['name'],1);
-				$f = $outpath.$data['name'];
+				$f = $outpath.'/'.$data['name'];
 				switch((int)$data['typeflg']){
 					case 0:	
 						$size = base_convert($data['size'],8,10);
@@ -216,39 +219,62 @@ class Archive{
 			}
 		}
 		fclose($fr);
+		
+		return $outpath;
 	}
 	/**
 	 * tar.gz(tgz)を解凍してファイル書き出しを行う
 	 * @param string $tarfile 解凍するtarファイル
 	 * @param string $outpath 解凍先のファイルパス
+	 * @return string 解凍先のファイルパス
 	 */
-	public static function untgz($tarfile,$outpath){
+	public static function untgz($tarfile,$outpath=null){
+		if(empty($outpath)){
+			$outpath = \ebi\WorkingStorage::tmpdir();
+		}
+		if(!is_dir($outpath)){
+			\ebi\Util::mkdir($outpath);
+		}
+		$outpath = \ebi\Util::path_slash($outpath,null,false);
+		$untar_path = $outpath.'.tar';
+		
 		$fr = gzopen($tarfile,'rb');
-		$ft = fopen($outpath.'.tar','wb');
-			while(!gzeof($fr)) fwrite($ft,gzread($fr,4096));
+		$ft = fopen($untar_path,'wb');
+		
+		while(!gzeof($fr)){
+			fwrite($ft,gzread($fr,4096));
+		}
+		
 		fclose($ft);
 		gzclose($fr);
-		self::untar($outpath.'.tar',$outpath);
-		unlink($outpath.'.tar');
-		return true;
+		
+		$outpath = self::untar($untar_path,$outpath);
+		unlink($untar_path);
+
+		return $outpath;
 	}
 	/**
 	 * zipを解凍してファイル書き出しを行う
 	 * @param string $zipfile 解凍するZIPファイル
 	 * @param string $outpath 解凍先のファイルパス
+	 * @return string 解凍先のファイルパス
 	 */
-	public static function unzip($zipfile,$outpath){
+	public static function unzip($zipfile,$outpath=null){
 		$zip = new \ZipArchive();
 		if($zip->open($zipfile) !== true){
 			throw new \ebi\exception\AccessDeniedException('failed to open stream');
 		}
-		if(substr($outpath,-1) != '/'){
-			$outpath = $outpath.'/';
+		if(empty($outpath)){
+			$outpath = \ebi\WorkingStorage::tmpdir();
 		}
 		if(!is_dir($outpath)){
-			\ebi\Util::mkdir($outpath,0777);
-		}		
+			\ebi\Util::mkdir($outpath);
+		}
+		$outpath = \ebi\Util::path_slash($outpath,null,false);
+		
 		$zip->extractTo($outpath);
 		$zip->close();
+		
+		return $outpath;
 	}
 }
