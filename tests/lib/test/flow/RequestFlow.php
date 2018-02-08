@@ -71,4 +71,18 @@ class RequestFlow extends \ebi\flow\Request{
 		 */
 		self::call_class_plugin_funcs('plguin_sendmail',$address);
 	}
+	
+	/**
+	 * @request file $file1 @['require'=>true,'max'=>0.001]
+	 */
+	public function file_upload(){
+		$req = new \ebi\Request();
+		
+		$file = $req->in_files('file1');
+		
+		return [
+				'vars'=>$req->ar_vars(),
+				'files'=>$req->ar_files(),
+		];
+	}
 }

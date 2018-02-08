@@ -68,12 +68,28 @@ class Request extends \ebi\Request{
 		if(isset($annon['request'])){
 			foreach($annon['request'] as $k => $an){
 				if(isset($an['type'])){
-					try{
-						\ebi\Validator::type($k,$this->in_vars($k),$an);
-					}catch(\ebi\exception\InvalidArgumentException $e){
-						\ebi\Exceptions::add($e,$k);
+					if($an['type'] == 'file'){
+						if(isset($an['require']) && $an['require'] === true){
+							if(!$this->has_file($k)){
+								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'),$k);
+							}else{
+								if(isset($an['max'])){
+									$filesize = is_file($this->file_path($k)) ? filesize($this->file_path($k)) : 0;
+									
+									if($filesize <= 0 || ($filesize/1024/1024) > $an['max']){
+										\ebi\Exceptions::add(new \ebi\exception\MaxSizeExceededException($k.' exceeds maximum'),$k);
+									}
+								}
+							}
+						}
+					}else{
+						try{
+							\ebi\Validator::type($k,$this->in_vars($k),$an);
+						}catch(\ebi\exception\InvalidArgumentException $e){
+							\ebi\Exceptions::add($e,$k);
+						}
+						\ebi\Validator::value($k, $this->in_vars($k), $an);
 					}
-					\ebi\Validator::value($k, $this->in_vars($k), $an);
 				}
 			}
 		}

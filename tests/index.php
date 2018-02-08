@@ -118,7 +118,7 @@ include_once('bootstrap.php');
 	'abc'=>['name'=>'abc','action'=>'test.db.Abc::create'],
 	
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
-	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.Action::file_upload'],
+	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.RequestFlow::file_upload'],
 		
 	'get_method'=>['name'=>'ge_method','action'=>'test.flow.Action::get_method'],
 	
