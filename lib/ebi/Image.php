@@ -13,7 +13,9 @@ class Image{
 	public static function cropping_jpeg($filename,$width,$height,$output=null){
 		if(extension_loaded('imagick')){
 			$canvas = new \Imagick($filename);
-			$canvas->cropThumbnailImage($width,$height);
+			
+			list($cw,$ch) = self::get_resize_info($canvas->getImageWidth(),$canvas->getImageHeight(), $width, $height);
+			$canvas->cropThumbnailImage($cw,$ch);
 			
 			if(empty($output)){
 				header('Content-Type: image/jpeg');
@@ -51,7 +53,9 @@ class Image{
 		if(extension_loaded('imagick')){
 			$canvas = new \Imagick();
 			$canvas->readImageBlob($string);
-			$canvas->cropThumbnailImage($width,$height);
+			
+			list($cw,$ch) = self::get_resize_info($canvas->getImageWidth(),$canvas->getImageHeight(), $width, $height);
+			$canvas->cropThumbnailImage($cw,$ch);
 			
 			if(empty($output)){
 				header('Content-Type: image/jpeg');
@@ -77,13 +81,18 @@ class Image{
 		}
 	}
 	
-	private static function get_gd_cropping_resource($original_image,$original_w,$original_h,$width,$height){
+	private static function get_resize_info($original_w,$original_h,$width,$height){
 		$aw = $width / $original_w;
 		$ah = $height / $original_h;
-		$a = max($aw,$ah);
+		$a = min($aw,$ah);
 		
 		$cw = $original_w * $a;
 		$ch = $original_h * $a;
+		
+		return [$cw,$ch];
+	}
+	private static function get_gd_cropping_resource($original_image,$original_w,$original_h,$width,$height){
+		list($cw,$ch) = self::get_resize_info($original_w, $original_h, $width, $height);
 		
 		$x = 0;
 		$y = 0;
@@ -102,38 +111,5 @@ class Image{
 			$canvas = imagecrop($canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
 		}
 		return $canvas;
-	}
-	
-	/**
-	 * 画像ファイルから配置情報を算出
-	 * @param string $filename
-	 * @param number $mm_width
-	 * @param number $mm_height
-	 * @param number $dpi
-	 * @return mixed{}
-	 */
-	public static function calc_jpeg_layout_info($filename,$mm_width,$mm_height,$dpi=null){
-		list($original_w,$original_h) = getimagesize($filename);
-
-		if(empty($dpi)){
-			$width_dpi = \ebi\Calc::px2dpi($original_w,$mm_width);
-			$height_dpi = \ebi\Calc::px2dpi($original_h,$mm_height);
-			
-			$dpi = round(($width_dpi < $height_dpi) ? $height_dpi : $width_dpi);
-		}
-		
-		$image_w = \ebi\Calc::px2mm($original_w,$dpi);
-		$image_h = \ebi\Calc::px2mm($original_h,$dpi);
-		
-		$x = ($mm_width / 2) - ($image_w / 2);
-		$y = ($mm_height / 2) - ($image_h / 2);
-		
-		return [
-			'x'=>$x,
-			'y'=>$y,
-			'width'=>$image_w,
-			'height'=>$image_h,
-			'dpi'=>$dpi,
-		];
 	}
 }
