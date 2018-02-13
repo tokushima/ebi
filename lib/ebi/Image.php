@@ -84,7 +84,7 @@ class Image{
 	private static function get_resize_info($original_w,$original_h,$width,$height){
 		$aw = $width / $original_w;
 		$ah = $height / $original_h;
-		$a = min($aw,$ah);
+		$a = max($aw,$ah);
 		
 		$cw = $original_w * $a;
 		$ch = $original_h * $a;
