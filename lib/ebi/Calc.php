@@ -39,7 +39,7 @@ class Calc{
 	 * @return number
 	 */
 	public static function pt2mm($pt){
-		return ($mm * 0.352778);
+		return ($pt * 0.352778);
 	}
 	
 	/**
