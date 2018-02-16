@@ -193,6 +193,13 @@ class Image{
 			
 			list($x,$y) = [($x >= 0) ? $x : 0,($y >= 0) ? $y : 0];
 		}
+		if($x < 0){
+			$x = $w + $x;
+		}
+		if($y < 0){
+			$y = $h + $y;
+		}
+		
 		if($this->mode == 1){
 			$this->canvas->cropImage($width,$height,$x,$y);
 		}else{
@@ -225,20 +232,23 @@ class Image{
 	 * 画像のサイズを変更する
 	 * @param integer $width 変更後の幅
 	 * @param integer $height 変更後の高さ
-	 * @param boolean $smallfit 比率が小さい方に合わせる
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
-	public function resize($width,$height,$smallfit=false){
+	public function resize($width,$height=null){
 		list($w,$h) = $this->get_size();
-		
-		$width = ((int)$width <= 0) ? 1 : $width;
-		$height = ((int)$height <= 0) ? 1 : $height;
-		
-		$aw = $width / $w;
-		$ah = $height / $h;
-		$a = $smallfit ? min($aw,$ah) : max($aw,$ah);
-		
+		$rw = empty($width) ? 1 : $width;
+		$rh = empty($height) ? 1 : $height;
+				
+		if(!empty($width) && !empty($height)){
+			$aw = $rw / $w;
+			$ah = $rh / $h;
+			$a = max($aw,$ah);
+		}else if(!isset($height)){
+			$a = $rw / $w;
+		}else{
+			$a = $rh / $h;
+		}
 		$cw = $w * $a;
 		$ch = $h * $a;
 		
