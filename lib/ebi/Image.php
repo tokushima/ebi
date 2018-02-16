@@ -22,6 +22,10 @@ class Image{
 	 */
 	const ORIENTATION_SQUARE = 3;
 	
+	const CHANNELS_GLAY = 1;
+	const CHANNELS_RGB = 3;
+	const CHANNELS_CMYK = 4;
+	
 	private $canvas;
 	private $mode;
 	
@@ -291,5 +295,22 @@ class Image{
 		}else{
 			return self::ORIENTATION_LANDSCAPE;
 		}
+	}
+	
+	/**
+	 * 画像の情報(width, height, mime, bits, channels)を取得する
+	 * @param string $filename
+	 * @return mixed{}
+	 */
+	public static function info($filename){
+		$info = getimagesize($filename);
+		
+		return [
+			'width'=>$info[0],
+			'height'=>$info[1],
+			'mime'=>$info['mime'] ?? null,
+			'bits'=>$info['bits'] ?? null,
+			'channels'=>$info['channels'] ?? null,
+		];
 	}
 }

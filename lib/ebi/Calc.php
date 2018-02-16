@@ -95,25 +95,7 @@ class Calc{
 		$dpi = ($px / $mm * 25.4);
 		return (!empty($precision)) ? round($dpi,$precision) : $dpi;
 	}
-	
-	/**
-	 * 白銀比 (紙の寸法）
-	 * @param integer $a
-	 * @param integer $b
-	 * @return integer[]
-	 */
-	public static function silver_ratio($a,$b){
-		if($a < ($b * sqrt(2))){
-			$b = ceil($a / sqrt(2));
-			$c = ceil($b * sqrt(2));
-			
-			if($c < $a){
-				$a = $c;
-			}
-		}
-		return [(int)$a,(int)$b];
-	}
-	
+		
 	/**
 	 * 用紙サイズ width, height (mm)
 	 * @param string $type
