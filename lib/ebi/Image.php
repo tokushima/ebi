@@ -313,4 +313,21 @@ class Image{
 			'channels'=>$info['channels'] ?? null,
 		];
 	}
+	
+	/**
+	 * PDFのバージョンを取得
+	 * @param string $filename
+	 * @throws \ebi\exception\IllegalDataTypeException
+	 * @return string
+	 */
+	public static function get_pdf_version($filename){
+		$fp = fopen($filename,'rb');
+			$value = trim(fgets($fp));
+		fclose($fp);
+		
+		if(preg_match('/^%PDF\-(.+)/',$value,$m)){
+			return preg_replace('/[^\w\.]/','',$m[1]);
+		}
+		throw new \ebi\exception\IllegalDataTypeException();
+	}
 }
