@@ -181,8 +181,13 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function crop($width,$height,$x=null,$y=null){
+		list($w,$h) = $this->get_size();
+		
+		if($width >= $w && $height >= $h){
+			return $this;
+		}
+		
 		if($x === null || $y === null){
-			list($w,$h) = $this->get_size();
 			$x = ($w - $width) / 2;
 			$y = ($h - $height) / 2;
 			
@@ -220,15 +225,19 @@ class Image{
 	 * 画像のサイズを変更する
 	 * @param integer $width 変更後の幅
 	 * @param integer $height 変更後の高さ
+	 * @param boolean $smallfit 比率が小さい方に合わせる
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
-	public function resize($width,$height){
+	public function resize($width,$height,$smallfit=false){
 		list($w,$h) = $this->get_size();
+		
+		$width = ((int)$width <= 0) ? 1 : $width;
+		$height = ((int)$height <= 0) ? 1 : $height;
 		
 		$aw = $width / $w;
 		$ah = $height / $h;
-		$a = max($aw,$ah);
+		$a = $smallfit ? min($aw,$ah) : max($aw,$ah);
 		
 		$cw = $w * $a;
 		$ch = $h * $a;
