@@ -10,7 +10,7 @@ class Cors{
 		/**
 		 * @param string $origin 許可するURL
 		 */
-		$origin = \ebi\Conf::get('origin');
+		$origin = \ebi\Conf::get('origin','*');
 		
 		\ebi\HttpHeader::cors_origin($origin);
 	}
