@@ -302,7 +302,7 @@ class Image{
 	 * @param string $filename
 	 * @return mixed{}
 	 */
-	public static function info($filename){
+	public static function get_info($filename){
 		$info = getimagesize($filename);
 		
 		return [
