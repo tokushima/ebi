@@ -326,7 +326,7 @@ class Image{
 		fclose($fp);
 		
 		if(preg_match('/^%PDF\-(.+)/',$value,$m)){
-			return preg_replace('/[^\w\.]/','',$m[1]);
+			return preg_replace('/[^\d\.]/','',$m[1]);
 		}
 		throw new \ebi\exception\IllegalDataTypeException();
 	}
