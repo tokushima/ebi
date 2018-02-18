@@ -118,11 +118,13 @@ class HttpHeader{
 	 * Ajaxでクロスドメインでアクセスする場合に設定する
 	 * @param string $url 許可するURL
 	 */
-	public static function cors_origin($url='*'){
+	public static function cors_origin($url){
 		self::send('Access-Control-Allow-Origin',$url);
 		
 		if($url != '*'){
 			self::send('Access-Control-Allow-Credentials','true');
+			self::send('Access-Control-Allow-Method','GET, POST, OPTIONS, PUT, DELETE');
+			self::send('Access-Control-Allow-Headers','Origin, X-Requested-With, X-Csrftoken, Content-Type, Accept');
 		}
 	}
 }

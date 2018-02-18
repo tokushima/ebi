@@ -71,13 +71,14 @@ class WorkingStorage{
 	
 	/**
 	 * テンポラリファイルとして作成する
-	 * @param string $src
+	 * @param string $src テンポラリファイルに書き込む文字列
+	 * @param string $postfix テンポラリファイル名の接尾文字列
 	 * @throws \ebi\exception\AccessDeniedException
 	 * @return string ファイルパス
 	 */
-	public static function tmpfile($src=''){
+	public static function tmpfile($src='',$postfix=''){
 		for($i=0;$i<100;$i++){
-			$uniq = uniqid();
+			$uniq = uniqid().$postfix;
 			
 			if(!file_exists(\ebi\Conf::work_path($uniq))){
 				return self::set($uniq,$src);

@@ -39,7 +39,7 @@ class Calc{
 	 * @return number
 	 */
 	public static function pt2mm($pt){
-		return ($mm * 0.352778);
+		return ($pt * 0.352778);
 	}
 	
 	/**
@@ -56,12 +56,11 @@ class Calc{
 	 * mm -> pixel
 	 * @param number $mm
 	 * @param number $dpi
-	 * @param boolean $floor
 	 * @return number
 	 */
-	public static function mm2px($mm,$dpi,$floor=true){
+	public static function mm2px($mm,$dpi){
 		$x = ($mm / 25.4 * $dpi);
-		return ($floor) ? floor($x) : $x;
+		return ceil($x);
 	}
 	
 	/**
@@ -78,12 +77,11 @@ class Calc{
 	 * point -> pixel
 	 * @param number $pt
 	 * @param number $dpi
-	 * @param boolean $floor
 	 * @return number
 	 */
-	public static function pt2px($pt,$dpi,$floor=true){
+	public static function pt2px($pt,$dpi){
 		$x = ($pt / 72 * $dpi);
-		return ($floor) ? floor($x) : $x;
+		return ceil($x);
 	}
 	
 	/**
@@ -97,7 +95,7 @@ class Calc{
 		$dpi = ($px / $mm * 25.4);
 		return (!empty($precision)) ? round($dpi,$precision) : $dpi;
 	}
-	
+		
 	/**
 	 * 用紙サイズ width, height (mm)
 	 * @param string $type

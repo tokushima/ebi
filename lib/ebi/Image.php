@@ -1,139 +1,333 @@
 <?php
 namespace ebi;
-
+/**
+ * 
+ * @author tokushima
+ *
+ */
 class Image{
 	/**
-	 * JPG画像ファイルを指定のサイズで縮小・切り取り
-	 * 縦横比は変えずクロップする
-	 * @param string $filename 入力ファイル名
-	 * @param integer $width 幅(px)
-	 * @param integer $height 高さ(px)
-	 * @param string $output 出力先ファイル名
+	 * 縦向き
+	 * @var integer
 	 */
-	public static function cropping_jpeg($filename,$width,$height,$output=null){
-		if(extension_loaded('imagick')){
-			$canvas = new \Imagick($filename);
-			$canvas->cropThumbnailImage($width,$height);
-			
-			if(empty($output)){
-				header('Content-Type: image/jpeg');
-				print($canvas);
-			}else{
-				$canvas->writeImage($output);
-			}
-			$canvas->clear();
-		}else{
-			list($original_w,$original_h) = getimagesize($filename);
-			$original_image = imagecreatefromjpeg($filename);
-			
-			$canvas = self::get_gd_cropping_resource($original_image, $original_w, $original_h, $width, $height);		
-			
-			if(empty($output)){
-				header('Content-Type: image/jpeg');
-				imagejpeg($canvas);
-			}else{
-				imagejpeg($canvas,$output);
-			}
-			imagedestroy($original_image);
-			imagedestroy($canvas);
-		}
-	}
+	const ORIENTATION_PORTRAIT = 1;
+	/**
+	 * 横向き
+	 * @var integer
+	 */
+	const ORIENTATION_LANDSCAPE = 2;
+	/**
+	 * 正方形
+	 * @var integer
+	 */
+	const ORIENTATION_SQUARE = 3;
+	
+	const CHANNELS_GLAY = 1;
+	const CHANNELS_RGB = 3;
+	const CHANNELS_CMYK = 4;
+	
+	private $canvas;
+	private $mode;
 	
 	/**
-	 * JPG画像バイナリ文字列を指定のサイズで縮小・切り取り
-	 * 縦横比は変えずクロップする
-	 * @param string $filename 入力ファイル名
-	 * @param integer $width 幅(px)
-	 * @param integer $height 高さ(px)
-	 * @param string $output 出力先ファイル名
-	 */
-	public static function cropping_jpeg_from_string($string,$width,$height,$output=null){
-		if(extension_loaded('imagick')){
-			$canvas = new \Imagick();
-			$canvas->readImageBlob($string);
-			$canvas->cropThumbnailImage($width,$height);
-			
-			if(empty($output)){
-				header('Content-Type: image/jpeg');
-				print($canvas);
-			}else{
-				$canvas->writeImage($output);
-			}
-			$canvas->clear();
-		}else{
-			list($original_w,$original_h) = getimagesizefromstring($string);
-			$original_image = imagecreatefromstring($string);
-			
-			$canvas = self::get_gd_cropping_resource($original_image, $original_w, $original_h, $width, $height);
-			
-			if(empty($output)){
-				header('Content-Type: image/jpeg');
-				imagejpeg($canvas);
-			}else{
-				imagejpeg($canvas,$output);
-			}
-			imagedestroy($original_image);
-			imagedestroy($canvas);
-		}
-	}
-	
-	private static function get_gd_cropping_resource($original_image,$original_w,$original_h,$width,$height){
-		$aw = $width / $original_w;
-		$ah = $height / $original_h;
-		$a = max($aw,$ah);
-		
-		$cw = $original_w * $a;
-		$ch = $original_h * $a;
-		
-		$x = 0;
-		$y = 0;
-		
-		if($cw > $width){
-			$x = ($cw - $width) / 2;
-		}
-		if($ch > $height){
-			$y = ($ch - $height) / 2;
-		}
-		
-		$canvas = imagecreatetruecolor($cw,$ch);
-		imagecopyresampled($canvas,$original_image,0,0,0,0,$cw,$ch,$original_w,$original_h);
-		
-		if($cw > $width || $ch > $height){
-			$canvas = imagecrop($canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
-		}
-		return $canvas;
-	}
-	
-	/**
-	 * 画像ファイルから配置情報を算出
+	 * 
 	 * @param string $filename
-	 * @param number $mm_width
-	 * @param number $mm_height
-	 * @param number $dpi
+	 */
+	public function __construct($filename){
+		if($filename != __FILE__){
+			try{
+				if(extension_loaded('imagick')){
+					$this->canvas = new \Imagick($filename);
+					$this->mode = 1;
+				}else{
+					$size = getimagesize($filename);
+					
+					switch($size['mime']){
+						case  'image/jpeg':
+							$this->canvas = imagecreatefromjpeg($filename);
+							break;
+						case 'image/png':
+							$this->canvas = imagecreatefrompng($filename);
+							break;
+						case 'image/gif':
+							$this->canvas = imagecreatefromgif($filename);
+							break;
+						default:
+							throw new \ebi\exception\ImageException();
+					}
+					$this->mode = 2;
+				}
+			}catch(\Exception $e){
+				throw new \ebi\exception\ImageException();
+			}
+		}
+	}
+	
+	/**
+	 * バイナリ文字列から画像を読み込む
+	 * @param string $string
+	 * @return \ebi\Image
+	 */
+	public static function readImageBlob($string){
+		$self = new static(__FILE__);
+		
+		try{
+			if(extension_loaded('imagick')){
+				$self->canvas = new \Imagick();
+				if($self->canvas->readImageBlob($string) !== true){
+					throw \ebi\exception\ImageException();
+				}
+				$self->mode = 1;
+			}else{
+				$self->canvas = imagecreatefromstring($string);
+				
+				if($self->canvas === false){
+					throw \ebi\exception\ImageException();
+				}
+				$self->mode = 2;
+			}
+		}catch(\Exception $e){
+			throw \ebi\exception\ImageException();
+		}
+		return $self;
+	}
+	
+	
+	/**
+	 * ファイルに書き出す
+	 * @param string $filename
+	 * @return \ebi\Image
+	 */
+	public function write($filename){
+		\ebi\Util::mkdir(dirname($filename));
+		
+		if($this->mode == 1){
+			$this->canvas->writeImage($filename);
+		}else{
+			$type = 'jpg';
+			
+			if(preg_match('/\.([\w]+)$/',$filename,$m)){
+				$type = strtolower($m[1]);
+			}
+			switch($type){
+				case 'jpeg':
+				case 'jpg':
+					imagejpeg($this->canvas,$filename);
+					break;
+				case 'png':
+					imagepng($this->canvas,$filename);
+					break;
+				case 'gif':
+					imagegif($this->canvas,$filename);
+					break;
+				default:
+					imagejpeg($this->canvas,$filename);
+			}
+		}
+		return $this;
+	}	
+	
+	/**
+	 * 画像をブラウザに出力する
+	 * @return \ebi\Image
+	 */
+	public function output($format='jpeg'){
+		$format = strtolower($format);
+	
+		switch($format){
+			case 'png':
+				header('Content-Type: image/png');
+				break;
+			case 'gif':
+				header('Content-Type: image/gif');
+				break;
+			default:
+				header('Content-Type: image/jpeg');
+				$format = 'jpeg';
+		}
+		
+		if($this->mode == 1){
+			$this->canvas->setImageFormat($format);
+			print($this->canvas);
+		}else{
+			switch($format){
+				case 'jpeg':
+					imagejpeg($this->canvas);
+					break;
+				case 'png':
+					imagepng($this->canvas);
+					break;
+				case 'gif':
+					imagegif($this->canvas);
+					break;
+				default:
+					imagejpeg($this->canvas);
+			}
+		}
+		exit;
+	}
+	
+	public function __destruct(){
+		if($this->mode == 1){
+			$this->canvas->clear();
+		}else{
+			imagedestroy($this->canvas);
+		}
+	}
+	
+	/**
+	 * 画像の一部を抽出する
+	 * @param integer $width 抽出する幅
+	 * @param integer $height 抽出する高さ
+	 * @param integer $x 抽出する領域の左上の X 座標
+	 * @param integer $y 抽出する領域の左上の Y 座標
+	 * @throws \ebi\exception\ImageException
+	 * @return \ebi\Image
+	 */
+	public function crop($width,$height,$x=null,$y=null){
+		list($w,$h) = $this->get_size();
+		
+		if($width >= $w && $height >= $h){
+			return $this;
+		}
+		
+		if($x === null || $y === null){
+			$x = ($w - $width) / 2;
+			$y = ($h - $height) / 2;
+			
+			list($x,$y) = [($x >= 0) ? $x : 0,($y >= 0) ? $y : 0];
+		}
+		if($x < 0){
+			$x = $w + $x;
+		}
+		if($y < 0){
+			$y = $h + $y;
+		}
+		
+		if($this->mode == 1){
+			$this->canvas->cropImage($width,$height,$x,$y);
+		}else{
+			$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
+			
+			if($canvas === false){
+				throw new \ebi\exception\ImageException();
+			}
+			imagedestroy($this->canvas);
+			$this->canvas = $canvas;
+		}
+		return $this;
+	}
+	/**
+	 * サイズ
+	 * @return integer[] width,height
+	 */
+	public function get_size(){
+		if($this->mode == 1){
+			$w = $this->canvas->getImageWidth();
+			$h = $this->canvas->getImageHeight();
+		}else{
+			$w = imagesx($this->canvas);
+			$h = imagesy($this->canvas);
+		}
+		return [$w,$h];
+	}
+	
+	/**
+	 * 画像のサイズを変更する
+	 * @param integer $width 変更後の幅
+	 * @param integer $height 変更後の高さ
+	 * @throws \ebi\exception\ImageException
+	 * @return \ebi\Image
+	 */
+	public function resize($width,$height=null){
+		list($w,$h) = $this->get_size();
+		$rw = empty($width) ? 1 : $width;
+		$rh = empty($height) ? 1 : $height;
+				
+		if(!empty($width) && !empty($height)){
+			$aw = $rw / $w;
+			$ah = $rh / $h;
+			$a = max($aw,$ah);
+		}else if(!isset($height)){
+			$a = $rw / $w;
+		}else{
+			$a = $rh / $h;
+		}
+		$cw = $w * $a;
+		$ch = $h * $a;
+		
+		if($this->mode == 1){
+			$this->canvas->scaleImage($cw,$ch);
+		}else{
+			$canvas = imagecreatetruecolor($cw,$ch);
+			if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
+				throw new \ebi\exception\ImageException();
+			}			
+			imagedestroy($this->canvas);
+			$this->canvas = $canvas;
+		}
+		return $this;
+	}
+	
+	/**
+	 * 切り取ってサムネイルを作成する
+	 * @param integer $width 幅
+	 * @param integer $height 高さ
+	 * @return \ebi\Image
+	 */
+	public function thumbnail($width,$height){
+		return $this->resize($width, $height)->crop($width, $height);
+	}
+	
+	/**
+	 * 画像の向き
+	 * @return  integer
+	 */
+	public function get_orientation(){
+		list($w,$h) = $this->get_size();
+		
+		$d = $h / $w;
+		
+		if($d <= 1.02 && $d >= 0.98){
+			return self::ORIENTATION_SQUARE;
+		}else if($d > 1){
+			return self::ORIENTATION_PORTRAIT;
+		}else{
+			return self::ORIENTATION_LANDSCAPE;
+		}
+	}
+	
+	/**
+	 * 画像の情報(width, height, mime, bits, channels)を取得する
+	 * @param string $filename
 	 * @return mixed{}
 	 */
-	public static function calc_jpeg_layout_info($filename,$mm_width,$mm_height,$dpi=null){
-		list($original_w,$original_h) = getimagesize($filename);
-
-		if(empty($dpi)){
-			$width_dpi = \ebi\Calc::px2dpi($original_w,$mm_width);
-			$height_dpi = \ebi\Calc::px2dpi($original_h,$mm_height);
-			
-			$dpi = round(($width_dpi < $height_dpi) ? $height_dpi : $width_dpi);
-		}
-		
-		$image_w = \ebi\Calc::px2mm($original_w,$dpi);
-		$image_h = \ebi\Calc::px2mm($original_h,$dpi);
-		
-		$x = ($mm_width / 2) - ($image_w / 2);
-		$y = ($mm_height / 2) - ($image_h / 2);
+	public static function get_info($filename){
+		$info = getimagesize($filename);
 		
 		return [
-			'x'=>$x,
-			'y'=>$y,
-			'width'=>$image_w,
-			'height'=>$image_h,
-			'dpi'=>$dpi,
+			'width'=>$info[0],
+			'height'=>$info[1],
+			'mime'=>$info['mime'] ?? null,
+			'bits'=>$info['bits'] ?? null,
+			'channels'=>$info['channels'] ?? null,
 		];
+	}
+	
+	/**
+	 * PDFのバージョンを取得
+	 * @param string $filename
+	 * @throws \ebi\exception\IllegalDataTypeException
+	 * @return string
+	 */
+	public static function get_pdf_version($filename){
+		$fp = fopen($filename,'rb');
+			$value = trim(fgets($fp));
+		fclose($fp);
+		
+		if(preg_match('/^%PDF\-(.+)/',$value,$m)){
+			return preg_replace('/[^\d\.]/','',$m[1]);
+		}
+		throw new \ebi\exception\IllegalDataTypeException();
 	}
 }
