@@ -1,7 +1,7 @@
 <?php
 $filename = \testman\Resource::path('test.jpg');
 
-$info = \ebi\Image::info($filename);
+$info = \ebi\Image::get_info($filename);
 eq(922,$info['width']);
 eq(922,$info['height']);
 eq('image/jpeg',$info['mime']);
