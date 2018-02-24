@@ -95,7 +95,7 @@ class Calc{
 		$dpi = ($px / $mm * 25.4);
 		return (!empty($precision)) ? round($dpi,$precision) : $dpi;
 	}
-		
+	
 	/**
 	 * 用紙サイズ width, height (mm)
 	 * @param string $type
@@ -109,8 +109,8 @@ class Calc{
 			case 'A2': return [420,594];
 			case 'A3': return [297,420];
 			case 'A4': return [210,297];
-			case 'A5': return [148,210];
-			case 'A6': return [105,148];
+			case 'A5': return [148,210]; // 学術書
+			case 'A6': return [105,148]; // 文庫本
 			case 'A7': return [74,105];
 			case 'A8': return [52,74];
 			case 'A9': return [37,52];
@@ -125,8 +125,8 @@ class Calc{
 			case 'B2': return [515,728];
 			case 'B3': return [364,515];
 			case 'B4': return [257,364];
-			case 'B5': return [182,257];
-			case 'B6': return [128,182];
+			case 'B5': return [182,257]; // 週刊誌
+			case 'B6': return [128,182]; // 単行本
 			case 'B7': return [91,128];
 			case 'B8': return [64,91];
 			case 'B9': return [45,64];
@@ -146,6 +146,14 @@ class Calc{
 			case 'ZENSHI': return [457,560]; // 全紙
 			case 'DAIZENSHI': return [508,610]; // 大全紙
 			case 'ZENBAI': return [600,900]; // 全倍
+			case '46':
+			case 'SHIROKU': return [127,188]; // 四六判
+			case 'SHINSHO': return [103,182]; // 新書
+			case 'PAPAERBACK': return [114,178]; // ペーパーバック
+			case 'COMIC':
+			case 'B6SMALL': return [112,174]; // コミックス
+			case 'CD':
+			case 'A5SQUARE': return [148,148]; // A5スクエア、CDケースレーベル
 		}
 		throw new \ebi\exception\InvalidArgumentException();
 	}
