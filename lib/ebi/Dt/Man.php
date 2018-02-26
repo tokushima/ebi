@@ -422,16 +422,23 @@ class Man{
 							}
 						}
 						foreach($mail_template_list as $k => $mail_info){
-							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
-								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
-								
-								$mail_info->set_opt('use',true);
-								$mail_info->set_opt('description',$doc->document());
-								
-								foreach($doc->params() as $p){
-									$mail_info->add_params($p);
+							$preg_mail_names = [preg_quote($mail_info->name(),'/')];
+							
+							if(preg_match('/^(.+)_[^\/_]+\.xml$/',$mail_info->name(),$m)){
+								$preg_mail_names[] = preg_quote($m[1],'/').'_[^_\/]+\.xml';
+							}
+							foreach($preg_mail_names as $preg_mail_name){
+								if(preg_match_all('/[^\w\/]'.$preg_mail_name.'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
+									$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
+									
+									$mail_info->set_opt('use',true);
+									$mail_info->set_opt('description',$doc->document());
+									
+									foreach($doc->params() as $p){
+										$mail_info->add_params($p);
+									}
+									$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 								}
-								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 							}
 						}
 					}catch(\ReflectionException $e){
