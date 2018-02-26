@@ -438,6 +438,7 @@ class Man{
 										$mail_info->add_params($p);
 									}
 									$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
+									break;
 								}
 							}
 						}
