@@ -81,14 +81,19 @@ class Xml implements \IteratorAggregate{
 		}else if(is_array($v) || is_object($v)){
 			$r = '';
 			foreach($v as $k => $c){
-				if(is_numeric($k) && is_object($c)){
-					$e = explode('\\',get_class($c));
-					$k = array_pop($e);
+				if($c instanceof self){
+					$c->escape($this->esc);
+					$r .= $c->get();
+				}else{
+					if(is_numeric($k) && is_object($c)){
+						$e = explode('\\',get_class($c));
+						$k = array_pop($e);
+					}
+					if(is_numeric($k)) $k = 'data';
+					$x = new self($k,$c);
+					$x->escape($this->esc);
+					$r .= $x->get();
 				}
-				if(is_numeric($k)) $k = 'data';
-				$x = new self($k,$c);
-				$x->escape($this->esc);
-				$r .= $x->get();
 			}
 			$v = $r;
 		}else if($this->esc && strpos($v,'<![CDATA[') === false && preg_match("/&|<|>|\&[^#\da-zA-Z]/",$v)){
