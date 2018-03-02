@@ -69,7 +69,12 @@ class DocParam extends \ebi\Obj{
 				
 				if(strpos($summary,'@[') !== false){
 					list($summary,$anon) = explode('@[',$summary,2);
-					$opt = \ebi\Annotation::activation('@['.$anon);
+					
+					try{
+						$opt = \ebi\Annotation::activation('@['.$anon);
+					}catch(\ParseError $e){
+						throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.'@['.$anon.'`');
+					}
 				}
 				$result[] = new static(
 					$m[2][$n],

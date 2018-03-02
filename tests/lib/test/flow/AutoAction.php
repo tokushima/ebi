@@ -70,6 +70,11 @@ class AutoAction{
 			throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException();
 		}
 		
+		/**
+		 * コメントコメント
+		 * @var string $address
+		 */
+		
 		$address = "test@email.address";
 		$vars = [
 			'aaa'=>'ABC',
@@ -80,12 +85,13 @@ class AutoAction{
 		$mail->to($address);
 		
 		/**
-		 *
+		 * 
 		 * @param string $aaa ABCが出せる
 		 * @param string $bbb XYZが出せる
 		 * @param \test\db\AutoCodeNumberPrefix $ccc DBモデル
+		 * @real auto_action_send.xml
 		 */
-		$mail->send_template('auto_action_send.xml',$vars);
+		$mail->send_template(sprintf('auto_action_%s.xml','send'),$vars);
 		
 		/**
 		 * メソッド　プラグイン

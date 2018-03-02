@@ -502,26 +502,18 @@ class Dt{
 		$method_info = null;
 		
 		foreach(self::classes() as $class){
-			$mail_names = [$mail_info->name()];
-			
-			if(preg_match('/^(.+)_[^\/_]+\.xml$/',$mail_info->name(),$m)){
-				$mail_names[] = $m[1].'_%s.xml';
-			}
-			
-			foreach($mail_names as $mail_name){
-				if(strpos(\ebi\Util::file_read($class['filename']),$mail_name) !== false){
-					$ref_class = new \ReflectionClass($class['class']);
-					
-					foreach($ref_class->getMethods() as $ref_method){
-						if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_name) !== false){
-							$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
-							
-							foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-								if($x_t_code == $mail_info->opt('x_t_code')){
-									$method_list[] = $method_info;
-									$method_mail_info = $mmi;
-									break;
-								}
+			if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name()) !== false){
+				$ref_class = new \ReflectionClass($class['class']);
+				
+				foreach($ref_class->getMethods() as $ref_method){
+					if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name()) !== false){
+						$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+						
+						foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
+							if($x_t_code == $mail_info->opt('x_t_code')){
+								$method_list[] = $method_info;
+								$method_mail_info = $mmi;
+								break;
 							}
 						}
 					}
