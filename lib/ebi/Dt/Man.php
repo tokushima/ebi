@@ -421,10 +421,16 @@ class Man{
 								}
 							}
 						}
+						
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
-								
+
+								if(empty($doc->document())){
+									if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$use_method_src,$m)){
+										$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
+									}
+								}
 								$mail_info->set_opt('use',true);
 								$mail_info->set_opt('description',$doc->document());
 								
@@ -432,6 +438,7 @@ class Man{
 									$mail_info->add_params($p);
 								}
 								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
+								break;
 							}
 						}
 					}catch(\ReflectionException $e){

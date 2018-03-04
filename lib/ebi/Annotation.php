@@ -74,8 +74,12 @@ class Annotation{
 						$result['value'] = trim($mc);
 					}else{
 						$as = (false !== $at) ? substr($mc,$at+1,strrpos($mc,']')-$at) : null;
-						$decode = self::activation($as);
 						
+						try{
+							$decode = self::activation($as);
+						}catch(\ParseError $e){
+							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$mc.'`');
+						}						
 						if(preg_match("/([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$mc,$m)){
 							$n = $m[2];
 							$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;

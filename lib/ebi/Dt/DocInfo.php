@@ -49,7 +49,7 @@ class DocInfo extends \ebi\Obj{
 	}
 	
 	
-	public static function	parse($name,$src,$docendpos=0){
+	public static function parse($name,$src,$docendpos=0){
 		$info = new static();
 		$info->name($name);
 

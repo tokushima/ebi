@@ -269,6 +269,40 @@ class Image{
 		return $this;
 	}
 	
+	public function rotate($angle,$background_color='#000000'){
+		if($this->mode == 1){
+			$this->canvas->rotateImage($background_color,$angle);
+		}else{
+			list($r,$g,$b) = self::color2rgb($background_color);
+			
+			$color = imagecolorallocate($r,$g,$b);
+			$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
+			imagedestroy($this->canvas);
+			$this->canvas = $canvas;
+		}
+		return $this;
+	}
+	/**
+	 * カラーモードからRGB（10進数）を返す
+	 * @param string $color_code
+	 * @return integer[] R,G,B
+	 */
+	public static function color2rgb($color_code){
+		if(substr($color_code,0,1) == '#'){
+			$color_code = substr($color_code,1);
+		}
+		if(strlen($color_code) == 6){
+			$r = hexdec(substr($color_code,0,2));
+			$g = hexdec(substr($color_code,2,2));
+			$b = hexdec(substr($color_code,4,2));
+		}else{
+			$r = hexdec(substr($color_code,0,1));
+			$g = hexdec(substr($color_code,1,1));
+			$b = hexdec(substr($color_code,2,1));
+		}
+		return [$r,g,$b];
+	}
+	
 	/**
 	 * 切り取ってサムネイルを作成する
 	 * @param integer $width 幅
