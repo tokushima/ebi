@@ -99,7 +99,7 @@ class Flow{
 		$args = [];
 		$params = [];
 		$name = null;
-		$query = '';
+		$query_string = '';
 		
 		if(is_array($map_name)){
 			$name = array_shift($map_name);
@@ -128,19 +128,21 @@ class Flow{
 		if(strpos($name,'://') !== false){
 			\ebi\HttpHeader::redirect($name);
 		}
-		if(array_key_exists('qs',$pattern) && is_array($pattern['qs'])){
+		
+		// @deprecated `qs`
+		if(array_key_exists('query',$pattern) || array_key_exists('qs',$pattern)){
 			$qs = [];
 			
-			foreach($pattern['qs'] as $k => $v){
+			foreach(($pattern['query'] ?? $pattern['qs']) as $k => $v){
 				if(substr($v,0,1) == '@'){
 					$qs[$k] = isset($vars[substr($v,1)]) ? $vars[substr($v,1)] : null;
 				}
 			}
-			$query = '?'.http_build_query($qs);
+			$query_string = '?'.http_build_query($qs);
 		}
 		if(isset(self::$url_pattern[$name][sizeof($args)])){
 			$format = self::$url_pattern[$name][sizeof($args)];
-			\ebi\HttpHeader::redirect((empty($args) ? $format : vsprintf($format,$args)).$query);
+			\ebi\HttpHeader::redirect((empty($args) ? $format : vsprintf($format,$args)).$query_string);
 		}
 		throw new \ebi\exception\InvalidArgumentException('map `'.$name.'` not found');
 	}
