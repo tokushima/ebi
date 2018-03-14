@@ -12,6 +12,7 @@ abstract class Dao extends \ebi\Obj{
 	private $_has_hierarchy_ = 1;
 	private $_class_id_;
 	private $_hierarchy_;
+	private $_saving_ = [false,false];
 
 	private static $_co_anon_ = [];
 	private static $_connections_ = [];
@@ -989,6 +990,9 @@ abstract class Dao extends \ebi\Obj{
 	 * DBへ保存する
 	 */
 	public function save(){
+		if($this->_saving_[0]){
+			throw new \ebi\exception\BadMethodCallException('save can not be used during __before_save__');
+		}
 		$q = new \ebi\Q();
 		$new = false;
 		
@@ -1040,8 +1044,13 @@ abstract class Dao extends \ebi\Obj{
 			if(self::$_co_anon_[$self][2]){
 				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
 			}
-			$this->__before_save__();
-			$this->__before_create__();
+			if(!$this->_saving_[1]){ // after中は実行しない
+				$this->_saving_[0] = true;
+				$this->__before_save__();
+				$this->__before_create__();
+				$this->_saving_[0] = false;
+			}
+			
 			$this->save_verify_primary_unique();
 			$this->validate();
 			$daq = self::$_con_[get_called_class()]->create_sql($this);
@@ -1055,14 +1064,23 @@ abstract class Dao extends \ebi\Obj{
 				}
 				$this->{$daq->id()}($result[0]);
 			}
-			$this->__after_create__();
-			$this->__after_save__();
+			if(!$this->_saving_[1]){
+				$this->_saving_[1] = true;
+				$this->__after_create__();
+				$this->__after_save__();
+				$this->_saving_[1] = false;
+			}
 		}else{
 			if(self::$_co_anon_[$self][2]){
 				throw new \ebi\exception\BadMethodCallException('update save is not permitted');
 			}
-			$this->__before_save__();
-			$this->__before_update__();
+			if(!$this->_saving_[1]){ // after中は実行しない
+				$this->_saving_[0] = true;
+				$this->__before_save__();
+				$this->__before_update__();
+				$this->_saving_[0] = false;
+			}
+			
 			$this->validate();
 			$args = func_get_args();
 			$query = new \ebi\Q();
@@ -1086,8 +1104,12 @@ abstract class Dao extends \ebi\Obj{
 			if($affected_rows === 0 && !empty($args)){
 				throw new \ebi\exception\NoRowsAffectedException('update failed');
 			}
-			$this->__after_update__();
-			$this->__after_save__();
+			if(!$this->_saving_[1]){
+				$this->_saving_[1] = true;
+				$this->__after_update__();
+				$this->__after_save__();
+				$this->_saving_[1] = false;
+			}
 		}
 		return $this;
 	}
