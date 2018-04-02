@@ -88,7 +88,7 @@ class Validator{
 								$v = sprintf('%08d',$v);
 								list($y,$m,$d) = [(int)substr($v,0,-4),(int)substr($v,-4,2),(int)substr($v,-2,2)];
 							}else{
-								$x = preg_split("/[^\d]+/",$v);
+								$x = preg_split("/[^\d]+/",mb_convert_kana($v,'n'));
 								if(sizeof($x) < 3){
 									throw new \ebi\exception\InvalidArgumentException();
 								}
@@ -155,6 +155,7 @@ class Validator{
 				case 'text':
 				case 'string':
 				case 'alnum':
+				case 'intdate':
 					if($get('min') !== null && (int)$get('min') > mb_strlen($v)){
 						\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);
 					}
