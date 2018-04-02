@@ -129,11 +129,10 @@ class Flow{
 			\ebi\HttpHeader::redirect($name);
 		}
 		
-		// @deprecated `qs`
-		if(array_key_exists('query',$pattern) || array_key_exists('qs',$pattern)){
+		if(array_key_exists('query',$pattern)){
 			$qs = [];
 			
-			foreach(($pattern['query'] ?? $pattern['qs']) as $k => $v){
+			foreach($pattern['query'] as $k => $v){
 				if(substr($v,0,1) == '@'){
 					$qs[$k] = isset($vars[substr($v,1)]) ? $vars[substr($v,1)] : null;
 				}
