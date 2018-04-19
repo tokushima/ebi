@@ -269,6 +269,12 @@ class Image{
 		return $this;
 	}
 	
+	/**
+	 * 回転
+	 * @param integer $angle 角度
+	 * @param string $background_color
+	 * @return \ebi\Image
+	 */
 	public function rotate($angle,$background_color='#000000'){
 		if($this->mode == 1){
 			$this->canvas->rotateImage($background_color,$angle);
@@ -300,7 +306,7 @@ class Image{
 			$g = hexdec(substr($color_code,1,1));
 			$b = hexdec(substr($color_code,2,1));
 		}
-		return [$r,g,$b];
+		return [$r,$g,$b];
 	}
 	
 	/**
@@ -363,5 +369,28 @@ class Image{
 			return preg_replace('/[^\d\.]/','',$m[1]);
 		}
 		throw new \ebi\exception\IllegalDataTypeException();
+	}
+	
+	/**
+	 * 塗りつぶした矩形をファイルまたは標準出力に出力する
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @param string $filename 
+	 */
+	public static function filled_rectangle($width,$height,$color,$filename=null){
+		list($r,$g,$b) = self::color2rgb($color);
+		
+		$canvas = imagecreatetruecolor($width,$height);
+		imagefilledrectangle($canvas,0,0,$width,$height,imagecolorallocate($canvas,$r,$g,$b));
+		
+		if(empty($filename)){
+			header('Content-Type: image/png');
+			imagepng($canvas);
+		}else{
+			\ebi\Util::mkdir(dirname($filename));
+			imagepng($canvas,$filename);
+		}
+		imagedestroy($canvas);
 	}
 }
