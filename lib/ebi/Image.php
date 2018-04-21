@@ -26,17 +26,21 @@ class Image{
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
 	
+	const MODE_IMAGICK = 1;
+	const MODE_GD = 2;
+	
 	private $canvas;
 	private $mode;
+	private $font_path;
 	
 	/**
 	 * 
 	 * @param string $filename
 	 */
-	public function __construct($filename){
+	public function __construct($filename,$mode=null){
 		if($filename != __FILE__){
 			try{
-				if(extension_loaded('imagick')){
+				if($mode != 2 && extension_loaded('imagick')){
 					$this->canvas = new \Imagick($filename);
 					$this->mode = 1;
 				}else{
@@ -288,6 +292,64 @@ class Image{
 		}
 		return $this;
 	}
+	
+	/**
+	 * フォントを設定する
+	 * @param string $font_path
+	 * @return \ebi\Image
+	 */
+	public function set_font($font_path){
+		$this->font_path = $font_path;
+		
+		return $this;
+	}
+	
+	/**
+	 * テキストを画像に書き込む
+	 * @param integer $x
+	 * @param integer $y
+	 * @param string $font_color
+	 * @param number $font_point_size
+	 * @param string $text
+	 * @param number $angle
+	 * @throws \ebi\exception\UndefinedException
+	 * @return \ebi\Image
+	 */
+	public function add_text($x,$y,$font_color,$font_point_size,$text,$angle=0){
+		if(empty($this->font_path)){
+			throw new \ebi\exception\UndefinedException('undefined font');
+		}
+		
+		if($this->mode == 1){
+			$draw = new \ImagickDraw();
+			$draw->setFillColor($font_color);
+			$draw->setFont($this->font_path);
+			$draw->setFontSize($font_point_size);
+			
+			$this->canvas->annotateImage(
+				$draw,
+				$x,
+				$y,
+				$angle,
+				$text
+			);
+		}else{
+			list($r,$g,$b) = self::color2rgb($font_color);
+			
+			imagettftext(
+				$this->canvas,
+				($font_point_size*0.7),
+				$angle,
+				$x,
+				$y,
+				imagecolorallocate($this->canvas,$r,$g,$b),
+				$this->font_path,
+				$text
+			);
+		}
+		return $this;
+	}
+	
 	/**
 	 * カラーモードからRGB（10進数）を返す
 	 * @param string $color_code
