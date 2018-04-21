@@ -33,14 +33,24 @@ class Image{
 	private $mode;
 	private $font_path;
 	
+	static private $default_mode = 1;
+	
+	/**
+	 * インスタンスモードを設定する
+	 * @param integer $mode
+	 */
+	public static function set_mode($mode){
+		self::$default_mode = $mode;
+	}
+	
 	/**
 	 * 
 	 * @param string $filename
 	 */
-	public function __construct($filename,$mode=null){
+	public function __construct($filename){
 		if($filename != __FILE__){
 			try{
-				if($mode != 2 && extension_loaded('imagick')){
+				if(self::$default_mode != 2 && extension_loaded('imagick')){
 					$this->canvas = new \Imagick($filename);
 					$this->mode = 1;
 				}else{
@@ -76,7 +86,7 @@ class Image{
 		$self = new static(__FILE__);
 		
 		try{
-			if(extension_loaded('imagick')){
+			if(self::$default_mode != 2 && extension_loaded('imagick')){
 				$self->canvas = new \Imagick();
 				if($self->canvas->readImageBlob($string) !== true){
 					throw \ebi\exception\ImageException();
@@ -88,6 +98,43 @@ class Image{
 				if($self->canvas === false){
 					throw \ebi\exception\ImageException();
 				}
+				$self->mode = 2;
+			}
+		}catch(\Exception $e){
+			throw \ebi\exception\ImageException();
+		}
+		return $self;
+	}
+	
+	/**
+	 * 塗りつぶした矩形を作成する
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @param string $filename
+	 */
+	public static function filled_rectangle($width,$height,$color){
+		$self = new static(__FILE__);
+		
+		try{
+			if(self::$default_mode != 2 && extension_loaded('imagick')){
+				$self->canvas = new \Imagick();
+				$self->canvas->newImage($width,$height,$color);
+				
+				$self->mode = 1;
+			}else{				
+				list($r,$g,$b) = self::color2rgb($color);
+				
+				$self->canvas = imagecreatetruecolor($width,$height);
+				imagefilledrectangle(
+					$self->canvas,
+					0,
+					0,
+					$width,
+					$height,
+					imagecolorallocate($self->canvas,$r,$g,$b)
+				);
+				
 				$self->mode = 2;
 			}
 		}catch(\Exception $e){
@@ -305,7 +352,7 @@ class Image{
 	}
 	
 	/**
-	 * テキストを画像に書き込む
+	 * テキストを画像に書き込む、座標は左下が原点
 	 * @param integer $x
 	 * @param integer $y
 	 * @param string $font_color
@@ -319,6 +366,7 @@ class Image{
 		if(empty($this->font_path)){
 			throw new \ebi\exception\UndefinedException('undefined font');
 		}
+		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
 		
 		if($this->mode == 1){
 			$draw = new \ImagickDraw();
@@ -329,24 +377,59 @@ class Image{
 			$this->canvas->annotateImage(
 				$draw,
 				$x,
-				$y,
+				($y + $text_height),
 				$angle,
 				$text
 			);
 		}else{
+			$font_point_size = $font_point_size * 0.75;
+			$angle = $angle * -1;
+			
 			list($r,$g,$b) = self::color2rgb($font_color);
 			
 			imagettftext(
 				$this->canvas,
-				($font_point_size*0.7),
+				$font_point_size,
 				$angle,
 				$x,
-				$y,
+				($y + $text_height),
 				imagecolorallocate($this->canvas,$r,$g,$b),
 				$this->font_path,
 				$text
 			);
 		}
+		return $this;
+	}
+	
+	public function get_textbox_size($font_point_size,$text,$angle=0){
+		$font_box = imageftbbox($font_point_size,$angle, $this->font_path, $text);
+		return [($font_box[2] - $font_box[0]),($font_box[1] - $font_box[7])];
+	}
+	
+	public function merge($x,$y,\ebi\Image $img,$pct=100){
+		if($this->mode == 1){
+			$this->canvas->compositeImage(
+				$img->canvas,
+				\Imagick::COMPOSITE_OVER,
+				$x,
+				$y
+			);
+		}else{
+			list($wight,$height) = $img->get_size();
+			
+			imagecopymerge(
+				$this->canvas,
+				$img->canvas,
+				$x,
+				$y,
+				0,
+				0,
+				$wight,
+				$height,
+				$pct
+			);
+		}
+		
 		return $this;
 	}
 	
@@ -431,28 +514,5 @@ class Image{
 			return preg_replace('/[^\d\.]/','',$m[1]);
 		}
 		throw new \ebi\exception\IllegalDataTypeException();
-	}
-	
-	/**
-	 * 塗りつぶした矩形をファイルまたは標準出力に出力する
-	 * @param integer $width
-	 * @param integer $height
-	 * @param string $color
-	 * @param string $filename 
-	 */
-	public static function filled_rectangle($width,$height,$color,$filename=null){
-		list($r,$g,$b) = self::color2rgb($color);
-		
-		$canvas = imagecreatetruecolor($width,$height);
-		imagefilledrectangle($canvas,0,0,$width,$height,imagecolorallocate($canvas,$r,$g,$b));
-		
-		if(empty($filename)){
-			header('Content-Type: image/png');
-			imagepng($canvas);
-		}else{
-			\ebi\Util::mkdir(dirname($filename));
-			imagepng($canvas,$filename);
-		}
-		imagedestroy($canvas);
 	}
 }
