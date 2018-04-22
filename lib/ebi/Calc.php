@@ -156,7 +156,7 @@ class Calc{
 			case 'CD':
 			case 'A5SQUARE': return [148,148]; // A5スクエア、CDケースレーベル
 			case 'MEISHI': return [55,91]; // 名刺（９号）
-			case 'INSTAXMINU': return [54,86]; // instax mini
+			case 'INSTAXMINI': return [54,86]; // instax mini
 			case 'INSTAXSQUARE': return [72,86]; // instax SQUARE
 			case 'INSTAXWIDE': return [86,108]; // instax WIDE
 		}
