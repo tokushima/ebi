@@ -304,7 +304,6 @@ class Image{
 		}
 		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
 		
-		$font_point_size = $font_point_size * 0.75;
 		$angle = $angle * -1;
 		
 		list($r,$g,$b) = self::color2rgb($font_color);
