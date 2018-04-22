@@ -33,16 +33,6 @@ class Image{
 	private $mode;
 	private $font_path;
 	
-	static private $default_mode = 1;
-	
-	/**
-	 * インスタンスモードを設定する
-	 * @param integer $mode
-	 */
-	public static function set_mode($mode){
-		self::$default_mode = $mode;
-	}
-	
 	/**
 	 * 
 	 * @param string $filename
@@ -50,7 +40,10 @@ class Image{
 	public function __construct($filename){
 		if($filename != __FILE__){
 			try{
-				if(self::$default_mode != 2 && extension_loaded('imagick')){
+				/**
+				 * @param integer $mode 1: IMAGICK, 2: GD
+				 */
+				if(\ebi\Conf::get('mode') != 2 && extension_loaded('imagick')){
 					$this->canvas = new \Imagick($filename);
 					$this->mode = 1;
 				}else{
@@ -86,7 +79,7 @@ class Image{
 		$self = new static(__FILE__);
 		
 		try{
-			if(self::$default_mode != 2 && extension_loaded('imagick')){
+			if(\ebi\Conf::get('mode') != 2 && extension_loaded('imagick')){
 				$self->canvas = new \Imagick();
 				if($self->canvas->readImageBlob($string) !== true){
 					throw \ebi\exception\ImageException();
@@ -117,7 +110,7 @@ class Image{
 		$self = new static(__FILE__);
 		
 		try{
-			if(self::$default_mode != 2 && extension_loaded('imagick')){
+			if(\ebi\Conf::get('mode') != 2 && extension_loaded('imagick')){
 				$self->canvas = new \Imagick();
 				$self->canvas->newImage($width,$height,$color);
 				
@@ -345,7 +338,7 @@ class Image{
 	 * @param string $font_path
 	 * @return \ebi\Image
 	 */
-	public function set_font($font_path){
+	public function font($font_path){
 		$this->font_path = $font_path;
 		
 		return $this;
@@ -362,7 +355,7 @@ class Image{
 	 * @throws \ebi\exception\UndefinedException
 	 * @return \ebi\Image
 	 */
-	public function add_text($x,$y,$font_color,$font_point_size,$text,$angle=0){
+	public function text($x,$y,$font_color,$font_point_size,$text,$angle=0){
 		if(empty($this->font_path)){
 			throw new \ebi\exception\UndefinedException('undefined font');
 		}
@@ -401,16 +394,41 @@ class Image{
 		return $this;
 	}
 	
+	/**
+	 * テキストボックスのサイズ
+	 * @param number $font_point_size
+	 * @param number $text
+	 * @param number $angle
+	 * @return number[]
+	 */
 	public function get_textbox_size($font_point_size,$text,$angle=0){
 		$font_box = imageftbbox($font_point_size,$angle, $this->font_path, $text);
 		return [($font_box[2] - $font_box[0]),($font_box[1] - $font_box[7])];
 	}
 	
+	/**
+	 * 画像を結合する
+	 * @param integer $x
+	 * @param integer $y
+	 * @param \ebi\Image $img
+	 * @param number $pct
+	 * @return \ebi\Image
+	 */
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
 		if($this->mode == 1){
+			$pct = $pct / 100;
+			
+			if($pct != 1){
+				$img->canvas->evaluateImage(
+					\Imagick::EVALUATE_MULTIPLY,
+					$pct,
+					\Imagick::CHANNEL_ALPHA
+				);
+			}
+			
 			$this->canvas->compositeImage(
 				$img->canvas,
-				\Imagick::COMPOSITE_OVER,
+				$img->canvas->getImageCompose(),
 				$x,
 				$y
 			);
