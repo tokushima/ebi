@@ -25,9 +25,9 @@ class Image{
 	const CHANNELS_GLAY = 1;
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
-	
+		
 	private $canvas;
-	private $mode;
+	private $font_path;
 	
 	/**
 	 * 
@@ -36,26 +36,20 @@ class Image{
 	public function __construct($filename){
 		if($filename != __FILE__){
 			try{
-				if(extension_loaded('imagick')){
-					$this->canvas = new \Imagick($filename);
-					$this->mode = 1;
-				}else{
-					$size = getimagesize($filename);
-					
-					switch($size['mime']){
-						case  'image/jpeg':
-							$this->canvas = imagecreatefromjpeg($filename);
-							break;
-						case 'image/png':
-							$this->canvas = imagecreatefrompng($filename);
-							break;
-						case 'image/gif':
-							$this->canvas = imagecreatefromgif($filename);
-							break;
-						default:
-							throw new \ebi\exception\ImageException();
-					}
-					$this->mode = 2;
+				$size = getimagesize($filename);
+				
+				switch($size['mime']){
+					case  'image/jpeg':
+						$this->canvas = imagecreatefromjpeg($filename);
+						break;
+					case 'image/png':
+						$this->canvas = imagecreatefrompng($filename);
+						break;
+					case 'image/gif':
+						$this->canvas = imagecreatefromgif($filename);
+						break;
+					default:
+						throw new \ebi\exception\ImageException();
 				}
 			}catch(\Exception $e){
 				throw new \ebi\exception\ImageException();
@@ -72,20 +66,39 @@ class Image{
 		$self = new static(__FILE__);
 		
 		try{
-			if(extension_loaded('imagick')){
-				$self->canvas = new \Imagick();
-				if($self->canvas->readImageBlob($string) !== true){
-					throw \ebi\exception\ImageException();
-				}
-				$self->mode = 1;
-			}else{
-				$self->canvas = imagecreatefromstring($string);
-				
-				if($self->canvas === false){
-					throw \ebi\exception\ImageException();
-				}
-				$self->mode = 2;
+			$self->canvas = imagecreatefromstring($string);
+			
+			if($self->canvas === false){
+				throw \ebi\exception\ImageException();
 			}
+		}catch(\Exception $e){
+			throw \ebi\exception\ImageException();
+		}
+		return $self;
+	}
+	
+	/**
+	 * 塗りつぶした矩形を作成する
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @param string $filename
+	 */
+	public static function filled_rectangle($width,$height,$color){
+		$self = new static(__FILE__);
+		
+		try{
+			list($r,$g,$b) = self::color2rgb($color);
+			
+			$self->canvas = imagecreatetruecolor($width,$height);
+			imagefilledrectangle(
+				$self->canvas,
+				0,
+				0,
+				$width,
+				$height,
+				imagecolorallocate($self->canvas,$r,$g,$b)
+			);
 		}catch(\Exception $e){
 			throw \ebi\exception\ImageException();
 		}
@@ -101,28 +114,24 @@ class Image{
 	public function write($filename){
 		\ebi\Util::mkdir(dirname($filename));
 		
-		if($this->mode == 1){
-			$this->canvas->writeImage($filename);
-		}else{
-			$type = 'jpg';
-			
-			if(preg_match('/\.([\w]+)$/',$filename,$m)){
-				$type = strtolower($m[1]);
-			}
-			switch($type){
-				case 'jpeg':
-				case 'jpg':
-					imagejpeg($this->canvas,$filename);
-					break;
-				case 'png':
-					imagepng($this->canvas,$filename);
-					break;
-				case 'gif':
-					imagegif($this->canvas,$filename);
-					break;
-				default:
-					imagejpeg($this->canvas,$filename);
-			}
+		$type = 'jpg';
+		
+		if(preg_match('/\.([\w]+)$/',$filename,$m)){
+			$type = strtolower($m[1]);
+		}
+		switch($type){
+			case 'jpeg':
+			case 'jpg':
+				imagejpeg($this->canvas,$filename);
+				break;
+			case 'png':
+				imagepng($this->canvas,$filename);
+				break;
+			case 'gif':
+				imagegif($this->canvas,$filename);
+				break;
+			default:
+				imagejpeg($this->canvas,$filename);
 		}
 		return $this;
 	}	
@@ -146,33 +155,24 @@ class Image{
 				$format = 'jpeg';
 		}
 		
-		if($this->mode == 1){
-			$this->canvas->setImageFormat($format);
-			print($this->canvas);
-		}else{
-			switch($format){
-				case 'jpeg':
-					imagejpeg($this->canvas);
-					break;
-				case 'png':
-					imagepng($this->canvas);
-					break;
-				case 'gif':
-					imagegif($this->canvas);
-					break;
-				default:
-					imagejpeg($this->canvas);
-			}
+		switch($format){
+			case 'jpeg':
+				imagejpeg($this->canvas);
+				break;
+			case 'png':
+				imagepng($this->canvas);
+				break;
+			case 'gif':
+				imagegif($this->canvas);
+				break;
+			default:
+				imagejpeg($this->canvas);
 		}
 		exit;
 	}
 	
 	public function __destruct(){
-		if($this->mode == 1){
-			$this->canvas->clear();
-		}else{
-			imagedestroy($this->canvas);
-		}
+		imagedestroy($this->canvas);
 	}
 	
 	/**
@@ -204,17 +204,14 @@ class Image{
 			$y = $h + $y;
 		}
 		
-		if($this->mode == 1){
-			$this->canvas->cropImage($width,$height,$x,$y);
-		}else{
-			$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
-			
-			if($canvas === false){
-				throw new \ebi\exception\ImageException();
-			}
-			imagedestroy($this->canvas);
-			$this->canvas = $canvas;
+		$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
+		
+		if($canvas === false){
+			throw new \ebi\exception\ImageException();
 		}
+		imagedestroy($this->canvas);
+		$this->canvas = $canvas;
+		
 		return $this;
 	}
 	/**
@@ -222,13 +219,9 @@ class Image{
 	 * @return integer[] width,height
 	 */
 	public function get_size(){
-		if($this->mode == 1){
-			$w = $this->canvas->getImageWidth();
-			$h = $this->canvas->getImageHeight();
-		}else{
-			$w = imagesx($this->canvas);
-			$h = imagesy($this->canvas);
-		}
+		$w = imagesx($this->canvas);
+		$h = imagesy($this->canvas);
+		
 		return [$w,$h];
 	}
 	
@@ -256,32 +249,117 @@ class Image{
 		$cw = $w * $a;
 		$ch = $h * $a;
 		
-		if($this->mode == 1){
-			$this->canvas->scaleImage($cw,$ch);
-		}else{
-			$canvas = imagecreatetruecolor($cw,$ch);
-			if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
-				throw new \ebi\exception\ImageException();
-			}			
-			imagedestroy($this->canvas);
-			$this->canvas = $canvas;
-		}
+		$canvas = imagecreatetruecolor($cw,$ch);
+		if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
+			throw new \ebi\exception\ImageException();
+		}			
+		imagedestroy($this->canvas);
+		$this->canvas = $canvas;
+		
 		return $this;
 	}
 	
+	/**
+	 * 回転
+	 * @param integer $angle 角度
+	 * @param string $background_color
+	 * @return \ebi\Image
+	 */
 	public function rotate($angle,$background_color='#000000'){
-		if($this->mode == 1){
-			$this->canvas->rotateImage($background_color,$angle);
-		}else{
-			list($r,$g,$b) = self::color2rgb($background_color);
-			
-			$color = imagecolorallocate($r,$g,$b);
-			$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
-			imagedestroy($this->canvas);
-			$this->canvas = $canvas;
-		}
+		list($r,$g,$b) = self::color2rgb($background_color);
+		
+		$color = imagecolorallocate($r,$g,$b);
+		$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
+		imagedestroy($this->canvas);
+		$this->canvas = $canvas;
+		
 		return $this;
 	}
+	
+	/**
+	 * フォントを設定する
+	 * @param string $font_path
+	 * @return \ebi\Image
+	 */
+	public function font($font_path){
+		$this->font_path = $font_path;
+		
+		return $this;
+	}
+	
+	/**
+	 * テキストを画像に書き込む、座標は左下が原点
+	 * @param integer $x
+	 * @param integer $y
+	 * @param string $font_color
+	 * @param number $font_point_size
+	 * @param string $text
+	 * @param number $angle
+	 * @throws \ebi\exception\UndefinedException
+	 * @return \ebi\Image
+	 */
+	public function text($x,$y,$font_color,$font_point_size,$text,$angle=0){
+		if(empty($this->font_path)){
+			throw new \ebi\exception\UndefinedException('undefined font');
+		}
+		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		
+		$angle = $angle * -1;
+		
+		list($r,$g,$b) = self::color2rgb($font_color);
+		
+		imagettftext(
+			$this->canvas,
+			$font_point_size,
+			$angle,
+			$x,
+			($y + $text_height),
+			imagecolorallocate($this->canvas,$r,$g,$b),
+			$this->font_path,
+			$text
+		);
+		
+		return $this;
+	}
+	
+	/**
+	 * テキストボックスのサイズ
+	 * @param number $font_point_size
+	 * @param number $text
+	 * @param number $angle
+	 * @return number[]
+	 */
+	public function get_textbox_size($font_point_size,$text,$angle=0){
+		$font_box = imageftbbox($font_point_size,$angle, $this->font_path, $text);
+		return [($font_box[2] - $font_box[0]),($font_box[1] - $font_box[7])];
+	}
+	
+	/**
+	 * 画像を結合する
+	 * @param integer $x
+	 * @param integer $y
+	 * @param \ebi\Image $img
+	 * @param number $pct
+	 * @return \ebi\Image
+	 */
+	public function merge($x,$y,\ebi\Image $img,$pct=100){
+		list($wight,$height) = $img->get_size();
+		
+		imagecopymerge(
+			$this->canvas,
+			$img->canvas,
+			$x,
+			$y,
+			0,
+			0,
+			$wight,
+			$height,
+			$pct
+		);
+		
+		return $this;
+	}
+	
 	/**
 	 * カラーモードからRGB（10進数）を返す
 	 * @param string $color_code
@@ -300,7 +378,7 @@ class Image{
 			$g = hexdec(substr($color_code,1,1));
 			$b = hexdec(substr($color_code,2,1));
 		}
-		return [$r,g,$b];
+		return [$r,$g,$b];
 	}
 	
 	/**
