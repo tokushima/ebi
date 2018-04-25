@@ -445,7 +445,7 @@ class Browser{
 				return strlen($data);
 			});
 		}
-		$this->request_header = $this->request_vars = [];
+		$this->request_header = $this->request_vars = $this->request_file_vars = [];
 		$this->head = $this->body = $this->raw = '';
 		$this->bearer_token = $this->user = $this->password = null;
 		
