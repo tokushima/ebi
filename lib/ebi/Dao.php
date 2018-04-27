@@ -933,6 +933,7 @@ abstract class Dao extends \ebi\Obj{
 			 * 0: 数字 0123456789
 			 * a: 小文字 abcdefghjkmnprstuvwxy
 			 * A: 大文字 ABCDEFGHJKLMNPQRSTUVWXY
+			 * t: トークン token68
 			 * 
 			 * @param string $unique_code_ctype 0aAの組み合わせ
 			 */
@@ -946,6 +947,11 @@ abstract class Dao extends \ebi\Obj{
 			}
 			if(strpos($ctype,'0') !== false){
 				$base .= '0123456789';
+			}
+			if(strpos($ctype,'t') !== false){
+				$base .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+						'abcdefghijklmnopqrstuvwxyz'.
+						'0123456789-._~+/';
 			}
 			if(empty($base)){
 				throw new \ebi\exception\IllegalDataTypeException('unexpected ctype');
