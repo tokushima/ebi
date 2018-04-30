@@ -21,7 +21,7 @@
 		<h3 class="panel-title">Infomation</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Version</th>
 			<td>
@@ -36,7 +36,6 @@
 				<th>Deprecated</th>
 				<td>
 					<div class="deprecated">
-						<span class="glyphicon glyphicon-ban-circle"></span>
 						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -53,7 +52,7 @@
 			<h2 class="panel-title">Params</h2>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					{$param.name()}
@@ -84,7 +83,7 @@
 			<h2 class="panel-title">Return</h2>
 		</div>
 		<div class="panel-body">
-			<table class="table table-bordered table-striped panel-body-table">
+			<table class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t2">
 					<rt:if param="{$method_info.return().is_type_class()}">
@@ -112,7 +111,7 @@
 			<h3 class="panel-title">Throws</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1_2">
 					<rt:if param="{$param.is_type_class()}">
@@ -141,7 +140,7 @@
 			<h3 class="panel-title">Mail</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">				
 					<a href="{$t.package_method_url('mail_info_method')}?tcode={$info.opt('x_t_code')}&class={$method_info.opt('class')}&method={$method_info.opt('method')}">
@@ -168,7 +167,7 @@
 			<h3 class="panel-title">Plugins</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					{$info.name()}
@@ -197,7 +196,7 @@
 			<h3 class="panel-title">See</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td>
 					<rt:if param="{$t.eq($see['type'],'url')}">

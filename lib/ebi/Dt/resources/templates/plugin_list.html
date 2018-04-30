@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<table rt:param="{$class_info_list}" rt:var="class_info" class="table table-condensed">
+<table rt:param="{$class_info_list}" rt:var="class_info" class="table table-sm table-condensed">
 <thead>
 <tr class="text-muted">
 	<th style="width:20%;">Class</th>
@@ -22,7 +22,7 @@
 		</div>
 	</td>
 	<td colspan="2" style="width: 80%;">
-		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-striped table-bordered table-condensed">
+		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped table-bordered table-condensed">
 		<tr>
 			<td style="width:25%;">
 				<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">

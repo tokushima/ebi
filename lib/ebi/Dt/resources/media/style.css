@@ -1,4 +1,9 @@
-.deprecated {
+
+body {
+  padding-top: 5rem;
+}
+
+deprecated {
 	color: #cc6666;
 	text-decoration: line-through;
 }

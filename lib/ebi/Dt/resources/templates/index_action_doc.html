@@ -15,7 +15,7 @@
 		<h3 class="panel-title">Infomation</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Version</th>
 			<td>
@@ -101,7 +101,6 @@
 				<th>Deprecated</th>
 				<td>
 					<div class="deprecated">
-						<span class="glyphicon glyphicon-ban-circle"></span>
 						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -118,7 +117,7 @@
 			<h2 class="panel-title">Params</h2>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					{$param.name()}
@@ -148,13 +147,13 @@
 			<h3 class="panel-title">Request</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 				<td class="t1">
 					{$param.name()}
 					
 					<rt:if param="{$param.opt('require')}">
-						<span class="glyphicon glyphicon-asterisk" style="color: #ffbbbb;"></span>
+						<span style="color: #ffbbbb;">*</span>
 					</rt:if>
 				</td>
 				<td class="t2">
@@ -190,7 +189,7 @@
 			<h3 class="panel-title">Context</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 				<td class="t1">
 					{$param.name()}
@@ -228,7 +227,7 @@
 			<h3 class="panel-title">Throws</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1_2">
 					<rt:if param="{$param.is_type_class()}">
@@ -256,7 +255,7 @@
 			<h3 class="panel-title">Mail</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
@@ -288,7 +287,7 @@
 			<h3 class="panel-title">Plugins</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					<a href="{$t.package_method_url('plugin_doc',$method_info.opt('class'),$info.name())}">
@@ -321,7 +320,7 @@
 			<h3 class="panel-title">Tests</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1_2">
 					<a href="{$t.package_method_url('test_view')}?path={$info.name()}">
