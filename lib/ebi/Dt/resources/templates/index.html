@@ -1,16 +1,27 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
+	<div style="text-align: right;">
+		<form name="version_select_frm">
+			<label for="version">Version select</label>
+			<select id="version" rt:param="{$version_list}" name="version" rt:null="" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;">
+			</select>
+		</form>
+	</div>
+
+	<rt:if param="{$version}">
+		<h2>Version: {$version}</h2>
+	</rt:if>
+
+
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
-		<th style="width: 30px;"></th>
-		<th style="width: 250px;">Url</th>
-		<th style="width: 250px;">Name</th>	
-		<th style="width: 30px;"></th>		
-		<th>Version</th>
+		<th></th>
+		<th>Url</th>
+		<th>Name</th>
 		<th>Summary</th>
-		<th style="width: 50px;"></th>
+		<th></th>
 	</tr>
 	</thead>
 	<tbody>
@@ -40,11 +51,15 @@
 			</div>
 		
 			<a data-toggle="modal" data-target="#info{$count}">
-				<i data-feather="info"></i>
+				<button type="button" class="btn btn-outline-info btn-sm">Info</button>
 			</a>
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			{$map['url']}
+			
+			<rt:if param="{$map['login']}">
+				<span class="badge badge-pill badge-success">Auth</span>
+			</rt:if>			
 		</td>
 		
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
@@ -54,21 +69,21 @@
 				{$map['name']}
 			</rt:if>
 		</td>
-		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
-			<rt:if param="{$map['login']}">
-				<i data-feather="user"></i>
-			</rt:if>
-		</td>
-		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
-			<a href="{$t.package_method_url('index')}?version={$map['version']}">
-				{$map['version']}
-			</a>
-		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<span>
 				{$t.html($map['summary'])}
 			</span>
-			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
+			<span class="text-danger">{$map['error']}</span>
+			
+			<rt:if param="{$map['first_depricated_date']}">
+				<div>
+					<rt:if param="{$map['deprecated']}">
+						<span class="badge badge-warning">Deprecated Action</span>
+					<rt:else />
+						<span class="badge badge-danger">Deprecated URL</span>
+					</rt:if>
+				</div>
+			</rt:if>
 		</td>
 		
 		<td>
@@ -100,31 +115,13 @@
 				</div>
 			</div>
 		
-			<div style="text-align: right;">
-				<rt:if param="{$map['first_depricated_date']}">
-					<rt:if param="{$map['deprecated']}">
-						<i data-feather="slash"></i>
-					<rt:else />
-						<i data-feather="alert-circle"></i>
-					</rt:if>
-				</rt:if>
-				
+			<div style="text-align: right;">				
 				<a href="#" data-toggle="modal" data-target="#link{$count}">
-					<i data-feather="globe"></i>
+					<button type="button" class="btn btn-outline-primary btn-sm">Send</button>
 				</a>
 			</div>
 		</td>
 	</tr>
 	</tbody>
-	</table>
-	
-	
-	<hr />
-	
-	<div style="text-align: right;" class="text-muted">
-		<i data-feather="user"></i> Login required
-		<i data-feather="alert-circle"></i> Deprecated items
-		<i data-feather="slash"></i> Deprecated Action
-	</div>
-	
+	</table>	
 </rt:block>

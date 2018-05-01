@@ -58,6 +58,7 @@ class Dt{
 		$req = new \ebi\Request();
 		$target_version = $req->in_vars('version');
 		$file_version = date('Ymd',filemtime($this->entry));
+		$version_list = [];
 		
 		foreach($patterns as $k => $m){
 			foreach([
@@ -119,11 +120,15 @@ class Dt{
 				if(!isset($m['version'])){
 					$m['version'] = $file_version;
 				}
+				$version_list[$m['version']] = $m['version'];
+				
 				if(empty($target_version) || $m['version'] == $target_version){
 					$flow_output_maps[$m['name']] = $m;
 				}
 			}
 		}
+		krsort($version_list);
+		
 		$entry_desc = (preg_match('/\/\*\*.+?\*\//s',\ebi\Util::file_read($this->entry),$m)) ?
 			trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$m[0]))) :
 			'';
@@ -131,6 +136,8 @@ class Dt{
 		return [
 			'map_list'=>$flow_output_maps,
 			'description'=>$entry_desc,
+			'version'=>(empty($target_version) ? null : $target_version),
+			'version_list'=>$version_list,
 		];
 	}	
 	/**
