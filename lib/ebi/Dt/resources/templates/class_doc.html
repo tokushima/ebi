@@ -31,7 +31,6 @@
 				<th>Deprecated</th>
 				<td>
 					<div class="deprecated">
-						<span class="glyphicon glyphicon-ban-circle"></span>
 						{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -70,7 +69,6 @@
 					
 					<rt:if param="{$param.opt('deprecated')}">
 						<div class="deprecated-mark">
-							<span class="glyphicon glyphicon-ban-circle"></span>
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 						</div>
 					</rt:if>					

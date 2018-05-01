@@ -16,33 +16,37 @@
 	<tbody>
 	<tr style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
-			<div class="modal fade" id="info{$count}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class="modal-dialog">
+		
+			<div class="modal" tabindex="-1" role="dialog" id="info{$count}">
+				<div class="modal-dialog" role="document">
 					<div class="modal-content">
 						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">
-								{$map['name']}
-	
-								<rt:if param="{$map['deprecated']}">
-									(Deprecated)
-								</rt:if>
-							</h4>
+							{$map['name']}
+
+							<rt:if param="{$map['deprecated']}">
+								(Deprecated)
+							</rt:if>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
 						</div>
-						<div class="modal-body" style="word-break: break-all; padding: 5px;">
-							{$t.html($f.dump($map))}
+						<div class="modal-body">
+						<code class="text-secondary">{$t.html($f.dump($map))}</code>
+						</div>
+						<div class="modal-footer">
 						</div>
 					</div>
 				</div>
 			</div>
 		
 			<a data-toggle="modal" data-target="#info{$count}">
-				<span class="glyphicon glyphicon-info-sign"></span>
+				<i data-feather="info"></i>
 			</a>
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			{$map['url']}
 		</td>
+		
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			<rt:if param="{$map['class']}">
 				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
@@ -52,7 +56,7 @@
 		</td>
 		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
 			<rt:if param="{$map['login']}">
-				<span class="glyphicon glyphicon-user"></span>
+				<i data-feather="user"></i>
 			</rt:if>
 		</td>
 		<td style="opacity: 0.6 {$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
@@ -66,30 +70,23 @@
 			</span>
 			<span style="color:#ff0000; font-weight: bold;">{$map['error']}</span>
 		</td>
-		<td style="text-align: right;">
-			<rt:if param="{$map['first_depricated_date']}">
-				<rt:if param="{$map['deprecated']}">
-					<span class="glyphicon glyphicon-ban-circle"></span>
-				<rt:else />
-					<span class="glyphicon glyphicon-exclamation-sign"></span>
-				</rt:if>
-			</rt:if>
-			
-			<a href="#" data-toggle="modal" data-target="#link{$count}">
-				<span class="glyphicon glyphicon-globe"></span>
-			</a>
-			
-			<div class="modal fade" id="link{$count}" style="text-align: left;">
-				<div class="modal-dialog">
+		
+		<td>
+			<div class="modal" tabindex="-1" role="dialog" id="link{$count}">
+				<div class="modal-dialog  modal-lg" role="document">
 					<div class="modal-content">
 						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{$map['name']}</h4>
-							<div class="text-muted" style="font-size: small;">
-								{$map['summary']}
-							</div>
+							<h5 class="modal-title">{$map['name']}</h5>
+							
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
 						</div>
 						<div class="modal-body">
+							<div class="alert alert-secondary" role="alert">
+								{$map['summary']}
+							</div>
+							
 							<form name="linkdata{$count}">
 								<input type="text" name="url" value="{$map['format']}" class="form-control" />
 								<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
@@ -102,7 +99,20 @@
 					</div>
 				</div>
 			</div>
-			
+		
+			<div style="text-align: right;">
+				<rt:if param="{$map['first_depricated_date']}">
+					<rt:if param="{$map['deprecated']}">
+						<i data-feather="slash"></i>
+					<rt:else />
+						<i data-feather="alert-circle"></i>
+					</rt:if>
+				</rt:if>
+				
+				<a href="#" data-toggle="modal" data-target="#link{$count}">
+					<i data-feather="globe"></i>
+				</a>
+			</div>
 		</td>
 	</tr>
 	</tbody>
@@ -110,10 +120,11 @@
 	
 	
 	<hr />
-<div style="text-align: right;" class="text-muted">
-	<span class="glyphicon glyphicon-user"></span> Login required
-	<span class="glyphicon glyphicon-exclamation-sign"></span> Deprecated items
-	<span class="glyphicon glyphicon-ban-circle"></span> Deprecated Action
-</div>
+	
+	<div style="text-align: right;" class="text-muted">
+		<i data-feather="user"></i> Login required
+		<i data-feather="alert-circle"></i> Deprecated items
+		<i data-feather="slash"></i> Deprecated Action
+	</div>
 	
 </rt:block>
