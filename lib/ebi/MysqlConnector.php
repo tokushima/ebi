@@ -72,20 +72,20 @@ class MysqlConnector extends \ebi\DbConnector{
 			case '':
 			case 'mixed':
 			case 'string':
-				return $this->quotation($name).' varchar('.$dao->prop_anon($name,'max',255).')';
+				return $this->quotation($name).' VARCHAR('.$dao->prop_anon($name,'max',255).') BINARY';
 			case 'alnum':
 			case 'text':
-				return $this->quotation($name).(($dao->prop_anon($name,'max') !== null) ? ' varchar('.$dao->prop_anon($name,'max').')' : ' mediumtext');
+				return $this->quotation($name).(($dao->prop_anon($name,'max') !== null) ? ' VARCHAR('.$dao->prop_anon($name,'max').')' : ' MEDIUMTEXT').' BINARY';
 			case 'number':
-				return $this->quotation($name).' '.(($dao->prop_anon($name,'decimal_places') !== null) ? sprintf('numeric(%d,%d)',26-$dao->prop_anon($name,'decimal_places'),$dao->prop_anon($name,'decimal_places')) : 'double');
-			case 'serial': return $this->quotation($name).' int auto_increment';
-			case 'boolean': return $this->quotation($name).' int(1)';
-			case 'timestamp': return $this->quotation($name).' timestamp';
-			case 'date': return $this->quotation($name).' date';
-			case 'time': return $this->quotation($name).' int';
+				return $this->quotation($name).' '.(($dao->prop_anon($name,'decimal_places') !== null) ? sprintf('NUMERIC(%d,%d)',26-$dao->prop_anon($name,'decimal_places'),$dao->prop_anon($name,'decimal_places')) : 'DOUBLE');
+			case 'serial': return $this->quotation($name).' INT AUTO_INCREMENT';
+			case 'boolean': return $this->quotation($name).' INT(1)';
+			case 'timestamp': return $this->quotation($name).' DATETIME';
+			case 'date': return $this->quotation($name).' DATE';
+			case 'time': return $this->quotation($name).' INT';
 			case 'intdate':
-			case 'integer': return $this->quotation($name).' int';
-			case 'email': return $this->quotation($name).' varchar(255)';
+			case 'integer': return $this->quotation($name).' INT';
+			case 'email': return $this->quotation($name).' VARCHAR(255)';
 			default:
 				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 		}

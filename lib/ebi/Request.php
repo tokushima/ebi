@@ -362,7 +362,7 @@ class Request implements \IteratorAggregate{
 			$err['line'] == 0 && 
 			strpos($err['message'],'POST Content-Length of') !== false
 		){
-			throw new \ebi\exception\ContentLengthException();
+			throw new \ebi\exception\MaxSizeExceededException($n.' exceeds maximum');
 		}
 		
 		if(array_key_exists($n,$this->files)){

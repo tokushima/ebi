@@ -15,7 +15,7 @@
 		<h3 class="panel-title">Infomation</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Version</th>
 			<td>
@@ -29,25 +29,25 @@
 			<td>
 				{$method_info.opt('url')}
 				
-				<a href="#" data-toggle="modal" data-target="#link">
-					<span class="glyphicon glyphicon-globe"></span>
-				</a>
-				
-				<div class="modal fade" id="link" style="text-align: left;">
-					<div class="modal-dialog">
+				<div class="modal" tabindex="-1" role="dialog" id="link">
+					<div class="modal-dialog modal-lg" role="document">
 						<div class="modal-content">
 							<div class="modal-header">
-								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-								<h4 class="modal-title">{$method_info.opt('name')}</h4>
-								<div class="text-muted" style="font-size: small;">
-									{$t.noop($f.md2html($method_info.document()))}
-								</div>
+								<h5 class="modal-title">{$method_info.opt('name')}</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
 							</div>
 							<div class="modal-body">
+								<div class="alert alert-secondary">
+									{$t.noop($f.md2html($method_info.document()))}
+								</div>
+								
 								<form name="linkdata">
 									<input type="text" name="url" value="{$method_info.opt('url')}" class="form-control" />
 									<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
 								</form>
+								
 							</div>
 							<div class="modal-footer">
 								<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata,'post')">POST</button>
@@ -56,6 +56,11 @@
 						</div>
 					</div>
 				</div>
+				
+				<a href="#" data-toggle="modal" data-target="#link">
+					<i data-feather="globe"></i>
+				</a>
+
 			</td>
 		</tr>		
 		<tr>
@@ -101,7 +106,6 @@
 				<th>Deprecated</th>
 				<td>
 					<div class="deprecated">
-						<span class="glyphicon glyphicon-ban-circle"></span>
 						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -118,7 +122,7 @@
 			<h2 class="panel-title">Params</h2>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					{$param.name()}
@@ -148,13 +152,13 @@
 			<h3 class="panel-title">Request</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 				<td class="t1">
 					{$param.name()}
 					
 					<rt:if param="{$param.opt('require')}">
-						<span class="glyphicon glyphicon-asterisk" style="color: #ffbbbb;"></span>
+						<span style="color: #ffbbbb;">*</span>
 					</rt:if>
 				</td>
 				<td class="t2">
@@ -171,7 +175,6 @@
 					
 					<rt:if param="{$param.opt('deprecated')}">
 						<div class="deprecated-mark">
-							<span class="glyphicon glyphicon-ban-circle"></span>
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 						</div>
 					</rt:if>
@@ -190,7 +193,7 @@
 			<h3 class="panel-title">Context</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 				<td class="t1">
 					{$param.name()}
@@ -209,7 +212,6 @@
 
 					<rt:if param="{$param.opt('deprecated')}">
 						<div class="deprecated-mark">
-							<span class="glyphicon glyphicon-ban-circle"></span>
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 						</div>
 					</rt:if>
@@ -228,7 +230,7 @@
 			<h3 class="panel-title">Throws</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1_2">
 					<rt:if param="{$param.is_type_class()}">
@@ -256,7 +258,7 @@
 			<h3 class="panel-title">Mail</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
@@ -288,7 +290,7 @@
 			<h3 class="panel-title">Plugins</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					<a href="{$t.package_method_url('plugin_doc',$method_info.opt('class'),$info.name())}">
@@ -321,7 +323,7 @@
 			<h3 class="panel-title">Tests</h3>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1_2">
 					<a href="{$t.package_method_url('test_view')}?path={$info.name()}">

@@ -17,7 +17,7 @@
 		<h3 class="panel-title">Infomation</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Class</th>
 			<td>
@@ -37,7 +37,7 @@
 			<h2 class="panel-title">Params</h2>
 		</div>
 		<div class="panel-body">
-			<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+			<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t1">
 					{$param.name()}
@@ -68,7 +68,7 @@
 			<h2 class="panel-title">Return</h2>
 		</div>
 		<div class="panel-body">
-			<table class="table table-bordered table-striped panel-body-table">
+			<table class="table table-sm table-bordered table-striped panel-body-table">
 			<tr>
 				<td class="t2">
 					<rt:if param="{$plugin_info.return().is_type_class()}">

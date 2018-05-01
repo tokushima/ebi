@@ -7,10 +7,7 @@ eq(\ebi\Image::ORIENTATION_SQUARE,$image->get_orientation());
 $image->crop(100,50)->write($out);
 eq(\ebi\Image::ORIENTATION_LANDSCAPE,$image->get_orientation());
 
-eq(true,
-	(file_get_contents(\testman\Resource::path('crop_gd.jpg')) == file_get_contents($out)) ||
-	(file_get_contents(\testman\Resource::path('crop_im.jpg')) == file_get_contents($out))
-);
+eq(file_get_contents(\testman\Resource::path('crop_gd.jpg')) == file_get_contents($out));
 
 
 

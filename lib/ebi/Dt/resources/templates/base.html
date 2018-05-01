@@ -1,18 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
 	<title>{$appmode} DT</title>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	
-	<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-	<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
-	
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">	
 	<link rel="stylesheet" href="style.css" />
-	
+</head>
+
+<body>
+	<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+		<a class="navbar-brand" href="#">Developer Tool <span style="font-size: x-small;">( {$appmode} )</span></a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item {$t.contains_pattern_switch('index','active','inactive')}">
+					<a class="nav-link" href="{$t.package_method_url('index')}">Urls</a>
+				</li>
+				<li class="nav-item {$t.contains_pattern_switch('plugin','active','inactive')}">
+					<a class="nav-link" href="{$t.package_method_url('plugin_list')}">Plugin</a>
+				</li>
+				<li class="nav-item {$t.contains_pattern_switch('config','active','inactive')}">
+					<a class="nav-link" href="{$t.package_method_url('config_list')}">Config</a>
+				</li>
+				<li class="nav-item {$t.contains_pattern_switch('class','active','inactive')}">
+					<a class="nav-link" href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">Class</a>
+				</li>					
+				<li class="nav-item {$t.contains_pattern_switch('mail','active','inactive')}">
+					<a class="nav-link" href="{$t.package_method_url('mail_list')}">Mail</a>
+				</li>
+				
+				<rt:if param="{$has_test}">
+					<li class="nav-item {$t.contains_pattern_switch('test','active','inactive')}">
+						<a class="nav-link" href="{$t.package_method_url('test_list')}">Test</a>
+					</li>
+				</rt:if>
+			</ul>
+		</div>
+	</nav>
+
+	<main role="main" class="container">
+		<rt:block name="content"></rt:block>
+	</main>
+
+	<form name="linkform"></form>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+	<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script><!-- https://feathericons.com -->
+ 
 	<script type="text/javascript">
+		feather.replace();
+	
 		function submit_linkform(datafrm,method){
 			linkform.action = datafrm.url.value;
 			linkform.method = method;
@@ -36,66 +82,9 @@
 				alert('query invalid: ' + e);
 			}
 		}
-	</script>	
-</head>
+	</script>
 
-<body>
-
-<div id="wrap">
-	<div class="navbar navbar-default navbar-fixed-top" role="navigation">
-		<div class="container">
-			<div class="navbar-header">			
-				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				
-				<a class="navbar-brand" href="#">Developer Tool <span style="font-size: x-small;">( {$appmode} )</span></a>
-			</div>
-			
-			<div id="navbar" class="collapse navbar-collapse">
-				<ul class="nav navbar-nav">
-					<li class="{$t.contains_pattern_switch('index','active','inactive')}">
-						<a href="{$t.package_method_url('index')}">Urls</a>
-					</li>
-					<li class="{$t.contains_pattern_switch('plugin','active','inactive')}">
-						<a href="{$t.package_method_url('plugin_list')}">Plugin</a>
-					</li>
-					<li class="{$t.contains_pattern_switch('config','active','inactive')}">
-						<a href="{$t.package_method_url('config_list')}">Config</a>
-					</li>
-					<li class="{$t.contains_pattern_switch('class','active','inactive')}">
-						<a href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">Class</a>
-					</li>					
-					<li class="{$t.contains_pattern_switch('mail','active','inactive')}">
-						<a href="{$t.package_method_url('mail_list')}">Mail</a>
-					</li>
-					
-					<rt:if param="{$has_test}">
-						<li class="{$t.contains_pattern_switch('test','active','inactive')}">
-							<a href="{$t.package_method_url('test_list')}">Test</a>
-						</li>
-					</rt:if>
-				</ul>
-        	</div>
-		</div>
-	</div>
-	<div class="container">
-		<div class="page-header">
-		</div>
-		
-		<rt:block name="content">
-		</rt:block>
-	</div>
-</div>
-<div id="footer" style="margin-bottom: 100px;">
-	<div class="container">
-	</div>
-</div>
-
-
-<form id="linkform"></form>
+	<div style="height: 100px;"></div>
 </body>
 </html>
+

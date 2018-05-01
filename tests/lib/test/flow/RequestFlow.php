@@ -91,8 +91,8 @@ class RequestFlow extends \ebi\flow\Request{
 		$file = $req->in_files('file1');
 		
 		return [
-				'vars'=>$req->ar_vars(),
-				'files'=>$req->ar_files(),
+			'vars'=>$req->ar_vars(),
+			'files'=>$req->ar_files(),
 		];
 	}
 }

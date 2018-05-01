@@ -15,7 +15,7 @@
 		<h3 class="panel-title">Infomation</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Template</th>
 			<td>
@@ -49,7 +49,6 @@
 							<rt:else />
 								<span class="text-danger">
 									( <span style="font-size: small;">
-										<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
 										Version: {$method_info.version()}
 									</span> )
 								</span>							
@@ -91,7 +90,7 @@
 				<h3 class="panel-title">Vars</h3>
 			</div>
 			<div class="panel-body">
-				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-bordered table-striped panel-body-table">
+				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
 				<tr>
 					<td  class="t1">
 						{$param.name()}
@@ -122,7 +121,7 @@
 		<h3 class="panel-title">Template</h3>
 	</div>
 	<div class="panel-body">
-		<table class="table table-bordered table-striped panel-body-table">
+		<table class="table table-sm table-bordered table-striped panel-body-table">
 		<tr>
 			<th>Subject</th>
 			<td>{$mail_info.opt('subject')}</td>
