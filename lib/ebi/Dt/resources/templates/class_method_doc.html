@@ -2,17 +2,17 @@
 
 <rt:block name="content">
 
-<h2 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+<h1 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
 	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
 		{$method_info.opt('class')}
 	</a>
 	::
 	{$method_info.opt('method')}
-</h2>
+</h1>
 
-<blockquote>
+<div class="alert alert-secondary">
 {$t.noop($f.md2html($method_info.document()))}
-</blockquote>
+</div>
 
 
 

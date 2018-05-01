@@ -2,13 +2,13 @@
 
 <rt:block name="content">
 
-<h2 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+<h1 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
 	{$method_info.opt('name')}
-</h2>
+</h1>
 
-<blockquote>
+<div class="alert alert-secondary">
 {$t.noop($f.md2html($method_info.document()))}
-</blockquote>
+</div>
 
 <div class="panel panel-info">
 	<div class="panel-heading">

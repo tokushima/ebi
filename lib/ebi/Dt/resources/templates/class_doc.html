@@ -2,13 +2,13 @@
 
 <rt:block name="content">
 
-<h2 class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated;','')}">
+<h1 class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated;','')}">
 	{$class_info.name()}
-</h2>
+</h1>
 
-<blockquote>
+<div class="alert alert-secondary">
 {$t.noop($f.md2html($class_info.document()))}
-</blockquote>
+</div>
 
 
 <div class="panel panel-info">
@@ -47,7 +47,7 @@
 <rt:if param="{$class_info.opt('properties')}">
 	<div class="panel panel-success">
 		<div class="panel-heading">
-			<h2 class="panel-title">Properties</h2>
+			<h3 class="panel-title">Properties</h3>
 		</div>
 		<div class="panel-body">
 			<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
@@ -90,7 +90,7 @@
 <rt:if param="{$class_info.opt('methods')}">
 	<div class="panel panel-success">
 		<div class="panel-heading">
-			<h2 class="panel-title">Methods</h2>
+			<h3 class="panel-title">Methods</h3>
 		</div>
 		<div class="panel-body">
 			<table rt:param="{$class_info.opt('methods')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
@@ -119,7 +119,7 @@
 <rt:if param="{$class_info.opt('static_methods')}">
 	<div class="panel panel-success">
 		<div class="panel-heading">
-			<h2 class="panel-title">Static Methods</h2>
+			<h3 class="panel-title">Static Methods</h3>
 		</div>
 		<div class="panel-body">
 			<table rt:param="{$class_info.opt('static_methods')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
