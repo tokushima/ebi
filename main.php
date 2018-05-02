@@ -3,7 +3,6 @@ set_error_handler(function($n,$s,$f,$l){
 	throw new \ErrorException($s,0,$n,$f,$l);
 });
 
-ini_set('display_errors','On');
 ini_set('html_errors',0);
 ini_set('error_reporting',E_ALL);
 ini_set('xdebug.overload_var_dump',0);
