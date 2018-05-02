@@ -203,6 +203,7 @@ class Dt{
 					}
 				}
 				
+				\ebi\Log::trace(self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
 				return ['method_info'=>$info];
@@ -370,6 +371,7 @@ class Dt{
 	private function test_file_list($entry=null){
 		$testdir = $this->test_path();
 		$test_list = [];
+		
 		try{
 			foreach(\ebi\Util::ls($testdir,true,'/\.php$/') as $f){
 				if(
@@ -379,9 +381,9 @@ class Dt{
 					$name = str_replace($testdir,'',$f->getPathname());
 					$src = file_get_contents($f->getPathname());
 					
-					if(empty($entry) || preg_match('/url\(([\'\"])'.preg_quote($entry,'/').'\\1/',$src)){
+					if(empty($entry) || preg_match('@\(([\'\"])'.preg_quote($entry,'@').'\\1@',$src)){
 						$pos = strpos($src,'*/');
-						
+
 						if($pos === false){
 							$info = new \ebi\Dt\DocInfo();
 							$info->name($name);

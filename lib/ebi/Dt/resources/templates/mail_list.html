@@ -17,17 +17,17 @@
 </thead>
 <tbody>
 <tr>
-	<td class="t2">
+	<td>
 		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
 				{$info.name()}
 			</span>
 		</a>
 	</td>
-	<td class="t3">
+	<td>
 		{$info.summary()}
 	</td>
-	<td class="t1s">
+	<td>
 		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','text-muted')}">
 				{$info.opt('x_t_code')}
@@ -35,14 +35,14 @@
 		</a>
 	</td>
 	
-	<td class="t1s" style="opacity: 0.6">
+	<td style="opacity: 0.6">
 		<a href="{$t.package_method_url('index')}?version={$info.version()}">
 			{$info.version()}
 		</a>
 	</td>
 	
 	<rt:if param="{$is_test}">
-		<td class="t4">
+		<td>
 			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}">
 				{$info.opt('count')}
 			</a>

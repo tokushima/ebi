@@ -2,27 +2,30 @@
 
 <rt:block name="content">
 
-<h1 class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated;','')}">
+<h1 class="display-3 {$t.cond_switch($class_info.opt('deprecated'),'deprecated;','')}">
 	{$class_info.name()}
 </h1>
 
-<div class="alert alert-secondary">
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
 {$t.noop($f.md2html($class_info.document()))}
 </div>
 
 
-<div class="panel panel-info">
-	<div class="panel-heading">
-		<h3 class="panel-title">Infomation</h3>
-	</div>
-	<div class="panel-body">
-		<table class="table table-sm table-sm  table-bordered table-striped panel-body-table">
+
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Infomation</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm style-table-borderless">
 		<tr>
 			<th>Extends</th>
 			<td>
-				<a href="{$t.package_method_url('class_doc',$class_info.opt('extends'))}">
-					{$class_info.opt('extends')}
-				</a>
+				<rt:if param="{$class_info.opt('extends')}">
+					<a href="{$t.package_method_url('class_doc',$class_info.opt('extends'))}">
+						{$class_info.opt('extends')}
+					</a>
+				<rt:else />
+					stdObject
+				</rt:if>
 			</td>
 		</tr>
 		
@@ -30,14 +33,12 @@
 			<tr>
 				<th>Deprecated</th>
 				<td>
-					<div class="deprecated">
+					<div class="text-danger">
 						{$t.date_format('Y-m-d',$class_info.opt('deprecated'))}
 					</div>
 				</td>
 			</tr>
 		</rt:if>		
-		
-
 		</table>
 	</div>
 </div>
@@ -45,183 +46,173 @@
 
 
 <rt:if param="{$class_info.opt('properties')}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h3 class="panel-title">Properties</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-				<td class="t1">
-					{$param.name()}
-				</td>
-				<td class="t2">
-					<rt:if param="{$param.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
-							{$param.fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-primary">Properties</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+			<td>
+				{$param.name()}
+			</td>
+			<td>
+				<rt:if param="{$param.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
-					</rt:if>
-				</td>				
-				<td class="t3">
-					{$t.html($param.summary())}
-					
-					<rt:if param="{$param.opt('deprecated')}">
-						<div class="deprecated-mark">
-							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-						</div>
-					</rt:if>					
-				</td>
-				<td class="t4">
-					<rt:if param="{$t.not($param.opt('hash'))}">
-						-
-					</rt:if>
-				</td>
-			</tr>
-			</table>
-		</div>
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>				
+			<td>
+				{$t.html($param.summary())}
+				
+				<rt:if param="{$param.opt('deprecated')}">
+					<div class="deprecated-mark">
+						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+					</div>
+				</rt:if>					
+			</td>
+			<td>
+				<rt:if param="{$t.not($param.opt('hash'))}">
+					-
+				</rt:if>
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
-
 
 
 
 <rt:if param="{$class_info.opt('methods')}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h3 class="panel-title">Methods</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('methods')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-				<td class="t1">
-					<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
-						{$param.name()}
-					</a>
-				</td>
-				<td class="t3">
-					{$t.html($param.summary())}
-					
-					<rt:if param="{$param.opt('deprecated')}">
-						<div class="deprecated-mark">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-success">Methods</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('methods')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+			<td>
+				<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
+					{$param.name()}
+				</a>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+				
+				<rt:if param="{$param.opt('deprecated')}">
+					<div>
+						<span class="badge badge-pill badge-danger">
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-						</div>
-					</rt:if>					
-				</td>
-			</tr>
-			</table>
-		</div>
+						</span>
+					</div>
+				</rt:if>					
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 <rt:if param="{$class_info.opt('static_methods')}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h3 class="panel-title">Static Methods</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('static_methods')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-				<td class="t1">
-					<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
-						{$param.name()}
-					</a>
-				</td>
-				<td class="t3">
-					{$t.html($param.summary())}
-					
-					<rt:if param="{$param.opt('deprecated')}">
-						<div class="deprecated-mark">
-							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-						</div>
-					</rt:if>					
-				</td>
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-success">Static Methods</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('static_methods')}" rt:var="param" class="table table-sm style-table-borderless">
+		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
+			<td>
+				<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
+					{$param.name()}
+				</a>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+				
+				<rt:if param="{$param.opt('deprecated')}">
+					<div class="deprecated-mark">
+						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+					</div>
+				</rt:if>					
+			</td>
+		</tr>
+		</table>	
 	</div>
+</div>
 </rt:if>
 
 
 <rt:if param="{$class_info.opt('plugins')}">
-	<div class="panel panel-primary">
-		<div class="panel-heading">
-			<h3 class="panel-title">Plugins</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">
-					<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">
-						{$info.name()}
-					</a>
-				</td>
-				<td class="t3">
-					{$t.html($info.summary(),200,1)}
-				</td>
-				<td class="t3">
-					<rt:loop param="{$info.opt('added')}" var="class_name">
-						<div>
-							<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
-								{$class_name}
-							</a>
-						</div>
-					</rt:loop>
-				</td>			
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Plugins</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">
+					{$info.name()}
+				</a>
+			</td>
+			<td>
+				{$t.html($info.summary(),200,1)}
+			</td>
+			<td>
+				<rt:loop param="{$info.opt('added')}" var="class_name">
+					<div>
+						<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
+							{$class_name}
+						</a>
+					</div>
+				</rt:loop>
+			</td>			
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 
 <rt:if param="{$class_info.opt('conf_list')}">
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">Conf</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">
-					{$info.name()}
-				</td>
-				<td class="t3">
-					{$t.html($info.summary(),200,1)}
-				</td>
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Config</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				{$info.name()}
+			</td>
+			<td>
+				{$t.html($info.summary(),200,1)}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 <rt:if param="{$class_info.opt('see_list')}">
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">See</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$class_info.opt('see_list')}" rt:var="see" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td>
-					<rt:if param="{$t.eq($see['type'],'url')}">
-						<a href="{$see['url']}">{$see['url']}</a>
-					</rt:if>
-					<rt:if param="{$t.eq($see['type'],'method')}">
-						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
-					</rt:if>
-					<rt:if param="{$t.eq($see['type'],'class')}">
-						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
-					</rt:if>
-				</td>
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">See</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$class_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				<rt:if param="{$t.eq($see['type'],'url')}">
+					<a href="{$see['url']}">{$see['url']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'method')}">
+					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'class')}">
+					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
+				</rt:if>
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
+
 
 </rt:block>
