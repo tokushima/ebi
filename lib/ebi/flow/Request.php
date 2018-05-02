@@ -70,20 +70,16 @@ class Request extends \ebi\Request{
 				if(isset($an['type'])){
 					if($an['type'] == 'file'){
 						if(isset($an['require']) && $an['require'] === true){
-							try{
-								if(!$this->has_file($k)){
-									\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'),$k);
-								}else{
-									if(isset($an['max'])){
-										$filesize = is_file($this->file_path($k)) ? filesize($this->file_path($k)) : 0;
-										
-										if($filesize <= 0 || ($filesize/1024/1024) > $an['max']){
-											\ebi\Exceptions::add(new \ebi\exception\MaxSizeExceededException($k.' exceeds maximum'),$k);
-										}
+							if(!$this->has_file($k)){
+								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'),$k);
+							}else{
+								if(isset($an['max'])){
+									$filesize = is_file($this->file_path($k)) ? filesize($this->file_path($k)) : 0;
+									
+									if($filesize <= 0 || ($filesize/1024/1024) > $an['max']){
+										\ebi\Exceptions::add(new \ebi\exception\MaxSizeExceededException($k.' exceeds maximum'),$k);
 									}
 								}
-							}catch(\ebi\exception\MaxSizeExceededException $e){
-								\ebi\Exceptions::add($e);
 							}
 						}
 					}else{
