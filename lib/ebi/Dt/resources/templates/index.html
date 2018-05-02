@@ -4,8 +4,7 @@
 	<div style="text-align: right;">
 		<form name="version_select_frm">
 			<label for="version">Version select</label>
-			<select id="version" rt:param="{$version_list}" name="version" rt:null="" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;">
-			</select>
+			<select id="version" rt:param="{$version_list}" name="version" rt:null="" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
 		</form>
 	</div>
 
@@ -17,7 +16,6 @@
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
-		<th></th>
 		<th>Url</th>
 		<th>Name</th>
 		<th>Summary</th>
@@ -26,34 +24,6 @@
 	</thead>
 	<tbody>
 	<tr style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
-		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
-		
-			<div class="modal" tabindex="-1" role="dialog" id="info{$count}">
-				<div class="modal-dialog" role="document">
-					<div class="modal-content">
-						<div class="modal-header">
-							{$map['name']}
-
-							<rt:if param="{$map['deprecated']}">
-								(Deprecated)
-							</rt:if>
-							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-						</div>
-						<div class="modal-body">
-						<code class="text-secondary">{$t.html($f.dump($map))}</code>
-						</div>
-						<div class="modal-footer">
-						</div>
-					</div>
-				</div>
-			</div>
-		
-			<a data-toggle="modal" data-target="#info{$count}">
-				<button type="button" class="btn btn-outline-info btn-sm">Info</button>
-			</a>
-		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			{$map['url']}
 			
@@ -64,9 +34,41 @@
 		
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
 			<rt:if param="{$map['class']}">
-				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">{$map['name']}</a>
+				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">
+					<strong>{$map['name']}</strong>
+				</a>
 			<rt:else />
-				{$map['name']}
+				<div class="modal" tabindex="-1" role="dialog" id="link{$count}">
+					<div class="modal-dialog modal-lg" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">{$map['name']}</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<div class="alert alert-info" role="alert">
+									{$t.html($map['summary'])}
+								</div>
+							
+								<form name="linkdata{$count}">
+									<input type="text" name="url" value="{$map['format']}" class="form-control" />
+									<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata{$count},'post')">POST</button>
+								<button type="button" class="btn btn-info" onclick="submit_linkform(linkdata{$count},'get')">GET</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			
+				<a href="#" data-toggle="modal" data-target="#link{$count}">
+					{$map['name']}
+				</a>
+				
 			</rt:if>
 		</td>
 		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
@@ -86,40 +88,32 @@
 			</rt:if>
 		</td>
 		
-		<td>
-			<div class="modal" tabindex="-1" role="dialog" id="link{$count}">
+		<td>		
+			<div class="modal" tabindex="-1" role="dialog" id="info{$count}">
 				<div class="modal-dialog  modal-lg" role="document">
 					<div class="modal-content">
 						<div class="modal-header">
-							<h5 class="modal-title">{$map['name']}</h5>
-							
+							{$map['name']}
+
+							<rt:if param="{$map['deprecated']}">
+								(Deprecated)
+							</rt:if>
 							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 								<span aria-hidden="true">&times;</span>
 							</button>
 						</div>
 						<div class="modal-body">
-							<div class="alert alert-secondary" role="alert">
-								{$map['summary']}
-							</div>
-							
-							<form name="linkdata{$count}">
-								<input type="text" name="url" value="{$map['format']}" class="form-control" />
-								<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
-							</form>
+							<pre class="text-secondary">{$f.dump($map)}</pre>
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata{$count},'post')">POST</button>
-							<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata{$count},'get')">GET</button>
 						</div>
 					</div>
 				</div>
 			</div>
 		
-			<div style="text-align: right;">				
-				<a href="#" data-toggle="modal" data-target="#link{$count}">
-					<button type="button" class="btn btn-outline-primary btn-sm">Send</button>
-				</a>
-			</div>
+			<a data-toggle="modal" data-target="#info{$count}">
+				<button type="button" class="btn btn-outline-info btn-sm">Info</button>
+			</a>
 		</td>
 	</tr>
 	</tbody>

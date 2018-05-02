@@ -3,21 +3,19 @@
 <rt:block name="content">
 
 
-<h2>
+<h1 class="display-3">
 	{$plugin_info.name()}
-</h2>
+</h1>
 
-<blockquote>
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
 {$t.noop($f.md2html($plugin_info.document()))}
-</blockquote>
+</div>
 
 
-<div class="panel panel-info">
-	<div class="panel-heading">
-		<h3 class="panel-title">Infomation</h3>
-	</div>
-	<div class="panel-body">
-		<table class="table table-sm table-bordered table-striped panel-body-table">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Infomation</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm style-table-borderless">
 		<tr>
 			<th>Class</th>
 			<td>
@@ -31,62 +29,58 @@
 </div>
 
 
+
 <rt:if param="{$plugin_info.params()}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h2 class="panel-title">Params</h2>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">
-					{$param.name()}
-				</td>
-				<td class="t2">
-					<rt:if param="{$plugin_info.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$plugin_info.plain_type())}">
-							{$param.fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-secondary">Params</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-sm style-table-borderless">
+		<tr>
+			<td class="t1">
+				{$param.name()}
+			</td>
+			<td class="t2">
+				<rt:if param="{$plugin_info.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$plugin_info.plain_type())}">
 						{$param.fm_type()}
-					</rt:if>
-				</td>				
-				<td class="t3">
-					{$t.html($param.summary())}
-				</td>
-			</tr>
-			</table>
-		</div>
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>				
+			<td class="t3">
+				{$t.html($param.summary())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 
 <rt:if param="{$plugin_info.is_return()}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h2 class="panel-title">Return</h2>
-		</div>
-		<div class="panel-body">
-			<table class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t2">
-					<rt:if param="{$plugin_info.return().is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$plugin_info.return().plain_type())}">
-							{$plugin_info.return().fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Return</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm style-table-borderless">
+		<tr>
+			<td class="t2">
+				<rt:if param="{$plugin_info.return().is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$plugin_info.return().plain_type())}">
 						{$plugin_info.return().fm_type()}
-					</rt:if>
-				</td>
-				<td class="t3">
-					{$t.html($plugin_info.return().summary())}
-				</td>
-			</tr>
-			</table>
-		
-		</div>
+					</a>
+				<rt:else />
+					{$plugin_info.return().fm_type()}
+				</rt:if>
+			</td>
+			<td class="t3">
+				{$t.html($plugin_info.return().summary())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 

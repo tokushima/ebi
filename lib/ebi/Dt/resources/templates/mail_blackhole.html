@@ -2,13 +2,13 @@
 
 <rt:block name="content">
 
-<h2>{$mail_info.opt('x_t_code')} ({$mail_info.name()})</h2>
+<h1 class="display-3">{$mail_info.opt('x_t_code')} ({$mail_info.name()})</h1>
 
-<blockquote>
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
 	{$t.html($mail_info.document())}
-</blockquote>
+</div>
 
-<table rt:param="{$object_list}" rt:var="obj" class="table table-sm table-condensed table-striped">
+<table rt:param="{$object_list}" rt:var="obj" class="table table-sm table-striped style-table-borderless">
 <thead>
 <tr class="text-muted">
 	<th>From</th>
@@ -34,5 +34,6 @@
 </table>
 
 <rt:paginator />
+
 </rt:block>
 

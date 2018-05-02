@@ -2,20 +2,19 @@
 
 <rt:block name="content">
 
-<h2>
+<h1 class="display-3">
 	{$mail_info.opt('x_t_code')}
-</h2>
+</h1>
 
-<blockquote>
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
 	{$t.html($mail_info.document())}
-</blockquote>
+</div>
 
-<div class="panel panel-info">
-	<div class="panel-heading">
-		<h3 class="panel-title">Infomation</h3>
-	</div>
-	<div class="panel-body">
-		<table class="table table-sm table-bordered table-striped panel-body-table">
+
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Infomation</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<th>Template</th>
 			<td>
@@ -67,35 +66,30 @@
 				</td>
 			</tr>		
 		</rt:if>
-		
-		
-		</table>
+		</table>	
 	</div>
 </div>
 
 
+
 <rt:if param="{$multiple_method}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h3 class="panel-title">Vars</h3>
-		</div>
-		<div class="panel-body">
+	<div class="card border-secondary mb-3">
+		<div class="card-header text-white bg-primary">Vars</div>
+		<div class="card-body text-secondary">
 			Multiple method
 		</div>
 	</div>
 <rt:else />
 	<rt:if param="{$mail_info.params()}">
-		<div class="panel panel-success">
-			<div class="panel-heading">
-				<h3 class="panel-title">Vars</h3>
-			</div>
-			<div class="panel-body">
-				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
+		<div class="card border-secondary mb-3">
+			<div class="card-header text-white bg-info">Vars</div>
+			<div class="card-body text-secondary">
+				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 				<tr>
-					<td  class="t1">
+					<td>
 						{$param.name()}
 					</td>
-					<td class="t2">
+					<td>
 						<rt:if param="{$param.is_type_class()}">
 							<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 								{$param.fm_type()}
@@ -105,23 +99,22 @@
 						</rt:if>
 					</td>
 
-					<td class="t3">
+					<td>
 						{$t.html($param.summary())}
 					</td>
 				</tr>	
 				</table>
 			</div>
-		</div>
+		</div>	
 	</rt:if>
 </rt:if>
 
 
-<div class="panel panel-default">
-	<div class="panel-heading">
-		<h3 class="panel-title">Template</h3>
-	</div>
-	<div class="panel-body">
-		<table class="table table-sm table-bordered table-striped panel-body-table">
+
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-success">Template</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<th>Subject</th>
 			<td>{$mail_info.opt('subject')}</td>
@@ -144,6 +137,7 @@
 		</table>
 	</div>
 </div>
+
 
 </rt:block>
 

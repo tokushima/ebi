@@ -2,13 +2,12 @@
 
 <rt:block name="content">
 
+<h1 class="display-3">{$info.name()}</h1>
 
-<h2>{$info.name()}</h2>
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
+{$info.document()}
+</div>
 
-<blockquote>
-{$t.noop($f.md2html($info.document()))}
-</blockquote>
-
-<pre style="white-space: pre-wrap;">{$t.htmlspecialchars($src)}</pre>
+<pre class="prettyprint lang-php" style="padding: 10px; border-style: dashed;">{$t.htmlspecialchars($src)}</pre>
 </rt:block>
 

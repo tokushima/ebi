@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<h1 class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+<h1 class="display-3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
 	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
 		{$method_info.opt('class')}
 	</a>
@@ -10,18 +10,16 @@
 	{$method_info.opt('method')}
 </h1>
 
-<div class="alert alert-secondary">
+<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
 {$t.noop($f.md2html($method_info.document()))}
 </div>
 
 
 
-<div class="panel panel-info">
-	<div class="panel-heading">
-		<h3 class="panel-title">Infomation</h3>
-	</div>
-	<div class="panel-body">
-		<table class="table table-sm table-bordered table-striped panel-body-table">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Infomation</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm style-table-borderless">
 		<tr>
 			<th>Version</th>
 			<td>
@@ -35,7 +33,7 @@
 			<tr>
 				<th>Deprecated</th>
 				<td>
-					<div class="deprecated">
+					<div class="text-danger">
 						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -47,172 +45,160 @@
 
 
 <rt:if param="{$method_info.params()}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h2 class="panel-title">Params</h2>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">
-					{$param.name()}
-				</td>
-				<td class="t2">
-					<rt:if param="{$method_info.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
-							{$param.fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-secondary">Params</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				{$param.name()}
+			</td>
+			<td>
+				<rt:if param="{$method_info.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
 						{$param.fm_type()}
-					</rt:if>
-				</td>				
-				<td class="t3">
-					{$t.html($param.summary())}
-				</td>
-			</tr>
-			</table>
-		</div>
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 
 <rt:if param="{$method_info.return()}">
-	<div class="panel panel-success">
-		<div class="panel-heading">
-			<h2 class="panel-title">Return</h2>
-		</div>
-		<div class="panel-body">
-			<table class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t2">
-					<rt:if param="{$method_info.return().is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
-							{$method_info.return().fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Return</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm table-striped style-table-borderles">
+		<tr>
+			<td>
+				<rt:if param="{$method_info.return().is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
 						{$method_info.return().fm_type()}
-					</rt:if>
-				</td>				
-				<td class="t3">
-					{$t.html($method_info.return().summary())}
-				</td>
-			</tr>
-			</table>
-		
-		</div>
+					</a>
+				<rt:else />
+					{$method_info.return().fm_type()}
+				</rt:if>
+			</td>				
+			<td>
+				{$t.html($method_info.return().summary())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 <rt:if param="{$method_info.opt('throws')}">
-	<div class="panel panel-danger">
-		<div class="panel-heading">
-			<h3 class="panel-title">Throws</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1_2">
-					<rt:if param="{$param.is_type_class()}">
-						<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
-							{$param.fm_type()}
-						</a>
-					<rt:else />
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-danger">Throws</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				<rt:if param="{$param.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
-					</rt:if>
-				</td>
-				<td class="t3">
-					{$t.html($param.summary())}
-				</td>
-			</tr>
-			</table>
-		</div>
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 
 
 <rt:if param="{$method_info.opt('mail_list')}">
-	<div class="panel panel-warning">
-		<div class="panel-heading">
-			<h3 class="panel-title">Mail</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">				
-					<a href="{$t.package_method_url('mail_info_method')}?tcode={$info.opt('x_t_code')}&class={$method_info.opt('class')}&method={$method_info.opt('method')}">
-						{$info.opt('x_t_code')}
-					</a>
-				</td>
-				<td class="t2">
-					{$info.name()}	
-				</td>
-				<td class="t3">
-					{$t.html($info.document())}
-				</td>
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Mail</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>				
+				<a href="{$t.package_method_url('mail_info_method')}?tcode={$info.opt('x_t_code')}&class={$method_info.opt('class')}&method={$method_info.opt('method')}">
+					{$info.opt('x_t_code')}
+				</a>
+			</td>
+			<td>
+				{$info.name()}	
+			</td>
+			<td>
+				{$t.html($info.document())}
+			</td>
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 
 
 <rt:if param="{$method_info.opt('plugins')}">
-	<div class="panel panel-primary">
-		<div class="panel-heading">
-			<h3 class="panel-title">Plugins</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td class="t1">
-					{$info.name()}
-				</td>
-				<td class="t3">
-					{$t.html($info.summary(),200,1)}
-				</td>
-				<td class="t3">
-					<rt:loop param="{$info.opt('added')}" var="class_name">
-						<div>
-							<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
-								{$class_name}
-							</a>
-						</div>
-					</rt:loop>
-				</td>			
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Plugins</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				{$info.name()}
+			</td>
+			<td>
+				{$t.html($info.summary(),200,1)}
+			</td>
+			<td>
+				<rt:loop param="{$info.opt('added')}" var="class_name">
+					<div>
+						<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
+							{$class_name}
+						</a>
+					</div>
+				</rt:loop>
+			</td>			
+		</tr>
+		</table>
 	</div>
+</div>
 </rt:if>
 
 <rt:if param="{$method_info.opt('see_list')}">
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">See</h3>
-		</div>
-		<div class="panel-body">
-			<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-sm table-bordered table-striped panel-body-table">
-			<tr>
-				<td>
-					<rt:if param="{$t.eq($see['type'],'url')}">
-						<a href="{$see['url']}">{$see['url']}</a>
-					</rt:if>
-					<rt:if param="{$t.eq($see['type'],'method')}">
-						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
-					</rt:if>
-					<rt:if param="{$t.eq($see['type'],'class')}">
-						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
-					</rt:if>
-				</td>
-			</tr>
-			</table>
-		</div>
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">See</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td>
+				<rt:if param="{$t.eq($see['type'],'url')}">
+					<a href="{$see['url']}">{$see['url']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'method')}">
+					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'class')}">
+					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
+				</rt:if>
+			</td>
+		</tr>
+		</table>
+
 	</div>
+</div>
 </rt:if>
 
 </rt:block>
