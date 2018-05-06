@@ -282,17 +282,19 @@ class Util{
 	 * @return string
 	 */
 	public static function path_slash($path,$prefix,$postfix=null){
-		if($path == '/') return ($postfix === true) ? '/' : '';
+		if($path == '/'){
+			return ($postfix === true) ? '/' : '';
+		}
 		if(!empty($path)){
-			if($prefix === true){
-				if($path[0] != '/') $path = '/'.$path;
-			}else if($prefix === false){
-				if($path[0] == '/') $path = substr($path,1);
+			if($prefix === true && $path[0] != '/'){
+				$path = '/'.$path;
+			}else if($prefix === false && $path[0] == '/'){
+				$path = substr($path,1);
 			}
-			if($postfix === true){
-				if(substr($path,-1) != '/') $path = $path.'/';
-			}else if($postfix === false){
-				if(substr($path,-1) == '/') $path = substr($path,0,-1);
+			if($postfix === true && substr($path,-1) != '/'){
+				$path = $path.'/';
+			}else if($postfix === false && substr($path,-1) == '/'){
+				$path = substr($path,0,-1);
 			}
 		}
 		return $path;

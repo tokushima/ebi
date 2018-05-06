@@ -377,8 +377,12 @@ class Mail{
 			
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
-			$template->cp($vars);
 			
+			if(is_array($vars) || is_object($vars)){
+				foreach($vars as $k => $v){
+					$template->vars($k,$v);
+				}
+			}
 			$body_xml = $xml->find_get('body');		
 			$signature = $body_xml->in_attr('signature');
 			$signature_text = '';
@@ -392,9 +396,9 @@ class Mail{
 				$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
 				$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
 			}
-			$message = $template->get(\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text);
+			$message = $template->get(\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text,$resource_path);
 			$this->message($message);
-			$this->subject($template->get($subject));
+			$this->subject($template->get($subject,$resource_path));
 			
 			try{
 				$html = $xml->find_get('html');
@@ -409,9 +413,7 @@ class Mail{
 					}
 					$this->media($media->in_attr('src'),file_get_contents($file));
 				}
-				$template = new \ebi\Template();
-				$template->cp($vars);
-				$this->html($template->read($html_path));
+				$this->html($template->read($html_path,$resource_path));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
 			foreach($xml->find('attach') as $attach){

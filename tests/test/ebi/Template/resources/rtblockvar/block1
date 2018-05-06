@@ -1,3 +1,0 @@
-<rt:extends href="parent" />
-
-<rt:blockvar name="variable">AAA</rt:blockvar>

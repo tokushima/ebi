@@ -5,134 +5,67 @@ namespace ebi;
  * @author tokushima
  * @var mixed{} $vars バインドされる変数
  * @var boolean $secure http://をhttps://に置換するか
- * @var string $put_block ブロックファイル
- * @var string $template_super 継承元テンプレート
  * @var string $media_url メディアファイルへのURLの基点
  */
 class Template{
 	use \ebi\Plugin,\ebi\TemplateVariable;
 	
-	private $file;
-	private $selected_template;
-
 	private $secure = false;
 	private $vars = [];
-	private $put_block;
-	private $template_super;
 	private $media_url;
 
-	public function __construct($media_url=null){
-		if($media_url !== null) $this->media_url($media_url);
-	}
-	public function secure($bool=null){
-		if($bool !== null) $this->secure = (boolean)$bool;
-		return $this->secure;
-	}
-	public function vars($k=null,$v=null){
-		if($k !== null) $this->vars[$k] = $v;
-		return $this->vars;
-	}
-	public function in_vars($k,$d=null){
-		return isset($this->vars[$k]) ? $this->vars[$k] : $d;
-	}
-	public function rm_vars($k=null){
-		if($k === null){
-			$this->vars = [];
-		}else if(isset($this->vars[$k])){
-			unset($this->vars[$k]);
-		}
-	}
-	public function put_block($v=null){
-		if($v !== null) $this->put_block = $v;
-		return $this->put_block;
-	}
-	public function template_super($v=null){
-		if($v !== null) $this->template_super = $v;
-		return $this->template_super;
-	}
-	public function media_url($v=null){
-		if($v !== null){
-			$this->media_url = str_replace('\\','/',$v);
-			if(!empty($this->media_url) && substr($this->media_url,-1) !== '/') $this->media_url = $this->media_url.'/';
-		}
-		return $this->media_url;
-	}
+	private $base_dir;
+	
 	/**
-	 * 配列からテンプレート変数に値をセットする
-	 * @param array $array
+	 * メディアURLをhttpsにする
+	 * @param boolean $bool
+	 * @return \ebi\Template
 	 */
-	public function cp($array){
-		if(is_array($array) || is_object($array)){
-			foreach($array as $k => $v) $this->vars[$k] = $v;
-		}else{
-			throw new \ebi\exception\InvalidArgumentException('must be an of array');
-		}
+	public function secure($bool){
+		$this->secure = (boolean)$bool;
 		return $this;
 	}
 	/**
-	 * 出力する
-	 * @param string $file
-	 * @param string $template_name
+	 * 変数をバインドする
+	 * @param string $k
+	 * @param mixed $v
+	 * @return \ebi\Template
 	 */
-	public function output($file,$template_name=null){
-		print($this->read($file,$template_name));
-		exit;
+	public function vars($k,$v){
+		$this->vars[$k] = $v;
+		return $this;
 	}
+	
+	/**
+	 * メディアURLを設定する
+	 * @param string $v
+	 * @return \ebi\Template
+	 */
+	public function media_url($v){
+		$this->media_url = \ebi\Util::path_slash($v,null,true);
+		return $this;
+	}
+	
 	/**
 	 * ファイルを読み込んで結果を返す
 	 * @param string $file
-	 * @param string $template_name
 	 * @return string
 	 */
-	public function read($file,$template_name=null){
-		if(!is_file($file) && strpos($file,'://') === false){
-			throw new \ebi\exception\InvalidArgumentException($file.' not found');
-		}
-		$this->file = $file;
-		$cname = md5($this->template_super.$this->put_block.$this->file.$this->selected_template);
-		/**
-		 * キャッシュのチェック
-		 * @param string $cname キャッシュ名
-		 * @return boolean
-		 */
-		if(static::call_class_plugin_funcs('has_template_cache',$cname) !== true){
-			if(!empty($this->put_block)){
-				$src = $this->read_src($this->put_block,$template_name);
-				foreach(\ebi\Xml::anonymous($src)->find('rt:extends')  as $ext){
-					$src = str_replace($ext->plain(),'',$src);
-				}
-				$src = sprintf('<rt:extends href="%s" />\n',$file).$src;
-				$this->file = $this->put_block;
-			}else{
-				$src = $this->read_src($this->file,$template_name);
-			}
-			$src = $this->replace($src,$template_name);
-			/**
-			 * キャッシュにセットする
-			 * @param string $cname キャッシュ名
-			 * @param string $src 作成されたテンプレート
-			 */
-			static::call_class_plugin_funcs('set_template_cache',$cname,$src);
-		}else{
-			/**
-			 * キャッシュから取得する
-			 * @param string $cname キャッシュ名
-			 * @return string
-			 */
-			$src = static::call_class_plugin_funcs('get_template_cache',$cname);
-		}
-		return $this->execute($src);
+	public function read($filename,$base_dir=null){
+		$this->base_dir = $base_dir ?? dirname(realpath($filename));
+		$src = $this->read_src($filename);
+		
+		return $this->get($src,$base_dir);
 	}
 	/**
 	 * 文字列から結果を返す
 	 * @param string $src
-	 * @param string $template_name
 	 * @return string
 	 */
-	public function get($src,$template_name=null){
-		return $this->execute($this->replace($src,$template_name));
-	}
-	private function execute($src){
+	public function get($src,$base_dir=null){
+		$this->base_dir = $base_dir ?? getcwd();
+		
+		$src = $this->replace($src);
 		$src = $this->exec($src);
 		
 		if(strpos($src,'rt:ref') !== false){
@@ -149,8 +82,16 @@ class Template{
 		}
 		return $src;
 	}
-	private function replace($src,$template_name){
-		$this->selected_template = $template_name;
+	/**
+	 * 出力する
+	 * @param string $file
+	 */
+	public function output($file,$base_dir=null){
+		print($this->read($file,$base_dir));
+		exit;
+	}
+	
+	private function replace($src){
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
 		$src = str_replace(["\\\\","\\\"","\\'"],['__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'],$src);
 		$src = $this->replace_xtag($src);
@@ -162,7 +103,7 @@ class Template{
 		foreach($this->get_object_plugin_funcs('init_template') as $o){
 			$src = static::call_func($o,$src);
 		}
-		$src = $this->rtcomment($this->rtblock($src,$this->file));
+		$src = $this->rtcomment($this->rtinclude($this->rtblock($src)));
 		/**
 		 * 前処理
 		 * @param string $src
@@ -185,10 +126,12 @@ class Template{
 		$php = [' ?>','<?php ','->'];
 		$str = ['__PHP_TAG_END__','__PHP_TAG_START__','__PHP_ARROW__'];
 		$src = str_replace($php,$str,$src);
+		
 		if($bool = $this->html_script_search($src,$keys,$tags)){
 			$src = str_replace($tags,$keys,$src);
 		}
 		$src = $this->parse_url($src,$this->media_url);
+		
 		if($bool){
 			$src = str_replace($keys,$tags,$src);
 		}
@@ -235,6 +178,7 @@ class Template{
 			$media = $media.'/';
 		}
 		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
+		
 		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$match)){
 			foreach($match[2] as $k => $p){
 				list($url) = explode('?',$match[4][$k]);				
@@ -248,7 +192,9 @@ class Template{
 			}
 		}
 		if(preg_match_all("/[^:]:[\040]*url\(([^\\$\n]+?)\)/",$src,$match)){
-			if($this->secure) $media = $secure_base;
+			if($this->secure){
+				$media = $secure_base;
+			}
 			foreach(array_keys($match[1]) as $key){
 				$src = $this->replace_parse_url($src,$media,$match[0][$key],$match[1][$key]);
 			}
@@ -261,70 +207,46 @@ class Template{
 		}
 		return $src;
 	}
-	private function read_src($filename,$name=null){
-		if(preg_match('/^(.*)#(.+)$/',$filename,$m)){
-			list($filename,$name) = [$m[1],$m[2]];
-		}
-		$src = file_get_contents($filename);
-		$src = (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename).'/') : $src;
-		
-		foreach(\ebi\Xml::anonymous($this->rtcomment($src))->find('rt:template') as $tag){
-			if(empty($name) || $tag->in_attr('name') == $name){
-				return $tag->value();
+	private function read_src($filename){
+		$src = \ebi\Util::file_read(\ebi\Util::path_absolute($this->base_dir,$filename));
+		return (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename)) : $src;
+	}
+	private function rtinclude($src){
+		try{
+			while(true){
+				$tag = \ebi\Xml::extract($src,'rt:include');
+				$src = str_replace($tag->plain(),$this->read_src($tag->in_attr('href')),$src);
 			}
+		}catch(\ebi\exception\NotFoundException $e){
 		}
 		return $src;
 	}
-	private function rtblock($src,$filename){
+	private function rtblock($src){
 		if(strpos($src,'rt:block') !== false || strpos($src,'rt:extends') !== false){
-			$base_filename = $filename;
-			$blocks = $paths = $blockvars = [];
+			$blocks = [];
+			
 			try{
 				while(true){
-					$e = \ebi\Xml::extract($this->rtcomment($src),'rt:extends');
-					$href = $e->in_attr('href');
-					if(substr($href,0,1) == '#') $href = $filename.$href;
-					$href = \ebi\Util::path_absolute(str_replace("\\",'/',dirname($filename)).'/',$href);
-					if(empty($href) || !is_file(preg_replace('/^(.+)#.*$/','\\1',$href))){
-						throw new \ebi\exception\InvalidTemplateException('href not found '.$filename);
-					}
-					if($filename === $href){
-						throw new \ebi\exception\InvalidTemplateException('Infinite Recursion Error'.$filename);
-					}
+					$extends = \ebi\Xml::extract($this->rtcomment($src),'rt:extends');
 					$readxml = \ebi\Xml::anonymous($this->rtcomment($src));
+					
 					foreach($readxml->find('rt:block') as $b){
 						$n = $b->in_attr('name');
+						
 						if(!empty($n) && !array_key_exists($n,$blocks)){
 							$blocks[$n] = $b->value();
-							$paths[$n] = $filename;
 						}
 					}
-					foreach($readxml->find('rt:blockvar') as $b){
-						if(!isset($blockvars[$b->in_attr('name')])){
-							$blockvars[$b->in_attr('name')] = $b->value();
-						}
-					}
-					$src = $this->replace_xtag($this->read_src($href));
-					$filename = preg_replace('/^(.+)#.*$/','\\1',$href);
+					$src = $this->replace_xtag($this->read_src($extends->in_attr('href')));
 				}
 			}catch(\ebi\exception\NotFoundException $e){
 			}
-			/**
-			 * ブロック処理前の処理
-			 * @param string $src
-			 * @return $src
-			 */
-			foreach($this->get_object_plugin_funcs('before_block_template') as $o){
-				$src = static::call_func($o,$src);
-			}
+			
 			if(empty($blocks)){
 				foreach(\ebi\Xml::anonymous($src)->find('rt:block') as $b){
 					$src = str_replace($b->plain(),$b->value(),$src);
 				}
 			}else{
-				if(!empty($this->template_super)){
-					$src = $this->read_src(\ebi\Util::path_absolute(str_replace("\\",'/',dirname($base_filename).'/'),$this->template_super));
-				}				
 				try{
 					while(true){
 						$b = \ebi\Xml::extract($src,'rt:block');
@@ -333,10 +255,6 @@ class Template{
 					}
 				}catch(\ebi\exception\NotFoundException $e){
 				}
-			}
-			$this->file = $filename;
-			foreach($blockvars as $k => $v){
-				$this->vars($k,$v);
 			}
 		}
 		return $src;

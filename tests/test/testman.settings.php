@@ -3,6 +3,4 @@
 
 \testman\Conf::set('urls',\ebi\Dt::get_urls());
 \testman\Conf::set('ssl-verify',false);
-\testman\Conf::set('coverage-dir',dirname(__DIR__).'/lib');
-\testman\Conf::set('benchmark',dirname(__DIR__).'/work/benchmark.csv');
 
