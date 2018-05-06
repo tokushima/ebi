@@ -28,8 +28,7 @@ include_once('bootstrap.php');
 	'template_parent'=>['name'=>'template_parent','template'=>'parent.html'],
 	'template_child'=>['name'=>'template_child','template'=>'child.html'],
 	'template_grandchild'=>['name'=>'template_grandchild','template'=>'grandchild.html'],
-	'template_grandchild_super'=>['name'=>'template_grandchild_super','template'=>'grandchild.html','template_super'=>'super.html'],
-	
+		
 	'map_url'=>['template'=>'map_url.html'],
 	'xml'=>[
 		'patterns'=>[
@@ -183,6 +182,11 @@ include_once('bootstrap.php');
 		'action'=>'\\test\\flow\\Action::abc',
 		'deprecated'=>true,
 		'version'=>'20161112',
+	],
+	
+	'parts/parts1'=>[
+		'name'=>'parts_parts1',
+		'template'=>'parts_load.html',
 	],
 	
 	

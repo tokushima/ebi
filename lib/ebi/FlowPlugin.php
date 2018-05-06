@@ -6,7 +6,6 @@ namespace ebi;
  */
 trait FlowPlugin{
 	private $_selected_pattern = [];
-	private $_template_block = null;
 	private $_template = null;
 	private $_before_redirect;
 	private $_after_redirect;
@@ -66,19 +65,6 @@ trait FlowPlugin{
 	 */
 	public function get_after_vars(){
 		return [];
-	}
-	/**
-	 * Flowが利用
-	 */
-	final public function get_template_block(){
-		return $this->_template_block;
-	}
-	/**
-	 * テンプレートブロックを上書きする
-	 * @param string $block
-	 */
-	public function set_template_block($block){
-		$this->_template_block = $block;
 	}
 
 	/**

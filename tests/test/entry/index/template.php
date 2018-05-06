@@ -20,12 +20,3 @@ meq('new_child',$b->body());
 mneq('default_grandchild',$b->body());
 meq('new_grandchild',$b->body());
 
-$b->do_get('index::template_grandchild_super');
-eq(200,$b->status());
-mneq('Parent',$b->body());
-meq('Super',$b->body());
-mneq('default_super_child',$b->body());
-meq('new_child',$b->body());
-mneq('default_grandchild',$b->body());
-meq('new_grandchild',$b->body());
-

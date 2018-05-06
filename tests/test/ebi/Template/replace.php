@@ -1,5 +1,6 @@
 <?php
-$t = new \ebi\Template('http://localhost/hoge/media');
+$t = new \ebi\Template();
+$t->media_url('http://localhost/hoge/media');
 
 $src = <<< 'PRE'
 <script src="abc.js"></script>

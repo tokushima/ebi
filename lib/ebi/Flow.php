@@ -10,7 +10,7 @@ class Flow{
 
 	private static $app_url;
 	private static $media_url;
-	private static $template_path;
+	private static $template_dir;
 	private static $package_media_url = 'package/resources/media';
 	
 	private static $url_pattern = [];
@@ -71,14 +71,19 @@ class Flow{
 		
 		return self::$map;
 	}
-	private static function template(array $vars,$selected_pattern,$ins,$path,$media=null){
+	private static function template(array $vars,$selected_pattern,$ins,$path,$media,$temaplate_dir){
 		self::$template->set_object_plugin(new \ebi\FlowInvalid());
 		self::$template->set_object_plugin(new \ebi\Paginator());
 		self::$template->media_url(empty($media) ? self::$media_url : $media);
-		self::$template->cp($vars);
+		
+		if(is_array($vars) || is_object($vars)){
+			foreach($vars as $k => $v){
+				self::$template->vars($k,$v);
+			}
+		}
 		self::$template->vars('t',new \ebi\FlowHelper((isset($selected_pattern['name']) ? $selected_pattern['name'] :  null),$ins));
 		
-		print(self::$template->read($path));
+		print(self::$template->read($path,$temaplate_dir ?? self::$template_dir));
 		self::terminate();
 		exit;
 	}
@@ -211,7 +216,7 @@ class Flow{
 		/**
 		 * @param string $val テンプレートファイルのディレクトリ
 		 */
-		self::$template_path = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
+		self::$template_dir = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 		
 		$automap_idx = 1;
 		$selfmap = ['patterns'=>self::expand_patterns('',$map['patterns'], [], $automap_idx)];
@@ -381,10 +386,6 @@ class Flow{
 					if($has_flow_plugin){
 						$ins->after();
 						
-						$template_block = $ins->get_template_block();
-						if(!empty($template_block)){
-							self::$template->put_block(\ebi\Util::path_absolute(self::$template_path,$ins->get_template_block()));
-						}
 						$template = $ins->get_template();
 						if(!empty($template)){
 							$pattern['template'] = $template;
@@ -432,28 +433,25 @@ class Flow{
 						}
 					
 						if(array_key_exists('template',$pattern)){
-							if(array_key_exists('template_super',$pattern)){
-								self::$template->template_super(\ebi\Util::path_absolute(self::$template_path,$pattern['template_super']));
-							}
-							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['template']));
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$pattern['template']),null,null);
 						}else if(isset($template)){
-							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$template));
+							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$template),null,null);
 						}else if(
 							array_key_exists('@',$pattern)
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name']).'.html')
+							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')
 						){
-							return self::template($result_vars,$pattern,$ins,$t);					
+							return self::template($result_vars,$pattern,$ins,$t,null,null,null);	
 						}else if(
 							array_key_exists('@',$pattern)
 							&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
 						){
 							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
-							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx']);
+							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
 						}else if(
 							array_key_exists('find_template',$selfmap) && $selfmap['find_template'] === true
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_path,$pattern['name'].'.html'))
+							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name'].'.html'))
 						){
-							return self::template($result_vars,$pattern,$ins,$t);
+							return self::template($result_vars,$pattern,$ins,$t,null,null);
 						}else if(self::has_class_plugin('flow_output')){
 							/**
 							 * 結果を出力する
@@ -494,15 +492,15 @@ class Flow{
 					if(!$accept_debug){
 						if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
 							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
-							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx']);
+							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
 						}else if(array_key_exists('error_redirect',$pattern)){
-							return self::map_redirect($pattern['error_redirect'],[],$pattern);
+							return self::map_redirect($pattern['error_redirect'],[],$pattern,null,null,null);
 						}else if(array_key_exists('error_template',$pattern)){
-							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$pattern['error_template']));
+							return self::template($result_vars,$pattern,$ins,$pattern['error_template'],null,null);
 						}else if(array_key_exists('error_redirect',$selfmap)){
-							return self::map_redirect($selfmap['error_redirect'],[],$pattern);
+							return self::map_redirect($selfmap['error_redirect'],[],$pattern,null,null,null);
 						}else if(array_key_exists('error_template',$selfmap)){
-							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_path,$selfmap['error_template']));
+							return self::template($result_vars,$pattern,$ins,$selfmap['error_template'],null,null);
 						}else if(self::has_class_plugin('flow_exception')){
 							/**
 							 * 例外発生時の処理・出力
