@@ -11,6 +11,7 @@ include_once('bootstrap.php');
 			'name'=>'login',
 			'action'=>'ebi.flow.Request::do_login',
 			'logged_in_after'=>'aaa',
+			'plugins'=>['test.flow.plugin.Login2'],
 		],
 		'logout_url'=>[
 			'name'=>'logout',

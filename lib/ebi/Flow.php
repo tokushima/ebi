@@ -329,9 +329,10 @@ class Flow{
 					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
+					
 					foreach(array_merge(
-						(array_key_exists('plugins',$selfmap) ? (is_array($selfmap['plugins']) ? $selfmap['plugins'] : [$selfmap['plugins']]) : []),
-						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : [])
+						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
+						(array_key_exists('plugins',$selfmap) ? (is_array($selfmap['plugins']) ? $selfmap['plugins'] : [$selfmap['plugins']]) : [])
 					) as $m){
 						$o = \ebi\Util::strtoinstance($m);
 						self::set_class_plugin($o);
@@ -484,7 +485,7 @@ class Flow{
 						\ebi\HttpHeader::send_status($pattern['error_status']);
 					}else if(isset($selfmap['error_status'])){
 						\ebi\HttpHeader::send_status($selfmap['error_status']);
-					}					
+					}
 					if(isset($pattern['vars']) && !empty($pattern['vars']) && is_array($pattern['vars'])){
 						$result_vars = array_merge($result_vars,$pattern['vars']);
 					}
