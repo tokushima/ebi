@@ -23,19 +23,18 @@
 	</tr>
 	</thead>
 	<tbody>
-	<tr style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')} {$t.cond_switch($map['mode'],' color: #6666cc; font-style: italic; ','')}">
-		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
+	<tr class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
+		<td>
 			{$map['url']}
 			
 			<rt:if param="{$map['login']}">
 				<span class="badge badge-pill badge-success">Auth</span>
 			</rt:if>			
 		</td>
-		
-		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}" nowrap>
+		<td>
 			<rt:if param="{$map['class']}">
-				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" style="{$t.cond_switch($map['first_depricated_date'],'color: #cc6666;','')}">
-					<strong>{$map['name']}</strong>
+				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
+					{$map['name']}
 				</a>
 			<rt:else />
 				<div class="modal" tabindex="-1" role="dialog" id="link{$count}">
@@ -71,8 +70,8 @@
 				
 			</rt:if>
 		</td>
-		<td style="{$t.cond_switch($map['deprecated'],'text-decoration: line-through;','')}">
-			<span>
+		<td>
+			<span >
 				{$t.html($map['summary'])}
 			</span>
 			<span class="text-danger">{$map['error']}</span>
@@ -112,7 +111,7 @@
 			</div>
 		
 			<a data-toggle="modal" data-target="#info{$count}">
-				<button type="button" class="btn btn-outline-info btn-sm">Info</button>
+				<button type="button" class="btn btn-info btn-sm">info</button>
 			</a>
 		</td>
 	</tr>

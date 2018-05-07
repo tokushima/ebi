@@ -183,8 +183,8 @@ class Dt{
 				// ログイン プラグイン情報をマージ
 				foreach($info->opt('plugins') as $plugin){
 					if($plugin->name() == 'login_condition'){
-						foreach($m['plugins'] as $map_plugin){
-							$plugin_class = \ebi\Util::get_class_name($map_plugin);							
+						foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){							
+							$plugin_class = \ebi\Util::get_class_name($map_plugin);
 							$ref = new \ReflectionClass($plugin_class);
 							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
 							$info->document(trim($info->document().PHP_EOL.$document));
@@ -192,10 +192,14 @@ class Dt{
 							foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 								if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
 									$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
-
+									
+									if($login_method->has_opt('http_method')){
+										$info->set_opt('http_method',$login_method->opt('http_method'));
+									}
 									foreach(['requests','contexts'] as $k){
 										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
 									}
+									break 2;
 								}
 							}
 						}
@@ -203,9 +207,7 @@ class Dt{
 					}
 				}
 				
-				\ebi\Log::trace(self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
-				
 				return ['method_info'=>$info];
 			}
 		}

@@ -187,8 +187,10 @@ class Man{
 		] as $preg){
 			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 				foreach($m[2] as $k => $v){
-					$call_plugins[$v[0]] = \ebi\Dt\DocInfo::parse($v[0], $src, $m[0][$k][1]);
-					$call_plugins[$v[0]]->set_opt('added',[]);
+					if(!isset($call_plugins[$v[0]]) || empty(trim($call_plugins[$v[0]]->document()))){
+						$call_plugins[$v[0]] = \ebi\Dt\DocInfo::parse($v[0], $src, $m[0][$k][1]);
+						$call_plugins[$v[0]]->set_opt('added',[]);
+					}
 				}
 			}
 		}
