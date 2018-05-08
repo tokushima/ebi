@@ -194,6 +194,10 @@ include_once('bootstrap.php');
 		'name'=>'working_storage',
 		'action'=>'test.flow.Action::working_storage',
 	],
+	'working'=>[
+			'name'=>'working_storage',
+			'action'=>'test.flow.Action::working_storagea',
+	],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 
