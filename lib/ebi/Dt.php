@@ -600,6 +600,10 @@ class Dt{
 		
 				try{
 					$html_xml = $xml->find_get('html');
+					
+					if(empty($html_xml->in_attr('src'))){
+						throw new \ebi\exception\RequiredException('attribute src is required for html');
+					}
 					$info->set_opt('html',\ebi\Util::file_read(\ebi\Util::path_absolute($path,$html_xml->in_attr('src'))));
 				}catch(\ebi\exception\NotFoundException $e){
 				}

@@ -1,12 +1,10 @@
 <rt:extends href="base.html" />
 
-<rt:block name="list_search">
-</rt:block>
 
 <rt:block name="content">
-<h2>Error</h2>
+<h1 class="display-1 text-danger">Error</h1>
 
-<rt:invalid />
+<rt:invalid class="alert alert-warning" />
 
-<a href="javascript:history.back(1)" class="btn btn-default">Back</a>
+<a href="javascript:history.back(1)" class="btn btn-secondary">Back</a>
 </rt:block>

@@ -110,31 +110,25 @@
 </rt:if>
 
 
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-primary">Subject</div>
+	<div class="card-body text-secondary">
+		<h5 class="card-title">{$mail_info.opt('subject')}</h5>
+	</div>
+</div>
+
 
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-success">Template</div>
+	<div class="card-header text-white bg-primary">Body</div>
 	<div class="card-body text-secondary">
-		<table class="table table-sm table-striped style-table-borderless">
-		<tr>
-			<th>Subject</th>
-			<td>{$mail_info.opt('subject')}</td>
-		</tr>
-		<tr>
-			<th>Body</th>
-			<td>
-				<pre style="white-space: pre-wrap;">{$t.html($mail_info.opt('body'),0,0,null,false)}</pre>
-			</td>
-		</tr>
-		
-		<rt:if param="{$mail_info.opt('html')}">
-		<tr>
-			<th>HTML</th>
-			<td>
-				<pre style="white-space: pre-wrap;">{$t.html($mail_info.opt('html'),0,0,null,false)}</pre>
-			</td>
-		</tr>
-		</rt:if>		
-		</table>
+		<pre class="prettyprint lang-html" style="border: 0">{$t.html($mail_info.opt('body'),0,0,null,false)}</pre>
+	</div>
+</div>
+
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-secondary">HTML</div>
+	<div class="card-body text-secondary">
+		<pre class="prettyprint lang-html" style="border: 0">{$t.html($mail_info.opt('html'),0,0,null,false)}</pre>
 	</div>
 </div>
 
