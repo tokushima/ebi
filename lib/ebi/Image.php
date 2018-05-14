@@ -442,4 +442,23 @@ class Image{
 		}
 		throw new \ebi\exception\IllegalDataTypeException();
 	}
+	
+	/**
+	 * 矩形(SVG)
+	 * @param integer $width (px)
+	 * @param integer $height (px)
+	 * @param string $color
+	 * @param number $opacity 0..1
+	 * @return string
+	 */
+	public static function get_rect_svg($width,$height,$color='#000000',$opacity=1){
+		return sprintf(
+			'<?xml version="1.0" standalone="no" ?>'.PHP_EOL.
+			'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.PHP_EOL.
+			'<svg width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg"><g>'.PHP_EOL.
+			'<rect x="0" y="0" width="%d" height="%d" fill="%s"  fill-opacity="%s" />'.PHP_EOL.
+			'</g></svg>',
+			$width,$height,$width,$height,$color,$opacity
+		);
+	}
 }
