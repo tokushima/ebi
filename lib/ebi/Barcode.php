@@ -122,10 +122,10 @@ class Barcode{
 					$value
 				);
 				
-				$x = ($x < $value * $font_size) ? $value * $font_size : $x;
+				$x = ($x < strlen($value) * $font_size) ? (strlen($value) * $font_size) : $x;
 			}
 		}		
-		return self::svg($x + $margin,$y,$barcord,$color);
+		return self::svg($x + $margin,$y + $margin,$barcord,$color);
 	}
 }
 
