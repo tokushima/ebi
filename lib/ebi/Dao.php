@@ -484,7 +484,6 @@ abstract class Dao extends \ebi\Obj{
 		try{
 			$statement->execute($daq->ar_vars());
 		}catch(\PDOException $e){
-			// TODO 
 			if($statement->errorCode() == 23000){
 				throw new \ebi\exception\UniqueException();
 			}
