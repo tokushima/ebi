@@ -131,9 +131,14 @@ class MysqlConnector extends \ebi\DbConnector{
 	
 	/**
 	 * SQLエラーを解析し適切なExceptionをthrowする
-	 * @param \ebi\exception\InvalidQueryException $e
+	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
 	 */
-	public function parse_invalid_query_exception(\ebi\exception\InvalidQueryException $e){
+	public function parse_invalid_query_exception(array $error_info){
 		// https://dev.mysql.com/doc/refman/5.6/ja/error-messages-server.html
+		if($error_info[0] == 'HY000'){
+			if($error_info[1] == 1470 || $error_info[1] == 1552 || $error_info[1] == 1742){
+				throw new \ebi\exception\LengthException();
+			}
+		}
 	}
 }
