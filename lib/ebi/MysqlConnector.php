@@ -128,4 +128,12 @@ class MysqlConnector extends \ebi\DbConnector{
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
+	
+	/**
+	 * SQLエラーを解析し適切なExceptionをthrowする
+	 * @param \ebi\exception\InvalidQueryException $e
+	 */
+	public function parse_invalid_query_exception(\ebi\exception\InvalidQueryException $e){
+		// https://dev.mysql.com/doc/refman/5.6/ja/error-messages-server.html
+	}
 }

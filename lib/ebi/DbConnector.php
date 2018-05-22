@@ -603,5 +603,12 @@ abstract class DbConnector{
 	protected function date_format($column_map,$dao,$column,$require){
 		return $column_map;
 	}
+	
+	/**
+	 * SQLエラーを解析し適切なExceptionをthrowする
+	 * @param \ebi\exception\InvalidQueryException $e
+	 */
+	public function parse_invalid_query_exception(\ebi\exception\InvalidQueryException $e){
+	}
 }
 

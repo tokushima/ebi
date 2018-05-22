@@ -1046,76 +1046,82 @@ abstract class Dao extends \ebi\Obj{
 				}
 			}
 		}
-		if($new){
-			if(self::$_co_anon_[$self][2]){
-				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
-			}
-			if(!$this->_saving_[1]){ // after中は実行しない
-				$this->_saving_[0] = true;
-				$this->__before_save__();
-				$this->__before_create__();
-				$this->_saving_[0] = false;
-			}
-			
-			$this->save_verify_primary_unique();
-			$this->validate();
-			$daq = self::$_con_[get_called_class()]->create_sql($this);
-			if($this->update_query($daq) == 0){
-				throw new \ebi\exception\InvalidQueryException('create failed');
-			}
-			if($daq->is_id()){
-				$result = $this->func_query(self::$_con_[get_called_class()]->last_insert_id_sql($this));
-				if(empty($result)){
-					throw new \ebi\exception\NoRowsAffectedException('create failed');
+		
+		try{
+			if($new){
+				if(self::$_co_anon_[$self][2]){
+					throw new \ebi\exception\BadMethodCallException('create save is not permitted');
 				}
-				$this->{$daq->id()}($result[0]);
-			}
-			if(!$this->_saving_[1]){
-				$this->_saving_[1] = true;
-				$this->__after_create__();
-				$this->__after_save__();
-				$this->_saving_[1] = false;
-			}
-		}else{
-			if(self::$_co_anon_[$self][2]){
-				throw new \ebi\exception\BadMethodCallException('update save is not permitted');
-			}
-			if(!$this->_saving_[1]){ // after中は実行しない
-				$this->_saving_[0] = true;
-				$this->__before_save__();
-				$this->__before_update__();
-				$this->_saving_[0] = false;
-			}
-			
-			$this->validate();
-			$args = func_get_args();
-			$query = new \ebi\Q();
-			$target = [];
-			
-			if(!empty($args)){
-				foreach($args as $arg){
-					if(is_string($arg)){
-						$target[] = $arg;
-					}else if($arg instanceof \ebi\Q){
-						$query->add($arg);
+				if(!$this->_saving_[1]){ // after中は実行しない
+					$this->_saving_[0] = true;
+					$this->__before_save__();
+					$this->__before_create__();
+					$this->_saving_[0] = false;
+				}
+				
+				$this->save_verify_primary_unique();
+				$this->validate();
+				$daq = self::$_con_[get_called_class()]->create_sql($this);
+				if($this->update_query($daq) == 0){
+					throw new \ebi\exception\InvalidQueryException('create failed');
+				}
+				if($daq->is_id()){
+					$result = $this->func_query(self::$_con_[get_called_class()]->last_insert_id_sql($this));
+					if(empty($result)){
+						throw new \ebi\exception\NoRowsAffectedException('create failed');
+					}
+					$this->{$daq->id()}($result[0]);
+				}
+				if(!$this->_saving_[1]){
+					$this->_saving_[1] = true;
+					$this->__after_create__();
+					$this->__after_save__();
+					$this->_saving_[1] = false;
+				}
+			}else{
+				if(self::$_co_anon_[$self][2]){
+					throw new \ebi\exception\BadMethodCallException('update save is not permitted');
+				}
+				if(!$this->_saving_[1]){ // after中は実行しない
+					$this->_saving_[0] = true;
+					$this->__before_save__();
+					$this->__before_update__();
+					$this->_saving_[0] = false;
+				}
+				
+				$this->validate();
+				$args = func_get_args();
+				$query = new \ebi\Q();
+				$target = [];
+				
+				if(!empty($args)){
+					foreach($args as $arg){
+						if(is_string($arg)){
+							$target[] = $arg;
+						}else if($arg instanceof \ebi\Q){
+							$query->add($arg);
+						}
+					}
+					if(!empty($target)){
+						$target = array_merge($target,$auto_update_prop);
 					}
 				}
-				if(!empty($target)){
-					$target = array_merge($target,$auto_update_prop);
+				$daq = self::$_con_[get_called_class()]->update_sql($this,$query,$target);
+				$affected_rows = $this->update_query($daq);
+				
+				if($affected_rows === 0 && !empty($args)){
+					throw new \ebi\exception\NoRowsAffectedException('update failed');
+				}
+				if(!$this->_saving_[1]){
+					$this->_saving_[1] = true;
+					$this->__after_update__();
+					$this->__after_save__();
+					$this->_saving_[1] = false;
 				}
 			}
-			$daq = self::$_con_[get_called_class()]->update_sql($this,$query,$target);
-			$affected_rows = $this->update_query($daq);
-			
-			if($affected_rows === 0 && !empty($args)){
-				throw new \ebi\exception\NoRowsAffectedException('update failed');
-			}
-			if(!$this->_saving_[1]){
-				$this->_saving_[1] = true;
-				$this->__after_update__();
-				$this->__after_save__();
-				$this->_saving_[1] = false;
-			}
+		}catch(\ebi\exception\InvalidQueryException $e){
+			self::$_con_[get_called_class()]->parse_invalid_query_exception($e);
+			throw $e;
 		}
 		return $this;
 	}
