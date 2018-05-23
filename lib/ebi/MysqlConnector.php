@@ -48,7 +48,7 @@ class MysqlConnector extends \ebi\DbConnector{
 			}
 			if(!empty($this->timezone)){
 				$this->prepare_execute($con,'set time_zone=\''.$this->timezone.'\'');
-			}			
+			}
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException((strpos($e->getMessage(),'SQLSTATE[HY000]') === false) ? $e->getMessage() : __CLASS__.' connect failed');
 		}
