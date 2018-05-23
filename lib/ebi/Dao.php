@@ -484,8 +484,8 @@ abstract class Dao extends \ebi\Obj{
 		try{
 			$statement->execute($daq->ar_vars());
 		}catch(\PDOException $e){
-			if($statement->errorCode() == 23000){
-				throw new \ebi\exception\UniqueException();
+			if($statement->errorCode() == 22001){
+				throw new \ebi\exception\LengthException('Data too long: '.$statement->errorCode());
 			}
 			self::$_con_[get_called_class()]->parse_invalid_query_exception($statement->errorInfo());
 			

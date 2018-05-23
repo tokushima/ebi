@@ -48,7 +48,7 @@ class MysqlConnector extends \ebi\DbConnector{
 			}
 			if(!empty($this->timezone)){
 				$this->prepare_execute($con,'set time_zone=\''.$this->timezone.'\'');
-			}
+			}			
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException((strpos($e->getMessage(),'SQLSTATE[HY000]') === false) ? $e->getMessage() : __CLASS__.' connect failed');
 		}
@@ -128,17 +128,13 @@ class MysqlConnector extends \ebi\DbConnector{
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
-	
 	/**
 	 * SQLエラーを解析し適切なExceptionをthrowする
 	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
 	 */
 	public function parse_invalid_query_exception(array $error_info){
-		// https://dev.mysql.com/doc/refman/5.6/ja/error-messages-server.html
-		if($error_info[0] == 'HY000'){
-			if($error_info[1] == 1470 || $error_info[1] == 1552 || $error_info[1] == 1742){
-				throw new \ebi\exception\LengthException();
-			}
+		if($error_info[0] == 23000 && $error_info[1] == 1062){
+			throw new \ebi\exception\UniqueException('Duplicate entry');
 		}
 	}
 }

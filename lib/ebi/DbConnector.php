@@ -609,6 +609,9 @@ abstract class DbConnector{
 	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
 	 */
 	public function parse_invalid_query_exception(array $error_info){
+		if($error_info[0] == 23000 && $error_info[1] == 19){
+			throw new \ebi\exception\UniqueException('Duplicate entry');
+		}
 	}
 }
 
