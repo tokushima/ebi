@@ -114,6 +114,17 @@ class Db implements \Iterator{
 	public function prepare($sql){
 		return $this->connection->prepare($sql);
 	}
+	
+	/**
+	 * 直近の操作に関連する SQLSTATE を取得する
+	 * @return string
+	 */
+	public function error_code(){
+		if($this->statement === false){
+			return null;
+		}
+		return $this->statement->errorCode();
+	}
 	/**
 	 * SQL ステートメントを実行する
 	 * @param string $sql 実行するSQL
@@ -131,7 +142,7 @@ class Db implements \Iterator{
 		
 		if(isset($errors[1])){
 			$this->rollback();
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : '.$sql);
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.($errors[2] ?? '').' : '.$sql);
 		}
 		return $this;
 	}
@@ -148,7 +159,7 @@ class Db implements \Iterator{
 		
 		if(isset($errors[1])){
 			$this->rollback();
-			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').' : #requery');
+			throw new \ebi\exception\InvalidQueryException('['.$errors[1].'] '.($errors[2] ?? '').' : #requery');
 		}
 		return $this;
 	}

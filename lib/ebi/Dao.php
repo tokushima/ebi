@@ -480,15 +480,22 @@ abstract class Dao extends \ebi\Obj{
 		}catch(\PDOException $e){
 			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
-		$statement->execute($daq->ar_vars());
+		
+		try{
+			$statement->execute($daq->ar_vars());
+		}catch(\PDOException $e){
+			if($statement->errorCode() == 22001){
+				throw new \ebi\exception\LengthException('Data too long: '.$statement->errorCode());
+			}
+			self::$_con_[get_called_class()]->parse_invalid_query_exception($statement->errorInfo());
+			
+			throw new \ebi\exception\InvalidQueryException($e->getMessage());
+		}
 		return $statement;
 	}
 	private function update_query(\ebi\Daq $daq){
-		try{
-			$statement = $this->query($daq);
-		}catch(\PDOException $e){
-			throw new \ebi\exception\InvalidQueryException($e->getMessage());
-		}
+		$statement = $this->query($daq);
+		
 		return $statement->rowCount();
 	}
 	private function func_query(\ebi\Daq $daq,$is_list=false){
@@ -1046,6 +1053,7 @@ abstract class Dao extends \ebi\Obj{
 				}
 			}
 		}
+		
 		if($new){
 			if(self::$_co_anon_[$self][2]){
 				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
@@ -1060,8 +1068,9 @@ abstract class Dao extends \ebi\Obj{
 			$this->save_verify_primary_unique();
 			$this->validate();
 			$daq = self::$_con_[get_called_class()]->create_sql($this);
+			
 			if($this->update_query($daq) == 0){
-				throw new \ebi\exception\InvalidQueryException('create failed');
+				throw new \ebi\exception\NoRowsAffectedException('create failed');
 			}
 			if($daq->is_id()){
 				$result = $this->func_query(self::$_con_[get_called_class()]->last_insert_id_sql($this));

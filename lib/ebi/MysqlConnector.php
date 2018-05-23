@@ -128,4 +128,13 @@ class MysqlConnector extends \ebi\DbConnector{
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
+	/**
+	 * SQLエラーを解析し適切なExceptionをthrowする
+	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
+	 */
+	public function parse_invalid_query_exception(array $error_info){
+		if($error_info[0] == 23000 && $error_info[1] == 1062){
+			throw new \ebi\exception\UniqueException('Duplicate entry');
+		}
+	}
 }
