@@ -96,9 +96,9 @@
 		
 		<rt:if param="{$method_info.opt('deprecated')}">
 			<tr>
-				<th>Deprecated</th>
+				<th class="text-danger">Deprecated</th>
 				<td>
-					<div class="deprecated">
+					<div class="text-danger">
 						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
 					</div>
 				</td>
@@ -166,8 +166,11 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<div class="deprecated-mark">
-						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+					<div>
+						<span class="badge badge-warning">
+							Deprecated
+							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+						</span>
 					</div>
 				</rt:if>
 			</td>
