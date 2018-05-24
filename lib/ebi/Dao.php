@@ -410,13 +410,13 @@ abstract class Dao extends \ebi\Obj{
 	 * @param $resultset array
 	 * @return integer
 	 */
-	public function parse_resultset($resultset){
+	protected function cast_resultset($resultset){
 		foreach($resultset as $alias => $value){
 			if(isset(self::$_dao_[$this->_class_id_]->_alias_[$alias])){
 				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1') $this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
 
 				if($this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has') === true){
-					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->parse_resultset([$alias=>$value]);
+					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->cast_resultset([$alias=>$value]);
 				}else{
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}($value);
 				}
@@ -487,7 +487,7 @@ abstract class Dao extends \ebi\Obj{
 			if($statement->errorCode() == 22001){
 				throw new \ebi\exception\LengthException('Data too long: '.$statement->errorCode());
 			}
-			self::$_con_[get_called_class()]->parse_invalid_query_exception($statement->errorInfo());
+			self::$_con_[get_called_class()]->error_info($statement->errorInfo());
 			
 			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
@@ -593,7 +593,7 @@ abstract class Dao extends \ebi\Obj{
 		}
 		\ebi\Exceptions::throw_over();
 	}
-	private function which_aggregator($exe,array $args,$is_list=false){
+	private function call_aggregator($exe,array $args,$is_list=false){
 		$target_name = $gorup_name = [];
 		if(isset($args[0]) && is_string($args[0])){
 			$target_name = array_shift($args);
@@ -617,7 +617,7 @@ abstract class Dao extends \ebi\Obj{
 	private static function exec_aggregator($exec,$target_name,$args,$cast=null){
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
-		$result = $dao->which_aggregator($exec,$args);
+		$result = $dao->call_aggregator($exec,$args);
 		return static::exec_aggregator_result_cast($dao,$target_name,current($result),$cast);
 	}
 	private static function exec_aggregator_by($exec,$target_name,$gorup_name,$args,$cast=null){
@@ -631,7 +631,7 @@ abstract class Dao extends \ebi\Obj{
 		$args[] = $dao->__find_conds__();
 		$results = [];
 		
-		foreach($dao->which_aggregator($exec,$args,true) as $value){
+		foreach($dao->call_aggregator($exec,$args,true) as $value){
 			$dao->{$gorup_name}($value['key_column']);
 			$results[$dao->{$gorup_name}()] = static::exec_aggregator_result_cast($dao,$target_name,$value['target_column'],$cast);
 		}
@@ -745,7 +745,7 @@ abstract class Dao extends \ebi\Obj{
 		$args = func_get_args();
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
-		$results = $dao->which_aggregator('distinct',$args);
+		$results = $dao->call_aggregator('distinct',$args);
 		return $results;
 	}
 	/**
@@ -820,7 +820,7 @@ abstract class Dao extends \ebi\Obj{
 					break;
 				}
 				$obj = clone($dao);
-				$obj->parse_resultset($resultset);
+				$obj->cast_resultset($resultset);
 				
 				yield $obj;
 			}
@@ -1168,6 +1168,7 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * テーブルの作成
+	 * @return boolean
 	 */
 	public static function create_table(){
 		$dao = new static();
