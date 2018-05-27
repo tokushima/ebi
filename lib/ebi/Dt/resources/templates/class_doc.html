@@ -67,10 +67,11 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<div class="deprecated-mark">
+					<span class="badge badge-warning">
+						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-					</div>
-				</rt:if>					
+					</span>
+				</rt:if>	
 			</td>
 			<td>
 				<rt:if param="{$t.not($param.opt('hash'))}">
@@ -129,9 +130,10 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<div class="deprecated-mark">
+					<span class="badge badge-danger">
+						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-					</div>
+					</span>
 				</rt:if>					
 			</td>
 		</tr>

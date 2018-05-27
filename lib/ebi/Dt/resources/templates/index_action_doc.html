@@ -113,7 +113,7 @@
 
 <rt:if param="{$method_info.params()}">
 
-<div class="card border-secondary mb-3" style="max-width: 18rem;">
+<div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-secondary">Params</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
@@ -204,9 +204,10 @@
 				{$t.html($param.summary())}
 
 				<rt:if param="{$param.opt('deprecated')}">
-					<div class="deprecated-mark">
+					<span class="badge badge-warning">
+						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-					</div>
+					</span>
 				</rt:if>
 			</td>
 		</tr>
