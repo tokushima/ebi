@@ -199,14 +199,13 @@ class Dt{
 									foreach(['requests','contexts'] as $k){
 										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
 									}
-									break 2;
 								}
 							}
+							break;
 						}
 						break;
 					}
 				}
-				
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				return ['method_info'=>$info];
 			}
