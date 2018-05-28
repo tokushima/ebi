@@ -199,9 +199,9 @@ class Dt{
 									foreach(['requests','contexts'] as $k){
 										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
 									}
-									break 2;
 								}
 							}
+							break;
 						}
 						break;
 					}
