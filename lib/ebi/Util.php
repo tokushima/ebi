@@ -537,6 +537,7 @@ class Util{
 	
 	/**
 	 * 配列のキー順でkeyが範囲内の値を返す
+	 * 最小より小さければ最小を、最大より大きければ最大を返す
 	 * @param mixed $key
 	 * @param array $array
 	 * @return mixed
