@@ -535,4 +535,20 @@ class Util{
 		return $name;
 	}
 	
+	/**
+	 * 配列のキー順でkeyが範囲内の値を返す
+	 * @param mixed $key
+	 * @param array $array
+	 * @return mixed
+	 */
+	public static function array_range_search($key,array $array){
+		krsort($array);
+		
+		foreach($array as $k => $v){
+			if($k < $key){
+				return $v;
+			}
+		}
+		return empty($array) ? null : $v;
+	}
 }
