@@ -546,7 +546,7 @@ class Util{
 		krsort($array);
 		
 		foreach($array as $k => $v){
-			if($k < $key){
+			if($k <= $key){
 				return $v;
 			}
 		}
