@@ -8,11 +8,11 @@ $array = [
 	1000200=>5,
 ];
 
+
 eq(1,\ebi\Util::array_range_search(1000015, $array));
-
-eq(100,\ebi\Util::array_range_search(1, $array));
-
+eq(2,\ebi\Util::array_range_search(1000035, $array));
 eq(5,\ebi\Util::array_range_search(1000210, $array));
+eq(100,\ebi\Util::array_range_search(1, $array));
 
 
 $array = [
