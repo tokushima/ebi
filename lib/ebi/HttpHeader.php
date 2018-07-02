@@ -29,7 +29,14 @@ class HttpHeader{
 			header($key.': '.$value);
 			self::$header[$key] = $value;
 		}
-	}	
+	}
+	/**
+	 * 送信済みヘッダ
+	 * @return array
+	 */
+	public static function sended(){
+		return self::$header;
+	}
 	/**
 	 * HTTPステータスを返す
 	 * @param integer $statuscode 出力したいステータスコード
@@ -120,12 +127,16 @@ class HttpHeader{
 	 */
 	public static function cors_origin($url){
 		self::send('Access-Control-Allow-Origin',$url);
-		
+
 		if($url != '*'){
-			self::send('Access-Control-Allow-Credentials','true');
 			self::send('Access-Control-Allow-Methods','GET, POST, OPTIONS, PUT, DELETE');
 			self::send('Access-Control-Allow-Headers','Origin, X-Requested-With, X-Csrftoken, Content-Type, Accept');
-			self::send('Access-Control-Max-Age',86400);
+			self::send('Access-Control-Allow-Credentials','true');
+			self::send('Access-Control-Max-Age',5);
+		}
+		
+		if(\ebi\Request::method() == 'OPTIONS'){
+			exit;
 		}
 	}
 }
