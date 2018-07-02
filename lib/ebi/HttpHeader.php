@@ -123,8 +123,9 @@ class HttpHeader{
 		
 		if($url != '*'){
 			self::send('Access-Control-Allow-Credentials','true');
-			self::send('Access-Control-Allow-Method','GET, POST, OPTIONS, PUT, DELETE');
+			self::send('Access-Control-Allow-Methods','GET, POST, OPTIONS, PUT, DELETE');
 			self::send('Access-Control-Allow-Headers','Origin, X-Requested-With, X-Csrftoken, Content-Type, Accept');
+			self::send('Access-Control-Max-Age',86400);
 		}
 	}
 }
