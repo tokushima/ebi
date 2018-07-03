@@ -124,15 +124,16 @@ class HttpHeader{
 	/**
 	 * Ajaxでクロスドメインでアクセスする場合に設定する
 	 * @param string $url 許可するURL
+	 * @param integer $max_age プリフライトの応答をキャッシュする秒数
 	 */
-	public static function cors_origin($url){
+	public static function cors_origin($url,$max_age=5){
 		self::send('Access-Control-Allow-Origin',$url);
-
+		
 		if($url != '*'){
 			self::send('Access-Control-Allow-Methods','GET, POST, OPTIONS, PUT, DELETE');
 			self::send('Access-Control-Allow-Headers','Origin, X-Requested-With, X-Csrftoken, Content-Type, Accept');
 			self::send('Access-Control-Allow-Credentials','true');
-			self::send('Access-Control-Max-Age',5);
+			self::send('Access-Control-Max-Age',$max_age);
 		}
 		
 		if(\ebi\Request::method() == 'OPTIONS'){
