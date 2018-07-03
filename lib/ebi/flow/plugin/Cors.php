@@ -33,7 +33,7 @@ class Cors{
 			\ebi\HttpHeader::send('Access-Control-Allow-Origin',$request_origin);
 			\ebi\HttpHeader::send('Access-Control-Allow-Credentials','true');
 			
-			if(\ebi\Request::method() == 'OPTIONS' && $origin != '*'){
+			if(\ebi\Request::method() == 'OPTIONS' && $request_origin != '*'){
 				if(!empty($request_method)){
 					\ebi\HttpHeader::send('Access-Control-Allow-Methods',$request_method);
 				}
