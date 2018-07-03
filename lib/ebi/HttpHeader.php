@@ -29,7 +29,14 @@ class HttpHeader{
 			header($key.': '.$value);
 			self::$header[$key] = $value;
 		}
-	}	
+	}
+	/**
+	 * 送信済みヘッダ
+	 * @return array
+	 */
+	public static function sended(){
+		return self::$header;
+	}
 	/**
 	 * HTTPステータスを返す
 	 * @param integer $statuscode 出力したいステータスコード
@@ -113,18 +120,5 @@ class HttpHeader{
 	 */
 	public static function rawdata(){
 		return file_get_contents('php://input');
-	}
-	/**
-	 * Ajaxでクロスドメインでアクセスする場合に設定する
-	 * @param string $url 許可するURL
-	 */
-	public static function cors_origin($url){
-		self::send('Access-Control-Allow-Origin',$url);
-		
-		if($url != '*'){
-			self::send('Access-Control-Allow-Credentials','true');
-			self::send('Access-Control-Allow-Method','GET, POST, OPTIONS, PUT, DELETE');
-			self::send('Access-Control-Allow-Headers','Origin, X-Requested-With, X-Csrftoken, Content-Type, Accept');
-		}
 	}
 }
