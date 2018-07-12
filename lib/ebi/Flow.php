@@ -259,7 +259,7 @@ class Flow{
 			self::$map = $selfmap;
 			return;
 		}
-		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : ''));
+		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",($_SERVER['PATH_INFO'] ?? ''));
 		
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach($selfmap['patterns'] as $p){
