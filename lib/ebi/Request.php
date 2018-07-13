@@ -32,8 +32,8 @@ class Request implements \IteratorAggregate{
 							}
 						}else{
 							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));
-							$eval = 'if(isset($files[\'tmp_name\']'.$ks.') && !empty($files[\'tmp_name\']'.$ks.')){ ';
-								foreach(['name','tmp_name','size'] as $k){
+							$eval = 'if(isset($files[\'name\']'.$ks.') && !empty($files[\'name\']'.$ks.')){ ';
+								foreach(['name','tmp_name','size','error'] as $k){
 									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.';';
 								}
 							eval($eval.'}');
@@ -43,7 +43,7 @@ class Request implements \IteratorAggregate{
 						if(is_array($v['name'])){
 							$this->files[$k] = [];
 							$marge_func($v['name'],[],$v,$this->files[$k]);
-						}else if(array_key_exists('tmp_name',$v) && !empty($v['tmp_name'])){
+						}else if(array_key_exists('name',$v) && !empty($v['name'])){
 							$this->files[$k] = $v;
 						}
 					}
@@ -357,15 +357,24 @@ class Request implements \IteratorAggregate{
 	 * @return array
 	 */
 	public function in_files($n){
-		if(($err = error_get_last()) !== null && 
-			$err['file'] == 'Unknown' && 
-			$err['line'] == 0 && 
-			strpos($err['message'],'POST Content-Length of') !== false
-		){
-			throw new \ebi\exception\MaxSizeExceededException($n.' exceeds maximum');
-		}
-		
 		if(array_key_exists($n,$this->files)){
+			if(array_key_exists('error',$this->files[$n])){
+				// http://php.net/manual/ja/features.file-upload.errors.php
+				switch($this->files[$n]['error']){
+					case UPLOAD_ERR_OK:
+						return $this->files[$n];
+					case UPLOAD_ERR_INI_SIZE:
+					case UPLOAD_ERR_FORM_SIZE:
+					case UPLOAD_ERR_PARTIAL:
+					case UPLOAD_ERR_NO_FILE:
+						throw new \ebi\exception\ContentLengthException('Upload failed ('.$this->files[$n]['error'].')');
+					case UPLOAD_ERR_NO_TMP_DIR:
+					case UPLOAD_ERR_CANT_WRITE:
+					case UPLOAD_ERR_EXTENSION:
+						throw new \ebi\exception\IOException('Upload failed ('.$this->files[$n]['error'].')');
+					default:
+				}
+			}
 			return $this->files[$n];
 		}
 		if(array_key_exists($n,$this->vars)){
