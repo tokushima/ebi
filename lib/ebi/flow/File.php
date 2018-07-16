@@ -1,30 +1,27 @@
 <?php
 namespace ebi\flow;
 /**
- * ファイルを返す
+ * ファイルダウンロード
  * @author tokushima
  *
  */
 class File{
-	private $root;
+	protected $root;
 
-	/**
-	 * 
-	 * @param string $root ファイルを探すルートパス
-	 */
-	public function __construct($root=null){
-		if(empty($root)){
-			$root = \ebi\Conf::resource_path('files');
-		}
-		$this->root = $root;
+	public function __construct(){
+		/**
+		 * 
+		 * @param string $root ルートパス
+		 */
+		$this->root = \ebi\Conf::get('root',\ebi\Conf::resource_path('files'));
 	}
 
 	/**
-	 * ファイルを返す
+	 * ダウンロード
 	 * @param string $path
 	 */
-	public function inline($path){
-		$path = \ebi\Util::path_absolute($this->root,$path);
+	public function download($path){
+		$path = \ebi\Util::path_slash($this->root,null,true).\ebi\Util::path_slash($path,false);
 		
 		if(!is_file($path)){
 			\ebi\HttpHeader::send_status(404);
