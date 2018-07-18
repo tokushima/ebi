@@ -189,7 +189,7 @@ class Util{
 	 * @param string $directory 検索対象のディレクトリパス
 	 * @return string[]
 	 */
-	public static function lsd($directory){
+	public static function ls_directory($directory){
 		if(is_dir($directory)){
 			foreach(scandir($directory) as $f){
 				if(is_dir($directory.'/'.$f) && $f != '.' && $f != '..'){
@@ -486,7 +486,6 @@ class Util{
 	public static function ls_classes($base_class,$parent_class_name=null,$recursive=false){
 		$result = [];
 		$ref = new \ReflectionClass($base_class);
-		$namespace = $ref->getNamespaceName();
 		$dir = dirname($ref->getFileName());
 		
 		foreach(\ebi\Util::ls($dir,$recursive,'/\.php$/') as $f){
@@ -495,7 +494,7 @@ class Util{
 			if($recursive){
 				$subns = str_replace([$dir,DIRECTORY_SEPARATOR],['','\\'],dirname($f->getPathname()));
 			}
-			$classname = $namespace.$subns.'\\'.basename($f->getFilename(),'.php');
+			$classname = $ref->getNamespaceName().$subns.'\\'.basename($f->getFilename(),'.php');
 			
 			if(class_exists($classname)){
 				if(empty($parent_class_name) || is_subclass_of($classname, $parent_class_name)){
@@ -506,6 +505,19 @@ class Util{
 		sort($result);
 		
 		return $result;
+	}
+	
+	/**
+	 * クラスリソースのパス
+	 * @param string $class
+	 * @param string $path
+	 * @return string
+	 */
+	public static function get_class_resources($class,$path=null){
+		$ref = new \ReflectionClass($class);
+		$dir = dirname($ref->getFileName()).'/'.$ref->getShortName();
+		
+		return $dir.'/resources'.self::path_slash($path,true);
 	}
 	
 	/**
