@@ -521,13 +521,6 @@ class Util{
 	}
 	
 	/**
-	 * 改行付きで出力
-	 * @param string $val
-	 */
-	public static function println($val){
-		print(((string)$val).PHP_EOL);
-	}
-	/**
 	 * camelcaseをsnakecaseへ変換する
 	 * namespace部は無視される
 	 * @param string $str
