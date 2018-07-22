@@ -35,6 +35,14 @@ class Util{
 		}
 	}
 	/**
+	 * JSONファイルを読み込む
+	 * @param string $filename
+	 * @return mixed
+	 */
+	public static function file_read_json($filename){
+		return \ebi\Json::decode(self::file_read($filename));		
+	}
+	/**
 	 * CSVファイルとして配列を書き出す
 	 * @param \SplFileObject $file
 	 * @param array $arr
@@ -54,6 +62,15 @@ class Util{
 			$file->fputcsv($arr);
 		}
 		return $file;
+	}
+	/**
+	 * JSONを書き出す
+	 * @param string $filename
+	 * @param mixed $vars
+	 * @param boolean $format JSONを整形するか
+	 */
+	public static function file_write_json($filename,$vars,$format=false){
+		self::file_write($filename,\ebi\Json::encode($vars,$format));
 	}
 	/**
 	 * ファイルに書き出す
@@ -556,5 +573,38 @@ class Util{
 			}
 		}
 		return empty($array) ? null : $v;
+	}
+	
+	/**
+	 * 文字列を処理し数値配列を返す
+	 * @param string $str
+	 * @throws \ebi\exception\IllegalDataTypeException
+	 * @return number[]
+	 */
+	public static function parse_numbers($str){
+		$list = [];
+		
+		foreach(explode(',',$str) as $p){
+			$p = trim($p);
+			
+			if(!empty($p)){
+				if(is_numeric($p)){
+					$list[$p] = $p;
+				}else if(strpos($p,'..') !== false){
+					list($start,$end) = explode('..',$p,2);
+					
+					if(!is_numeric($start) || !is_numeric($end)){
+						throw new \ebi\exception\IllegalDataTypeException('value must be a number');
+					}
+					
+					foreach(range($start,$end) as $n){
+						$list[$n] = $n;
+					}
+				}else{
+					throw new \ebi\exception\IllegalDataTypeException('value must be a number');
+				}
+			}
+		}
+		return array_keys($list);
 	}
 }
