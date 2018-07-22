@@ -70,7 +70,7 @@ class Util{
 	 * @param boolean $format JSONを整形するか
 	 */
 	public static function file_write_json($filename,$vars,$format=false){
-		self::file_write(\ebi\Json::encode($vars),$format);
+		self::file_write($filename,\ebi\Json::encode($vars,$format));
 	}
 	/**
 	 * ファイルに書き出す
@@ -576,32 +576,32 @@ class Util{
 	}
 	
 	/**
-	 * 文字列に含まれる数値を取得
+	 * 文字列を処理し数値配列を返す
 	 * @param string $str
 	 * @throws \ebi\exception\IllegalDataTypeException
 	 * @return number[]
 	 */
-	public static function strtonumbers($str){
+	public static function parse_numbers($str){
 		$list = [];
 		
 		foreach(explode(',',$str) as $p){
 			$p = trim($p);
 			
 			if(!empty($p)){
-				if(ctype_digit($p)){
-					$list[(int)$p] = (int)$p;
+				if(is_numeric($p)){
+					$list[$p] = $p;
 				}else if(strpos($p,'..') !== false){
 					list($start,$end) = explode('..',$p,2);
 					
 					if(!is_numeric($start) || !is_numeric($end)){
-						throw new \ebi\exception\IllegalDataTypeException();
+						throw new \ebi\exception\IllegalDataTypeException('value must be a number');
 					}
 					
 					foreach(range($start,$end) as $n){
 						$list[$n] = $n;
 					}
 				}else{
-					throw new \ebi\exception\IllegalDataTypeException();
+					throw new \ebi\exception\IllegalDataTypeException('value must be a number');
 				}
 			}
 		}
