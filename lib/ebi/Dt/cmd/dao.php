@@ -1,6 +1,6 @@
 <?php
 /**
- * Dao create / drop / import / export / show creata tbale
+ * Dao create / drop / import / export / show
  * @param string[] $model target models
  */
 
