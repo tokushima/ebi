@@ -107,7 +107,7 @@ class Session{
 	
 	
 	/**
-	 * 初期処理
+	 * (session_set_save_handler) 初期処理
 	 * @param string $path セッションを格納/取得するパス。
 	 * @param string $name セッション名
 	 * @return boolean
@@ -124,7 +124,7 @@ class Session{
 	}
 	
 	/**
-	 * writeが実行された後で実行される
+	 * (session_set_save_handler) writeが実行された後で実行される
 	 * @return boolean
 	 */
 	public function close(){
@@ -137,7 +137,7 @@ class Session{
 	}
 	
 	/**
-	 * データを読み込む
+	 * (session_set_save_handler) データを読み込む
 	 * @param string $id
 	 * @return mixed
 	 */
@@ -151,7 +151,7 @@ class Session{
 	}
 	
 	/**
-	 * データを書き込む
+	 * (session_set_save_handler) データを書き込む
 	 * @param string $id セッションのid
 	 * @param mixed $sess_data データ
 	 * @return boolean
@@ -168,7 +168,7 @@ class Session{
 	}
 	
 	/**
-	 * 破棄
+	 * (session_set_save_handler) 破棄
 	 * @param string $id セッションのid
 	 * @return boolean
 	 */
@@ -183,7 +183,7 @@ class Session{
 	}
 	
 	/**
-	 * 古いセッションを削除する
+	 * (session_set_save_handler) 古いセッションを削除する
 	 * @param integer $maxlifetime session.gc_maxlifetime
 	 * @return boolean
 	 */
