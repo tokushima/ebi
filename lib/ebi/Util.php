@@ -252,8 +252,14 @@ class Util{
 	 * @return string
 	 */
 	public static function path_absolute($a,$b){
-		if($b === '' || $b === null) return $a;
-		if($a === '' || $a === null || preg_match("/^[a-zA-Z]+:/",$b)) return $b;
+		if($b === '' || $b === null){
+			return $a;
+		}
+		if($a === '' || $a === null || preg_match("/^[a-zA-Z]+:/",$b)){
+			return $b;
+		}
+		
+		$h = [];
 		if(preg_match("/^[\w]+\:\/\/[^\/]+/",$a,$h)){
 			$a = preg_replace("/^(.+?)[".(($b[0] === '#') ? '#' : "#\?")."].*$/","\\1",$a);
 			if($b[0] == '#' || $b[0] == '?') return $a.$b;
@@ -334,6 +340,8 @@ class Util{
 				if(trim($lines[sizeof($lines)-1]) == ''){
 					array_pop($lines);
 				}
+				
+				$match = [];
 				return preg_match("/^([\040\t]+)/",$lines[0],$match) ? 
 							preg_replace('/^'.$match[1].'/m','',implode("\n",$lines)) : 
 							implode("\n",$lines);
@@ -349,6 +357,8 @@ class Util{
 	 * @return string
 	 */
 	public static function fstring($str,$params){
+		$match = [];
+		
 		if(preg_match_all("/\{([\d]+)\}/",$str,$match)){
 			$params = func_get_args();
 			array_shift($params);
@@ -584,7 +594,7 @@ class Util{
 	public static function parse_numbers($str){
 		$list = [];
 		
-		foreach(explode(',',$str) as $p){
+		foreach((is_array($str) ? $str : explode(',',$str)) as $p){
 			$p = trim($p);
 			
 			if(!empty($p)){
