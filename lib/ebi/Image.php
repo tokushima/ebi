@@ -83,6 +83,7 @@ class Image{
 	 * @param integer $height
 	 * @param string $color
 	 * @param string $filename
+	 * @return \ebi\Image
 	 */
 	public static function filled_rectangle($width,$height,$color){
 		$self = new static(__FILE__);
@@ -116,6 +117,7 @@ class Image{
 		
 		$type = 'jpg';
 		
+		$m = [];
 		if(preg_match('/\.([\w]+)$/',$filename,$m)){
 			$type = strtolower($m[1]);
 		}
@@ -302,7 +304,7 @@ class Image{
 		if(empty($this->font_path)){
 			throw new \ebi\exception\UndefinedException('undefined font');
 		}
-		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		list(,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
 		
 		$angle = $angle * -1;
 		
@@ -437,6 +439,7 @@ class Image{
 			$value = trim(fgets($fp));
 		fclose($fp);
 		
+		$m = [];
 		if(preg_match('/^%PDF\-(.+)/',$value,$m)){
 			return preg_replace('/[^\d\.]/','',$m[1]);
 		}
