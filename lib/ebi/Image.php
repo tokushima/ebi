@@ -57,6 +57,10 @@ class Image{
 		}
 	}
 	
+	public function __destruct(){
+		imagedestroy($this->canvas);
+	}
+	
 	/**
 	 * バイナリ文字列から画像を読み込む
 	 * @param string $string
@@ -83,6 +87,7 @@ class Image{
 	 * @param integer $height
 	 * @param string $color
 	 * @param string $filename
+	 * @return \ebi\Image
 	 */
 	public static function filled_rectangle($width,$height,$color){
 		$self = new static(__FILE__);
@@ -116,6 +121,7 @@ class Image{
 		
 		$type = 'jpg';
 		
+		$m = [];
 		if(preg_match('/\.([\w]+)$/',$filename,$m)){
 			$type = strtolower($m[1]);
 		}
@@ -169,10 +175,6 @@ class Image{
 				imagejpeg($this->canvas);
 		}
 		exit;
-	}
-	
-	public function __destruct(){
-		imagedestroy($this->canvas);
 	}
 	
 	/**
@@ -302,7 +304,7 @@ class Image{
 		if(empty($this->font_path)){
 			throw new \ebi\exception\UndefinedException('undefined font');
 		}
-		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		list(,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
 		
 		$angle = $angle * -1;
 		
@@ -397,32 +399,65 @@ class Image{
 	 */
 	public function get_orientation(){
 		list($w,$h) = $this->get_size();
-		
+		return self::judge_orientation($w, $h);
+	}
+	
+	private static function judge_orientation($w,$h){
 		$d = $h / $w;
 		
 		if($d <= 1.02 && $d >= 0.98){
 			return self::ORIENTATION_SQUARE;
 		}else if($d > 1){
 			return self::ORIENTATION_PORTRAIT;
-		}else{
-			return self::ORIENTATION_LANDSCAPE;
 		}
+		return self::ORIENTATION_LANDSCAPE;
+	}
+	
+	private static function check_file_type($filename,$header,$footer){
+		$fp = fopen($filename,'rb');
+		$a = unpack('H*',fread($fp,$header));
+		fseek($fp,$footer * -1,SEEK_END);
+		$b = unpack('H*',fread($fp,$footer));
+		fclose($fp);
+		return [($a[1] ?? null),($b[1] ?? null)];
 	}
 	
 	/**
-	 * 画像の情報(width, height, mime, bits, channels)を取得する
+	 * 画像の情報
+	 *  integer width
+	 *  integer height
+	 *  integer orientation 画像の向き 1: PORTRAIT, 2: LANDSCAPE, 3: SQUARE
+	 *  string mime 画像形式のMIMEタイプ
+	 *  integer bits
+	 *  integer channels 1: GRAY, 3: RGB, 4: CMYK
+	 *  boolean broken 画像ファイルとして破損しているか
+	 *  
 	 * @param string $filename
 	 * @return mixed{}
+	 * @see http://jp2.php.net/manual/ja/function.getimagesize.php
+	 * @see http://jp2.php.net/manual/ja/function.image-type-to-mime-type.php
 	 */
 	public static function get_info($filename){
 		$info = getimagesize($filename);
+		$mime = $info['mime'] ?? null;
+		$broken = null;
+		
+		if($mime == 'image/jpeg'){
+			$broken = (['ffd8','ffd9'] != self::check_file_type($filename, 2, 2));
+		}else if($mime == 'image/png'){
+			$broken = (['89504e470d0a1a0a','0000000049454e44ae426082'] != self::check_file_type($filename, 8, 12));
+		}else if($mime == 'image/gif'){
+			$broken = (['474946','3b'] != self::check_file_type($filename, 3, 1));
+		}
 		
 		return [
 			'width'=>$info[0],
 			'height'=>$info[1],
-			'mime'=>$info['mime'] ?? null,
+			'orientation'=>self::judge_orientation($info[0],$info[1]),
+			'mime'=>$mime,
 			'bits'=>$info['bits'] ?? null,
 			'channels'=>$info['channels'] ?? null,
+			'broken'=>$broken,
 		];
 	}
 	
@@ -437,6 +472,7 @@ class Image{
 			$value = trim(fgets($fp));
 		fclose($fp);
 		
+		$m = [];
 		if(preg_match('/^%PDF\-(.+)/',$value,$m)){
 			return preg_replace('/[^\d\.]/','',$m[1]);
 		}
