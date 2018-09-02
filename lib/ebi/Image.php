@@ -57,6 +57,10 @@ class Image{
 		}
 	}
 	
+	public function __destruct(){
+		imagedestroy($this->canvas);
+	}
+	
 	/**
 	 * バイナリ文字列から画像を読み込む
 	 * @param string $string
@@ -171,10 +175,6 @@ class Image{
 				imagejpeg($this->canvas);
 		}
 		exit;
-	}
-	
-	public function __destruct(){
-		imagedestroy($this->canvas);
 	}
 	
 	/**
@@ -428,6 +428,7 @@ class Image{
 	 *  integer height
 	 *  integer orientation 画像の向き 1: PORTRAIT, 2: LANDSCAPE, 3: SQUARE
 	 *  string mime 画像形式のMIMEタイプ
+	 *  integer bits
 	 *  integer channels 1: GRAY, 3: RGB, 4: CMYK
 	 *  boolean broken 画像ファイルとして破損しているか
 	 *  
@@ -454,6 +455,7 @@ class Image{
 			'height'=>$info[1],
 			'orientation'=>self::judge_orientation($info[0],$info[1]),
 			'mime'=>$mime,
+			'bits'=>$info['bits'] ?? null,
 			'channels'=>$info['channels'] ?? null,
 			'broken'=>$broken,
 		];
