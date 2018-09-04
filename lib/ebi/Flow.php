@@ -261,6 +261,7 @@ class Flow{
 		}
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",($_SERVER['PATH_INFO'] ?? ''));
 		
+		$m = [];
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach($selfmap['patterns'] as $p){
 				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1] && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
@@ -271,6 +272,7 @@ class Flow{
 			return self::terminate();
 		}
 		foreach($selfmap['patterns'] as $k => $pattern){
+			$param_arr = [];
 			if(preg_match('/^'.(empty($k) ? '' : '\/').str_replace(['\/','/','@#S'],['@#S','\/','\/'],$k).'[\/]{0,1}$/',$pathinfo,$param_arr)){
 				if($is_secure_pattern_func($pattern)){
 					if(substr(\ebi\Request::current_url(),0,5) === 'http:' &&
