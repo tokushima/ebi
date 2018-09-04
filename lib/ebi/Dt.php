@@ -152,7 +152,7 @@ class Dt{
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
-				list($login,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
+				list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
 				
 				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 				$info->set_opt('name',$name);
@@ -555,7 +555,6 @@ class Dt{
 		$req = new \ebi\Request();
 		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
 		$method_info = \ebi\Dt\Man::method_info($req->in_vars('class'),$req->in_vars('method'),true);
-		$method_mail_info = null;
 		
 		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
 			if($x_t_code == $mail_info->opt('x_t_code')){
@@ -580,8 +579,6 @@ class Dt{
 	private function find_mail_template_info($tcode){
 		foreach(\ebi\Dt\Man::mail_template_list() as $info){
 			if($info->opt('x_t_code') == $tcode){
-				$mail_info = $info;
-		
 				$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
 				$xml = \ebi\Xml::extract(\ebi\Util::file_read(\ebi\Util::path_absolute($path,$info->name())),'mail');
 				$body_xml = $xml->find_get('body');
@@ -618,10 +615,10 @@ class Dt{
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
 		$list = \ebi\SmtpBlackholeDao::find_all(
-				Q::eq('tcode',$req->in_vars('tcode')),
-				$paginator,
-				Q::order('-id')
-				);
+			Q::eq('tcode',$req->in_vars('tcode')),
+			$paginator,
+			Q::order('-id')
+		);
 	
 		$mail_info = new \ebi\Dt\DocInfo();
 		foreach(\ebi\Dt\Man::mail_template_list() as $info){
@@ -665,7 +662,6 @@ class Dt{
 	 * @return array
 	 */
 	public static function classes($parent_class=null){
-		$result = [];
 		$include_path = [];
 	
 		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
