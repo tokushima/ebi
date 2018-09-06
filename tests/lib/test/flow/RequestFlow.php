@@ -95,4 +95,12 @@ class RequestFlow extends \ebi\flow\Request{
 			'files'=>$req->ar_files(),
 		];
 	}
+	
+	public function force_login_redirect(){
+		$member = new \test\model\Member1(1,'AAA');
+		$this->user($member);
+		$this->force_user_login(); // ログイン完了処理
+		
+		\ebi\HttpHeader::redirect($this->in_vars('url'));
+	}	
 }
