@@ -41,13 +41,19 @@ class Json{
 	/**
 	 * 値を JSON 形式にして返す
 	 * @param mixed $val
-	 * @param boolean $format
+	 * @param boolean $pretty_print
+	 * @param boolean $unescaped_unicode
 	 * @return string
 	 */
-	public static function encode($val,$format=false){
-		$json = ($format) ?
-			json_encode(self::encode_object($val),JSON_PRETTY_PRINT) :
-			json_encode(self::encode_object($val));
+	public static function encode($val,$pretty_print=false,$unescaped_unicode=false){
+		$opt = 0;
+		if($pretty_print){
+			$opt = $opt | JSON_PRETTY_PRINT;
+		}
+		if($unescaped_unicode){
+			$opt = $opt | JSON_UNESCAPED_UNICODE;
+		}
+		$json = json_encode(self::encode_object($val),$opt);
 		
 		if(json_last_error() != JSON_ERROR_NONE){
 			throw new \ebi\exception\InvalidArgumentException(json_last_error_msg());
