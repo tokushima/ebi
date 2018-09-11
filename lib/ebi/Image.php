@@ -159,12 +159,8 @@ class Image{
 			default:
 				header('Content-Type: image/jpeg');
 				$format = 'jpeg';
-		}
-		
+		}		
 		switch($format){
-			case 'jpeg':
-				imagejpeg($this->canvas);
-				break;
 			case 'png':
 				imagepng($this->canvas);
 				break;
@@ -175,6 +171,28 @@ class Image{
 				imagejpeg($this->canvas);
 		}
 		exit;
+	}
+	
+	/**
+	 * 画像を返す
+	 * @param string $format
+	 * @return string
+	 */
+	public function get($format='jpeg'){
+		$format = strtolower($format);
+		
+		ob_start();
+			switch($format){
+				case 'png':
+					imagepng($this->canvas);
+					break;
+				case 'gif':
+					imagegif($this->canvas);
+					break;
+				default:
+					imagejpeg($this->canvas);
+			}
+		return ob_get_clean();		
 	}
 	
 	/**
