@@ -13,8 +13,6 @@ class Sample{
 	 * @context \test\db\Find[] $model_list
 	 */
 	public function model_list(){
-		$req = new \ebi\Request();		
-		
 		return [
 			'model_list'=>\test\db\Find::find_all(),
 			'id'=>10,

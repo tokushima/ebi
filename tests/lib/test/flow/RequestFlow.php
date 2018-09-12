@@ -67,7 +67,9 @@ class RequestFlow extends \ebi\flow\Request{
 	public function sendmail(){
 		$vars = ['abc'=>'ABC'];
 		$mail = new \ebi\Mail();
-		$mail->to("test@email.address");
+		$mail->to('test@email.address');
+		
+		$address = 'test@email.address';
 		
 		/**
 		 * 
@@ -87,8 +89,6 @@ class RequestFlow extends \ebi\flow\Request{
 	 */
 	public function file_upload(){
 		$req = new \ebi\Request();
-		
-		$file = $req->in_files('file1');
 		
 		return [
 			'vars'=>$req->ar_vars(),
