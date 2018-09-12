@@ -58,7 +58,7 @@ class Image{
 	}
 	
 	public function __destruct(){
-		if(!empty($this->canvas)){
+		if(is_resource($this->canvas)){
 			imagedestroy($this->canvas);
 		}
 	}
