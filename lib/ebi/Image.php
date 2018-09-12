@@ -58,7 +58,9 @@ class Image{
 	}
 	
 	public function __destruct(){
-		imagedestroy($this->canvas);
+		if(!empty($this->canvas)){
+			imagedestroy($this->canvas);
+		}
 	}
 	
 	/**
@@ -66,7 +68,7 @@ class Image{
 	 * @param string $string
 	 * @return \ebi\Image
 	 */
-	public static function readImageBlob($string){
+	public static function read($string){
 		$self = new static(__FILE__);
 		
 		try{
