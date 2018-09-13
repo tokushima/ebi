@@ -75,10 +75,10 @@ class Image{
 			$self->canvas = imagecreatefromstring($string);
 			
 			if($self->canvas === false){
-				throw \ebi\exception\ImageException();
+				throw new \ebi\exception\ImageException();
 			}
 		}catch(\Exception $e){
-			throw \ebi\exception\ImageException();
+			throw new \ebi\exception\ImageException();
 		}
 		return $self;
 	}
@@ -107,7 +107,7 @@ class Image{
 				imagecolorallocate($self->canvas,$r,$g,$b)
 			);
 		}catch(\Exception $e){
-			throw \ebi\exception\ImageException();
+			throw new \ebi\exception\ImageException();
 		}
 		return $self;
 	}
