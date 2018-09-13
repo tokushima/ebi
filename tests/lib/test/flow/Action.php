@@ -12,14 +12,11 @@ class Action{
 	 * @context string $abc 入力された文字列
 	 */
 	public function abc(){
-		/**
-		 * Confのダミー
-		 * @param string $aa ダミー
-		 * @see https://github.com/tokushima/ebi
-		 */
-		$value = \ebi\Conf::get('value');
 		$var = isset($_GET['abc']) ? $_GET['abc'] : null;
-		return ['abc'=>$var];
+		
+		return [
+			'abc'=>$var,
+		];
 	}
 	/**
 	 * @request string $rrrrr らららら

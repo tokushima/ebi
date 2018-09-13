@@ -60,12 +60,6 @@ class AutoAction{
 	 * @throws \ebi\exception\GenerateUniqueCodeRetryLimitOverException ユニークコードエクセプション
 	 */
 	public function ghi($a){
-		$req = new \ebi\Request();
-		unset($a);
-		
-		$abc = $req->in_vars('abc');
-		$def = $req->in_vars(' def');
-		
 		if(false){
 			throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException();
 		}

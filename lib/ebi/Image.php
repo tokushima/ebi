@@ -58,7 +58,9 @@ class Image{
 	}
 	
 	public function __destruct(){
-		imagedestroy($this->canvas);
+		if(is_resource($this->canvas)){
+			imagedestroy($this->canvas);
+		}
 	}
 	
 	/**
@@ -66,7 +68,7 @@ class Image{
 	 * @param string $string
 	 * @return \ebi\Image
 	 */
-	public static function readImageBlob($string){
+	public static function read($string){
 		$self = new static(__FILE__);
 		
 		try{
@@ -159,12 +161,8 @@ class Image{
 			default:
 				header('Content-Type: image/jpeg');
 				$format = 'jpeg';
-		}
-		
+		}		
 		switch($format){
-			case 'jpeg':
-				imagejpeg($this->canvas);
-				break;
 			case 'png':
 				imagepng($this->canvas);
 				break;
@@ -175,6 +173,28 @@ class Image{
 				imagejpeg($this->canvas);
 		}
 		exit;
+	}
+	
+	/**
+	 * 画像を返す
+	 * @param string $format
+	 * @return string
+	 */
+	public function get($format='jpeg'){
+		$format = strtolower($format);
+		
+		ob_start();
+			switch($format){
+				case 'png':
+					imagepng($this->canvas);
+					break;
+				case 'gif':
+					imagegif($this->canvas);
+					break;
+				default:
+					imagejpeg($this->canvas);
+			}
+		return ob_get_clean();		
 	}
 	
 	/**
