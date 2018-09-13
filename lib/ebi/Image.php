@@ -251,10 +251,11 @@ class Image{
 	 * 画像のサイズを変更する
 	 * @param integer $width 変更後の幅
 	 * @param integer $height 変更後の高さ
+	 * @param boolean $minimum widthまたはheightの値を最小値とする
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
-	public function resize($width,$height=null){
+	public function resize($width,$height=null,$minimum=true){
 		list($w,$h) = $this->get_size();
 		$rw = empty($width) ? 1 : $width;
 		$rh = empty($height) ? 1 : $height;
@@ -262,7 +263,7 @@ class Image{
 		if(!empty($width) && !empty($height)){
 			$aw = $rw / $w;
 			$ah = $rh / $h;
-			$a = max($aw,$ah);
+			$a = $minimum ? max($aw,$ah) : min($aw,$ah);
 		}else if(!isset($height)){
 			$a = $rw / $w;
 		}else{
