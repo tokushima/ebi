@@ -120,11 +120,11 @@ class Request extends \ebi\Request{
 						$this->call_object_plugin_funcs('before_login_redirect',$this);
 					}
 					if(strpos($selected_pattern['action'],'::do_logout') === false){
-						$this->sessions('logged_in_redirect_to',\ebi\Request::current_url().\ebi\Request::request_string(true));
+						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					}
 					$req = new \ebi\Request();
 					$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
-						
+					
 					if(array_key_exists('@',$selected_pattern)){
 						$this->set_before_redirect('do_login');
 					}else{
@@ -155,6 +155,15 @@ class Request extends \ebi\Request{
 			$this->call_object_plugin_funcs('before_flow_action_request',$this);
 		}
 	}
+	
+	/**
+	 * ログイン後、ログイン済みの場合にリダイレクトするURLを設定する
+	 * @param string $url
+	 */
+	public function set_logged_in_redirect_to($url){
+		$this->sessions('logged_in_redirect_to',$url);
+	}
+	
 	/**
 	 * 後処理
 	 * __after__メソッドを定義することで拡張する
@@ -231,24 +240,11 @@ class Request extends \ebi\Request{
 	}
 	
 	/**
-	 * 	User情報がセットされている場合のみ、do_loginを使わず強制的にログインしていることにする
+	 * ログイン完了処理
 	 */
-	protected function force_user_login(){
-		if(empty($this->user())){
-			throw new \ebi\exception\UnauthorizedException();
-		}
-		$this->sessions($this->login_id,$this->login_id);
-		session_regenerate_id(true);
-	}
-	
 	private function after_user_login(){
 		$this->sessions($this->login_id,$this->login_id);
 		session_regenerate_id(true);
-		/**
-		 * ログイン後処理
-		 * @param \ebi\flow\Request $arg1
-		 */
-		$this->call_object_plugin_funcs('after_login',$this);
 	}
 	/**
 	 * ログイン処理
@@ -283,25 +279,20 @@ class Request extends \ebi\Request{
 		$rtn_vars = ['login'=>$this->is_user_logged_in()];
 		
 		if($this->is_user_logged_in()){
+			/**
+			 * ログイン後またはログイン済みの場合の後処理
+			 * @param \ebi\flow\Request $arg1
+			 */
+			$this->call_object_plugin_funcs('after_login',$this);
+			
 			$logged_in_redirect_to = $this->in_sessions('logged_in_redirect_to');
 			$this->rm_sessions('logged_in_redirect_to');
-
-			if(empty($logged_in_redirect_to)){
-				if($this->has_object_plugin('logged_in_redirect_to')){
-					/**
-					 * ログイン済みの場合にリダイレクトするURLを設定する
-					 * @param \ebi\flow\Request $arg1
-					 */
-					$logged_in_redirect_to = $this->call_object_plugin_func('logged_in_redirect_to',$this);
-				}else if(isset($pattern['logged_in_after'])){
-					$logged_in_redirect_to = $pattern['logged_in_after'];
-				}
-			}
 			
+			if(isset($pattern['logged_in_after'])){
+				$logged_in_redirect_to = $pattern['logged_in_after'];
+			}
 			if(empty($this->get_after_redirect()) && !empty($logged_in_redirect_to)){
 				$this->set_after_redirect($logged_in_redirect_to);
-			}else if(array_key_exists('logged_in_after',$pattern)){
-				$this->set_after_redirect($pattern['logged_in_after']);
 			}
 			
 			/**
@@ -323,7 +314,7 @@ class Request extends \ebi\Request{
 				if(
 					!isset($pattern['template']) && 
 					!(isset($pattern['@']) && 
-					is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))
+					is_file(($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))
 				){
 					throw new \ebi\exception\UnauthorizedException();
 				}

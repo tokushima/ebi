@@ -4,7 +4,7 @@
  */
 $b = b();
 
-// loginにリダイレクトされる
+// name=loginにリダイレクトされる
 $b->do_get('login3::aaa');
 eq(401,$b->status());
 eq(\testman\Util::url('login3::login'),$b->url());

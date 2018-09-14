@@ -1,9 +1,11 @@
 <?php
 include_once('bootstrap.php');
-
+/**
+ * remember_me plugin
+ */
 \ebi\Flow::app([
 	'plugins'=>[
-		'test.flow.plugin.Login4',
+		\test\flow\plugin\Login4::class,
 		\ebi\flow\plugin\UnauthorizedThrow::class,
 	],
 	'patterns'=>[

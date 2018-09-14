@@ -1,5 +1,7 @@
 <?php
 $b = b();
+
+// automapの中のdo_loginにリダイレクト
 $b->do_post('login1::automap/aaa');
 
 eq(401,$b->status());

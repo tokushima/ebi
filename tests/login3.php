@@ -1,11 +1,13 @@
 <?php
 include_once('bootstrap.php');
-
+/**
+ * name=loginにリダイレクトされる
+ */
 \ebi\Flow::app([
 	'plugins'=>'test.flow.plugin.Login1',
 	'patterns'=>[
 		'login_url'=>[
-			'name'=>'login',
+			'name'=>'login', // <----
 			'action'=>'ebi.flow.Request::do_login',
 		],
 		'logout_url'=>[

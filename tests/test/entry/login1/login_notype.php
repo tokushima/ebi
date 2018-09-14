@@ -1,6 +1,7 @@
 <?php
 $b = b();
 
+// loginへリダイレクトされる
 $b->do_get('login1::notype');
 eq(401,$b->status());
 eq(\testman\Util::url('login1::login'),$b->url());

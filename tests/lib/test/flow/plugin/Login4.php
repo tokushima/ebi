@@ -10,6 +10,12 @@ class Login4{
 		}
 		return false;
 	}
+	
+	/**
+	 * remeber meに記録
+	 * @param \ebi\flow\Request $req
+	 * @return boolean
+	 */
 	public function remember_me(\ebi\flow\Request $req){
 		try{
 			$user_id = \ebi\UserRememberMeDao::read_cookie($req);
@@ -22,6 +28,12 @@ class Login4{
 		}
 		return false;
 	}
+	
+	
+	/**
+	 * ログアウトでremeber meから削除
+	 * @param \ebi\flow\Request $req
+	 */
 	public function before_logout(\ebi\flow\Request $req){
 		\ebi\UserRememberMeDao::delete_cookie($req);
 	}
