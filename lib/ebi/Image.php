@@ -291,7 +291,7 @@ class Image{
 	public function rotate($angle,$background_color='#000000'){
 		list($r,$g,$b) = self::color2rgb($background_color);
 		
-		$color = imagecolorallocate($r,$g,$b);
+		$color = imagecolorallocate($this->canvas,$r,$g,$b);
 		$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
 		imagedestroy($this->canvas);
 		$this->canvas = $canvas;
