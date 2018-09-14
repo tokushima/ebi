@@ -283,12 +283,26 @@ class Request extends \ebi\Request{
 		$rtn_vars = ['login'=>$this->is_user_logged_in()];
 		
 		if($this->is_user_logged_in()){
-			if(array_key_exists('logged_in_after',$pattern)){
-				$this->set_after_redirect($pattern['logged_in_after']);
-			}else if(empty($this->get_after_redirect()) && $this->is_sessions('logged_in_redirect_to')){
-				$this->set_after_redirect($this->in_sessions('logged_in_redirect_to'));
-			}
+			$logged_in_redirect_to = $this->in_sessions('logged_in_redirect_to');
 			$this->rm_sessions('logged_in_redirect_to');
+
+			if(empty($logged_in_redirect_to)){
+				if($this->has_object_plugin('logged_in_redirect_to')){
+					/**
+					 * ログイン済みの場合にリダイレクトするURLを設定する
+					 * @param \ebi\flow\Request $arg1
+					 */
+					$logged_in_redirect_to = $this->call_object_plugin_func('logged_in_redirect_to',$this);
+				}else if(isset($pattern['logged_in_after'])){
+					$logged_in_redirect_to = $pattern['logged_in_after'];
+				}
+			}
+			
+			if(empty($this->get_after_redirect()) && !empty($logged_in_redirect_to)){
+				$this->set_after_redirect($logged_in_redirect_to);
+			}else if(array_key_exists('logged_in_after',$pattern)){
+				$this->set_after_redirect($pattern['logged_in_after']);
+			}
 			
 			/**
 			 * ログイン処理後にアクションに連想配列を追加する
