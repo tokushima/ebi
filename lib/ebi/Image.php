@@ -78,7 +78,7 @@ class Image{
 				throw new \ebi\exception\ImageException();
 			}
 		}catch(\Exception $e){
-			throw new \ebi\exception\ImageException();
+			throw new \ebi\exception\ImageException($e->getMessage());
 		}
 		return $self;
 	}
@@ -291,7 +291,7 @@ class Image{
 	public function rotate($angle,$background_color='#000000'){
 		list($r,$g,$b) = self::color2rgb($background_color);
 		
-		$color = imagecolorallocate($r,$g,$b);
+		$color = imagecolorallocate($this->canvas,$r,$g,$b);
 		$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
 		imagedestroy($this->canvas);
 		$this->canvas = $canvas;
@@ -380,6 +380,34 @@ class Image{
 			$pct
 		);
 		
+		return $this;
+	}
+		
+	/**
+	 * グリッドレイアウトでマージする
+	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
+	 * @param integer $grid_gap px
+	 * @return \ebi\Image
+	 */
+	public function grid(array $image_layout,$grid_gap=0){
+		list($pw,$ph) = $this->get_size();
+		$w = $pw - $grid_gap;
+		$h = $ph - $grid_gap;
+		
+		foreach($image_layout as $path => $layout){
+			$img = new \ebi\Image($path);
+			
+			$img->thumbnail(
+				ceil($w * $layout[2] / 100) - $grid_gap,
+				ceil($h * $layout[3] / 100) - $grid_gap
+			);
+			
+			$this->merge(
+				ceil($w * $layout[0] / 100) + $grid_gap,
+				ceil($h * $layout[1] / 100) + $grid_gap,
+				$img
+			);
+		}
 		return $this;
 	}
 	
