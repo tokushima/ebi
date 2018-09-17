@@ -312,4 +312,12 @@ class Conf{
 		 */
 		return self::get_self_conf_get('date_format','Y-m-d');
 	}
+		
+	/**
+	 * スクリプトが確保できる最大メモリを設定
+	 * @param integer $mem memory size (MB)
+	 */
+	public static function memory_limit($mem){
+		ini_set('memory_limit',($mem > 0) ? $mem.'M' : -1);
+	}
 }
