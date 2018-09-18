@@ -212,20 +212,14 @@ class Image{
 		if($width >= $w && $height >= $h){
 			return $this;
 		}
-		
-		if($x === null || $y === null){
-			$x = ($w - $width) / 2;
-			$y = ($h - $height) / 2;
-			
-			list($x,$y) = [($x >= 0) ? $x : 0,($y >= 0) ? $y : 0];
+		if($x === null){
+			$x = floor(($w - $width) / 2);
+			$x = ($x >= 0) ? $x : 0;
 		}
-		if($x < 0){
-			$x = $w + $x;
+		if($y === null){
+			$y = floor(($h - $height) / 2);
+			$y = ($y >= 0) ? $y : 0;
 		}
-		if($y < 0){
-			$y = $h + $y;
-		}
-		
 		$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
 		
 		if($canvas === false){
@@ -257,20 +251,9 @@ class Image{
 	 */
 	public function resize($width,$height=null,$minimum=true){
 		list($w,$h) = $this->get_size();
-		$rw = empty($width) ? 1 : $width;
-		$rh = empty($height) ? 1 : $height;
-				
-		if(!empty($width) && !empty($height)){
-			$aw = $rw / $w;
-			$ah = $rh / $h;
-			$a = $minimum ? max($aw,$ah) : min($aw,$ah);
-		}else if(!isset($height)){
-			$a = $rw / $w;
-		}else{
-			$a = $rh / $h;
-		}
-		$cw = $w * $a;
-		$ch = $h * $a;
+		$m = \ebi\Calc::magnification($w,$h,$width,$height,$minimum);
+		$cw = ceil($w * $m);
+		$ch = ceil($h * $m);
 		
 		$canvas = imagecreatetruecolor($cw,$ch);
 		if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
@@ -382,31 +365,78 @@ class Image{
 		
 		return $this;
 	}
+	
+	/**
+	 * グリッドレイアウト配置情報
+	 * @param number $width
+	 * @param number $height
+	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
+	 * @param integer $grid_gap px
+	 * @return number{} width,height,crop_x,crop_y,merge_x,merge_y
+	 */
+	public static function get_grid_layout($width,$height,array $image_layout,$grid_gap=0){
+		$grid_info = [];
 		
+		$w = $width - $grid_gap;
+		$h = $height - $grid_gap;
+		
+		foreach($image_layout as $filename => $layout){
+			$info = self::get_info($filename);
+			
+			$mx = ($w * $layout[0] / 100) + $grid_gap;
+			$my = ($h * $layout[1] / 100) + $grid_gap;
+			
+			$lw = ($w * $layout[2] / 100) - $grid_gap;
+			$lh = ($h * $layout[3] / 100) - $grid_gap;
+			
+			$m = \ebi\Calc::magnification($info['width'],$info['height'],$lw,$lh);
+			$cw = ($info['width'] * $m);
+			$ch = ($info['height'] * $m);
+			
+			$cx = floor(($cw - $lw) / 2);
+			$cx = ($cx >= 0) ? $cx : 0;
+			
+			if($info['orientation'] == self::ORIENTATION_PORTRAIT){
+				$cy = 0;
+			}else{
+				$cy = floor(($ch - $lh) / 2);
+				$cy = ($cy >= 0) ? $cy : 0;
+			}
+			$grid_info[$filename] = [
+				'width'=>$lw,
+				'height'=>$lh,
+				'crop_x'=>$cx,
+				'crop_y'=>$cy,
+				'merge_x'=>$mx,
+				'merge_y'=>$my,
+			];
+		}
+		return $grid_info;
+	}
+	
 	/**
 	 * グリッドレイアウトでマージする
 	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
 	 * @param integer $grid_gap px
-	 * @return \ebi\Image
 	 */
 	public function grid(array $image_layout,$grid_gap=0){
-		list($pw,$ph) = $this->get_size();
-		$w = $pw - $grid_gap;
-		$h = $ph - $grid_gap;
+		list($width,$height) = $this->get_size();
 		
-		foreach($image_layout as $path => $layout){
-			$img = new \ebi\Image($path);
+		$grid_info = self::get_grid_layout($width,$height,$image_layout,$grid_gap);
+		
+		foreach($grid_info as $filename => $info){
+			$rw = ceil($info['width']);
+			$rh = ceil($info['height']);
 			
-			$img->thumbnail(
-				ceil($w * $layout[2] / 100) - $grid_gap,
-				ceil($h * $layout[3] / 100) - $grid_gap
-			);
+			$img = new static($filename);
+			$img->resize($rw,$rh);
 			
-			$this->merge(
-				ceil($w * $layout[0] / 100) + $grid_gap,
-				ceil($h * $layout[1] / 100) + $grid_gap,
-				$img
-			);
+			list($gw,$gh) = $img->get_size();
+			
+			if($gw > $rw || $gh > $rh){
+				$img->crop($rw,$rh,ceil($info['crop_x']),ceil($info['crop_y']));
+			}
+			$this->merge(ceil($info['merge_x']),ceil($info['merge_y']),$img);
 		}
 		return $this;
 	}
