@@ -212,20 +212,14 @@ class Image{
 		if($width >= $w && $height >= $h){
 			return $this;
 		}
-		
-		if($x === null || $y === null){
-			$x = ($w - $width) / 2;
-			$y = ($h - $height) / 2;
-			
-			list($x,$y) = [($x >= 0) ? $x : 0,($y >= 0) ? $y : 0];
+		if($x === null){
+			$x = floor(($w - $width) / 2);
+			$x = ($x >= 0) ? $x : 0;
 		}
-		if($x < 0){
-			$x = $w + $x;
+		if($y === null){
+			$y = floor(($h - $height) / 2);
+			$y = ($y >= 0) ? $y : 0;
 		}
-		if($y < 0){
-			$y = $h + $y;
-		}
-		
 		$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
 		
 		if($canvas === false){
@@ -397,10 +391,22 @@ class Image{
 		foreach($image_layout as $path => $layout){
 			$img = new \ebi\Image($path);
 			
-			$img->thumbnail(
-				ceil($w * $layout[2] / 100) - $grid_gap,
-				ceil($h * $layout[3] / 100) - $grid_gap
-			);
+			if($img->get_orientation() == self::ORIENTATION_PORTRAIT){
+				$img->resize(
+					ceil($w * $layout[2] / 100) - $grid_gap,
+					ceil($h * $layout[3] / 100) - $grid_gap
+				)->crop(
+					ceil($w * $layout[2] / 100) - $grid_gap,
+					ceil($h * $layout[3] / 100) - $grid_gap,
+					null,
+					0
+				);
+			}else{
+				$img->thumbnail(
+					ceil($w * $layout[2] / 100) - $grid_gap,
+					ceil($h * $layout[3] / 100) - $grid_gap
+				);
+			}
 			
 			$this->merge(
 				ceil($w * $layout[0] / 100) + $grid_gap,
