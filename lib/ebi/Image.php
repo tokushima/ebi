@@ -220,7 +220,12 @@ class Image{
 			$y = floor(($h - $height) / 2);
 			$y = ($y >= 0) ? $y : 0;
 		}
-		$canvas = imagecrop($this->canvas, ['x'=>$x,'y'=>$y,'width'=>$width,'height'=>$height]);
+		$canvas = imagecrop($this->canvas, [
+			'x'=>ceil($x),
+			'y'=>ceil($y),
+			'width'=>ceil($width),
+			'height'=>ceil($height)
+		]);
 		
 		if($canvas === false){
 			throw new \ebi\exception\ImageException();
@@ -354,8 +359,8 @@ class Image{
 		imagecopymerge(
 			$this->canvas,
 			$img->canvas,
-			$x,
-			$y,
+			ceil($x),
+			ceil($y),
 			0,
 			0,
 			$wight,
@@ -372,7 +377,7 @@ class Image{
 	 * @param number $height
 	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
 	 * @param integer $grid_gap px
-	 * @return number{} width,height,crop_x,crop_y,merge_x,merge_y
+	 * @return number{} [filename=>[width,height,crop_x,crop_y,merge_x,merge_y]]
 	 */
 	public static function get_grid_layout($width,$height,array $image_layout,$grid_gap=0){
 		$grid_info = [];
@@ -425,17 +430,10 @@ class Image{
 		$grid_info = self::get_grid_layout($width,$height,$image_layout,$grid_gap);
 		
 		foreach($grid_info as $filename => $info){
-			$rw = ceil($info['width']);
-			$rh = ceil($info['height']);
-			
 			$img = new static($filename);
-			$img->resize($rw,$rh);
+			$img->resize($info['width'],$info['height']);
+			$img->crop($info['width'],$info['height'],$info['crop_x'],$info['crop_y']);
 			
-			list($gw,$gh) = $img->get_size();
-			
-			if($gw > $rw || $gh > $rh){
-				$img->crop($rw,$rh,ceil($info['crop_x']),ceil($info['crop_y']));
-			}
 			$this->merge(ceil($info['merge_x']),ceil($info['merge_y']),$img);
 		}
 		return $this;
