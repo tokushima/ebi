@@ -288,6 +288,21 @@ class Image{
 	}
 	
 	/**
+	 * 透明色の設定
+	 * @param string $color
+	 * @return \ebi\Image
+	 */
+	public function transparent($color='#000000'){
+		list($r,$g,$b) = self::color2rgb($color);
+		
+		$transparent_color = imagecolorallocate($this->canvas,$r,$g,$b);
+		
+		imagecolortransparent($this->canvas, $transparent_color);
+		
+		return $this;
+	}
+	
+	/**
 	 * フォントを設定する
 	 * @param string $font_path
 	 * @return \ebi\Image
