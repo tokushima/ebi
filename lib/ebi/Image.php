@@ -52,7 +52,7 @@ class Image{
 						throw new \ebi\exception\ImageException();
 				}
 			}catch(\Exception $e){
-				throw new \ebi\exception\ImageException();
+				throw new \ebi\exception\ImageException($filename);
 			}
 		}
 	}
@@ -88,10 +88,9 @@ class Image{
 	 * @param integer $width
 	 * @param integer $height
 	 * @param string $color
-	 * @param string $filename
 	 * @return \ebi\Image
 	 */
-	public static function filled_rectangle($width,$height,$color){
+	public static function filled_rectangle($width,$height,$color='#FFFFFF'){
 		$self = new static(__FILE__);
 		
 		try{
@@ -111,14 +110,32 @@ class Image{
 		}
 		return $self;
 	}
+	/**
+	 * 矩形を描画する
+	 * @param integer $x
+	 * @param integer $y
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @return \ebi\Image
+	 */
+	public function rectangle($x,$y,$width,$height,$color){
+		list($r,$g,$b) = self::color2rgb($color);
+		imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
+		
+		return $this;
+	}
 	
 	
 	/**
 	 * ファイルに書き出す
 	 * @param string $filename
-	 * @return \ebi\Image
+	 * @return string
 	 */
-	public function write($filename){
+	public function write($filename=null){
+		if(empty($filename)){
+			$filename = \ebi\WorkingStorage::tmpfile(null,'.jpg');
+		}
 		\ebi\Util::mkdir(dirname($filename));
 		
 		$type = 'jpg';
@@ -141,7 +158,7 @@ class Image{
 			default:
 				imagejpeg($this->canvas,$filename);
 		}
-		return $this;
+		return $filename;
 	}	
 	
 	/**
@@ -372,6 +389,47 @@ class Image{
 	}
 	
 	/**
+	 * 写真配置計算
+	 * @param integer $width 台紙の幅
+	 * @param integer $height 台紙の高さ
+	 * @param integer $resize_type 0: フチなし, 1: フチあり, 2: 広フチ, 3: 下フチ
+	 * @number[] x, y, width, height
+	 */
+	public static function get_photo_layout($width,$height,$resize_type){
+		$gap = ceil($width * 0.045);
+		$margin = ceil($height * 0.15);
+
+		switch($resize_type){
+			case 0:
+				$pw = $width;
+				$ph = $height;
+				$x = 0;
+				$y = 0;
+				break;
+			case 1:
+				$pw = $width - $gap - $gap;
+				$ph = $height - $gap - $gap;
+				$x = $gap;
+				$y = $gap;
+				break;
+			case 2:
+				$pw = $width - $gap - $gap;
+				$ph = $height - $margin - $margin;
+				$x = $gap;
+				$y = $margin;
+				break;
+			case 3:
+				$pw = $width - $gap - $gap;
+				$ph = $height - $gap - $margin;
+				$x = $gap;
+				$y = $gap;
+				break;
+		}
+		return [$x,$y,$pw,$ph];
+	}
+	
+	
+	/**
 	 * グリッドレイアウト配置情報
 	 * @param number $width
 	 * @param number $height
@@ -440,6 +498,29 @@ class Image{
 	}
 	
 	/**
+	 * 写真をリサイズしてcropする
+	 * @param integer $width
+	 * @param integer $height
+	 */
+	public function photo_crop($width,$height){
+		if($this->get_orientation() == self::ORIENTATION_PORTRAIT){
+			$this->resize($width,$height,true)->crop($width, $height,null,0);
+		}else{
+			$this->resize($width,$height,true)->crop($width, $height);
+		}
+		return $this;
+	}
+	/**
+	 * 切り取ってサムネイルを作成する
+	 * @param integer $width 幅
+	 * @param integer $height 高さ
+	 * @return \ebi\Image
+	 */
+	public function thumbnail($width,$height){
+		return $this->resize($width, $height)->crop($width, $height);
+	}
+	
+	/**
 	 * カラーモードからRGB（10進数）を返す
 	 * @param string $color_code
 	 * @return integer[] R,G,B
@@ -459,17 +540,7 @@ class Image{
 		}
 		return [$r,$g,$b];
 	}
-	
-	/**
-	 * 切り取ってサムネイルを作成する
-	 * @param integer $width 幅
-	 * @param integer $height 高さ
-	 * @return \ebi\Image
-	 */
-	public function thumbnail($width,$height){
-		return $this->resize($width, $height)->crop($width, $height);
-	}
-	
+		
 	/**
 	 * 画像の向き
 	 * @return  integer
