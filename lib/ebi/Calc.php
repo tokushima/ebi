@@ -107,6 +107,7 @@ class Calc{
 			case 'A0': return [841,1189];
 			case 'A1': return [594,841];
 			case 'A2': return [420,594];
+			case 'A3+': return [329,483]; // A3ノビ
 			case 'A3': return [297,420];
 			case 'A4': return [210,297];
 			case 'A5': return [148,210]; // 学術書、豪華版コミック
@@ -117,8 +118,6 @@ class Calc{
 			case 'A10': return [26,38];
 			case 'A11': return [18,26];
 			case 'A12': return [13,18];
-			
-			case 'A3+': return [329,483];
 			
 			case 'B0': return [1030,1456];
 			case 'B1': return [728,1030];
@@ -134,27 +133,39 @@ class Calc{
 			case 'B11': return [22,32];
 			case 'B12': return [16,32];
 			
-			case 'DSC': return [89,119];
-			case 'L': return [89,127];
+			case 'DSC': return [89,119]; // デジタルカメラ
+			case 'HV': return [89,158]; // ハイビジョン
+			case 'L': return [89,127]; // L版
+			case 'P': return [89,254]; // パノラマ
+			case 'MASHIKAKU': return [89,89]; // ましかくプリント
+			
+			case 'CD':
+			case 'A5SQUARE': return [148,148]; // A5スクエア、CDケースレーベル
 			case 'HAGAKI': return [100,148]; // 官製はがき
+			
 			case 'KG': return [102,152];
+			
+			case 'DSCW': return [127,169];
 			case '2L': return [127,178];
+			case 'MASHIKAKU127': return [127,127]; // ましかく127プリント
+			case '46':
+			case 'SHIROKU': return [127,188]; // 四六判
+			
 			case 'CABINET': return [130,180];
 			case '6P': return [203,254]; // 六切
+			case 'W6P': return [203,305]; // W6切
 			case '4P': return [254,305]; // 四切
+			case 'W4P': return [254,365]; // W4切
 			case 'HP': return [356,432]; // 半切
 			case 'ZENSHI': return [457,560]; // 全紙
 			case 'DAIZENSHI': return [508,610]; // 大全紙
 			case 'ZENBAI': return [600,900]; // 全倍
-			case '46':
-			case 'SHIROKU': return [127,188]; // 四六判
 			case 'B40':
 			case 'SHINSHO': return [103,182]; // 新書
 			case 'PAPAERBACK': return [114,178]; // ペーパーバック
 			case 'B6S':
 			case 'B6SMALL': return [112,174]; // 新書判、少年・少女コミック
-			case 'CD':
-			case 'A5SQUARE': return [148,148]; // A5スクエア、CDケースレーベル
+
 			case 'MEISHI': return [55,91]; // 名刺（９号）
 			case 'INSTAXMINI': return [54,86]; // instax mini
 			case 'INSTAXSQUARE': return [72,86]; // instax SQUARE
