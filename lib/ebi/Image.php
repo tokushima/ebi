@@ -407,7 +407,7 @@ class Image{
 	 * 写真配置計算
 	 * @param integer $width 台紙の幅
 	 * @param integer $height 台紙の高さ
-	 * @param integer $resize_type 0: フチなし, 1: フチあり, 2: 広フチ, 3: 下フチ
+	 * @param integer $resize_type 0: フチなし, 1: フチあり, 2: 広フチ, 3: 下フチ, 4: 正方形下フチ
 	 * @number[] x, y, width, height
 	 */
 	public static function get_photo_layout($width,$height,$resize_type){
@@ -439,6 +439,14 @@ class Image{
 				$x = $gap;
 				$y = $gap;
 				break;
+			case 4:
+				$pw = ceil((($width > $height) ? $height : $width) - ($gap * 2));
+				$ph = $pw;
+				$x = $gap;
+				$y = $gap;
+				break;
+			default:
+				throw new \InvalidArgumentException();
 		}
 		return [$x,$y,$pw,$ph];
 	}
