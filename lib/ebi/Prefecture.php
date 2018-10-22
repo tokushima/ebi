@@ -1,4 +1,6 @@
 <?php
+namespace ebi;
+
 class Prefecture{
 	private static $pref = [
 		1=>'北海道',
