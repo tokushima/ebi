@@ -461,14 +461,22 @@ class FlowHelper{
 	 * varがarg1,arg2,arg3,,,に含まれるか
 	 * @param mixed $var
 	 * @param mixed $arg1
-	 * @param mixed $arg2
 	 * @return boolean
 	 */
-	public function in($var,$arg1,$arg2){
+	public function in($var,$arg1){
 		$args = func_get_args();
 		array_shift($args);
-		
-		return in_array($var, $args);
+
+		foreach($args as $arg){
+			if(is_array($arg)){
+				if(in_array($var, $arg)){
+					return true;
+				}
+			}else if($var == $arg){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
