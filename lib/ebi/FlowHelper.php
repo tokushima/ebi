@@ -458,6 +458,20 @@ class FlowHelper{
 		return false;
 	}
 	/**
+	 * varがarg1,arg2,arg3,,,に含まれるか
+	 * @param mixed $var
+	 * @param mixed $arg1
+	 * @param mixed $arg2
+	 * @return boolean
+	 */
+	public function in($var,$arg1,$arg2){
+		$args = func_get_args();
+		array_shift($args);
+		
+		return in_array($var, $args);
+	}
+	
+	/**
 	 * オブジェクトのクラス名を返す
 	 * @param object $obj
 	 * @return string
