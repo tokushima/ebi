@@ -65,7 +65,7 @@ class Paginator implements \IteratorAggregate{
 	 * @return integer
 	 */
 	public function limit($value=null){
-		if(isset($value)) $this->limit = $value;
+		if(isset($value)) $this->limit = intval($value);
 		return $this->limit;
 	}
 	/**
