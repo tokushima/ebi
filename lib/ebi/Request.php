@@ -164,7 +164,7 @@ class Request implements \IteratorAggregate{
 	 * @return string
 	 */
 	public static function request_string($sep=false){
-		$query = ((isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'].'&' : '').file_get_contents('php://input');
+		$query = ((isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'] : '');
 		return (($sep && !empty($query)) ? '?' : '').$query;
 	}
 	/**
