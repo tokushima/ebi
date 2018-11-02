@@ -29,7 +29,7 @@ class HttpHeader{
 		self::send('Last-Modified',gmdate('D, d M Y H:i:s T',time() - $expires));
 		self::send('Expires',gmdate('D, d M Y H:i:s T',time() + $expires));
 		self::send('Cache-Control','private, max-age='.$expires);
-		self::send('Pragma');
+		self::send('Pragma','');
 	}
 	
 	/**
