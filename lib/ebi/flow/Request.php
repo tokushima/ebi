@@ -119,7 +119,10 @@ class Request extends \ebi\Request{
 						 */
 						$this->call_object_plugin_funcs('before_login_redirect',$this);
 					}
-					if(strpos($selected_pattern['action'],'::do_logout') === false){
+					if(
+						strpos($selected_pattern['action'],'::do_login') === false &&
+						strpos($selected_pattern['action'],'::do_logout') === false
+					){
 						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					}
 					$req = new \ebi\Request();
