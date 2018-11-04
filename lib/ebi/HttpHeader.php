@@ -20,6 +20,18 @@ class HttpHeader{
 		}
 		return self::$send_status;
 	}
+	
+	/**
+	 * キャッシュを指示する
+	 * @param integer $expires キャッシュさせる秒数
+	 */
+	public static function send_cache($expires){
+		self::send('Last-Modified',gmdate('D, d M Y H:i:s T',time() - $expires));
+		self::send('Expires',gmdate('D, d M Y H:i:s T',time() + $expires));
+		self::send('Cache-Control','private, max-age='.$expires);
+		self::send('Pragma','');
+	}
+	
 	/**
 	 * headerを送信する
 	 * @param string $value 

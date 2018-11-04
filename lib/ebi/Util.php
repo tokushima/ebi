@@ -452,15 +452,21 @@ class Util{
 		$r = new \ReflectionClass($class_name);
 		return $r->getName();
 	}
-			
+	
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
 	 * @param  mixed $bool
 	 * @return boolean
 	 */
 	public static function is_true($bool){
-		return ($bool === true || $bool === 1 || strtolower($bool) === 'true') ? true : false;		
+		foreach(func_get_args() as $arg){
+			if(!($arg === true || $arg === 1 || (is_string($arg) && strtolower($arg) === 'true'))){
+				return false;
+			}
+		}
+		return true;
 	}
+	
 	/**
 	 * 値をプリミティブ型で返す
 	 * @param mixed $value

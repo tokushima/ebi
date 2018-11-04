@@ -457,6 +457,16 @@ class FlowHelper{
 		}
 		return false;
 	}
+	
+	/**
+	 * 対象がtrue / 1 / 'true' ならtrue
+	 * @param  mixed $bool
+	 * @return boolean
+	 */
+	public function is_true($bool){
+		return call_user_func_array([\ebi\Util::class,'is_true'],func_get_args());
+	}
+		
 	/**
 	 * varがarg1,arg2,arg3,,,に含まれるか
 	 * @param mixed $var
