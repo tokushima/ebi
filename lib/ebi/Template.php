@@ -426,7 +426,7 @@ class Template{
 				$type = strtolower($obj->in_attr('type','text'));
 				$name = $this->parse_plain_variable($this->form_variable_name($originalName));
 				$tagname = strtolower($obj->name());
-				$change = false;
+				$change = $obj->is_attr('rt:ref');
 				$uid = uniqid();
 
 				if(substr($originalName,-2) !== '[]'){
