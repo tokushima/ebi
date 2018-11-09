@@ -289,24 +289,30 @@ class Template{
 				$var = '$'.$tag->in_attr('var','_v_'.$uniq);
 				$key = '$'.$tag->in_attr('key','_k_'.$uniq);
 				$counter = '$'.$tag->in_attr('counter','_c_'.$uniq);
+				$limitname = '$_l_'.$uniq;
+				$limit = $tag->in_attr('limit','0');
 				
 				$src = $this->php_exception_catch(str_replace(
 					$tag->plain(),
 					sprintf('<?php '
-								.' %s=%s; '
+								.' %s = %s; '
 								.' %s = 0; '
+								.' %s = %s; '
 								.' foreach(%s as %s => %s){'
 									.' %s++; '
 							.' ?>'
 									.'%s'
 							.'<?php '
+								.' if(%s > 0 && %s <= %s){ break; }'
 								.' } '
 							.' ?>'
 							,$varname,$param
 							,$counter
+							,$limitname,$limit
 							,$varname,$key,$var
 								,$counter
 							,$value
+								,$limitname,$limitname,$counter
 					)
 					,$src
 				));
