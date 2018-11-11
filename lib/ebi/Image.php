@@ -84,6 +84,57 @@ class Image{
 	}
 	
 	/**
+	 * 定義配列を統合してイメージを作成
+	 * @param integer $width
+	 * @param integer $height
+	 * @param array $layers
+	 * @param array $opt
+	 * @return \ebi\Image
+	 */
+	public static function flatten($width,$height,array $layers,array $opt=[]){
+		$background_color = $opt['background-color'] ?? '#FFFFFF';
+		$transparent_color = $opt['transparent-color'] ?? null;
+		$default_font = $opt['font'] ?? null;
+		$img = self::filled_rectangle($width, $height,$background_color);
+		
+		$cuurent_font = null;
+		foreach($layers as $layer){
+			$x = $layer['x'] ?? 0;
+			$y = $layer['y'] ?? 0;
+			
+			if(isset($layer['src'])){
+				if($layer['src'] instanceof self){
+					if(!empty($transparent_color)){
+						$layer['src']->transparent_color($transparent_color);
+					}
+					
+					$img->merge($x, $y, $layer['src']);
+				}else if(is_file($layer['src'])){
+					$m = new static($layer['src']);
+					
+					if(!empty($transparent_color)){
+						$m->transparent_color($transparent_color);
+					}
+					$img->merge($x, $y,$m);
+				}
+			}else if(isset($layer['text'])){
+				$font_color = $layer['color'] ?? '#000000';
+				$font_size = $layer['size'] ?? 16;
+				$angle = $layer['angle'] ?? 0;
+				$font = $layer['font'] ?? $default_font;
+				$boxwidth = $layer['width'] ?? ($width - $x);
+				
+				if($cuurent_font != $font){
+					$img->font($font);
+					$cuurent_font = $font;
+				}
+				$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+			}
+		}
+		return $img;
+	}
+	
+	/**
 	 * 塗りつぶした矩形を作成する
 	 * @param integer $width
 	 * @param integer $height
@@ -309,7 +360,7 @@ class Image{
 	 * @param string $color
 	 * @return \ebi\Image
 	 */
-	public function transparent($color='#000000'){
+	public function transparent_color($color='#000000'){
 		list($r,$g,$b) = self::color2rgb($color);
 		
 		$transparent_color = imagecolorallocate($this->canvas,$r,$g,$b);
@@ -331,21 +382,39 @@ class Image{
 	}
 	
 	/**
-	 * テキストを画像に書き込む、座標は左下が原点
-	 * @param integer $x
-	 * @param integer $y
+	 * テキストを画像に書き込む
+	 * @param integer $x 左上座標
+	 * @param integer $y　左上座標
 	 * @param string $font_color
 	 * @param number $font_point_size
 	 * @param string $text
-	 * @param number $angle
+	 * @param number $angle 回転軸は左下
 	 * @throws \ebi\exception\UndefinedException
 	 * @return \ebi\Image
 	 */
-	public function text($x,$y,$font_color,$font_point_size,$text,$angle=0){
+	public function text($x,$y,$font_color,$font_point_size,$text,$angle=0,$box_width=null){
 		if(empty($this->font_path)){
 			throw new \ebi\exception\UndefinedException('undefined font');
 		}
-		list(,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		
+		if(!empty($box_width) && $text_width > $box_width){
+			$len = mb_strlen($text);
+
+			$t = '';
+			$s = 0;
+			for($i=0;$i<$len;$i++){
+				$v = mb_substr($text,$s,$i-$s+1);
+				list($w) = $this->get_textbox_size($font_point_size,$v,$angle);
+				
+				if($w > $box_width){
+					$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
+					$s = $i;
+					$i--;
+				}
+			}
+			$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
+		}
 		
 		$angle = $angle * -1;
 		

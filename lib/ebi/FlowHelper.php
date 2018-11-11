@@ -507,6 +507,6 @@ class FlowHelper{
 	 * @return integer
 	 */
 	public function sizeof($var){
-		return sizeof($var);
+		return is_array($var) ? sizeof($var) : 1;
 	}
 }
