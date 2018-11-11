@@ -65,8 +65,8 @@ $layers = [
 
 $opt = [
 	'transparent-color'=>'#FFFFFF',
-//	'font'=>'/System/Library/Fonts/ヒラギノ明朝 ProN.ttc',
-	'font'=>'/Users/tokushima/Downloads/M_PLUS_Rounded_1c/MPLUSRounded1c-Bold.ttf',
+	'font'=>'/System/Library/Fonts/ヒラギノ明朝 ProN.ttc',
+// 	'font'=>'/Users/tokushima/Downloads/M_PLUS_Rounded_1c/MPLUSRounded1c-Bold.ttf',
 ];
 
 $img = \ebi\Image::flatten(500, 500,$layers,$opt);
