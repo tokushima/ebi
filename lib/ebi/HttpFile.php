@@ -39,11 +39,12 @@ class HttpFile{
 					\ebi\HttpHeader::send_status(304);
 					exit;
 				}
-				\ebi\HttpHeader::send('Last-Modified',gmdate('D, d M Y H:i:s',$update).' GMT');
+				\ebi\HttpHeader::send('Last-Modified',gmdate('D, d M Y H:i:s T',$update));
 			}
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
 
+			$range = [];
 			if(isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\d+)\-(\d+)$/",$_SERVER['HTTP_RANGE'],$range)){
 				list(,$offset,$end) = $range;
 				$length = $end - $offset + 1;

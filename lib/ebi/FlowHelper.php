@@ -500,4 +500,13 @@ class FlowHelper{
 		}
 		return '';
 	}
+	
+	/**
+	 * size
+	 * @param mixed $var
+	 * @return integer
+	 */
+	public function sizeof($var){
+		return is_array($var) ? sizeof($var) : 1;
+	}
 }
