@@ -101,6 +101,7 @@ class Image{
 		foreach($layers as $layer){
 			$x = $layer['x'] ?? 0;
 			$y = $layer['y'] ?? 0;
+			$pct = $layer['pct'] ?? 100;
 			
 			if(isset($layer['src'])){
 				if($layer['src'] instanceof self){
@@ -108,14 +109,14 @@ class Image{
 						$layer['src']->transparent_color($transparent_color);
 					}
 					
-					$img->merge($x, $y, $layer['src']);
+					$img->merge($x, $y, $layer['src'],$pct);
 				}else if(is_file($layer['src'])){
 					$m = new static($layer['src']);
 					
 					if(!empty($transparent_color)){
 						$m->transparent_color($transparent_color);
 					}
-					$img->merge($x, $y,$m);
+					$img->merge($x,$y,$m,$pct);
 				}
 			}else if(isset($layer['text'])){
 				$font_color = $layer['color'] ?? '#000000';
@@ -128,7 +129,19 @@ class Image{
 					$img->font($font);
 					$cuurent_font = $font;
 				}
-				$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+				if($pct == 100){
+					$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+				}else{
+					$font_color = strtoupper($font_color);
+					$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
+					
+					$m = static::filled_rectangle($width, $height,$transparent_color);
+					$m->font($font);
+					$m->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+					$m->transparent_color($transparent_color);
+					
+					$img->merge(0,0,$m,$pct);
+				}
 			}
 		}
 		return $img;
@@ -448,6 +461,8 @@ class Image{
 	
 	/**
 	 * 画像を結合する
+	 * $pctを指定した場合はアルファ透過が有効になりPNGの透過情報が失われる
+	 * 
 	 * @param integer $x
 	 * @param integer $y
 	 * @param \ebi\Image $img
@@ -457,18 +472,11 @@ class Image{
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
 		list($wight,$height) = $img->get_size();
 		
-		imagecopymerge(
-			$this->canvas,
-			$img->canvas,
-			ceil($x),
-			ceil($y),
-			0,
-			0,
-			$wight,
-			$height,
-			$pct
-		);
-		
+		if($pct == 100){
+			imagecopy($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$wight,$height);
+		}else{
+			imagecopymerge($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$wight,$height,$pct);
+		}		
 		return $this;
 	}
 	

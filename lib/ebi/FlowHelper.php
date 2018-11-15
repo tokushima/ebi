@@ -509,4 +509,14 @@ class FlowHelper{
 	public function sizeof($var){
 		return is_array($var) ? sizeof($var) : 1;
 	}
+	
+	/**
+	 * 加算
+	 * @param number $a
+	 * @param number $b
+	 * @return number
+	 */
+	public function sum($a,$b){
+		return $a + $b;
+	}
 }

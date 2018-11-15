@@ -61,6 +61,20 @@ $layers = [
 		'y'=>350,
 		'text'=>'It\'s our 8th update for the Affinity Publisher Public Beta! Thanks to all of your participation, this is our most refined build yet. Give it a try and let us know what you think',		
 	],
+	[
+		'x'=>200,
+		'y'=>200,
+		'src'=>(new \ebi\Image(\testman\Resource::path('mm.png'))),
+	],
+	[
+		'x'=>50,
+		'y'=>450,
+		'angle'=>-45,
+		'size'=>120,
+		'text'=>'SAMPLE',
+		'color'=>'#0000ff',
+		'pct'=>30,
+	],		
 ];
 
 $opt = [
@@ -70,6 +84,7 @@ $opt = [
 ];
 
 $img = \ebi\Image::flatten(500, 500,$layers,$opt);
+$img->resize(400);
 // $img->write(\ebi\Conf::work_path('flatten.jpg'));
 $img->write(\ebi\WorkingStorage::path('flatten.jpg'));
 
