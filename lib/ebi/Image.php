@@ -87,7 +87,7 @@ class Image{
 	 * 定義配列を統合してイメージを作成
 	 * @param integer $width
 	 * @param integer $height
-	 * @param array $layers
+	 * @param array $layers 
 	 * @param array $opt
 	 * @return \ebi\Image
 	 */
@@ -97,50 +97,63 @@ class Image{
 		$default_font = $opt['font'] ?? null;
 		$img = self::filled_rectangle($width, $height,$background_color);
 		
+		usort($layers,function($a,$b){
+			$za = $a['z'] ?? 0;
+			$zb = $b['z'] ?? 0;
+			
+			if($za == $zb){
+				return 0;
+			}
+			return ($za < $zb) ? -1 : 1;
+		});
+		
 		$cuurent_font = null;
 		foreach($layers as $layer){
 			$x = $layer['x'] ?? 0;
 			$y = $layer['y'] ?? 0;
+			
 			$pct = $layer['pct'] ?? 100;
 			
-			if(isset($layer['src'])){
-				if($layer['src'] instanceof self){
-					if(!empty($transparent_color)){
-						$layer['src']->transparent_color($transparent_color);
+			if($width >= $x && $height >= $y){
+				if(isset($layer['src'])){
+					if($layer['src'] instanceof self){
+						if(!empty($transparent_color)){
+							$layer['src']->transparent_color($transparent_color);
+						}
+						
+						$img->merge($x, $y, $layer['src'],$pct);
+					}else if(is_file($layer['src'])){
+						$m = new static($layer['src']);
+						
+						if(!empty($transparent_color)){
+							$m->transparent_color($transparent_color);
+						}
+						$img->merge($x,$y,$m,$pct);
 					}
+				}else if(isset($layer['text'])){
+					$font_color = $layer['color'] ?? '#000000';
+					$font_size = $layer['size'] ?? 16;
+					$angle = $layer['angle'] ?? 0;
+					$font = $layer['font'] ?? $default_font;
+					$boxwidth = $layer['width'] ?? ($width - $x);
 					
-					$img->merge($x, $y, $layer['src'],$pct);
-				}else if(is_file($layer['src'])){
-					$m = new static($layer['src']);
-					
-					if(!empty($transparent_color)){
+					if($cuurent_font != $font){
+						$img->font($font);
+						$cuurent_font = $font;
+					}
+					if($pct == 100){
+						$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+					}else{
+						$font_color = strtoupper($font_color);
+						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
+						
+						$m = static::filled_rectangle($width, $height,$transparent_color);
+						$m->font($font);
+						$m->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
 						$m->transparent_color($transparent_color);
+						
+						$img->merge(0,0,$m,$pct);
 					}
-					$img->merge($x,$y,$m,$pct);
-				}
-			}else if(isset($layer['text'])){
-				$font_color = $layer['color'] ?? '#000000';
-				$font_size = $layer['size'] ?? 16;
-				$angle = $layer['angle'] ?? 0;
-				$font = $layer['font'] ?? $default_font;
-				$boxwidth = $layer['width'] ?? ($width - $x);
-				
-				if($cuurent_font != $font){
-					$img->font($font);
-					$cuurent_font = $font;
-				}
-				if($pct == 100){
-					$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
-				}else{
-					$font_color = strtoupper($font_color);
-					$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
-					
-					$m = static::filled_rectangle($width, $height,$transparent_color);
-					$m->font($font);
-					$m->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
-					$m->transparent_color($transparent_color);
-					
-					$img->merge(0,0,$m,$pct);
 				}
 			}
 		}
@@ -470,13 +483,13 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
-		list($wight,$height) = $img->get_size();
+		list($width,$height) = $img->get_size();
 		
 		if($pct == 100){
-			imagecopy($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$wight,$height);
+			imagecopy($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$width,$height);
 		}else{
-			imagecopymerge($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$wight,$height,$pct);
-		}		
+			imagecopymerge($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$width,$height,$pct);
+		}
 		return $this;
 	}
 	
