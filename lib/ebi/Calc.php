@@ -97,7 +97,38 @@ class Calc{
 	}
 	
 	/**
-	 * 用紙サイズ width, height (mm)
+	 * サイズ width, height (px)
+	 * @param string $type
+	 * @oaram integer $dpi
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return number[]
+	 */
+	public static function get_size_px($type,$dpi=72){
+		list($w,$h) = self::get_size_mm($type);
+		
+		return [
+			self::mm2px($w,$dpi),
+			self::mm2px($h,$dpi)
+		];
+	}
+	
+	/**
+	 * サイズ width, height (pt)
+	 * @param string $type
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return number[]
+	 */
+	public static function get_size_pt($type){
+		list($w,$h) = self::get_size_mm($type);
+		
+		return [
+			self::mm2pt($w),
+			self::mm2pt($h)
+		];
+	}
+	
+	/**
+	 * サイズ width, height (mm)
 	 * @param string $type
 	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return number[]
@@ -167,6 +198,12 @@ class Calc{
 			case 'B6SMALL': return [112,174]; // 新書判、少年・少女コミック
 
 			case 'MEISHI': return [55,91]; // 名刺（９号）
+			case 'SMARTSIZE': return [51,89]; // 名刺 スマートサイズ
+			
+			case 'ID1': return [53.98,85.6]; // ISO/IEC7810,JIS X 6301 ID-1 (ISO規格 クレカ・Suica等)
+			case 'ID2': return [74,105]; // ID-2 A7判 
+			case 'ID3': return [88,125]; // ID-3 B7判 (パスポート)
+			
 			case 'INSTAXMINI': return [54,86]; // instax mini
 			case 'INSTAXSQUARE': return [72,86]; // instax SQUARE
 			case 'INSTAXWIDE': return [86,108]; // instax WIDE

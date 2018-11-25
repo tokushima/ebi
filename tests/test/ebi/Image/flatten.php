@@ -67,6 +67,16 @@ $layers = [
 		'src'=>(new \ebi\Image(\testman\Resource::path('mm.png'))),
 	],
 	[
+		'x'=>100,
+		'y'=>100,
+		'src'=>(new \ebi\Image(\testman\Resource::path('test.png'))),
+	],
+	[
+		'x'=>100,
+		'y'=>-50,
+		'src'=>(new \ebi\Image(\testman\Resource::path('mm.png'))),
+	],		
+	[
 		'x'=>50,
 		'y'=>450,
 		'angle'=>-45,
@@ -74,7 +84,8 @@ $layers = [
 		'text'=>'SAMPLE',
 		'color'=>'#0000ff',
 		'pct'=>30,
-	],		
+		'z'=>100,
+	],
 ];
 
 $opt = [
@@ -83,8 +94,8 @@ $opt = [
 // 	'font'=>'/Users/tokushima/Downloads/M_PLUS_Rounded_1c/MPLUSRounded1c-Bold.ttf',
 ];
 
-$img = \ebi\Image::flatten(500, 500,$layers,$opt);
-$img->resize(400);
-// $img->write(\ebi\Conf::work_path('flatten.jpg'));
+list($w,$h) = \ebi\Calc::get_size_px('a4');
+$img = \ebi\Image::flatten($w, $h,$layers,$opt);
+//$img->write(\ebi\Conf::work_path('flatten.jpg'));
 $img->write(\ebi\WorkingStorage::path('flatten.jpg'));
 
