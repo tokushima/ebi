@@ -80,6 +80,7 @@ class HttpFile{
 			case 'gif':
 			case 'bmp':
 			case 'tiff': return 'image/'.$ext;
+			case 'svg': return 'image/svg+xml';
 			case 'pdf': return 'application/pdf';
 			case 'css': return 'text/css';
 			case 'txt': return 'text/plain';

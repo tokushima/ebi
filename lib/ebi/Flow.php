@@ -265,7 +265,7 @@ class Flow{
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach($selfmap['patterns'] as $p){
 				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1] && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
-					\ebi\HttpFile::attach($file);
+					\ebi\HttpFile::inline($file);
 				}
 			}
 			\ebi\HttpHeader::send_status(404);
