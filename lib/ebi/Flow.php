@@ -73,7 +73,6 @@ class Flow{
 	}
 	private static function template(array $vars,$selected_pattern,$ins,$path,$media,$temaplate_dir){
 		self::$template->set_object_plugin(new \ebi\FlowInvalid());
-		self::$template->set_object_plugin(new \ebi\Paginator());
 		self::$template->media_url(empty($media) ? self::$media_url : $media);
 		
 		if(is_array($vars) || is_object($vars)){

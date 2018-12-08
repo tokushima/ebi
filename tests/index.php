@@ -198,6 +198,8 @@ include_once('bootstrap.php');
 		'name'=>'working_storagea',
 		'action'=>'test.flow.Action::working_storagea', // 存在しないaction
 	],
+	
+	''=>['action'=>'test.flow.Main'],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 
