@@ -112,7 +112,7 @@ class Template{
 		foreach($this->get_object_plugin_funcs('before_template') as $o){
 			$src = static::call_func($o,$src);
 		}
-		$src = $this->rtif($this->rtloop($this->html_form($this->html_list($src))));
+		$src = $this->rtpaginator($this->rtif($this->rtloop($this->html_form($this->html_list($src)))));
 		/**
 		 * 後処理
 		 * @param string $src
@@ -127,6 +127,7 @@ class Template{
 		$str = ['__PHP_TAG_END__','__PHP_TAG_START__','__PHP_ARROW__'];
 		$src = str_replace($php,$str,$src);
 		
+		$keys = $tags = [];
 		if($bool = $this->html_script_search($src,$keys,$tags)){
 			$src = str_replace($tags,$keys,$src);
 		}
@@ -166,8 +167,9 @@ class Template{
 		return $_eval_src_;
 	}
 	private function replace_xtag($src){
-		if(preg_match_all("/<\?(?!php[\s\n])[\w]+ .*?\?>/s",$src,$null)){
-			foreach($null[0] as $value){
+		$m = [];
+		if(preg_match_all("/<\?(?!php[\s\n])[\w]+ .*?\?>/s",$src,$m)){
+			foreach($m[0] as $value){
 				$src = str_replace($value,'#PS#'.substr($value,2,-2).'#PE#',$src);
 			}
 		}
@@ -178,25 +180,26 @@ class Template{
 			$media = $media.'/';
 		}
 		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
+		$m = [];
 		
-		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$match)){
-			foreach($match[2] as $k => $p){
-				list($url) = explode('?',$match[4][$k]);				
+		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$m)){
+			foreach($m[2] as $k => $p){
+				list($url) = explode('?',$m[4][$k]);		
 				if(strpos($url,'$') === false){
 					$t = null;
 					if(strtolower($p) === 'href'){
-						list($t) = (preg_split("/[\s]/",strtolower($match[1][$k])));
+						list($t) = (preg_split("/[\s]/",strtolower($m[1][$k])));
 					}
-					$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$match[0][$k],$match[4][$k]);
+					$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$m[0][$k],$m[4][$k]);
 				}
 			}
 		}
-		if(preg_match_all("/[^:]:[\040]*url\(([^\\$\n]+?)\)/",$src,$match)){
+		if(preg_match_all("/[^:]:[\040]*url\(([^\\$\n]+?)\)/",$src,$m)){
 			if($this->secure){
 				$media = $secure_base;
 			}
-			foreach(array_keys($match[1]) as $key){
-				$src = $this->replace_parse_url($src,$media,$match[0][$key],$match[1][$key]);
+			foreach(array_keys($m[1]) as $key){
+				$src = $this->replace_parse_url($src,$media,$m[0][$key],$m[1][$key]);
 			}
 		}
 		return $src;
@@ -434,6 +437,7 @@ class Template{
 				$tagname = strtolower($obj->name());
 				$change = $obj->is_attr('rt:ref');
 				$uid = uniqid();
+				$m = [];
 
 				if(substr($originalName,-2) !== '[]'){
 					if($type == 'checkbox'){
@@ -479,8 +483,8 @@ class Template{
 							$obj->plain_attr($this->check_selected($name,$value,'checked'));
 						}else{
 							$obj->attr('value',$this->no_exception_str(sprintf('{$_t_.htmlencode(%s)}',
-									((preg_match("/^\{\$(.+)\}$/",$originalName,$match)) ?
-											'{$$'.$match[1].'}' :
+									((preg_match("/^\{\$(.+)\}$/",$originalName,$m)) ?
+											'{$$'.$m[1].'}' :
 											'{$'.$originalName.'}'))));
 						}
 						$change = true;
@@ -488,8 +492,8 @@ class Template{
 				}else if($tagname == 'textarea'){
 					if($this->is_reference($obj)){
 						$obj->value($this->no_exception_str(
-							sprintf('{$_t_.htmlencode(%s)}',((preg_match("/^{\$(.+)}$/",$originalName,$match)) ? 
-								'{$$'.$match[1].'}' : 
+								sprintf('{$_t_.htmlencode(%s)}',((preg_match("/^{\$(.+)}$/",$originalName,$m)) ? 
+								'{$$'.$m[1].'}' : 
 								'{$'.$originalName.'}')
 							)
 						));
@@ -543,8 +547,9 @@ class Template{
 				);
 	}
 	private function html_list($src){
+		$tags = $m = [];
+		
 		if(preg_match_all('/<(table|ul|ol)\s[^>]*rt\:/i',$src,$m,PREG_OFFSET_CAPTURE)){
-			$tags = [];
 			foreach($m[1] as $v){
 				try{
 					$tags[] = \ebi\Xml::extract(substr($src,$v[1]-1),$v[0]);
@@ -582,9 +587,62 @@ class Template{
 		}
 		return $src;
 	}
+	private function rtpaginator($src){
+		return \ebi\Xml::find_replace($src,'rt:paginator',function($xml){
+			$param = $this->variable_string($this->parse_plain_variable($xml->in_attr('param','paginator')));
+			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('nav','prev,next,first,last,counter'))));
+			$counter = $xml->in_attr('counter',10);
+			$lt = strtolower($xml->in_attr('lt','true'));
+			$href = $xml->in_attr('href','?');
+			
+			$uniq = uniqid('');
+			$counter_var = '$__counter__'.$uniq;
+			$func = '';
+			
+			if($lt == 'false'){
+				$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
+			}
+			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">',$param);
+			if(isset($navi['prev'])){
+				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
+			}
+			if(isset($navi['first'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+			}
+			if(isset($navi['counter'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
+					.sprintf('<?php if(%s->total() == 0){ ?>',$param)
+						.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
+					.'<?php }else{ ?>'
+						.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
+							.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
+								.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
+							.'<?php }else{ ?>'
+								.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
+							.'<?php } ?>'
+						.'<?php } ?>'
+					.'<?php } ?>'
+				.'<?php } ?>';
+			}
+			if(isset($navi['last'])){
+				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+			}
+			if(isset($navi['next'])){
+				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);
+			}
+			$func .= "<?php } ?><?php }catch(\\Exception \$e){} ?></ul>";
+			if($lt == 'false'){
+				$func .= sprintf('<?php } ?>',$param);
+			}
+			return $func;
+		});
+	}
+	
 	private function form_variable_name($name){
-		return (strpos($name,'[') && preg_match("/^(.+)\[([^\"\']+)\]$/",$name,$match)) ?
-			'{$'.$match[1].'["'.$match[2].'"]'.'}' : '{$'.$name.'}';
+		$m = [];
+		return (strpos($name,'[') && preg_match("/^(.+)\[([^\"\']+)\]$/",$name,$m)) ?
+			'{$'.$m[1].'["'.$m[2].'"]'.'}' : 
+			'{$'.$name.'}';
 	}
 	private function is_reference($tag){
 		$bool = ($tag->in_attr('rt:ref') === 'true');
