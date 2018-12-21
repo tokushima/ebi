@@ -470,7 +470,7 @@ class Template{
 								$obj->value('<option value="">'.$obj->in_attr('rt:null').'</option>'.$obj->value());
 							}
 					}
-					$obj->rm_attr('rt:param','rt:key','rt:var');
+					$obj->rm_attr('rt:param','rt:key','rt:var','rt:null');
 					$change = true;
 				}
 								
