@@ -105,9 +105,11 @@ class FlowInvalid implements \Iterator{
 			if(empty($value)){
 				$varnm = 'rtinvalid_varnm'.uniqid('');
 				$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
-						.'<li>{$%s.getMessage()}</li>'
-						.'</rt:loop></ul></div>'
-						,$xml->in_attr('class','alert alert-danger'),$var,$varnm,$varnm,((empty($tagtype)) ? '' : '</'.$tagtype.'>'));
+					.'<li><rt:if param="{$t.has($%s.getMessage())}">{$%s.getMessage()}<rt:else />{$t.get_class($%s)}</rt:if></li>'
+					.'</rt:loop></ul></div>'
+					,$xml->in_attr('class','alert alert-danger'),$var,$varnm,
+					$varnm,$varnm,$varnm
+				);
 			}
 			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
 					."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"

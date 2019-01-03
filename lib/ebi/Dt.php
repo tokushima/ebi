@@ -34,7 +34,6 @@ class Dt{
 	}
 	public function get_flow_plugins(){
 		return [
-			\ebi\Dt\TwitterBootstrap3Helper::class,
 			\ebi\flow\plugin\HtmlMinifier::class,
 		];
 	}

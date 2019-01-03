@@ -1,9 +1,49 @@
 <html>
 <head>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 <body>
 <h1>Test</h1>
+
+
+<ul rt:param="notes" rt:var="note">
+	<li class="row">
+		<div>
+			<span class="badge badge-pill badge-info" id="vote_{$note.id()}">{$note.vote()}</span>
+			<button class="btn" style="padding:3px; margin:1px;" onclick="vote({$note.id()},1,'vote_{$note. id()}')">↑</button>
+			<button class="btn" style="padding:3px; margin:1px;" onclick="vote({$note.id()},-1,'vote_{$note.id()}')">↓</button>
+		</div>
+		<div style="margin-left: 50px;">{$helper.keyword($note.value())}</div>
+	</li>
+</ul>
+
+
 <rt:paginator counter="3" />
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+	function vote(note_id,point,view_id){
+		$.ajax({
+			url:'{$t.package_method_url('vote')}',
+			type:'POST',
+			data:{
+				'note_id': note_id,
+				'point': point
+			}
+		}).done((data) => {
+			$('#' + view_id).text(data.result.point);			
+			$('#' + view_id).removeClass('badge-info badge-danger');
+			
+ 			if(data.result.point > 3){
+				$('#' + view_id).addClass('badge-danger');
+			}else if(data.result.point <= 0){
+				$('#' + view_id).addClass('badge-secondary');
+			}else{
+				$('#' + view_id).addClass('badge-info');
+			}
+		})
+	}
+</script>
 </body>
 </html>
