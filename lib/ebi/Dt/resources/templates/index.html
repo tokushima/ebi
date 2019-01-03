@@ -1,16 +1,12 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-	<div style="text-align: right;">
-		<form name="version_select_frm">
-			<label for="version">Version select</label>
-			<select id="version" rt:param="{$version_list}" name="version" rt:null="" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
+	<div>
+		<form class="form-inline" name="version_select_frm">
+			<label class="my-1 mr-2" for="version">Version: </label>
+			<select class="custom-select my-1 mr-sm-2" id="version" rt:param="{$version_list}" name="version" rt:null="ALL" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
 		</form>
 	</div>
-
-	<rt:if param="{$version}">
-		<h2>Version: {$version}</h2>
-	</rt:if>
 
 
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
@@ -74,7 +70,10 @@
 			<span >
 				{$t.html($map['summary'])}
 			</span>
-			<span class="text-danger">{$map['error']}</span>
+			
+			<rt:if param="{$map['error']}">
+				<div class="alert-danger">{$map['error']}</div>
+			</rt:if>
 			
 			<rt:if param="{$map['first_depricated_date']}">
 				<div>
