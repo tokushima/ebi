@@ -258,6 +258,7 @@ class Flow{
 			self::$map = $selfmap;
 			return;
 		}
+		
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",($_SERVER['PATH_INFO'] ?? ''));
 		
 		$m = [];
@@ -453,11 +454,6 @@ class Flow{
 						){
 							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
 							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
-						}else if(
-							array_key_exists('find_template',$selfmap) && $selfmap['find_template'] === true
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name'].'.html'))
-						){
-							return self::template($result_vars,$pattern,$ins,$t,null,null);
 						}else if(self::has_class_plugin('flow_output')){
 							/**
 							 * 結果を出力する

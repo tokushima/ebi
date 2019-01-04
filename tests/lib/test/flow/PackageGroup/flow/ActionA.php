@@ -1,0 +1,11 @@
+<?php
+namespace test\flow\PackageGroup\flow;
+
+class ActionA extends \ebi\flow\Request{
+	/**
+	 * @automap
+	 */
+	public function abc(){
+		
+	}
+}
