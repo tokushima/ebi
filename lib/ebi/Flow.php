@@ -258,13 +258,18 @@ class Flow{
 			self::$map = $selfmap;
 			return;
 		}
+		
 		$pathinfo = preg_replace("/(.*?)\?.*/","\\1",($_SERVER['PATH_INFO'] ?? ''));
 		
 		$m = [];
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach($selfmap['patterns'] as $p){
-				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1] && is_file($file=($p['@'].'/resources/media/'.$m[2]))){
-					\ebi\HttpFile::inline($file);
+				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1]){
+					if(is_file($file=($p['@'].'/resources/media/'.$m[2]))){
+						\ebi\HttpFile::inline($file);
+					}else if(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2]))){
+						\ebi\HttpFile::inline($file);
+					}
 				}
 			}
 			\ebi\HttpHeader::send_status(404);
@@ -449,11 +454,6 @@ class Flow{
 						){
 							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
 							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
-						}else if(
-							array_key_exists('find_template',$selfmap) && $selfmap['find_template'] === true
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name'].'.html'))
-						){
-							return self::template($result_vars,$pattern,$ins,$t,null,null);
 						}else if(self::has_class_plugin('flow_output')){
 							/**
 							 * 結果を出力する
@@ -613,10 +613,13 @@ class Flow{
 	}
 	private static function automap($url,$class,$name,$idx){
 		$result = [];
+		
 		try{
+			$m = null;
 			$r = new \ReflectionClass(str_replace('.','\\',$class));
 			$d = substr($r->getFilename(),0,-4);
-	
+			$group_parents = (preg_match('/\\\\[A-Z](.+)$/',$r->getNamespaceName(),$m)) ? (substr_count($m[1],'\\') + 1) : null;
+			
 			foreach($r->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 				if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
 					$suffix = '';
@@ -641,6 +644,11 @@ class Flow{
 							'@'=>$d,
 							'idx'=>$idx,
 						];
+						
+						if(isset($group_parents)){
+							$result[$murl.$suffix]['&'] = $group_parents;
+						}
+						
 						if(!empty($auto_anon)){
 							$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
 						}

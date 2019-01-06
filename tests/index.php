@@ -189,6 +189,15 @@ include_once('bootstrap.php');
 		'template'=>'parts_load.html',
 	],
 	
+	'package/group/action/a'=>[
+		'name'=>'package_group_action_a',
+		'action'=>'test.flow.PackageGroup.flow.ActionA'
+	],
+	'package/group/action/b'=>[
+		'name'=>'package_group_action_b',
+		'action'=>'test.flow.PackageGroup.flow.ActionB'
+	],
+	
 	
 	'working'=>[
 		'name'=>'working_storage',

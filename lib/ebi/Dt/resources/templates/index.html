@@ -72,7 +72,9 @@
 			</span>
 			
 			<rt:if param="{$map['error']}">
-				<div class="alert-danger">{$map['error']}</div>
+				<div>
+					<h4><span class="badge badge-pill badge-danger">{$map['error']}</span></h4>
+				</div>
 			</rt:if>
 			
 			<rt:if param="{$map['first_depricated_date']}">
@@ -109,9 +111,7 @@
 				</div>
 			</div>
 		
-			<a data-toggle="modal" data-target="#info{$count}">
-				<button type="button" class="btn btn-info btn-sm">info</button>
-			</a>
+			<a href="#" data-toggle="modal" data-target="#info{$count}" class="badge badge-pill badge-info">i</a>
 		</td>
 	</tr>
 	</tbody>
