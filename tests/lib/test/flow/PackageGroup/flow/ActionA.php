@@ -22,4 +22,11 @@ class ActionA extends \ebi\flow\Request{
 	public function ghi(){
 		throw new \Exception('エラー');
 	}
+	
+	/**
+	 * @automap
+	 */
+	public function jkl(){
+		
+	}
 }
