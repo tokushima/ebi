@@ -211,8 +211,15 @@ class Template{
 		return $src;
 	}
 	private function read_src($filename){
-		$src = \ebi\Util::file_read(\ebi\Util::path_absolute($this->base_dir,$filename));
-		return (preg_match('/^http[s]*\:\/\//',$filename)) ? $this->parse_url($src,dirname($filename)) : $src;
+ 		if(preg_match('/^http[s]*\:\/\//',$filename)){
+			return $this->parse_url(file_get_contents($filename),dirname($filename));
+		}
+		foreach((is_array($this->base_dir) ? $this->base_dir : [$this->base_dir]) as $d){
+			if(is_file($f=\ebi\Util::path_absolute($d,$filename))){
+				return file_get_contents($f);
+			}
+		}
+		throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 	}
 	private function rtinclude($src){
 		try{

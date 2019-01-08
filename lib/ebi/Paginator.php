@@ -238,7 +238,7 @@ class Paginator implements \IteratorAggregate{
 	 */
 	public function cp(array $array){
 		foreach($array as $name => $value){
-			if(ctype_alpha($name[0])) $this->vars[$name] = (string)$value;
+			if(ctype_alpha($name[0]) && !is_array($value)) $this->vars[$name] = (string)$value;
 		}
 		return $this;
 	}

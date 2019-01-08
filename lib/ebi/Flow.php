@@ -265,9 +265,10 @@ class Flow{
 		if(preg_match('/^\/'.preg_quote(self::$package_media_url,'/').'\/(\d+)\/(.+)$/',$pathinfo,$m)){	
 			foreach($selfmap['patterns'] as $p){
 				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1]){
-					if(is_file($file=($p['@'].'/resources/media/'.$m[2]))){
-						\ebi\HttpFile::inline($file);
-					}else if(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2]))){
+					if(
+						is_file($file=($p['@'].'/resources/media/'.$m[2])) || 
+						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2])))
+					){
 						\ebi\HttpFile::inline($file);
 					}
 				}
@@ -438,23 +439,35 @@ class Flow{
 						if(array_key_exists('after',$pattern)){
 							self::map_redirect($pattern['after'],$result_vars,$pattern);
 						}
-					
+						
 						if(array_key_exists('template',$pattern)){
 							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$pattern['template']),null,null);
 						}else if(isset($template)){
 							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$template),null,null);
-						}else if(
-							array_key_exists('@',$pattern)
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')
-						){
-							return self::template($result_vars,$pattern,$ins,$t,null,null,null);	
-						}else if(
-							array_key_exists('@',$pattern)
-							&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
-						){
-							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
-							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
-						}else if(self::has_class_plugin('flow_output')){
+						}else if(array_key_exists('@',$pattern)){
+							if(is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')){
+								return self::template($result_vars,$pattern,$ins,$t,null,null,null);
+							}else{
+								$rtp = '/resources/templates/';
+								$f = $rtp.preg_replace('/^.+::/','',$pattern['action']).'.html';
+								
+								if(is_file($t=$pattern['@'].$f) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$f))){
+									$app_url = $is_secure_pattern_func($pattern) ? 
+										str_replace('http://','https://',self::$app_url) : 
+										self::$app_url;
+									
+									return self::template(
+										$result_vars,
+										$pattern,
+										$ins,
+										$t,
+										$app_url.self::$package_media_url.'/'.$pattern['idx'],
+										(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
+									);
+								}
+							}
+						}
+						if(self::has_class_plugin('flow_output')){
 							/**
 							 * 結果を出力する
 							 * @param mixed{} $result_vars actionで返却された変数
@@ -492,18 +505,38 @@ class Flow{
 					}
 					
 					if(!$accept_debug){
-						if(isset($pattern['@']) && is_file($t=$pattern['@'].'/resources/templates/error.html')){
-							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
-							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
-						}else if(array_key_exists('error_redirect',$pattern)){
+						if(isset($pattern['@'])){
+							$rtp = '/resources/templates/';
+							$f = $rtp.'error.html';
+							
+							if(is_file($t=$pattern['@'].$f) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$f))){
+								$app_url = $is_secure_pattern_func($pattern) ? 
+									str_replace('http://','https://',self::$app_url) : 
+									self::$app_url;
+								
+								return self::template(
+									$result_vars,
+									$pattern,
+									$ins,
+									$t,
+									$app_url.self::$package_media_url.'/'.$pattern['idx'],
+									(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
+								);
+							}
+						}
+						if(array_key_exists('error_redirect',$pattern)){
 							return self::map_redirect($pattern['error_redirect'],[],$pattern,null,null,null);
-						}else if(array_key_exists('error_template',$pattern)){
+						}
+						if(array_key_exists('error_template',$pattern)){
 							return self::template($result_vars,$pattern,$ins,$pattern['error_template'],null,null);
-						}else if(array_key_exists('error_redirect',$selfmap)){
+						}
+						if(array_key_exists('error_redirect',$selfmap)){
 							return self::map_redirect($selfmap['error_redirect'],[],$pattern,null,null,null);
-						}else if(array_key_exists('error_template',$selfmap)){
+						}
+						if(array_key_exists('error_template',$selfmap)){
 							return self::template($result_vars,$pattern,$ins,$selfmap['error_template'],null,null);
-						}else if(self::has_class_plugin('flow_exception')){
+						}
+						if(self::has_class_plugin('flow_exception')){
 							/**
 							 * 例外発生時の処理・出力
 							 * @param \Exception $e 発生した例外
