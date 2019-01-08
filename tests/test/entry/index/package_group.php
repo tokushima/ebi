@@ -19,3 +19,10 @@ if(preg_match('/href="(.+?)"/', $b->body(),$m)){
 }else{
 	fail();
 }
+
+$b->do_get('index::package_group_action_a/def');
+meq('DEF',$b->body());
+
+
+$b->do_get('index::package_group_action_a/ghi');
+meq('ERROR',$b->body());
