@@ -443,18 +443,15 @@ class Flow{
 							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$pattern['template']),null,null);
 						}else if(isset($template)){
 							return self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$template),null,null);
-						}else if(
-							array_key_exists('@',$pattern)
-							&& is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')
-						){
-							return self::template($result_vars,$pattern,$ins,$t,null,null,null);	
-						}else if(
-							array_key_exists('@',$pattern)
-							&& is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))
-						){
-							$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
-							return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
-						}else if(self::has_class_plugin('flow_output')){
+						}else if(array_key_exists('@',$pattern)){
+							if(is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')){
+								return self::template($result_vars,$pattern,$ins,$t,null,null,null);					
+							}else if(is_file($t=($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action'].'.html')))){
+								$app_url = $is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url;
+								return self::template($result_vars,$pattern,$ins,$t,$app_url.self::$package_media_url.'/'.$pattern['idx'],$pattern['@'].'/resources/templates/');
+							}
+						}
+						if(self::has_class_plugin('flow_output')){
 							/**
 							 * 結果を出力する
 							 * @param mixed{} $result_vars actionで返却された変数
