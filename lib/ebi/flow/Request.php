@@ -314,11 +314,19 @@ class Request extends \ebi\Request{
 			if(empty($this->get_after_redirect())){
 				\ebi\HttpHeader::send_status(401);
 				
-				if(
-					!isset($pattern['template']) && 
-					!(isset($pattern['@']) && 
-					is_file(($pattern['@'].'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html')))
-				){
+				$rtp = '/resources/templates/';
+				$html = preg_replace('/^.+::/','',$pattern['action']).'.html';
+				
+				if(!(
+					isset($pattern['template']) || 
+					(
+						isset($pattern['@']) && 
+						(
+							is_file($pattern['@'].$rtp.$html) ||
+							(isset($pattern['&']) && is_file(dirname($pattern['@'],$pattern['&']).$rtp.$html))
+						)
+					)
+				)){
 					throw new \ebi\exception\UnauthorizedException();
 				}
 			}

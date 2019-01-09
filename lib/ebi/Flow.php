@@ -411,6 +411,7 @@ class Flow{
 						 */
 						self::call_class_plugin_funcs('after_flow_action');
 					}
+					
 					if(isset($exception)){
 						throw $exception;
 					}
@@ -449,19 +450,15 @@ class Flow{
 								return self::template($result_vars,$pattern,$ins,$t,null,null,null);
 							}else{
 								$rtp = '/resources/templates/';
-								$f = $rtp.preg_replace('/^.+::/','',$pattern['action']).'.html';
+								$html = $rtp.preg_replace('/^.+::/','',$pattern['action']).'.html';
 								
-								if(is_file($t=$pattern['@'].$f) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$f))){
-									$app_url = $is_secure_pattern_func($pattern) ? 
-										str_replace('http://','https://',self::$app_url) : 
-										self::$app_url;
-									
+								if(is_file($t=$pattern['@'].$html) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$html))){
 									return self::template(
 										$result_vars,
 										$pattern,
 										$ins,
 										$t,
-										$app_url.self::$package_media_url.'/'.$pattern['idx'],
+										(($is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url).self::$package_media_url.'/'.$pattern['idx']),
 										(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
 									);
 								}
@@ -507,19 +504,15 @@ class Flow{
 					if(!$accept_debug){
 						if(isset($pattern['@'])){
 							$rtp = '/resources/templates/';
-							$f = $rtp.'error.html';
+							$html = $rtp.'error.html';
 							
-							if(is_file($t=$pattern['@'].$f) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$f))){
-								$app_url = $is_secure_pattern_func($pattern) ? 
-									str_replace('http://','https://',self::$app_url) : 
-									self::$app_url;
-								
+							if(is_file($t=$pattern['@'].$html) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$html))){
 								return self::template(
 									$result_vars,
 									$pattern,
 									$ins,
 									$t,
-									$app_url.self::$package_media_url.'/'.$pattern['idx'],
+									(($is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url).self::$package_media_url.'/'.$pattern['idx']),
 									(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
 								);
 							}
