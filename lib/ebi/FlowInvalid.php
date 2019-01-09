@@ -83,10 +83,9 @@ class FlowInvalid implements \Iterator{
 		if(self::$self === null) return false;
 		self::$self->group = $group;
 		self::$self->type = self::type($type);
-		foreach(self::$self as $e){
-			return true;
-		}
-		return false;
+		
+		reset(self::$self);
+		return (next(self::$self) !== false);
 	}
 	public function before_template($src){
 		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
@@ -100,7 +99,6 @@ class FlowInvalid implements \Iterator{
 				$type = '"'.$type.'"';
 			}
 			$value = $xml->value();
-			$tagtype = $xml->in_attr('tag');
 				
 			if(empty($value)){
 				$varnm = 'rtinvalid_varnm'.uniqid('');

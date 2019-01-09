@@ -1,6 +1,5 @@
 <?php
 namespace ebi;
-use \ebi\Q;
 /**
  * Daoでセッションを扱うモジュール
  * @author tokushima

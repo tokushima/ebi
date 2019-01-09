@@ -13,6 +13,8 @@ class HttpAuthorizationBearer{
 	 * @return string
 	 */
 	public static function get_token(){
+		$m = [];
+		
 		if(isset($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/((?i)Bearer(?-i)(\s)+)(.*)/',$_SERVER['HTTP_AUTHORIZATION'],$m)){
 			return trim($m[3]);
 		}

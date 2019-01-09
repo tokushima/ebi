@@ -54,7 +54,6 @@ class PgsqlConnector extends \ebi\DbConnector{
 		return new \ebi\Daq('select lastval() as last_insert_id');
 	}
 	public function exists_table_sql(\ebi\Dao $dao){
-		$dbc = \ebi\Dao::connection(get_class($dao));
 		return sprintf('select * from pg_tables where not tablename like \'%s\'',$dao->table());
 	}	
 
@@ -114,7 +113,6 @@ class PgsqlConnector extends \ebi\DbConnector{
 	}
 	public function create_sql(\ebi\Dao $dao){
 		$insert = $vars = [];
-		$autoid = null;
 		
 		foreach($dao->columns(true) as $column){
 			if(!$column->auto()){
@@ -122,7 +120,8 @@ class PgsqlConnector extends \ebi\DbConnector{
 				$vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
-		return new \ebi\Daq('insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
+		return new \ebi\Daq(
+			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
 			,$vars
 		);
 	}
@@ -134,6 +133,6 @@ class PgsqlConnector extends \ebi\DbConnector{
 			$fmt[] = (strpos($require,$f) === false) ? $d : $sql[$f];
 		}
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
-		return 'DATE_FORMAT('.$table_column.',\''.$f.'\')';
+		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
 }

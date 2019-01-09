@@ -193,7 +193,7 @@ abstract class Dao extends \ebi\Obj{
 		$root_table_alias = 't'.self::$_cnt_++;
 		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = [];
 		
-		$prop = $last_cond_column = [];
+		$props = $last_cond_column = [];
 		$ref = new \ReflectionClass($this);
 		foreach($ref->getProperties(\ReflectionProperty::IS_PUBLIC|\ReflectionProperty::IS_PROTECTED) as $prop){
 			if($prop->getName()[0] != '_' && $this->prop_anon($prop->getName(),'extra') !== true){
@@ -241,9 +241,10 @@ abstract class Dao extends \ebi\Obj{
 			}else if(false !== strpos($anon_cond,'(')){
 				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
 				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
+				$matches = [];
 				
-				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$match)){
-					list(,$self_var,$conds_string,$has_var) = $match;
+				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$matches)){
+					list(,$self_var,$conds_string,$has_var) = $matches;
 					$conds = [];
 					$ref_table = $ref_table_alias = null;
 					
@@ -884,6 +885,22 @@ abstract class Dao extends \ebi\Obj{
 	public static function rollback(){
 		self::connection(get_called_class())->rollback();
 	}
+	
+	/**
+	 * 複数レコードを一括登録する
+	 * before/after/verifyは実行されない
+	 */
+	public static function insert_multiple(array $data_objects){
+		foreach($data_objects as $obj){
+			if(!($obj instanceof static)){
+				throw new \ebi\exception\InvalidArgumentException();
+			}
+		}
+		$dao = new static();
+		$daq = self::$_con_[get_called_class()]->insert_multiple_sql($dao,$data_objects);
+		return $dao->update_query($daq);
+	}
+	
 	/**
 	 * 条件により削除する
 	 * before/after/verifyは実行されない
@@ -968,7 +985,6 @@ abstract class Dao extends \ebi\Obj{
 		$code = '';
 		$challenge = 0;
 		$challenge_max = 10;
-		$bool = true;
 		$vefify_func = method_exists($this,'__verify_'.$prop_name.'__');
 		$prefix = '';
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'length');

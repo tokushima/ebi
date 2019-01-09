@@ -29,11 +29,18 @@ trait TemplateVariable{
 		return $src;
 	}
 	protected function parse_plain_variable($src){
+		
 		while(true){
 			$array = $this->match_variable($src);
-			if(sizeof($array) <= 0)	break;
+			
+			if(sizeof($array) <= 0){
+				break;
+			}
+			
 			foreach($array as $v){
 				$tmp = $v;
+				$match = [];
+				
 				if(preg_match_all("/([\"\'])([^\\1]+?)\\1/",$v,$match)){
 					foreach($match[2] as $value){
 						$tmp = str_replace($value,str_replace('.','__PERIOD__',$value),$tmp);
@@ -53,7 +60,7 @@ trait TemplateVariable{
 		.'<?php }catch(\Exception $e){} ?>';
 	}
 	protected function match_variable($src){
-		$hash = [];
+		$hash = $vars = [];
 		while(preg_match("/({(\\$[\$\w][^\t]*)})/s",$src,$vars,PREG_OFFSET_CAPTURE)){
 			list($value,$pos) = $vars[1];
 			if($value == '') break;

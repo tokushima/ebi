@@ -54,6 +54,33 @@ abstract class DbConnector{
 			,$autoid
 		);
 	}
+	
+	/**
+	 * insert文(複数行)を生成する
+	 * @param \ebi\Dao $dao
+	 * @return \ebi\Daq
+	 */
+	public function insert_multiple_sql(\ebi\Dao $dao,array $data_objects){
+		$insert = $values = $vars = $column_names = [];
+		
+		foreach($dao->columns(true) as $column){
+			$insert[] = $this->quotation($column->column());
+			$column_names[] = $column->name();
+		}
+		$sql = '('.implode(',',array_fill(0,sizeof($insert),'?')).')';
+		
+		foreach($data_objects as $obj){
+			foreach($column_names as $name){
+				$vars[] = $this->column_value($dao,$name,$obj->{$name}());
+			}
+			$values[] = $sql;
+		}
+		return new \ebi\Daq(
+			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).')'.
+			'values '.implode(',',$values).';'
+			,$vars
+		);
+	}
 	/**
 	 * update文を生成する
 	 * @param \ebi\Dao $dao
@@ -112,7 +139,7 @@ abstract class DbConnector{
 		);
 	}
 	/**
-	 * delete文を生成する
+	 * 条件式delete文を生成する
 	 * @param Dao $dao
 	 * @param Q $query
 	 * @return Daq
@@ -562,18 +589,15 @@ abstract class DbConnector{
 				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 		}
 	}
+	
 	public function create_table_sql(\ebi\Dao $dao){
-		$columndef = $primary = [];
+		$columndef = [];
 		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
 		
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
 				$columndef[] = $column_str;
-				
-				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
-					$primary[] = $this->quotation($column->column());
-				}
 			}
 		}
 		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;

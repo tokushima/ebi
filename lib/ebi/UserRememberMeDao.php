@@ -1,6 +1,5 @@
 <?php
 namespace ebi;
-use \ebi\Q;
 /**
  * Remember me
  * @var serial $id

@@ -233,8 +233,8 @@ class Xml implements \IteratorAggregate{
 	 */
 	public function find_count($name,$offset=0,$length=0){
 		$cnt = 0;
-			
-		foreach($this->find($name,$offset,$length) as $x){
+		
+		while($this->find($name,$offset,$length)){
 			$cnt++;
 		}
 		return $cnt;
@@ -340,6 +340,8 @@ class Xml implements \IteratorAggregate{
 			$names = explode('/',$name,2);
 			$name = $names[0];
 		}
+		
+		$x = null;
 		if(self::find_extract($x,$plain,$name)){
 			if(isset($names[1])){
 				try{
@@ -355,10 +357,13 @@ class Xml implements \IteratorAggregate{
 	private static function find_extract(&$x,$plain,$name=null,$vtag=null){
 		$plain = (string)$plain;
 		$name = (string)$name;
+		$m = [];
+		
 		if(empty($name) && preg_match("/<([\w\:\-]+)[\s][^>]*?>|<([\w\:\-]+)>/is",$plain,$m)){
 			$name = str_replace(["\r\n","\r","\n"],'',(empty($m[1]) ? $m[2] : $m[1]));
 		}
 		$qname = preg_quote($name,'/');
+		$parse = $matches = [];
 		if(!preg_match("/<(".$qname.")([\s][^>]*?)>|<(".$qname.")>|<(".$qname.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
 			return false;
 		}
@@ -371,27 +376,32 @@ class Xml implements \IteratorAggregate{
 			$x->name = $parse[1][0];
 			$x->plain = empty($vtag) ? $parse[0][0] : preg_replace('/'.preg_quote(substr($vtag,0,-1).' />','/').'/',$vtag,$parse[0][0],1);
 			$attrs = $parse[2][0];
-		}else if(preg_match_all("/<[\/]{0,1}".$qname."[\s][^>]*[^\/]>|<[\/]{0,1}".$qname."[\s]*>/is",$plain,$list,PREG_OFFSET_CAPTURE,$x->pos)){
-			foreach($list[0] as $arg){
-				if(($balance += (($arg[0][1] == '/') ? -1 : 1)) <= 0 &&
-						preg_match("/^(<(".$qname.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
-							substr($plain,$x->pos,($arg[1] + strlen($arg[0]) - $x->pos)),
-							$match
-						)
+		}else if(preg_match_all("/<[\/]{0,1}".$qname."[\s][^>]*[^\/]>|<[\/]{0,1}".$qname."[\s]*>/is",$plain,$matches,PREG_OFFSET_CAPTURE,$x->pos)){
+			foreach($matches[0] as $arg){
+				$balance += (($arg[0][1] == '/') ? -1 : 1);
+				
+				if($balance <= 0 &&
+					preg_match("/^(<(".$qname.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
+						substr($plain,$x->pos,($arg[1] + strlen($arg[0]) - $x->pos)),
+						$m
+					)
 				){
-					$x->plain = $match[0];
-					$x->name = $match[2];
-					$x->value = ($match[4] === '' || $match[4] === null) ? null : $match[4];
-					$attrs = $match[3];
+					$x->plain = $m[0];
+					$x->name = $m[2];
+					$x->value = ($m[4] === '' || $m[4] === null) ? null : $m[4];
+					$attrs = $m[3];
 					break;
 				}
 			}
 			if(!isset($x->plain)){
-				return self::find_extract($x,preg_replace('/'.preg_quote($list[0][0][0],'/').'/',substr($list[0][0][0],0,-1).' />',$plain,1),$name,$list[0][0][0]);
+				return self::find_extract($x,preg_replace('/'.preg_quote($matches[0][0][0],'/').'/',substr($matches[0][0][0],0,-1).' />',$plain,1),$name,$matches[0][0][0]);
 			}
 		}
-		if(!isset($x->plain)) return false;
+		if(!isset($x->plain)){
+			return false;
+		}
 		if(!empty($attrs)){
+			$attr = [];
 			if(preg_match_all("/[\s]+([\w\-\:]+)[\s]*=[\s]*([\"\'])([^\\2]*?)\\2/ms",$attrs,$attr)){
 				foreach($attr[0] as $id => $value){
 					$x->attr($attr[1][$id],$attr[3][$id]);
@@ -415,13 +425,14 @@ class Xml implements \IteratorAggregate{
 		$rtn = '';
 		$i = 0;
 		$c = md5(__FILE__);
+		$m = [];
 		
 		if(preg_match_all('/<([\w_]+?)[^><]*><\/\\1>/', $src,$m)){
 			foreach($m[0] as $s){
 				$src = str_replace($s,str_replace('><','>'.$c.'<',$s),$src);
 			}
 		}
-		foreach(explode("\n",preg_replace('/>\s*</','>'."\n".'<',$src)) as $k => $line){
+		foreach(explode("\n",preg_replace('/>\s*</','>'."\n".'<',$src)) as $line){
 			$indent = 0;
 			$lc = substr_count($line,'<');
 		

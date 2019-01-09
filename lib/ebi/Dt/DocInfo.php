@@ -61,6 +61,7 @@ class DocInfo extends \ebi\Obj{
 				$startpos = strrpos($doc,'/**');
 				
 				if($startpos !== false){
+					$m = [];
 					$doc = substr($doc,$startpos);
 					
 					if(preg_match('/\/\*\*(.+?)\*\//s',$doc,$m)){
@@ -90,6 +91,8 @@ class DocInfo extends \ebi\Obj{
 				$m[2]
 			));
 		}
+		
+		$match = [];
 		if(preg_match("/@version\s+([^\s]+)/",$doc,$match)){
 			$info->version(trim($match[1]));
 		}

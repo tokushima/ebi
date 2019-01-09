@@ -135,7 +135,6 @@ class Validator{
 	 * @param mixed{} $anon
 	 */
 	public static function value($name,$v,$anon){
-		$e_require = false;
 		$get = function($an) use($anon){
 			return isset($anon[$an]) ? $anon[$an] : null;
 		};

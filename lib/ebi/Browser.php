@@ -259,9 +259,11 @@ class Browser{
 	 * @return string{}
 	 */
 	public function explode_head(){
-		$result = [];
+		$result = $m = [];
 		foreach(explode("\n",$this->head) as $h){
-			if(preg_match("/^(.+?):(.+)$/",$h,$match)) $result[trim($match[1])] = trim($match[2]);
+			if(preg_match("/^(.+?):(.+)$/",$h,$m)){
+				$result[trim($m[1])] = trim($m[2]);
+			}
 		}
 		return $result;
 	}
@@ -316,6 +318,7 @@ class Browser{
 			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
 			case 'GET':
 				if(isset($url_info['query'])){
+					$vars = [];
 					parse_str($url_info['query'],$vars);
 				
 					foreach($vars as $k => $v){
@@ -466,6 +469,8 @@ class Browser{
 		if(self::$recording_request){
 			self::$record_request[] = curl_getinfo($this->resource,CURLINFO_HEADER_OUT);
 		}
+		
+		$match = [];
 		if(preg_match_all('/Set-Cookie:[\s]*(.+)/i',$this->head,$match)){
 			foreach($match[1] as $cookies){
 				$cookie_name = $cookie_value = $cookie_domain = $cookie_path = $cookie_expires = null;
@@ -514,6 +519,7 @@ class Browser{
 				case 302:
 				case 303:
 				case 307:
+					$redirect_url = [];
 					if(preg_match('/Location:[\040](.*)/i',$this->head,$redirect_url)){
 						return $this->request('GET',trim(\ebi\Util::path_absolute($url,$redirect_url[1])),$download_path);
 					}
@@ -549,6 +555,7 @@ class Browser{
 	 * @return mixed{}
 	 */
 	public function query_string($name=null){
+		$array = [];
 		parse_str($this->body(),$array);
 		
 		if(empty($name)){

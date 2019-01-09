@@ -60,7 +60,7 @@ class DocParam extends \ebi\Obj{
 		return $type;
 	}
 	public static function parse($varname,$doc){
-		$result = [];
+		$result = $m = [];
 		
 		if(preg_match_all("/@".$varname."\s+([^\s]+)\s+\\$(\w+)(.*)/",$doc,$m)){
 			foreach(array_keys($m[2]) as $n){
