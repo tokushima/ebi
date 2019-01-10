@@ -18,8 +18,7 @@ class Md{
 			$v = str_replace('\\'.$e,'@%'.$k,$v);
 		}
 		
-		$lines = [];
-		$pre = $on = false;
+		$lines = $m = [];
 		$explode_lines = explode(PHP_EOL,$v);
 	
 		while(!empty($explode_lines)){
@@ -146,10 +145,11 @@ class Md{
 	}
 
 	private function html_list($line,&$explode_lines,&$lines){
-		array_unshift($explode_lines,$line);		
+		array_unshift($explode_lines,$line);
+		$efunc = null;
 
 		$efunc = function(&$explode_lines,$index=1,$a=null) use(&$efunc){
-			$result = [];
+			$result = $m = [];
 		
 			if(isset($a)){
 				$result[] = $a;
@@ -178,6 +178,7 @@ class Md{
 			return $result;
 		};
 		
+		$ofunc = null;
 		$ofunc = function($list,&$lines) use(&$ofunc){
 			$lines[] = '<ul>';
 		

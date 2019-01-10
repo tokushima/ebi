@@ -35,7 +35,7 @@ class Daq{
 		return !empty($this->vars);
 	}
 	public function unique_sql(){
-		$rep = [];
+		$rep = $match = [];
 		$sql = $this->sql();
 
 		if(preg_match_all("/[ct][\d]+/",$this->sql,$match)){

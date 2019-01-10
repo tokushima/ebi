@@ -25,6 +25,7 @@ class Request implements \IteratorAggregate{
 					}
 				}
 				if(isset($_FILES) && is_array($_FILES)){
+					$marge_func = null;
 					$marge_func = function($arr,$pk,$files,&$map) use(&$marge_func){
 						if(is_array($arr)){
 							foreach($arr as $k => $v){

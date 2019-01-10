@@ -1,6 +1,5 @@
 <?php
 namespace ebi;
-use \ebi\Q;
 /**
  * 開発支援ツール
  * @author tokushima

@@ -62,6 +62,7 @@ class Annotation{
 	
 	private static function decode($d,$name,$doc_name=null){
 		$result = null;
+		$mtc = $m = [];
 		
 		if(preg_match_all('/@'.$name.'(.*)/',$d,$mtc)){
 			$result = [];

@@ -251,9 +251,6 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * ログイン処理
-	 * 
-	 * @automap
-	 * @version 1.2.11
 	 */
 	public function do_login(){
 		if($this->sess->is_vars(__CLASS__.'_login_vars')){
@@ -335,8 +332,6 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * ログアウト
-	 * @automap
-	 * @version 1.2.11
 	 */
 	public function do_logout(){
 		/**
@@ -351,7 +346,6 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * 何も処理をせずに、varsを返す
-	 * @version 1.2.11
 	 */
 	public function noop(){
 		return $this->ar_vars();

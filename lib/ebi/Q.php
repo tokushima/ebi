@@ -423,6 +423,7 @@ class Q{
 	 * @param mixed $to
 	 */
 	public static function between($column,$from,$to){
+		$m = [];
 		if(preg_match('/^\d{4}([\/\-\.])\d{2}/',$from,$m)){
 			$exp = explode(' ',$from,2);
 

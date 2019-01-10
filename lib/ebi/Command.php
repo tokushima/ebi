@@ -144,9 +144,12 @@ class Command{
 	 * @return string
 	 */
 	public static function stdin($msg,$default=null,$choice=[],$multiline=false,$invisible=false){
-		$result = null;
+		$result = $b = null;
 		print($msg.(empty($choice) ? '' : ' ('.implode(' / ',$choice).')').(empty($default) ? '' : ' ['.$default.']').': ');
-		if($invisible && substr(PHP_OS,0,3) != 'WIN') `tty -s && stty -echo`;
+		
+		if($invisible && substr(PHP_OS,0,3) != 'WIN'){
+			`tty -s && stty -echo`;
+		}
 		while(true){
 			fscanf(STDIN,'%s',$b);
 			if($multiline && $b == '.') break;

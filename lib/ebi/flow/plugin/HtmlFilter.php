@@ -12,6 +12,8 @@ class HtmlFilter{
 	 * @return string|mixed
 	 */	
 	public function before_exec_template($src){
+		$match = [];
+		
 		if(preg_match_all('/\$_t_->print_variable\((.+?)\);/ms',$src,$match)){
 			$src = str_replace($match[0],array_map(function($value){
 				if(strpos($value,'$_t_->htmlencode(') === false

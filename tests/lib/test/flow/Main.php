@@ -28,7 +28,6 @@ class Main extends \ebi\flow\Request{
 	 * @automap
 	 */
 	public function  vote(){
-\ebi\Log::trace($this->ar_vars());		
 		$note = \test\flow\model\Note::find_get(Q::eq('id',$this->in_vars('note_id')));
 		$note->vote($note->vote() + (int)$this->in_vars('point'));
 		$note->save();

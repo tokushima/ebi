@@ -57,7 +57,7 @@ class Man{
 		
 		self::find_deprecate($document,$info);
 		
-		$see = [];
+		$see = $m = [];
 		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
 			foreach($m[1] as $v){
 				$v = trim($v);
@@ -228,6 +228,8 @@ class Man{
 	}
 	
 	private static function find_deprecate($summary,$obj,$rootobj=null,$containt=false){
+		$m = $mm = [];
+		
 		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
 			$d = time();
 			
@@ -261,6 +263,7 @@ class Man{
 				try{
 					$before_ref = new \ReflectionMethod(self::get_class_name($class),'__before__');
 					
+					$m = [];
 					if(preg_match_all('/@.+$/',self::get_method_document($before_ref),$m)){
 						foreach($m[0] as $a){
 							$document = $a.PHP_EOL.$document;
@@ -273,6 +276,7 @@ class Man{
 			$src = self::method_src($ref);			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
+			$match = [];
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
 				$info->set_opt('http_method',strtoupper(trim($match[1])));
 			}else{
@@ -300,7 +304,7 @@ class Man{
 				}
 			}
 			$info->set_opt('see_list',$see);
-			$info->set_opt('class',$ref->getDeclaringClass()->getName());
+			$info->set_opt('class',self::get_class_name($class));
 			$info->set_opt('method',$ref->getName());
 			
 			self::find_deprecate($document,$info);
@@ -362,8 +366,7 @@ class Man{
 			}
 			$use_method_list = array_unique($use_method_list);
 			
-			
-			foreach($use_method_list as $k => $c){
+			foreach(array_keys($use_method_list) as $k){
 				$use_method_list[$k] = '\\'.$use_method_list[$k];
 				$use_method_list[$k] = preg_replace('/\\\\+/','\\',$use_method_list[$k]);
 			}
@@ -528,6 +531,7 @@ class Man{
 			if(is_file($ref->getDeclaringClass()->getFileName())){
 				$src = self::method_src($ref);
 				$vars = ['$this'=>$class];
+				$m = [];
 				
 				foreach($ref->getParameters() as $param){
 					if($param->hasType()){
@@ -544,6 +548,8 @@ class Man{
 					}
 				}
 				if(preg_match_all('/(\$\w+)\s*=\s*([\\\\\w]+)::(\w+)/',$src,$m)){
+					$r = [];
+					
 					foreach($m[1] as $k => $v){
 						try{
 							$ref = new \ReflectionMethod($m[2][$k],$m[3][$k]);

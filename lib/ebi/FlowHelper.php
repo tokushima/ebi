@@ -320,7 +320,7 @@ class FlowHelper{
 			$list = $url;
 			$url = '';
 		}
-		foreach($args as $k => $v){
+		foreach($args as $v){
 			if(is_array($v)){
 				$list = array_merge($list,$v);
 			}else if(is_string($v)){
