@@ -14,7 +14,7 @@ abstract class DbConnector{
 	public function __construct($encode=null,$timezone=null){
 		$this->encode = $encode;
 		$this->timezone = $timezone;
-	}	
+	}
 	
 	public static function type(){
 		return get_called_class();
@@ -111,6 +111,7 @@ abstract class DbConnector{
 		}
 		$vars = array_merge($updatevars,$wherevars);
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
+		
 		return new \ebi\Daq(
 			'update '.$this->quotation($column->table()).' set '.
 			implode(',',$update).' where '.implode(' and ',$where).
@@ -118,6 +119,44 @@ abstract class DbConnector{
 			array_merge($vars,$where_vars)
 		);
 	}
+	
+	/**
+	 * 条件式update文を生成する
+	 * @param \ebi\Dao $dao
+	 * @param \ebi\Q $query
+	 * @param string[] $target
+	 * @return Daq
+	 */
+	public function find_update_sql(\ebi\Dao $dao,\ebi\Q $query,$target){
+		$update = $updatevars = $from = [];
+		
+		$target_all = empty($target);
+		foreach($dao->columns(true) as $column){
+			if(!$column->primary() && ($target_all || in_array($column->name(),$target))){
+				$update[] = $this->quotation($column->column()).' = ?';
+				$updatevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
+			}
+		}
+		if(empty($update) || (!$target_all && sizeof($target) != sizeof($update))){
+			throw new \ebi\exception\InvalidQueryException('no update column');
+		}
+		list($where_sql,$where_vars) = $this->where_sql(
+			$dao,
+			$from,
+			$query,
+			$dao->columns(true),
+			null,
+			false
+		);
+		
+		return new \ebi\Daq(
+			'update '.$this->quotation($column->table()).' set '.
+			implode(',',$update).' where '.
+			$where_sql,
+			array_merge($updatevars,$where_vars)
+		);
+	}
+	
 	/**
 	 * delete文を生成する
 	 * @param Dao $dao

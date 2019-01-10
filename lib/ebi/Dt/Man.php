@@ -304,7 +304,7 @@ class Man{
 				}
 			}
 			$info->set_opt('see_list',$see);
-			$info->set_opt('class',$ref->getDeclaringClass()->getName());
+			$info->set_opt('class',self::get_class_name($class));
 			$info->set_opt('method',$ref->getName());
 			
 			self::find_deprecate($document,$info);

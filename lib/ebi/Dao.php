@@ -893,12 +893,43 @@ abstract class Dao extends \ebi\Obj{
 	public static function insert_multiple(array $data_objects){
 		foreach($data_objects as $obj){
 			if(!($obj instanceof static)){
-				throw new \ebi\exception\InvalidArgumentException();
+				throw new \ebi\exception\InvalidArgumentException('must be an '.get_class($obj));
 			}
 		}
 		$dao = new static();
 		$daq = self::$_con_[get_called_class()]->insert_multiple_sql($dao,$data_objects);
 		return $dao->update_query($daq);
+	}
+	
+	/**
+	 * 条件により更新する
+	 * before/after/verifyは実行されない
+	 * @return integer 実行した件数
+	 */
+	public static function find_update(self $obj){
+		if(!($obj instanceof static)){
+			throw new \ebi\exception\InvalidArgumentException('must be an '.get_class($obj));
+		}
+		$args = func_get_args();
+		array_shift($args);
+		
+		$target = [];
+		$query = new \ebi\Q();
+		
+		if(!empty($args)){
+			foreach($args as $arg){
+				if(is_string($arg)){
+					$target[] = $arg;
+				}else if($arg instanceof \ebi\Q){
+					$query->add($arg);
+				}
+			}
+		}
+		if(empty($target)){
+			throw new \ebi\exception\InvalidArgumentException('target column required');
+		}
+		$daq = self::$_con_[get_called_class()]->find_update_sql($obj,$query,$target);
+		return $obj->update_query($daq);
 	}
 	
 	/**
@@ -1114,9 +1145,8 @@ abstract class Dao extends \ebi\Obj{
 			
 			$this->validate();
 			$args = func_get_args();
-			$query = new \ebi\Q();
 			$target = [];
-			
+			$query = new \ebi\Q();			
 			if(!empty($args)){
 				foreach($args as $arg){
 					if(is_string($arg)){
