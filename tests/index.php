@@ -163,6 +163,13 @@ include_once('bootstrap.php');
 			];
 		},
 	],
+	'browser_form'=>[
+		'name'=>'browser_form',
+		'vars'=>[
+			
+		],
+		'template'=>'browser_form.html',
+	],
 	'deprecated/method'=>[
 		'name'=>'deprecated_method',
 		'action'=>'test.flow.Action::deprecated',
