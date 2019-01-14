@@ -85,7 +85,6 @@ class ZipCode{
 					$area = $parse_area_func($area);
 					$facility = $parse_area_func($facility);
 					
-					var_dump([$zip,$pref,$city,$area,$facility]);					
 					yield [$zip,$pref,$city,$area,$facility];
 				}
 			}
