@@ -549,6 +549,84 @@ class Browser{
 		$json = new \ebi\Json($this->body());
 		return $json->find($name);
 	}
+	
+	/**
+	 * FORMタグからform.action, form.method, varsを取得する
+	 * @param mixed $name form.name | form[index]
+	 * @param boolean $set varsにセットする
+	 * @throws \ebi\exception\NotFoundException
+	 * @return array action, method, vars
+	 */
+	public function form($name=1,$set=true){
+		$cnt = 0;
+		$vars = [];
+		
+		foreach(\ebi\Xml::extract($this->body(),'body')->find('form') as $form){
+			$cnt++;
+			
+			if(
+				(is_int($name) && $cnt == $name) || 
+				$form->in_attr('name') == $name || 
+				$form->in_attr('id') == $name
+			){
+				$chkbx_vars = [];
+				foreach($form->find(['input','textarea','select']) as $input){
+					if($input->is_attr('name')){
+						$tag = strtolower($input->name());
+						$nm = str_replace('[]','',$input->in_attr('name'));
+						
+						if($tag == 'input'){
+							$type = strtolower($input->in_attr('type'));
+							
+							if($type == 'hidden' || $type == 'text'){
+								$vars[$nm] = $input->in_attr('value');
+							}else if($input->is_attr('checked')){
+								if($type == 'radio'){
+									$vars[$nm] = $input->in_attr('value');
+								}else if($type == 'checkbox'){
+									$chkbx_vars[$nm] ?? [];
+									$chkbx_vars[$nm][] = $input->in_attr('value');
+								}
+							}
+						}else if($tag == 'textarea'){
+							$vars[$nm] = $input->value();
+						}else if($tag == 'select'){
+							$select = [];
+							$val = null;
+							
+							foreach($input->find('option') as $op){
+								if(!isset($val)){
+									$val = [$op->in_attr('value')];
+								}
+								if($op->is_attr('selected')){
+									$select[] = $op->in_attr('value');
+								}
+							}
+							if(empty($select)){
+								$select = $val;
+							}
+							$vars[$nm] = $input->is_attr('multiple') ? $select : array_shift($select);
+						}
+					}
+					if(!empty($chkbx_vars)){
+						$vars = array_merge($vars,$chkbx_vars);
+					}
+				}
+				if($set){
+					foreach($vars as $k => $v){
+						$this->vars($k,$v);
+					}
+				}				
+				return [
+					'action'=>\ebi\Util::path_absolute($this->url(),$form->in_attr('action')),
+					'method'=>strtolower($form->in_attr('method','get')),
+					'vars'=>$vars,
+				];
+			}
+		}
+		throw new \ebi\exception\NotFoundException('not found');
+	}
+	
 	/**
 	 * bodyをクエリ文字列として解析し配列として返す
 	 * @param string $name
