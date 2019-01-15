@@ -76,7 +76,7 @@ abstract class DbConnector{
 			$values[] = $sql;
 		}
 		return new \ebi\Daq(
-			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).')'.
+			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') '.
 			'values '.implode(',',$values).';'
 			,$vars
 		);
