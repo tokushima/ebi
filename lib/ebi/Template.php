@@ -75,7 +75,7 @@ class Template{
 		/**
 		 * 実行後処理
 		 * @param string $src
-		 * @return $src
+		 * @return string $src
 		 */
 		foreach($this->get_object_plugin_funcs('after_exec_template') as $o){
 			$src = static::call_func($o,$src);
@@ -98,7 +98,7 @@ class Template{
 		/**
 		 * 初期処理
 		 * @param string $src
-		 * @return $src
+		 * @return string $src
 		 */
 		foreach($this->get_object_plugin_funcs('init_template') as $o){
 			$src = static::call_func($o,$src);
@@ -107,7 +107,7 @@ class Template{
 		/**
 		 * 前処理
 		 * @param string $src
-		 * @return $src
+		 * @return string $src
 		 */		
 		foreach($this->get_object_plugin_funcs('before_template') as $o){
 			$src = static::call_func($o,$src);
@@ -116,7 +116,7 @@ class Template{
 		/**
 		 * 後処理
 		 * @param string $src
-		 * @return $src
+		 * @return string $src
 		 */		
 		foreach($this->get_object_plugin_funcs('after_template') as $o){
 			$src = static::call_func($o,$src);
@@ -144,7 +144,7 @@ class Template{
 		/**
 		 * 実行直前処理
 		 * @param string $src
-		 * @return $src
+		 * @return string $src
 		 */
 		foreach($this->get_object_plugin_funcs('before_exec_template') as $o){
 			$_src_ = static::call_func($o,$_src_);

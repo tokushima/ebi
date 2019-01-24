@@ -5,7 +5,12 @@ namespace ebi;
  * @author tokushima
  *
  */
-trait TemplateVariable{	
+trait TemplateVariable{
+	/**
+	 * HTMLエンコード
+	 * @param string $v
+	 * @return string
+	 */
 	public function htmlencode($v){
 		if(!empty($v) && is_string($v)){
 			$v = mb_convert_encoding($v,'UTF-8',mb_detect_encoding($v));
@@ -13,6 +18,11 @@ trait TemplateVariable{
 		}
 		return $v;
 	}
+	
+	/**
+	 * print
+	 * @param string $v
+	 */
 	public function print_variable($v){
 		print($v);
 	}
