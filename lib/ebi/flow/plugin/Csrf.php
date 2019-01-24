@@ -7,44 +7,29 @@ namespace ebi\flow\plugin;
 class Csrf{
 	private $token;
 	
-	public function before_flow_action(){
-		$req = new \ebi\Request();
-		$sess = new \ebi\Session();
+	/**
+	 * @plugin ebi.Flow
+	 * @param \ebi\flow\Request $req
+	 */
+	public function before_flow_action_request(\ebi\flow\Request $req){
+		/**
+		 * @param string $secret_key シークレットキー
+		 */
+		$secret_key = \ebi\Conf::get('secret_key',sha1(__FILE__));
 		
 		if($req->is_post()){
-			if($req->in_vars('csrftoken') != $sess->in_vars('csrftoken')){
+			$validtoken = $req->in_sessions('validtoken');
+			$req->rm_sessions('validtoken');
+			
+			if(empty($validtoken) || $validtoken != sha1($secret_key.$req->in_vars('csrftoken'))){
 				\ebi\HttpHeader::send_status(403);
 				throw new \ebi\exception\TokenMismatchException('CSRF verification failed');
 			}
 		}else{
 			$this->token = md5(rand(1000,10000).time());
-			$sess->vars('validtoken',$this->token);
+			$req->sessions('validtoken',sha1($secret_key.$this->token));
 		}
-		
 	}
-// 	/**
-// 	 * @plugin ebi.Flow
-// 	 * @param \ebi\flow\Request $req
-// 	 */
-// 	public function before_flow_action_request(\ebi\flow\Request $req){
-// 		/**
-// 		 * @param string $secret_key シークレットキー
-// 		 */
-// 		$secret_key = \ebi\Conf::get('secret_key',sha1(__FILE__));
-		
-// 		if($req->is_post()){
-// 			$validtoken = $req->in_sessions('validtoken');
-// 			$req->rm_sessions('validtoken');
-			
-// 			if(empty($validtoken) || $validtoken != sha1($secret_key.$req->in_vars('csrftoken'))){
-// 				\ebi\HttpHeader::send_status(403);
-// 				throw new \ebi\exception\TokenMismatchException('CSRF verification failed');
-// 			}
-// 		}else{
-// 			$this->token = md5(rand(1000,10000).time());
-// 			$req->sessions('validtoken',sha1($secret_key.$this->token));
-// 		}
-// 	}
 	
 	/**
 	 * @plugin ebi.Template
