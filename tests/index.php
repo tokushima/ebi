@@ -118,7 +118,14 @@ include_once('bootstrap.php');
 	
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.RequestFlow::file_upload'],
-		
+	
+	// TODO
+	'form/csrf'=>[
+		'name'=>'form_csrf',
+		'template'=>'form_csrf.html',
+		'action'=>'ebi.flow.Request::noop',
+		'plugins'=>'ebi.flow.plugin.Csrf',
+	], 
 	'get_method'=>['name'=>'ge_method','action'=>'test.flow.Action::get_method'],
 	
 	'flow/request/require/vars'=>['name'=>'require_vars','action'=>'test.flow.RequestFlow::require_vars'],
