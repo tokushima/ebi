@@ -49,16 +49,18 @@ class Session{
 					[$this,'destroy'],
 					[$this,'gc']
 				);
-				if(isset($this->vars[session_name()])){
-					session_regenerate_id(true);
-				}
 			}
 			session_start();
+			
 			register_shutdown_function(function(){
 				if('' != session_id()){
 					session_write_close();
 				}
 			});
+			
+			if(isset($this->vars[session_name()])){
+				session_regenerate_id(true);
+			}
 		}
 	}
 	
