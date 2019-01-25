@@ -223,6 +223,9 @@ include_once('bootstrap.php');
 	],
 	
 	''=>['action'=>'test.flow.Main'],
+	'info'=>['action'=>function(){
+		phpinfo();
+	}],
 	'dt'=>['action'=>'ebi.Dt','mode'=>'@dev'],
 ]);
 
