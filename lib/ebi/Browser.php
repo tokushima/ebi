@@ -351,7 +351,7 @@ class Browser{
 							if(!is_file($f=urldecode($s[1]))){
 								throw new \ebi\exception\InvalidArgumentException($f.' not found');
 							}
-							$vars[urldecode($s[0])] = (class_exists('\\CURLFile',false)) ? new \CURLFile($f) : '@'.$f;
+							$vars[urldecode($s[0])] = (class_exists('\\CURLFile',false)) ? new \CURLFile($f,null,basename($f)) : '@'.$f;
 						}
 					}
 					curl_setopt($this->resource,CURLOPT_POSTFIELDS,$vars);

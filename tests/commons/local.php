@@ -4,7 +4,7 @@
 		'appmode_group'=>[
 			'dev'=>['local'],
 		],
-		'session_lifetime'=>1,
+		'session_lifetime'=>60,
 	],
 	\ebi\Log::class=>[
 		'level'=>'debug',
