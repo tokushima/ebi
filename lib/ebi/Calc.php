@@ -210,27 +210,4 @@ class Calc{
 		}
 		throw new \ebi\exception\InvalidArgumentException();
 	}
-	
-	/**
-	 * 拡大率
-	 * @param number $a_width
-	 * @param number $a_height
-	 * @param number $b_width
-	 * @param number $b_height
-	 * @param boolean $minimum widthまたはheightの値を最小値とする
-	 * @return number
-	 */
-	public static function magnification($a_width,$a_height,$b_width,$b_height=null,$minimum=true){
-		$rw = empty($b_width) ? 1 : $b_width;
-		$rh = empty($b_height) ? 1 : $b_height;
-		
-		if(!empty($b_width) && !empty($b_height)){
-			$aw = $rw / $a_width;
-			$ah = $rh / $a_height;
-			return $minimum ? max($aw,$ah) : min($aw,$ah);
-		}else if(!isset($b_height)){
-			return $rw / $a_width;
-		}
-		return $rh / $a_height;
-	}
 }

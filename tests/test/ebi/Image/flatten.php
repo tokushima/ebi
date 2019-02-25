@@ -86,16 +86,45 @@ $layers = [
 		'pct'=>30,
 		'z'=>100,
 	],
+	[
+		'x'=>10,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'一',
+	],
+	[
+		'x'=>30,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'ニ',
+	],
+	[
+		'x'=>50,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'六',
+	],
+	[
+		'x'=>70,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'A!',
+	],
 ];
 
 $opt = [
 	'transparent-color'=>'#FFFFFF',
-	'font'=>'/System/Library/Fonts/ヒラギノ明朝 ProN.ttc',
-// 	'font'=>'/Users/tokushima/Downloads/M_PLUS_Rounded_1c/MPLUSRounded1c-Bold.ttf',
+	'font'=>'HIRAMIN',
 ];
 
 list($w,$h) = \ebi\Calc::get_size_px('a4');
+
+\ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
+\ebi\Image::load_font(\ebi\Conf::work_path('Noto_Sans_JP/NotoSansJP-Regular.otf'),'HIRAKAKU');
+\ebi\Image::load_font(\ebi\Conf::work_path('Roboto/Roboto-Regular.ttf'),'Roboto');
+
+
 $img = \ebi\Image::flatten($w, $h,$layers,$opt);
-//$img->write(\ebi\Conf::work_path('flatten.jpg'));
-$img->write(\ebi\WorkingStorage::path('flatten.jpg'));
+$img->write(\ebi\Conf::work_path('flatten.jpg'));
+//$img->write(\ebi\WorkingStorage::path('flatten.jpg'));
 
