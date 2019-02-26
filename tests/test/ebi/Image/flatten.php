@@ -1,4 +1,6 @@
 <?php
+\ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
+
 
 list($w,$h) = \ebi\Calc::get_size_px('a4');
 
@@ -141,9 +143,36 @@ $opt = [
 
 
 
-\ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
-
 $img = \ebi\Image::flatten($w, $h,$layers,$opt);
 $img->write(\ebi\Conf::work_path('flatten.jpg'));
-//$img->write(\ebi\WorkingStorage::path('flatten.jpg'));
+
+
+
+// $dpi = 300;
+// $gap = \ebi\Calc::mm2px(4,$dpi);
+// list($w,$h) = \ebi\Calc::get_size_px('MASHIKAKU',$dpi);
+// $img = \ebi\Image::flatten($w, $h,[
+// 	[
+// 		'x'=>$gap,
+// 		'y'=>$gap,
+// 		'src'=>(new \ebi\Image(\ebi\Conf::work_path('IMG_0547.jpg')))->crop_resize($w - ($gap * 2),$h - ($gap * 2)),
+// 	],
+// 	[
+// 		'x'=>$gap,
+// 		'y'=>$gap,
+// 		'width'=>$w - ($gap * 2),
+// 		'height'=>$h - ($gap * 2),
+// 		'font'=>'HIRAMIN',
+// 		'size'=>128,
+// 		'color'=>'#FFFFFF',
+// 		'align'=>\ebi\Image::TEXT_ALIGN_CENTER,
+// 		'valign'=>\ebi\Image::TEXT_VALIGN_MIDDLE,
+// 		'text'=>'あああ',
+// 	]
+// ]);
+// $img->write(\ebi\Conf::work_path('mashikaku.jpg'));
+
+
+
+
 

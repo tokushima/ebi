@@ -501,22 +501,22 @@ class Image{
 				
 				if($box_width > $text_width){
 					if($box_align === self::TEXT_ALIGN_CENTER){
-						$x = $x + (($box_width - $text_width) / 2);
+						$x = ($x + $box_width - $text_width) / 2;
 					}else if($box_align === self::TEXT_ALIGN_RIGHT){
-						$x = $x + ($box_width - $text_width);
+						$x = $x + $box_width - $text_width;
 					}
 				}
 				if($box_height > $text_height){
 					if($box_valign === self::TEXT_VALIGN_MIDDLE){
-						$y = $y + (($box_height - $text_height) / 2);
+						$y = ($y + $box_height - $text_height) / 2;
 					}else if($box_valign === self::TEXT_VALIGN_BOTTOM){
-						$y = $y + ($box_height - $text_height);
+						$y = $y + $box_height - $text_height;
 					}
 				}
 			}
 		}
 		list($r,$g,$b) = self::color2rgb($font_color);
-		
+	
 		imagefttext(
 			$this->canvas,
 			$font_point_size,
