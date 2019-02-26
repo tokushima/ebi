@@ -1,5 +1,7 @@
 <?php
 
+list($w,$h) = \ebi\Calc::get_size_px('a4');
+
 $layers = [
 	[
 		'x'=>100,
@@ -111,6 +113,25 @@ $layers = [
 		'size'=>16,
 		'text'=>'A!',
 	],
+	[
+		'color'=>'#FF0000',
+		'width'=>$w,
+		'height'=>$h,
+		'align'=>\ebi\Image::TEXT_ALIGN_CENTER,
+		'valign'=>\ebi\Image::TEXT_ALIGN_CENTER,
+		'size'=>32,
+		'text'=>'abc',
+	],
+	[
+		'x'=>50,
+		'color'=>'#00FF00',
+		'width'=>$w-100,
+		'height'=>$h-100,
+		'align'=>\ebi\Image::TEXT_ALIGN_RIGHT,
+		'valign'=>\ebi\Image::TEXT_VALIGN_BOTTOM,
+		'size'=>16,
+		'text'=>'ABC',
+	],
 ];
 
 $opt = [
@@ -118,7 +139,7 @@ $opt = [
 	'font'=>'HIRAMIN',
 ];
 
-list($w,$h) = \ebi\Calc::get_size_px('a4');
+
 
 \ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
 

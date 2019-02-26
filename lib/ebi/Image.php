@@ -25,6 +25,14 @@ class Image{
 	const CHANNELS_GLAY = 1;
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
+	
+	const TEXT_ALIGN_LEFT = 0;
+	const TEXT_ALIGN_CENTER = 1;
+	const TEXT_ALIGN_RIGHT = 2;
+	
+	const TEXT_VALIGN_TOP = 0;
+	const TEXT_VALIGN_MIDDLE = 1;
+	const TEXT_VALIGN_BOTTOM = 2;
 
 	private static $font_path = [];
 	private $canvas;
@@ -144,19 +152,25 @@ class Image{
 				}else if(isset($layer['text'])){
 					$font_color = $layer['color'] ?? '#000000';
 					$font_size = $layer['size'] ?? 16;
-					$angle = $layer['angle'] ?? 0;
-					$linespacing = ($layer['leading'] ?? $font_size) / $font_size;
 					$font_name = $layer['font'] ?? $default_font;
-					$boxwidth = $layer['width'] ?? ($width - $x);
+					
+					$extrainfo = [
+						'angle'=>($layer['angle'] ?? 0),
+						'width'=>($layer['width'] ?? ($width - $x)),
+						'height'=>($layer['height'] ?? null),
+						'align'=>($layer['align'] ?? 0),
+						'valign'=>($layer['valign'] ?? 0),
+						'linespacing'=>(($layer['leading'] ?? $font_size) / $font_size),
+					];
 					
 					if($pct == 100){
-						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$linespacing,$boxwidth);
+						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
 					}else{
 						$font_color = strtoupper($font_color);
 						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
 						
 						$m = static::filled_rectangle($width, $height,$transparent_color);
-						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$linespacing,$boxwidth);
+						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
 						$m->transparent_color($transparent_color);
 						
 						$img->merge(0,0,$m,$pct);
@@ -424,36 +438,83 @@ class Image{
 	 * @param number $font_point_size フォントサイズ
 	 * @param string $font_name
 	 * @param string $text
+	 * 
 	 * @param number $angle 回転軸は左下
 	 * @param number $linespacing 行間隔、フォントサイズとの比率
 	 * @return \ebi\Image
 	 */
-	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$angle=0,$linespacing=1,$box_width=null){
+	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$extrainfo=[]){
 		if(!isset(self::$font_path[$font_name])){
 			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}
-		$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], $text,['linespacing'=>$linespacing]);
+		$angle = ($extrainfo['angle'] ?? 0) * -1;
+		$linespacing = $extrainfo['linespacing'] ?? 1;
+		$box_width = $extrainfo['width'] ?? null;
+		$box_height = $extrainfo['height'] ?? null;
+		$box_align = $extrainfo['align'] ?? 0;
+		$box_valign = $extrainfo['valign'] ?? 0;
+		
+		$font_box = imageftbbox(
+			$font_point_size,
+			$angle,
+			self::$font_path[$font_name],
+			$text,
+			['linespacing'=>$linespacing]
+		);
 		$text_width = $font_box[2] - $font_box[0];
 		
-		if(!empty($box_width) && $text_width > $box_width){
-			$len = mb_strlen($text);
-
-			$t = '';
-			$s = 0;
-			for($i=0;$i<$len;$i++){
-				$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], mb_substr($text,$s,$i-$s+1),['linespacing'=>$linespacing]);
-				$w = $font_box[2] - $font_box[0];
+		if(!empty($box_width)){
+			if($text_width > $box_width){
+				$len = mb_strlen($text);
+	
+				$t = '';
+				$s = 0;
+				for($i=0;$i<$len;$i++){
+					$font_box = imageftbbox(
+						$font_point_size,
+						$angle,
+						self::$font_path[$font_name],
+						mb_substr($text,$s,$i-$s+1),
+						['linespacing'=>$linespacing]
+					);
+					$w = $font_box[2] - $font_box[0];
+					
+					if($w > $box_width){
+						$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
+						$s = $i;
+						$i--;
+					}
+				}
+				$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
+			}
+			
+			if($box_align > 0 || $box_valign > 0){
+				$font_box = imageftbbox(
+					$font_point_size,
+					$angle,
+					self::$font_path[$font_name],
+					$text,
+					['linespacing'=>$linespacing]
+				);
+				$text_width = $font_box[2] - $font_box[0];
+				$text_height = $font_box[3] - $font_box[5];
 				
-				if($w > $box_width){
-					$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
-					$s = $i;
-					$i--;
+				if($box_width > $text_width){
+					if($box_align === self::TEXT_ALIGN_CENTER){
+						$x = $x + (($box_width - $text_width) / 2);
+					}else if($box_align === self::TEXT_ALIGN_RIGHT){
+						$x = $x + ($box_width - $text_width);
+					}
+				}
+				if($box_height > $text_height){
+					if($box_valign === self::TEXT_VALIGN_MIDDLE){
+						$y = $y + (($box_height - $text_height) / 2);
+					}else if($box_valign === self::TEXT_VALIGN_BOTTOM){
+						$y = $y + ($box_height - $text_height);
+					}
 				}
 			}
-			$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
 		}
-		$angle = $angle * -1;
-		
 		list($r,$g,$b) = self::color2rgb($font_color);
 		
 		imagefttext(
