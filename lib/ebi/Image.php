@@ -145,17 +145,18 @@ class Image{
 					$font_color = $layer['color'] ?? '#000000';
 					$font_size = $layer['size'] ?? 16;
 					$angle = $layer['angle'] ?? 0;
+					$linespacing = ($layer['leading'] ?? $font_size) / $font_size;
 					$font_name = $layer['font'] ?? $default_font;
 					$boxwidth = $layer['width'] ?? ($width - $x);
 					
 					if($pct == 100){
-						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$boxwidth);
+						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$linespacing,$boxwidth);
 					}else{
 						$font_color = strtoupper($font_color);
 						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
 						
 						$m = static::filled_rectangle($width, $height,$transparent_color);
-						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$boxwidth);
+						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$angle,$linespacing,$boxwidth);
 						$m->transparent_color($transparent_color);
 						
 						$img->merge(0,0,$m,$pct);
@@ -363,13 +364,13 @@ class Image{
 	 * 画像のサイズを変更する
 	 * @param integer $width 変更後の幅
 	 * @param integer $height 変更後の高さ
-	 * @param boolean $minimum widthまたはheightの値を最小値とする
+	 * @param boolean $aspect_ratio アスペクト比を維持する
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
-	public function resize($width,$height=null,$minimum=true){
+	public function resize($width,$height=null,$aspect_ratio=true){
 		list($w,$h) = $this->get_size();
-		$m = self::magnification($w,$h,$width,$height,$minimum);
+		$m = self::magnification($w,$h,$width,$height,$aspect_ratio);
 		$cw = ceil($w * $m);
 		$ch = ceil($h * $m);
 		
@@ -420,17 +421,18 @@ class Image{
 	 * @param integer $x 左上座標
 	 * @param integer $y　左上座標
 	 * @param string $font_color
-	 * @param number $font_point_size
+	 * @param number $font_point_size フォントサイズ
 	 * @param string $font_name
 	 * @param string $text
 	 * @param number $angle 回転軸は左下
+	 * @param number $linespacing 行間隔、フォントサイズとの比率
 	 * @return \ebi\Image
 	 */
-	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$angle=0,$box_width=null){
+	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$angle=0,$linespacing=1,$box_width=null){
 		if(!isset(self::$font_path[$font_name])){
 			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}
-		$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], $text);
+		$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], $text,['linespacing'=>$linespacing]);
 		$text_width = $font_box[2] - $font_box[0];
 		
 		if(!empty($box_width) && $text_width > $box_width){
@@ -439,7 +441,7 @@ class Image{
 			$t = '';
 			$s = 0;
 			for($i=0;$i<$len;$i++){
-				$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], mb_substr($text,$s,$i-$s+1));
+				$font_box = imageftbbox($font_point_size,$angle, self::$font_path[$font_name], mb_substr($text,$s,$i-$s+1),['linespacing'=>$linespacing]);
 				$w = $font_box[2] - $font_box[0];
 				
 				if($w > $box_width){
@@ -454,7 +456,7 @@ class Image{
 		
 		list($r,$g,$b) = self::color2rgb($font_color);
 		
-		imagettftext(
+		imagefttext(
 			$this->canvas,
 			$font_point_size,
 			$angle,
@@ -462,7 +464,8 @@ class Image{
 			($y + $font_point_size),
 			imagecolorallocate($this->canvas,$r,$g,$b),
 			self::$font_path[$font_name],
-			$text
+			$text,
+			['linespacing'=>$linespacing]
 		);
 		return $this;
 	}
@@ -620,17 +623,17 @@ class Image{
 	 * @param number $a_height
 	 * @param number $b_width
 	 * @param number $b_height
-	 * @param boolean $minimum widthまたはheightの値を最小値とする
+	 * @param boolean $aspect_ratio アスペクト比を維持する
 	 * @return number
 	 */
-	private static function magnification($a_width,$a_height,$b_width,$b_height=null,$minimum=true){
+	private static function magnification($a_width,$a_height,$b_width,$b_height=null,$aspect_ratio=true){
 		$rw = empty($b_width) ? 1 : $b_width;
 		$rh = empty($b_height) ? 1 : $b_height;
 		
 		if(!empty($b_width) && !empty($b_height)){
 			$aw = $rw / $a_width;
 			$ah = $rh / $a_height;
-			return $minimum ? max($aw,$ah) : min($aw,$ah);
+			return $aspect_ratio ? max($aw,$ah) : min($aw,$ah);
 		}else if(!isset($b_height)){
 			return $rw / $a_width;
 		}

@@ -41,7 +41,8 @@ $layers = [
 	[
 		'x'=>10,
 		'y'=>200,
-		'size'=>12,
+		'size'=>11,
+		'leading'=>9,
 		'text'=>'じゅげむじゅげむ '.
 				'ごこうのすりきれ '.
 				'かいじゃりすいぎょの '.
@@ -120,9 +121,6 @@ $opt = [
 list($w,$h) = \ebi\Calc::get_size_px('a4');
 
 \ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
-\ebi\Image::load_font(\ebi\Conf::work_path('Noto_Sans_JP/NotoSansJP-Regular.otf'),'HIRAKAKU');
-\ebi\Image::load_font(\ebi\Conf::work_path('Roboto/Roboto-Regular.ttf'),'Roboto');
-
 
 $img = \ebi\Image::flatten($w, $h,$layers,$opt);
 $img->write(\ebi\Conf::work_path('flatten.jpg'));
