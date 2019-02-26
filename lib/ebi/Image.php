@@ -25,9 +25,17 @@ class Image{
 	const CHANNELS_GLAY = 1;
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
-		
+	
+	const TEXT_ALIGN_LEFT = 0;
+	const TEXT_ALIGN_CENTER = 1;
+	const TEXT_ALIGN_RIGHT = 2;
+	
+	const TEXT_VALIGN_TOP = 0;
+	const TEXT_VALIGN_MIDDLE = 1;
+	const TEXT_VALIGN_BOTTOM = 2;
+
+	private static $font_path = [];
 	private $canvas;
-	private $font_path;
 	
 	/**
 	 * 
@@ -61,6 +69,18 @@ class Image{
 		if(is_resource($this->canvas)){
 			imagedestroy($this->canvas);
 		}
+	}
+	
+	/**
+	 * フォントファイルを設定する
+	 * @param string $font_path
+	 * @param string $font_name
+	 */
+	public static function load_font($font_path,$font_name=null){
+		if(empty($font_name)){
+			$font_name = preg_replace('/^(.+)\..+$/','\\1',basename($font_path));
+		}
+		self::$font_path[$font_name] = $font_path;
 	}
 	
 	/**
@@ -107,7 +127,6 @@ class Image{
 			return ($za < $zb) ? -1 : 1;
 		});
 		
-		$cuurent_font = null;
 		foreach($layers as $layer){
 			$x = $layer['x'] ?? 0;
 			$y = $layer['y'] ?? 0;
@@ -133,23 +152,25 @@ class Image{
 				}else if(isset($layer['text'])){
 					$font_color = $layer['color'] ?? '#000000';
 					$font_size = $layer['size'] ?? 16;
-					$angle = $layer['angle'] ?? 0;
-					$font = $layer['font'] ?? $default_font;
-					$boxwidth = $layer['width'] ?? ($width - $x);
+					$font_name = $layer['font'] ?? $default_font;
 					
-					if($cuurent_font != $font){
-						$img->font($font);
-						$cuurent_font = $font;
-					}
+					$extrainfo = [
+						'angle'=>($layer['angle'] ?? 0),
+						'width'=>($layer['width'] ?? ($width - $x)),
+						'height'=>($layer['height'] ?? null),
+						'align'=>($layer['align'] ?? 0),
+						'valign'=>($layer['valign'] ?? 0),
+						'linespacing'=>(($layer['leading'] ?? $font_size) / $font_size),
+					];
+					
 					if($pct == 100){
-						$img->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
 					}else{
 						$font_color = strtoupper($font_color);
 						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
 						
 						$m = static::filled_rectangle($width, $height,$transparent_color);
-						$m->font($font);
-						$m->text($x, $y, $font_color, $font_size, $layer['text'],$angle,$boxwidth);
+						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
 						$m->transparent_color($transparent_color);
 						
 						$img->merge(0,0,$m,$pct);
@@ -292,6 +313,19 @@ class Image{
 	}
 	
 	/**
+	 * 指定した幅と高さに合うようにリサイズとトリミングをする
+	 * @param integer $width
+	 * @param integer $height
+	 */
+	public function crop_resize($width,$height){
+		if($this->get_orientation() == self::ORIENTATION_PORTRAIT){
+			$this->resize($width,$height,true)->crop($width, $height,null,0);
+		}else{
+			$this->resize($width,$height,true)->crop($width, $height);
+		}
+		return $this;
+	}
+	/**
 	 * 画像の一部を抽出する
 	 * @param integer $width 抽出する幅
 	 * @param integer $height 抽出する高さ
@@ -344,13 +378,13 @@ class Image{
 	 * 画像のサイズを変更する
 	 * @param integer $width 変更後の幅
 	 * @param integer $height 変更後の高さ
-	 * @param boolean $minimum widthまたはheightの値を最小値とする
+	 * @param boolean $aspect_ratio アスペクト比を維持する
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
-	public function resize($width,$height=null,$minimum=true){
+	public function resize($width,$height=null,$aspect_ratio=true){
 		list($w,$h) = $this->get_size();
-		$m = \ebi\Calc::magnification($w,$h,$width,$height,$minimum);
+		$m = self::magnification($w,$h,$width,$height,$aspect_ratio);
 		$cw = ceil($w * $m);
 		$ch = ceil($h * $m);
 		
@@ -397,81 +431,106 @@ class Image{
 	}
 	
 	/**
-	 * フォントを設定する
-	 * @param string $font_path
-	 * @return \ebi\Image
-	 */
-	public function font($font_path){
-		$this->font_path = $font_path;
-		
-		return $this;
-	}
-	
-	/**
 	 * テキストを画像に書き込む
 	 * @param integer $x 左上座標
 	 * @param integer $y　左上座標
 	 * @param string $font_color
-	 * @param number $font_point_size
+	 * @param number $font_point_size フォントサイズ
+	 * @param string $font_name
 	 * @param string $text
+	 * 
 	 * @param number $angle 回転軸は左下
-	 * @throws \ebi\exception\UndefinedException
+	 * @param number $linespacing 行間隔、フォントサイズとの比率
 	 * @return \ebi\Image
 	 */
-	public function text($x,$y,$font_color,$font_point_size,$text,$angle=0,$box_width=null){
-		if(empty($this->font_path)){
-			throw new \ebi\exception\UndefinedException('undefined font');
+	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$extrainfo=[]){
+		if(!isset(self::$font_path[$font_name])){
+			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}
-		list($text_width,$text_height) = $this->get_textbox_size($font_point_size,$text,$angle);
+		$angle = ($extrainfo['angle'] ?? 0) * -1;
+		$linespacing = $extrainfo['linespacing'] ?? 1;
+		$box_width = $extrainfo['width'] ?? null;
+		$box_height = $extrainfo['height'] ?? null;
+		$box_align = $extrainfo['align'] ?? 0;
+		$box_valign = $extrainfo['valign'] ?? 0;
 		
-		if(!empty($box_width) && $text_width > $box_width){
-			$len = mb_strlen($text);
-
-			$t = '';
-			$s = 0;
-			for($i=0;$i<$len;$i++){
-				$v = mb_substr($text,$s,$i-$s+1);
-				list($w) = $this->get_textbox_size($font_point_size,$v,$angle);
+		$font_box = imageftbbox(
+			$font_point_size,
+			$angle,
+			self::$font_path[$font_name],
+			$text,
+			['linespacing'=>$linespacing]
+		);
+		$text_width = $font_box[2] - $font_box[0];
+		
+		if(!empty($box_width)){
+			if($text_width > $box_width){
+				$len = mb_strlen($text);
+	
+				$t = '';
+				$s = 0;
+				for($i=0;$i<$len;$i++){
+					$font_box = imageftbbox(
+						$font_point_size,
+						$angle,
+						self::$font_path[$font_name],
+						mb_substr($text,$s,$i-$s+1),
+						['linespacing'=>$linespacing]
+					);
+					$w = $font_box[2] - $font_box[0];
+					
+					if($w > $box_width){
+						$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
+						$s = $i;
+						$i--;
+					}
+				}
+				$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
+			}
+			
+			if($box_align > 0 || $box_valign > 0){
+				$font_box = imageftbbox(
+					$font_point_size,
+					$angle,
+					self::$font_path[$font_name],
+					$text,
+					['linespacing'=>$linespacing]
+				);
+				$text_width = $font_box[2] - $font_box[0];
+				$text_height = $font_box[3] - $font_box[5];
 				
-				if($w > $box_width){
-					$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
-					$s = $i;
-					$i--;
+				if($box_width > $text_width){
+					if($box_align === self::TEXT_ALIGN_CENTER){
+						$x = $x + (($box_width - $text_width) / 2);
+					}else if($box_align === self::TEXT_ALIGN_RIGHT){
+						$x = $x + ($box_width - $text_width);
+					}
+				}
+				if($box_height > $text_height){
+					if($box_valign === self::TEXT_VALIGN_MIDDLE){
+						$y = $y + (($box_height - $text_height) / 2);
+					}else if($box_valign === self::TEXT_VALIGN_BOTTOM){
+						$y = $y + ($box_height - $text_height);
+					}
 				}
 			}
-			$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
 		}
-		
-		$angle = $angle * -1;
-		
 		list($r,$g,$b) = self::color2rgb($font_color);
 		
-		imagettftext(
+		imagefttext(
 			$this->canvas,
 			$font_point_size,
 			$angle,
 			$x,
-			($y + $text_height),
+			($y + $font_point_size),
 			imagecolorallocate($this->canvas,$r,$g,$b),
-			$this->font_path,
-			$text
+			self::$font_path[$font_name],
+			$text,
+			['linespacing'=>$linespacing]
 		);
-		
 		return $this;
 	}
-	
-	/**
-	 * テキストボックスのサイズ
-	 * @param number $font_point_size
-	 * @param number $text
-	 * @param number $angle
-	 * @return number[]
-	 */
-	public function get_textbox_size($font_point_size,$text,$angle=0){
-		$font_box = imageftbbox($font_point_size,$angle, $this->font_path, $text);
-		return [($font_box[2] - $font_box[0]),($font_box[1] - $font_box[7])];
-	}
-	
+		
 	/**
 	 * 画像を結合する
 	 * $pctを指定した場合はアルファ透過が有効になりPNGの透過情報が失われる
@@ -494,152 +553,11 @@ class Image{
 	}
 	
 	/**
-	 * 写真配置計算
-	 * @param integer $width 台紙の幅
-	 * @param integer $height 台紙の高さ
-	 * @param integer $resize_type 0: フチなし, 1: フチあり, 2: 広フチ, 3: 下フチ, 4: 正方形下フチ
-	 * @param integer $margine 余白
-	 * @number[] x, y, width, height
-	 */
-	public static function get_photo_layout($width,$height,$resize_type,$margine=0){
-		$gap = ceil($width * 0.045) + $margine;
-		$margin = ceil($height * 0.15);
-
-		switch($resize_type){
-			case 0:
-				$pw = $width;
-				$ph = $height;
-				$x = 0;
-				$y = 0;
-				break;
-			case 1:
-				$pw = $width - $gap - $gap;
-				$ph = $height - $gap - $gap;
-				$x = $gap;
-				$y = $gap;
-				break;
-			case 2:
-				$pw = $width - $gap - $gap;
-				$ph = $height - $margin - $margin;
-				$x = $gap;
-				$y = $margin;
-				break;
-			case 3:
-				$pw = $width - $gap - $gap;
-				$ph = $height - $gap - $margin;
-				$x = $gap;
-				$y = $gap;
-				break;
-			case 4:
-				$pw = ceil((($width > $height) ? $height : $width) - ($gap * 2));
-				$ph = $pw;
-				$x = $gap;
-				$y = $gap;
-				break;
-			default:
-				throw new \InvalidArgumentException();
-		}
-		return [$x,$y,$pw,$ph];
-	}
-	
-	
-	/**
-	 * グリッドレイアウト配置情報
-	 * @param number $width
-	 * @param number $height
-	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
-	 * @param integer $grid_gap px
-	 * @return number{} [filename=>[width,height,crop_x,crop_y,merge_x,merge_y]]
-	 */
-	public static function get_grid_layout($width,$height,array $image_layout,$grid_gap=0){
-		$grid_info = [];
-		
-		$w = $width - $grid_gap;
-		$h = $height - $grid_gap;
-		
-		foreach($image_layout as $filename => $layout){
-			$info = self::get_info($filename);
-			
-			$mx = ($w * $layout[0] / 100) + $grid_gap;
-			$my = ($h * $layout[1] / 100) + $grid_gap;
-			
-			$lw = ($w * $layout[2] / 100) - $grid_gap;
-			$lh = ($h * $layout[3] / 100) - $grid_gap;
-			
-			$m = \ebi\Calc::magnification($info['width'],$info['height'],$lw,$lh);
-			$cw = ($info['width'] * $m);
-			$ch = ($info['height'] * $m);
-			
-			$cx = floor(($cw - $lw) / 2);
-			$cx = ($cx >= 0) ? $cx : 0;
-			
-			if($info['orientation'] == self::ORIENTATION_PORTRAIT){
-				$cy = 0;
-			}else{
-				$cy = floor(($ch - $lh) / 2);
-				$cy = ($cy >= 0) ? $cy : 0;
-			}
-			$grid_info[$filename] = [
-				'width'=>$lw,
-				'height'=>$lh,
-				'crop_x'=>$cx,
-				'crop_y'=>$cy,
-				'merge_x'=>$mx,
-				'merge_y'=>$my,
-			];
-		}
-		return $grid_info;
-	}
-	
-	/**
-	 * グリッドレイアウトでマージする
-	 * @param array $image_layout [path=>[x%,y%,w%,h%]]
-	 * @param integer $grid_gap px
-	 */
-	public function grid(array $image_layout,$grid_gap=0){
-		list($width,$height) = $this->get_size();
-		
-		$grid_info = self::get_grid_layout($width,$height,$image_layout,$grid_gap);
-		
-		foreach($grid_info as $filename => $info){
-			$img = new static($filename);
-			$img->resize($info['width'],$info['height']);
-			$img->crop($info['width'],$info['height'],$info['crop_x'],$info['crop_y']);
-			
-			$this->merge(ceil($info['merge_x']),ceil($info['merge_y']),$img);
-		}
-		return $this;
-	}
-	
-	/**
-	 * 写真をリサイズしてcropする
-	 * @param integer $width
-	 * @param integer $height
-	 */
-	public function photo_crop($width,$height){
-		if($this->get_orientation() == self::ORIENTATION_PORTRAIT){
-			$this->resize($width,$height,true)->crop($width, $height,null,0);
-		}else{
-			$this->resize($width,$height,true)->crop($width, $height);
-		}
-		return $this;
-	}
-	/**
-	 * 切り取ってサムネイルを作成する
-	 * @param integer $width 幅
-	 * @param integer $height 高さ
-	 * @return \ebi\Image
-	 */
-	public function thumbnail($width,$height){
-		return $this->resize($width, $height)->crop($width, $height);
-	}
-	
-	/**
 	 * カラーモードからRGB（10進数）を返す
 	 * @param string $color_code
 	 * @return integer[] R,G,B
 	 */
-	public static function color2rgb($color_code){
+	private static function color2rgb($color_code){
 		if(substr($color_code,0,1) == '#'){
 			$color_code = substr($color_code,1);
 		}
@@ -758,5 +676,28 @@ class Image{
 			'</g></svg>',
 			$width,$height,$width,$height,$color,$opacity
 		);
+	}
+	
+	/**
+	 * 拡大率
+	 * @param number $a_width
+	 * @param number $a_height
+	 * @param number $b_width
+	 * @param number $b_height
+	 * @param boolean $aspect_ratio アスペクト比を維持する
+	 * @return number
+	 */
+	private static function magnification($a_width,$a_height,$b_width,$b_height=null,$aspect_ratio=true){
+		$rw = empty($b_width) ? 1 : $b_width;
+		$rh = empty($b_height) ? 1 : $b_height;
+		
+		if(!empty($b_width) && !empty($b_height)){
+			$aw = $rw / $a_width;
+			$ah = $rh / $a_height;
+			return $aspect_ratio ? max($aw,$ah) : min($aw,$ah);
+		}else if(!isset($b_height)){
+			return $rw / $a_width;
+		}
+		return $rh / $a_height;
 	}
 }

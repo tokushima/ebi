@@ -1,5 +1,7 @@
 <?php
 
+list($w,$h) = \ebi\Calc::get_size_px('a4');
+
 $layers = [
 	[
 		'x'=>100,
@@ -41,7 +43,8 @@ $layers = [
 	[
 		'x'=>10,
 		'y'=>200,
-		'size'=>12,
+		'size'=>11,
+		'leading'=>9,
 		'text'=>'じゅげむじゅげむ '.
 				'ごこうのすりきれ '.
 				'かいじゃりすいぎょの '.
@@ -86,16 +89,61 @@ $layers = [
 		'pct'=>30,
 		'z'=>100,
 	],
+	[
+		'x'=>10,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'一',
+	],
+	[
+		'x'=>30,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'ニ',
+	],
+	[
+		'x'=>50,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'六',
+	],
+	[
+		'x'=>70,
+		'y'=>600,
+		'size'=>16,
+		'text'=>'A!',
+	],
+	[
+		'color'=>'#FF0000',
+		'width'=>$w,
+		'height'=>$h,
+		'align'=>\ebi\Image::TEXT_ALIGN_CENTER,
+		'valign'=>\ebi\Image::TEXT_ALIGN_CENTER,
+		'size'=>32,
+		'text'=>'abc',
+	],
+	[
+		'x'=>50,
+		'color'=>'#00FF00',
+		'width'=>$w-100,
+		'height'=>$h-100,
+		'align'=>\ebi\Image::TEXT_ALIGN_RIGHT,
+		'valign'=>\ebi\Image::TEXT_VALIGN_BOTTOM,
+		'size'=>16,
+		'text'=>'ABC',
+	],
 ];
 
 $opt = [
 	'transparent-color'=>'#FFFFFF',
-	'font'=>'/System/Library/Fonts/ヒラギノ明朝 ProN.ttc',
-// 	'font'=>'/Users/tokushima/Downloads/M_PLUS_Rounded_1c/MPLUSRounded1c-Bold.ttf',
+	'font'=>'HIRAMIN',
 ];
 
-list($w,$h) = \ebi\Calc::get_size_px('a4');
+
+
+\ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
+
 $img = \ebi\Image::flatten($w, $h,$layers,$opt);
-//$img->write(\ebi\Conf::work_path('flatten.jpg'));
-$img->write(\ebi\WorkingStorage::path('flatten.jpg'));
+$img->write(\ebi\Conf::work_path('flatten.jpg'));
+//$img->write(\ebi\WorkingStorage::path('flatten.jpg'));
 
