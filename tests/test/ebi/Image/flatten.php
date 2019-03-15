@@ -1,5 +1,5 @@
 <?php
-\ebi\Image::load_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
+\ebi\Image::set_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
 
 
 list($w,$h) = \ebi\Calc::get_size_px('a4');
