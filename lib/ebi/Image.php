@@ -72,11 +72,11 @@ class Image{
 	}
 	
 	/**
-	 * フォントファイルを設定する
+	 * フォントファイルパスに名前を設定する
 	 * @param string $font_path
 	 * @param string $font_name
 	 */
-	public static function load_font($font_path,$font_name=null){
+	public static function set_font($font_path,$font_name=null){
 		if(empty($font_name)){
 			$font_name = preg_replace('/^(.+)\..+$/','\\1',basename($font_path));
 		}
@@ -102,6 +102,34 @@ class Image{
 		}
 		return $self;
 	}
+
+	/**
+	 * 塗りつぶした矩形を作成する
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @return \ebi\Image
+	 */
+	public static function create($width,$height,$color='#FFFFFF'){
+		$self = new static(__FILE__);
+		
+		try{
+			list($r,$g,$b) = self::color2rgb($color);
+			
+			$self->canvas = imagecreatetruecolor($width,$height);
+			imagefilledrectangle(
+				$self->canvas,
+				0,
+				0,
+				$width,
+				$height,
+				imagecolorallocate($self->canvas,$r,$g,$b)
+			);
+		}catch(\Exception $e){
+			throw new \ebi\exception\ImageException();
+		}
+		return $self;
+	}
 	
 	/**
 	 * 定義配列を統合してイメージを作成
@@ -115,7 +143,7 @@ class Image{
 		$background_color = $opt['background-color'] ?? '#FFFFFF';
 		$transparent_color = $opt['transparent-color'] ?? null;
 		$default_font = $opt['font'] ?? null;
-		$img = self::filled_rectangle($width, $height,$background_color);
+		$img = self::create($width, $height,$background_color);
 		
 		usort($layers,function($a,$b){
 			$za = $a['z'] ?? 0;
@@ -169,7 +197,7 @@ class Image{
 						$font_color = strtoupper($font_color);
 						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
 						
-						$m = static::filled_rectangle($width, $height,$transparent_color);
+						$m = self::create($width, $height,$transparent_color);
 						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
 						$m->transparent_color($transparent_color);
 						
@@ -182,33 +210,6 @@ class Image{
 	}
 	
 	/**
-	 * 塗りつぶした矩形を作成する
-	 * @param integer $width
-	 * @param integer $height
-	 * @param string $color
-	 * @return \ebi\Image
-	 */
-	public static function filled_rectangle($width,$height,$color='#FFFFFF'){
-		$self = new static(__FILE__);
-		
-		try{
-			list($r,$g,$b) = self::color2rgb($color);
-			
-			$self->canvas = imagecreatetruecolor($width,$height);
-			imagefilledrectangle(
-				$self->canvas,
-				0,
-				0,
-				$width,
-				$height,
-				imagecolorallocate($self->canvas,$r,$g,$b)
-			);
-		}catch(\Exception $e){
-			throw new \ebi\exception\ImageException();
-		}
-		return $self;
-	}
-	/**
 	 * 矩形を描画する
 	 * @param integer $x
 	 * @param integer $y
@@ -217,10 +218,14 @@ class Image{
 	 * @param string $color
 	 * @return \ebi\Image
 	 */
-	public function rectangle($x,$y,$width,$height,$color){
+	public function rectangle($x,$y,$width,$height,$color,$fill=false){
 		list($r,$g,$b) = self::color2rgb($color);
-		imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
 		
+		if($fill){
+			imagefilledrectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
+		}else{
+			imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
+		}
 		return $this;
 	}
 	

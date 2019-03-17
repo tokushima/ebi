@@ -22,7 +22,7 @@ class ZipCode{
 				}
 			],
 			[
-				'http://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip',
+				'https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip',
 				'JIGYOSYO.CSV',
 				function($line){
 					list(,,$facility,$pref,$city,$area1,$area2,$zip) = explode(',',$line);
