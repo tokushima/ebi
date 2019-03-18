@@ -26,13 +26,13 @@ class Image{
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
 	
-	const TEXT_ALIGN_LEFT = 0;
-	const TEXT_ALIGN_CENTER = 1;
-	const TEXT_ALIGN_RIGHT = 2;
+	const ALIGN_LEFT = 0;
+	const ALIGN_CENTER = 1;
+	const ALIGN_RIGHT = 2;
 	
-	const TEXT_VALIGN_TOP = 0;
-	const TEXT_VALIGN_MIDDLE = 1;
-	const TEXT_VALIGN_BOTTOM = 2;
+	const VALIGN_TOP = 0;
+	const VALIGN_MIDDLE = 1;
+	const VALIGN_BOTTOM = 2;
 
 	private static $font_path = [];
 	private $canvas;
@@ -323,11 +323,7 @@ class Image{
 	 * @param integer $height
 	 */
 	public function crop_resize($width,$height){
-		if($this->get_orientation() == self::ORIENTATION_PORTRAIT){
-			$this->resize($width,$height,true)->crop($width, $height,null,0);
-		}else{
-			$this->resize($width,$height,true)->crop($width, $height);
-		}
+		$this->resize($width,$height,true)->crop($width, $height);
 		return $this;
 	}
 	/**
@@ -404,7 +400,7 @@ class Image{
 	}
 	
 	/**
-	 * 回転
+	 * 回転 (右回り)
 	 * @param integer $angle 角度
 	 * @param string $background_color
 	 * @return \ebi\Image
@@ -413,7 +409,7 @@ class Image{
 		list($r,$g,$b) = self::color2rgb($background_color);
 		
 		$color = imagecolorallocate($this->canvas,$r,$g,$b);
-		$canvas = imagerotate($this->canvas,$angle,(($color === false) ? 0 : $color));
+		$canvas = imagerotate($this->canvas,$angle * -1,(($color === false) ? 0 : $color));
 		imagedestroy($this->canvas);
 		$this->canvas = $canvas;
 		
@@ -505,16 +501,16 @@ class Image{
 				$text_height = $font_box[3] - $font_box[5];
 				
 				if($box_width > $text_width){
-					if($box_align === self::TEXT_ALIGN_CENTER){
+					if($box_align === self::ALIGN_CENTER){
 						$x = ($x + $box_width - $text_width) / 2;
-					}else if($box_align === self::TEXT_ALIGN_RIGHT){
+					}else if($box_align === self::ALIGN_RIGHT){
 						$x = $x + $box_width - $text_width;
 					}
 				}
 				if($box_height > $text_height){
-					if($box_valign === self::TEXT_VALIGN_MIDDLE){
+					if($box_valign === self::VALIGN_MIDDLE){
 						$y = ($y + $box_height - $text_height) / 2;
-					}else if($box_valign === self::TEXT_VALIGN_BOTTOM){
+					}else if($box_valign === self::VALIGN_BOTTOM){
 						$y = $y + $box_height - $text_height;
 					}
 				}
