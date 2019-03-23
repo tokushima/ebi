@@ -229,6 +229,54 @@ class Image{
 		return $this;
 	}
 	
+	/**
+	 * 画像にフィルタを適用する
+	 * 
+	 * filtertype
+	 *  IMG_FILTER_NEGATE: 色反転
+	 *  IMG_FILTER_GRAYSCALE: グレイスケール
+	 *  IMG_FILTER_EDGEDETECT: エッジの強調
+	 *  IMG_FILTER_EMBOSS: エンボス
+	 *  IMG_FILTER_GAUSSIAN_BLUR: ガウス
+	 *  IMG_FILTER_SELECTIVE_BLUR: ぼかし
+	 *  IMG_FILTER_MEAN_REMOVAL: スケッチ風
+	 *  
+	 *  IMG_FILTER_BRIGHTNESS: 輝度, arg1(レベル)=-255〜255
+	 *  IMG_FILTER_CONTRAST: コントラスト, arg1(レベル)=-255〜255
+	 *  IMG_FILTER_SMOOTH: 滑らかさ, arg1(レベル)=-8〜8
+	 *  
+	 *  IMG_FILTER_PIXELATE: モザイク効果, arg1(ブロックのピクセルサイズ), arg2(モザイク効果)=boolean
+	 *  
+	 *  IMG_FILTER_COLORIZE: カラーバランス, arg1(R)=0〜255, arg2(G)=0〜255, arg3(B)=0〜255, arg4(Alpha)=0〜127 
+	 *  
+	 * @param integer $filtertype IMG_FILTER_*
+	 * @param integer $arg1
+	 * @param mixed $arg2 IMG_FILTER_PIXELATE: boolean, IMG_FILTER_COLORIZE: integer
+	 * @param integer $arg3
+	 * @param integer $arg4
+	 * @return \ebi\Image
+	 * 
+	 * @see http://php.net/manual/ja/function.imagefilter.php
+	 */
+	public function filter($filtertype,$arg1=0,$arg2=0,$arg3=0,$arg4=0){
+		switch($filtertype){
+			case IMG_FILTER_BRIGHTNESS:
+			case IMG_FILTER_CONTRAST:
+			case IMG_FILTER_SMOOTH:
+				imagefilter($this->canvas,$filtertype,$arg1);
+				break;
+			case IMG_FILTER_PIXELATE:
+				imagefilter($this->canvas,$filtertype,$arg1,\ebi\Util::is_true($arg2));
+				break;
+			case IMG_FILTER_COLORIZE:
+				imagefilter($this->canvas,$filtertype,$arg1,$arg2,$arg3,$arg4);
+				break;
+			default:
+				imagefilter($this->canvas,$filtertype);
+		}
+		return $this;
+	}
+	
 	
 	/**
 	 * ファイルに書き出す

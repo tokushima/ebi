@@ -1,7 +1,7 @@
 <?php
 $filename = \testman\Resource::path('test.jpg');
 
-$out_format = \ebi\WorkingStorage::path(base64_encode(__FILE__).'_%s.jpg');
+$out_format = \ebi\WorkingStorage::tmpdir().'/'.base64_encode(__FILE__).'_%s.jpg';
 //$out_format = \ebi\Conf::work_path(base64_encode(__FILE__).'_%s.jpg');
 
 $image = new \ebi\Image($filename);
