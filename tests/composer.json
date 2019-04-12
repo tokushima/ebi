@@ -1,5 +1,5 @@
 {
-	"name" : "tokushima/ebi/test",
+	"name" : "tokushima/ebi_test",
 	"autoload" : {
 		"psr-0" : {
 			"test" : "lib/"

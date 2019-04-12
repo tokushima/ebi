@@ -1,6 +1,6 @@
 <?php
-//$outpath = \ebi\Conf::work_path('flatten.jpg');
-$outpath = \ebi\WorkingStorage::path('flatten.jpg');
+$outpath = \ebi\Conf::work_path('flatten.jpg');
+// $outpath = \ebi\WorkingStorage::path('flatten.jpg');
 
 \ebi\Image::set_font('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc','HIRAMIN');
 

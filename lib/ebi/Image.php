@@ -36,6 +36,7 @@ class Image{
 
 	private static $font_path = [];
 	private $canvas;
+	private $alpha = false;
 	
 	/**
 	 * 
@@ -107,23 +108,30 @@ class Image{
 	 * 塗りつぶした矩形を作成する
 	 * @param integer $width
 	 * @param integer $height
-	 * @param string $color
+	 * @param string $color #FFFFFF, nullの場合は透明
 	 * @return \ebi\Image
 	 */
-	public static function create($width,$height,$color='#FFFFFF'){
+	public static function create($width,$height,$color=null){
 		$self = new static(__FILE__);
 		
 		try{
+			$self->canvas = imagecreatetruecolor($width,$height);
+			$alpha = 0;
+			
+			if(empty($color)){
+				$color = '#FFFFFF';
+				imagealphablending($self->canvas, false);
+				imagesavealpha($self->canvas, true);
+				$alpha = 127;
+				$self->alpha = true;
+			}
 			list($r,$g,$b) = self::color2rgb($color);
 			
-			$self->canvas = imagecreatetruecolor($width,$height);
-			imagefilledrectangle(
+			imagefill(
 				$self->canvas,
 				0,
 				0,
-				$width,
-				$height,
-				imagecolorallocate($self->canvas,$r,$g,$b)
+				imagecolorallocatealpha($self->canvas,$r,$g,$b,$alpha)
 			);
 		}catch(\Exception $e){
 			throw new \ebi\exception\ImageException();
@@ -438,9 +446,15 @@ class Image{
 		$ch = ceil($h * $m);
 		
 		$canvas = imagecreatetruecolor($cw,$ch);
+		
+		if($this->alpha){
+			imagealphablending($canvas, false);
+			imagesavealpha($canvas, true);
+		}
+		
 		if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
 			throw new \ebi\exception\ImageException();
-		}			
+		}
 		imagedestroy($this->canvas);
 		$this->canvas = $canvas;
 		
@@ -473,7 +487,6 @@ class Image{
 		list($r,$g,$b) = self::color2rgb($color);
 		
 		$transparent_color = imagecolorallocate($this->canvas,$r,$g,$b);
-		
 		imagecolortransparent($this->canvas, $transparent_color);
 		
 		return $this;
