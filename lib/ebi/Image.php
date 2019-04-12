@@ -36,7 +36,6 @@ class Image{
 
 	private static $font_path = [];
 	private $canvas;
-	private $alpha = false;
 	
 	/**
 	 * 
@@ -123,7 +122,6 @@ class Image{
 				imagealphablending($self->canvas, false);
 				imagesavealpha($self->canvas, true);
 				$alpha = 127;
-				$self->alpha = true;
 			}
 			list($r,$g,$b) = self::color2rgb($color);
 			
@@ -138,85 +136,7 @@ class Image{
 		}
 		return $self;
 	}
-	
-	/**
-	 * 定義配列を統合してイメージを作成
-	 * @param integer $width
-	 * @param integer $height
-	 * @param array $layers 
-	 * @param array $opt
-	 * @return \ebi\Image
-	 */
-	public static function flatten($width,$height,array $layers,array $opt=[]){
-		$background_color = $opt['background-color'] ?? '#FFFFFF';
-		$transparent_color = $opt['transparent-color'] ?? null;
-		$default_font = $opt['font'] ?? null;
-		$img = self::create($width, $height,$background_color);
 		
-		usort($layers,function($a,$b){
-			$za = $a['z'] ?? 0;
-			$zb = $b['z'] ?? 0;
-			
-			if($za == $zb){
-				return 0;
-			}
-			return ($za < $zb) ? -1 : 1;
-		});
-		
-		foreach($layers as $layer){
-			$x = $layer['x'] ?? 0;
-			$y = $layer['y'] ?? 0;
-			
-			$pct = $layer['pct'] ?? 100;
-			
-			if($width >= $x && $height >= $y){
-				if(isset($layer['src'])){
-					if($layer['src'] instanceof self){
-						if(!empty($transparent_color)){
-							$layer['src']->transparent_color($transparent_color);
-						}
-						
-						$img->merge($x, $y, $layer['src'],$pct);
-					}else if(is_file($layer['src'])){
-						$m = new static($layer['src']);
-						
-						if(!empty($transparent_color)){
-							$m->transparent_color($transparent_color);
-						}
-						$img->merge($x,$y,$m,$pct);
-					}
-				}else if(isset($layer['text'])){
-					$font_color = $layer['color'] ?? '#000000';
-					$font_size = $layer['size'] ?? 16;
-					$font_name = $layer['font'] ?? $default_font;
-					
-					$extrainfo = [
-						'angle'=>($layer['angle'] ?? 0),
-						'width'=>($layer['width'] ?? ($width - $x)),
-						'height'=>($layer['height'] ?? null),
-						'align'=>($layer['align'] ?? 0),
-						'valign'=>($layer['valign'] ?? 0),
-						'linespacing'=>(($layer['leading'] ?? $font_size) / $font_size),
-					];
-					
-					if($pct == 100){
-						$img->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
-					}else{
-						$font_color = strtoupper($font_color);
-						$transparent_color = (strtoupper($font_color) == '#FFFFFF') ? '#000000' : '#FFFFFF';
-						
-						$m = self::create($width, $height,$transparent_color);
-						$m->text($x, $y, $font_color, $font_size, $font_name, $layer['text'],$extrainfo);
-						$m->transparent_color($transparent_color);
-						
-						$img->merge(0,0,$m,$pct);
-					}
-				}
-			}
-		}
-		return $img;
-	}
-	
 	/**
 	 * 矩形を描画する
 	 * @param integer $x
@@ -224,15 +144,17 @@ class Image{
 	 * @param integer $width
 	 * @param integer $height
 	 * @param string $color
+	 * @param integer $alpha 0〜127 (透明) PNGでのみ有効
 	 * @return \ebi\Image
 	 */
-	public function rectangle($x,$y,$width,$height,$color,$fill=false){
+	public function rectangle($x,$y,$width,$height,$color,$fill=false,$alpha=0){
 		list($r,$g,$b) = self::color2rgb($color);
+		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
 		
 		if($fill){
-			imagefilledrectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
+			imagefilledrectangle($this->canvas,$x,$y,$x + $width,$y + $height,$c);
 		}else{
-			imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,imagecolorallocate($this->canvas,$r,$g,$b));
+			imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,$c);
 		}
 		return $this;
 	}
@@ -446,11 +368,8 @@ class Image{
 		$ch = ceil($h * $m);
 		
 		$canvas = imagecreatetruecolor($cw,$ch);
-		
-		if($this->alpha){
-			imagealphablending($canvas, false);
-			imagesavealpha($canvas, true);
-		}
+		imagealphablending($canvas, false);
+		imagesavealpha($canvas, true);
 		
 		if(false === imagecopyresampled($canvas,$this->canvas,0,0,0,0,$cw,$ch,$w,$h)){
 			throw new \ebi\exception\ImageException();
@@ -496,103 +415,59 @@ class Image{
 	 * テキストを画像に書き込む
 	 * @param integer $x 左上座標
 	 * @param integer $y　左上座標
-	 * @param string $font_color
+	 * @param string $font_color #FFFFFF
 	 * @param number $font_point_size フォントサイズ
-	 * @param string $font_name
-	 * @param string $text
-	 * 
+	 * @param string $font_name set_fontで指定したフォント名
+	 * @param string $text テキスト
 	 * @param number $angle 回転軸は左下
-	 * @param number $linespacing 行間隔、フォントサイズとの比率
 	 * @return \ebi\Image
 	 */
-	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$extrainfo=[]){
+	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$angle=0){
 		if(!isset(self::$font_path[$font_name])){
 			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}
-		$angle = ($extrainfo['angle'] ?? 0) * -1;
-		$linespacing = $extrainfo['linespacing'] ?? 1;
-		$box_width = $extrainfo['width'] ?? null;
-		$box_height = $extrainfo['height'] ?? null;
-		$box_align = $extrainfo['align'] ?? 0;
-		$box_valign = $extrainfo['valign'] ?? 0;
-		
-		$font_box = imageftbbox(
-			$font_point_size,
-			$angle,
-			self::$font_path[$font_name],
-			$text,
-			['linespacing'=>$linespacing]
-		);
-		$text_width = $font_box[2] - $font_box[0];
-		
-		if(!empty($box_width)){
-			if($text_width > $box_width){
-				$len = mb_strlen($text);
-	
-				$t = '';
-				$s = 0;
-				for($i=0;$i<$len;$i++){
-					$font_box = imageftbbox(
-						$font_point_size,
-						$angle,
-						self::$font_path[$font_name],
-						mb_substr($text,$s,$i-$s+1),
-						['linespacing'=>$linespacing]
-					);
-					$w = $font_box[2] - $font_box[0];
-					
-					if($w > $box_width){
-						$t .= mb_substr($text,$s,$i-$s).PHP_EOL;
-						$s = $i;
-						$i--;
-					}
-				}
-				$text = $t.(($s < $i) ? mb_substr($text,$s) : '');
-			}
-			
-			if($box_align > 0 || $box_valign > 0){
-				$font_box = imageftbbox(
-					$font_point_size,
-					$angle,
-					self::$font_path[$font_name],
-					$text,
-					['linespacing'=>$linespacing]
-				);
-				$text_width = $font_box[2] - $font_box[0];
-				$text_height = $font_box[3] - $font_box[5];
-				
-				if($box_width > $text_width){
-					if($box_align === self::ALIGN_CENTER){
-						$x = ($x + $box_width - $text_width) / 2;
-					}else if($box_align === self::ALIGN_RIGHT){
-						$x = $x + $box_width - $text_width;
-					}
-				}
-				if($box_height > $text_height){
-					if($box_valign === self::VALIGN_MIDDLE){
-						$y = ($y + $box_height - $text_height) / 2;
-					}else if($box_valign === self::VALIGN_BOTTOM){
-						$y = $y + $box_height - $text_height;
-					}
-				}
-			}
-		}
 		list($r,$g,$b) = self::color2rgb($font_color);
-	
+		
 		imagefttext(
 			$this->canvas,
 			$font_point_size,
-			$angle,
+			($angle * -1),
 			$x,
 			($y + $font_point_size),
 			imagecolorallocate($this->canvas,$r,$g,$b),
 			self::$font_path[$font_name],
-			$text,
-			['linespacing'=>$linespacing]
+			$text
 		);
 		return $this;
 	}
+	
+	/**
+	 * テキストの幅と高さ
+	 * @param number $font_point_size フォントサイズ
+	 * @param string $font_name フォント名
+	 * @param string $text テキスト
+	 * @param number $angle 回転軸は左下
+	 * @throws \ebi\exception\UndefinedException
+	 * @return number[] [width,height]
+	 */
+	public static function get_text_size($font_point_size,$font_name,$text,$angle=0){
+		if(!isset(self::$font_path[$font_name])){
+			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
+		}
+		$info = imageftbbox(
+			$font_point_size,
+			($angle * -1),
+			self::$font_path[$font_name],
+			$text
+		);
 		
+		$w = $info[2] - $info[0];
+		$h = $info[3] - $info[5];
+		
+		return [$w,$h];
+	}
+	
+	
 	/**
 	 * 画像を結合する
 	 * $pctを指定した場合はアルファ透過が有効になりPNGの透過情報が失われる
@@ -600,7 +475,7 @@ class Image{
 	 * @param integer $x
 	 * @param integer $y
 	 * @param \ebi\Image $img
-	 * @param number $pct
+	 * @param integer $pct 0〜100
 	 * @return \ebi\Image
 	 */
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
