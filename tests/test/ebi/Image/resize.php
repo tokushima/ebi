@@ -1,9 +1,9 @@
 <?php
-$out = \ebi\Conf::work_path('resize.jpg');
-$out_png = \ebi\Conf::work_path('resize.png');
+// $out = \ebi\Conf::work_path('resize.jpg');
+// $out_png = \ebi\Conf::work_path('resize.png');
 
-//$out = \ebi\WorkingStorage::path('resize.jpg');
-//$out_png = \ebi\WorkingStorage::path('resize.png');
+$out = \ebi\WorkingStorage::path('resize.jpg');
+$out_png = \ebi\WorkingStorage::path('resize.png');
 
 
 $filename = \testman\Resource::path('test.jpg');

@@ -396,21 +396,7 @@ class Image{
 		
 		return $this;
 	}
-	
-	/**
-	 * 透明色の設定
-	 * @param string $color
-	 * @return \ebi\Image
-	 */
-	public function transparent_color($color='#000000'){
-		list($r,$g,$b) = self::color2rgb($color);
 		
-		$transparent_color = imagecolorallocate($this->canvas,$r,$g,$b);
-		imagecolortransparent($this->canvas, $transparent_color);
-		
-		return $this;
-	}
-	
 	/**
 	 * テキストを画像に書き込む
 	 * @param integer $x 左上座標
