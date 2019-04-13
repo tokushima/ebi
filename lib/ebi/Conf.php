@@ -152,7 +152,7 @@ class Conf{
 	}
 	/**
 	 * 現在のアプリケーションモードがモードに所属しているか
-	 * @param string $mode アプリケーションモード
+	 * @param string $mode アプリケーションモード、　グループを指定する場合は「@グループ名」
 	 * @return  boolean
 	 */
 	public static function in_mode($mode){
