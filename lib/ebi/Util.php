@@ -623,4 +623,23 @@ class Util{
 		}
 		return array_keys($list);
 	}
+	/**
+	 * 文字列を圧縮する
+	 * @param string $string
+	 * @param boolean $base64
+	 * @return string
+	 */
+	public static function compress($string,$base64=false){
+		return ($base64) ? base64_encode(gzdeflate($string)) : gzdeflate($string);
+	}
+	
+	/**
+	 * 文字列を解凍する
+	 * @param string $string
+	 * @param boolean $base64
+	 * @return string
+	 */
+	public static function uncompress($string,$base64=false){
+		return ($base64) ? gzinflate(base64_decode($string)) : gzinflate($string);
+	}
 }
