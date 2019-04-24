@@ -51,7 +51,7 @@ class HttpFile{
 				
 				\ebi\HttpHeader::send_status(206);
 				\ebi\HttpHeader::send('Accept-Ranges','bytes');
-				\ebi\HttpHeader::send('Content-length',sprint('%u',$length));
+				\ebi\HttpHeader::send('Content-length',sprintf('%u',$length));
 				\ebi\HttpHeader::send('Content-Range',sprintf('bytes %u-%u/%u',$offset,$end,filesize($filename)));
 
 				print(file_get_contents($filename,null,null,$offset,$length));
