@@ -442,7 +442,7 @@ abstract class DbConnector{
 					switch($ct){
 						case 'number':
 						case 'serial': 
-						case 'integer':							
+						case 'integer':
 						case 'timestamp':
 						case 'date':
 						case 'time':

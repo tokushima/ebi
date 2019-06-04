@@ -351,7 +351,7 @@ abstract class Dao extends \ebi\Obj{
 					$column->table_alias($_self_columns_[$cond_name]->table_alias());
 				}else if(isset($_where_columns_[$cond_name])){
 					$column->table($_where_columns_[$cond_name]->table());
-					$column->table_alias($_where_columns_[$cond_name]->table_alias());					
+					$column->table_alias($_where_columns_[$cond_name]->table_alias());
 				}else{
 					throw new \ebi\exception\InvalidQueryException('undef var `'.$name.'`');
 				}
@@ -1146,7 +1146,7 @@ abstract class Dao extends \ebi\Obj{
 			$this->validate();
 			$args = func_get_args();
 			$target = [];
-			$query = new \ebi\Q();			
+			$query = new \ebi\Q();
 			if(!empty($args)){
 				foreach($args as $arg){
 					if(is_string($arg)){

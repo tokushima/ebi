@@ -112,6 +112,18 @@ class AutoAction{
 	}
 	
 	/**
+	 * @automap
+	 * @param string $a
+	 * @param string $b
+	 */
+	public function mno($a,$b){
+		return [
+			'A'=>$a,
+			'B'=>$b,
+		];
+	}
+	
+	/**
 	 * @automap @['secure'=>false]
 	 */
 	public function nosecure(){

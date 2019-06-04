@@ -165,7 +165,7 @@ class Util{
 				}
 			}
 			krsort($dir);
-						
+			
 			foreach(array_keys($dir) as $d){
 				rmdir($d);
 			}
@@ -189,7 +189,7 @@ class Util{
 			$dest = realpath($dest);
 			
 			foreach(self::ls($source,true) as $f){
-				$destp = $dest.'/'.substr($f->getPathname(),$len);				
+				$destp = $dest.'/'.substr($f->getPathname(),$len);
 				self::mkdir(dirname($destp));
 				copy($f->getPathname(),$destp);
 			}
@@ -364,7 +364,7 @@ class Util{
 			array_shift($params);
 			if(is_array($params[0])){
 				$params = $params[0];
-			}			
+			}
 			foreach($match[1] as $key => $value){
 				$i = ((int)$value) - 1;
 				$str = str_replace($match[0][$key],isset($params[$i]) ? $params[$i] : '',$str);
@@ -563,7 +563,7 @@ class Util{
 		if(empty($str)){
 			return '';
 		}
-		$str = preg_replace("/^.*\\\\(.+)$/","\\1",$str);	
+		$str = preg_replace("/^.*\\\\(.+)$/","\\1",$str);
 		
 		$name = strtolower($str[0]);
 		

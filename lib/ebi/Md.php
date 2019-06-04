@@ -43,7 +43,7 @@ class Md{
 						$line = '';
 					}else if($trim_line[0] == '*'){
 						$this->html_list($line, $explode_lines, $lines);
-						$line = '';					
+						$line = '';
 					}
 				}
 			}
@@ -78,7 +78,7 @@ class Md{
 				}
 				$result = str_replace($m[0][$k],sprintf('<a href="%s">%s</a>',$m[2][$k],$m[1][$k]),$result);
 			}
-		}		
+		}
 		
 		foreach($escape as $k => $e){
 			$result = str_replace('@%'.$k,$e,$result);

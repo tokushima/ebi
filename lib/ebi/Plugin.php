@@ -22,7 +22,7 @@ trait Plugin{
 			}
 		}else{
 			$g = get_called_class();
-			if(is_string($o) && class_exists(($c='\\'.str_replace('.','\\',$o)))) $o = new $c();		
+			if(is_string($o) && class_exists(($c='\\'.str_replace('.','\\',$o)))) $o = new $c();
 			$t = (is_object($o) ? 1 : 0) + (is_callable($o) ? 2 : 0);
 			if($t === 1){
 				self::$_plug_funcs[$g][] = $o;

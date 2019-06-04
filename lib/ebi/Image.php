@@ -292,7 +292,7 @@ class Image{
 				default:
 					imagejpeg($this->canvas);
 			}
-		return ob_get_clean();		
+		return ob_get_clean();
 	}
 	
 	/**

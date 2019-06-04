@@ -36,7 +36,7 @@ class Benchmark{
 				
 				\ebi\Util::file_append($record_file,implode("\t",$report).PHP_EOL);
 			});
-		}		
+		}
 	}
 	/**
 	 * 開始する
