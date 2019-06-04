@@ -434,18 +434,18 @@ class Paginator implements \IteratorAggregate{
 			}
 			if(isset($navi['counter'])){
 				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
-				.sprintf('<?php if(%s->total() == 0){ ?>',$param)
-				.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
-				.'<?php }else{ ?>'
-						.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
-						.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
-						.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
-						.'<?php }else{ ?>'
-								.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
+							.sprintf('<?php if(%s->total() == 0){ ?>',$param)
+								.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
+							.'<?php }else{ ?>'
+								.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
+									.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
+										.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
+									.'<?php }else{ ?>'
+										.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
+									.'<?php } ?>'
 								.'<?php } ?>'
-										.'<?php } ?>'
-												.'<?php } ?>'
-														.'<?php } ?>';
+							.'<?php } ?>'
+						.'<?php } ?>';
 			}
 			if(isset($navi['last'])){
 				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);

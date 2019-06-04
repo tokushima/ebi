@@ -9,6 +9,10 @@ include_once('bootstrap.php');
 		'action'=>'test.flow.AutoAction',
 		'version'=>'20161123'
 	],
+	'ABC/(.+)'=>[
+		'name'=>'automap_arg',
+		'action'=>'test.flow.AutoAction',
+	],
 	'DEF/(.+)/(.+)'=>['action'=>'test.flow.AutoAction::jkl'],
 	'template_abc'=>['name'=>'template_abc','template'=>'abc.html'],
 	'template_abc/def'=>['name'=>'template_def','template'=>'abc.html'],
@@ -119,7 +123,6 @@ include_once('bootstrap.php');
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test.flow.RequestFlow::file_upload'],
 	
-	// TODO
 	'form/csrf'=>[
 		'name'=>'form_csrf',
 		'template'=>'form_csrf.html',

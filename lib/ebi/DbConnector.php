@@ -442,7 +442,7 @@ abstract class DbConnector{
 					switch($ct){
 						case 'number':
 						case 'serial': 
-						case 'integer':							
+						case 'integer':
 						case 'timestamp':
 						case 'date':
 						case 'time':
@@ -610,7 +610,7 @@ abstract class DbConnector{
 			case 'string':
 			case 'alnum':
 			case 'text':
-				return $this->quotation($name).' TEXT';
+				return $this->quotation($name).' VARCHAR(3000)';
 			case 'number':
 				return $this->quotation($name).' REAL';
 			case 'serial':
@@ -623,7 +623,7 @@ abstract class DbConnector{
 			case 'integer':
 				return $this->quotation($name).' INTEGER';
 			case 'email':
-				return $this->quotation($name).' TEXT';
+				return $this->quotation($name).' VARCHAR(255)';
 			default:
 				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 		}

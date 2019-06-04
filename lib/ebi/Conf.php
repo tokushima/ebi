@@ -161,7 +161,7 @@ class Conf{
 		 * 
 		 * @param string{} $group アプリケーションモードのグループ 
 		 */
-		$group = self::get_self_conf_get('appmode_group',[]);		
+		$group = self::get_self_conf_get('appmode_group',[]);
 		$chkmode = is_array($mode) ? 
 			$mode : 
 			((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));

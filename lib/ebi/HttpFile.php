@@ -65,7 +65,7 @@ class HttpFile{
 					flush();
 				}
 				fclose($fp);
-				exit;				
+				exit;
 			}
 		}	
 		\ebi\HttpHeader::send_status(404);

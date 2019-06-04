@@ -14,7 +14,7 @@ class LogMailSender{
 	 * @version 1.3.4
 	 */
 	public function log_output(\ebi\Log $log){
-		$mail = new \ebi\Mail();			
+		$mail = new \ebi\Mail();
 		
 		/**
 		 * @param mixed{} $arg1 メールにバインドする変数
@@ -125,7 +125,7 @@ class LogMailSender{
 					 * @param \ebi\Env $env
 					 */
 					$mail->send_template('logs/debug.xml',$vars);
-					break;					
+					break;
 			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}

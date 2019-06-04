@@ -138,7 +138,7 @@ class Template{
 		}
 		$src = str_replace($str,$php,$src);
 		$src = str_replace(['__ESC_DQ__','__ESC_SQ__','__ESC_DESC__'],["\\\"","\\'","\\\\"],$src);
-		return $src;		
+		return $src;
 	}
 	private function exec($_src_){
 		/**
@@ -284,7 +284,7 @@ class Template{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:loop');
 				$tag->escape(false);
-				$value = $tag->value();				
+				$value = $tag->value();
 				
 				try{
 					while(true){
@@ -362,7 +362,7 @@ class Template{
 	}
 	private function html_script_search($src,&$keys,&$tags){
 		$keys = $tags = [];
-		$uniq = uniqid('uniq');		
+		$uniq = uniqid('uniq');
 		$i = 0;
 		
 		foreach(\ebi\Xml::anonymous($src)->find('script') as $obj){
@@ -422,7 +422,7 @@ class Template{
 							case 'file':
 								$obj->attr('enctype','multipart/form-data');
 								$obj->attr('method','post');
-								break;								
+								break;
 							default:
 								$tag->attr('rt:ref','true');
 								$obj->value(str_replace($tag->plain(),$tag->get(),$obj->value()));
@@ -480,7 +480,7 @@ class Template{
 					$obj->rm_attr('rt:param','rt:key','rt:var','rt:null');
 					$change = true;
 				}
-								
+				
 				if($tagname == 'input'){
 					if($this->is_reference($obj)){
 						if($type == 'checkbox' || $type == 'radio'){

@@ -117,7 +117,7 @@ class Flow{
 		foreach($params as $vn){
 			if(is_string($vn) && isset($vn[0]) && $vn[0] == '@'){
 				$vnm = substr($vn,1);
-
+				
 				if(!isset($vars[$vnm])){
 					throw new \ebi\exception\InvalidArgumentException('variable '.$vnm.' not found');
 				}
@@ -312,7 +312,7 @@ class Flow{
 				try{
 					if(array_key_exists('action',$pattern)){
 						if(is_string($pattern['action'])){
-							list($class,$method) = explode('::',$pattern['action']);							
+							list($class,$method) = explode('::',$pattern['action']);
 						}else if(is_callable($pattern['action'])){
 							$funcs = $pattern['action'];
 						}else{
@@ -645,25 +645,27 @@ class Flow{
 			$r = new \ReflectionClass(str_replace('.','\\',$class));
 			$d = substr($r->getFilename(),0,-4);
 			$group_parents = (preg_match('/\\\\[A-Z](.+)$/',$r->getNamespaceName(),$m)) ? (substr_count($m[1],'\\') + 1) : null;
+			$urlcaps = 0;
 			
+			if(strpos($url,'(') !== false){
+				$um = [];
+				if(preg_match_all('/\(.+?\)/',$url,$um)){
+					$urlcaps = sizeof($um[0]);
+				}
+			}
 			foreach($r->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 				if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
-					$suffix = '';
 					$auto_anon = \ebi\Annotation::get_method($r->getName(),$m->getName(),'automap');
 					
 					if(is_array($auto_anon)){
-						$base_name = $m->getName();
-	
-						if(isset($auto_anon['suffix'])){
-							$suffix = $auto_anon['suffix'];
-							unset($auto_anon['suffix']);
-						}
-						if(isset($auto_anon['name'])){
-							$base_name = $auto_anon['name'];
-							unset($auto_anon['name']);
-						}
-						$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name).str_repeat('/(.+)',$m->getNumberOfRequiredParameters());
+						$base_name = $auto_anon['name'] ?? $m->getName();
+						$param_qty = $m->getNumberOfRequiredParameters() - $urlcaps;
+						$suffix = $auto_anon['suffix'] ?? '';
+						$murl = $url.(($m->getName() == 'index') ? '' : (($url == '') ? '' : '/').$base_name);
 						
+						if($param_qty > 0){
+							$murl .= str_repeat('/(.+)',$param_qty);
+						}
 						$result[$murl.$suffix] = [
 							'name'=>$name.'/'.$base_name,
 							'action'=>$class.'::'.$m->getName(),
@@ -674,7 +676,6 @@ class Flow{
 						if(isset($group_parents)){
 							$result[$murl.$suffix]['&'] = $group_parents;
 						}
-						
 						if(!empty($auto_anon)){
 							$result[$murl.$suffix] = array_merge($result[$murl.$suffix],$auto_anon);
 						}

@@ -28,7 +28,7 @@ class Dt{
 		}else{
 			$entryfile = realpath($entryfile);
 			$this->entry = $entryfile;
-			$this->entry_name = basename($this->entry,'.php');			
+			$this->entry_name = basename($this->entry,'.php');
 		}
 	}
 	public function get_flow_plugins(){
@@ -182,7 +182,7 @@ class Dt{
 				// ログイン プラグイン情報をマージ
 				foreach($info->opt('plugins') as $plugin){
 					if($plugin->name() == 'login_condition'){
-						foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){							
+						foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
 							$plugin_class = \ebi\Util::get_class_name($map_plugin);
 							$ref = new \ReflectionClass($plugin_class);
 							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
@@ -212,7 +212,7 @@ class Dt{
 		throw new \ebi\exception\NotFoundException();
 	}
 	
-	private function get_login_annotation($class,$method){		
+	private function get_login_annotation($class,$method){
 		$class = \ebi\Util::get_class_name($class);
 		$login_anon = \ebi\Annotation::get_class($class,'login');
 
@@ -468,7 +468,7 @@ class Dt{
 			if(\ebi\SmtpBlackholeDao::find_count() > 0){
 				$has_bh = true;
 			}
-		}catch(\Exception $e){			
+		}catch(\Exception $e){
 		}
 			
 		$template_list = \ebi\Dt\Man::mail_template_list();
