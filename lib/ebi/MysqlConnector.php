@@ -78,7 +78,7 @@ class MysqlConnector extends \ebi\DbConnector{
 				return $this->quotation($name).(($dao->prop_anon($name,'max') !== null) ? ' VARCHAR('.$dao->prop_anon($name,'max').')' : ' MEDIUMTEXT').' BINARY';
 			case 'number':
 				return $this->quotation($name).' '.(($dao->prop_anon($name,'decimal_places') !== null) ? sprintf('NUMERIC(%d,%d)',26-$dao->prop_anon($name,'decimal_places'),$dao->prop_anon($name,'decimal_places')) : 'DOUBLE');
-			case 'serial': return $this->quotation($name).' INT AUTO_INCREMENT';
+			case 'serial': return $this->quotation($name).' SERIAL';
 			case 'boolean': return $this->quotation($name).' INT(1)';
 			case 'timestamp': return $this->quotation($name).' DATETIME';
 			case 'date': return $this->quotation($name).' DATE';
