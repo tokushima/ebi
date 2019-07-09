@@ -296,8 +296,8 @@ class Man{
 					if(strpos($v,'://') !== false){
 						$see[$v] = ['type'=>'url','url'=>$v];
 					}else if(strpos($v,'::') !== false){
-						list($class,$method) = explode('::',$v,2);
-						$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
+						list($see_class,$see_method) = explode('::',$v,2);
+						$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
 					}else if(substr($v,-1) != ':'){
 						$see[$v] = ['type'=>'class','class'=>$v];
 					}
