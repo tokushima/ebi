@@ -396,7 +396,51 @@ class Image{
 		
 		return $this;
 	}
+	
+	/**
+	 * 塗りつぶす
+	 * @param string $color
+	 * @return \ebi\Image
+	 */
+	public function fill($color){
+		list($w,$h) = $this->get_size();
+		list($r,$g,$b) = self::color2rgb($color);
+		$color = imagecolorallocate($this->canvas,$r,$g,$b);
 		
+		for($x=0;$x<$w;$x++){
+			for($y=0;$y<$h;$y++){
+				$color_index = imagecolorsforindex($this->canvas,imagecolorat($this->canvas,$x,$y));
+				
+				if($color_index['alpha'] != 127){
+					imagesetpixel($this->canvas,$x,$y,$color);
+				}
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * 透明部を画像で塗りつぶす
+	 * @param \ebi\Image $image
+	 * @return \ebi\Image
+	 */
+	public function fill_transparency(\ebi\Image $image){
+		list($w,$h) = $this->get_size();
+		list($nw,$nh) = $image->get_size();
+		
+		for($x=0;$x<$w;$x++){
+			for($y=0;$y<$h;$y++){
+				$color_index = imagecolorsforindex($this->canvas,imagecolorat($this->canvas,$x,$y));
+				
+				if($color_index['alpha'] == 127 && $nw > $x && $nh > $y){
+					$ci = imagecolorsforindex($image->canvas,imagecolorat($image->canvas,$x,$y));
+					imagesetpixel($this->canvas,$x,$y,imagecolorallocate($image->canvas,$ci['red'],$ci['green'],$ci['blue']));
+				}
+			}
+		}
+		return $this;
+	}
+	
 	/**
 	 * テキストを画像に書き込む
 	 * @param integer $x 左上座標
