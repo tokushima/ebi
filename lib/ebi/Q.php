@@ -189,6 +189,7 @@ class Q{
 	}
 	/**
 	 * 大文字小文字を区別しない
+	 * decbin(IGNORE)
 	 * @return boolean
 	 */
 	public function ignore_case(){
@@ -196,6 +197,7 @@ class Q{
 	}
 	/**
 	 * 否定式である
+	 * decbin(NOT)
 	 * @return boolean
 	 */
 	public function not(){

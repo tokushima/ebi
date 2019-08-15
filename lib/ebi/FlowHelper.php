@@ -331,6 +331,16 @@ class FlowHelper{
 		
 		return $url.((strpos($url,'?') === false) ? '?' : '&').$query;
 	}
+	
+	/**
+	 * URL エンコードを行う
+	 * @param string $str
+	 * @return string
+	 */
+	public function urlencode($str){
+		return rawurlencode($str);
+	}
+	
 	/**
 	 * !
 	 * @param mixed $a
