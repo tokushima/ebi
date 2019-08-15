@@ -24,6 +24,7 @@ class Browser{
 	private $user;
 	private $password;
 	private $bearer_token;
+	private $proxy;
 	
 	private $raw;
 	
@@ -75,9 +76,21 @@ class Browser{
 	/**
 	 * Bearer token
 	 * @param string $token
+	 * @return $this
 	 */
 	public function bearer_token($token){
 		$this->bearer_token = $token;
+		return $this;
+	}
+	/**
+	 * Proxy
+	 * @param string $url
+	 * @param string $port
+	 * @return $this
+	 */
+	public function proxy($url,$port=null){
+		$this->proxy = [$url,$port];
+		return $this;
 	}
 	
 	public function __toString(){
@@ -389,6 +402,14 @@ class Browser{
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYPEER,false);
 		}
+		if(!empty($this->proxy)){
+			curl_setopt($this->resource,CURLOPT_HTTPPROXYTUNNEL,true);
+			curl_setopt($this->resource,CURLOPT_PROXY,$this->proxy[0]);
+			
+			if(!empty($this->proxy[1] ?? null)){
+				curl_setopt($this->resource,CURLOPT_PROXYPORT,$this->proxy[1]);
+			}
+		}
 		if(!empty($this->user)){
 			curl_setopt($this->resource,CURLOPT_USERPWD,$this->user.':'.$this->password);
 		}else if(!empty($this->bearer_token)){
@@ -647,6 +668,6 @@ class Browser{
 				throw new \ebi\exception\NotFoundException($name.' not found');
 			}
 		}
-		return $array;		
+		return $array;
 	}
 }
