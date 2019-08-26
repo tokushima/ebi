@@ -25,6 +25,7 @@ class Browser{
 	private $password;
 	private $bearer_token;
 	private $proxy;
+	private $ssl_verify = true;
 	
 	private $raw;
 	
@@ -90,6 +91,16 @@ class Browser{
 	 */
 	public function proxy($url,$port=null){
 		$this->proxy = [$url,$port];
+		return $this;
+	}
+	
+	/**
+	 * SSL証明書を確認する
+	 * @param boolean $bool
+	 * @return $this
+	 */
+	public function ssl_verify($bool){
+		$this->ssl_verify = $bool;
 		return $this;
 	}
 	
@@ -398,7 +409,7 @@ class Browser{
 		/**
 		 * @param boolean $ssl_verify SSL証明書を確認するかの真偽値
 		 */
-		if(\ebi\Conf::get('ssl-verify',true) === false){
+		if($this->ssl_verify === false || \ebi\Conf::get('ssl-verify',true) === false){
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYPEER,false);
 		}
@@ -637,7 +648,7 @@ class Browser{
 					foreach($vars as $k => $v){
 						$this->vars($k,$v);
 					}
-				}				
+				}
 				return [
 					'action'=>\ebi\Util::path_absolute($this->url(),$form->in_attr('action')),
 					'method'=>strtolower($form->in_attr('method','get')),

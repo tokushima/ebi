@@ -22,6 +22,7 @@ $sub1 = (new \test\db\SubFind())->value('abc')->order(4)->save();
 $sub2 = (new \test\db\SubFind())->value('def')->order(3)->save();
 $sub3 = (new \test\db\SubFind())->value('ghi')->order(1)->save();
 $sub4 = (new \test\db\SubFind())->value('jkl')->order(2)->save();
+$sub5 = (new \test\db\SubFind())->value('@@@')->order(5)->save();
 
 
 eq(4,sizeof(
@@ -34,6 +35,28 @@ eq(4,sizeof(
 eq(3,sizeof(
 		\test\db\Find::find_all(
 			Q::in('value1',\test\db\SubFind::find_sub('value',Q::gte('order',2)))
+		)
+	)
+);
+
+eq(0,sizeof(
+		\test\db\Find::find_all(
+			Q::in('value1',\test\db\SubFind::find_sub('value',Q::gte('order',100))) // inの対象がサブクエリの結果：空であれば対象なしとなる(SQLの動作)
+		)
+	)
+);
+
+eq(8,sizeof(
+		\test\db\Find::find_all(
+			Q::in('value1',[]) // inの対象が値で空だと条件がないのと同等 = 全件が対象となる(SQLの動作)
+		)
+	)
+);
+
+
+eq(0,sizeof(
+		\test\db\Find::find_all(
+			Q::in('value1',\test\db\SubFind::find_sub('value',Q::gte('order',5))) // Findにはない
 		)
 	)
 );
