@@ -41,8 +41,8 @@ trait Plugin{
 	 * @param string $n
 	 */
 	public function set_object_plugin($o,$n=null){
-		if(is_string($o) && class_exists(($c='\\'.str_replace('.','\\',$o)))){
-			$o = new $c();	
+		if(is_string($o) && class_exists($o)){
+			$o = new $o();	
 		}
 		$t = (is_object($o) ? 1 : 0) + (is_callable($o) ? 2 : 0);
 		
