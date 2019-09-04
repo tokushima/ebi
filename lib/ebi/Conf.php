@@ -18,19 +18,17 @@ class Conf{
 			return [$d['class'],$key];
 		}
 		list($class_name,$key) = explode('@',$key,2);
-		return [\ebi\Util::get_class_name($class_name),$key];
+		return [$class_name,$key];
 	}
 	/**
 	 * 定義情報をセットする
-	 * @param string $class_name
+	 * @param string $class_name 
 	 * @param string $key
 	 * @param mixed $value
 	 */
 	public static function set($class_name,$key=null,$value=null){
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
-				$c = \ebi\Util::get_class_name($c);
-				
 				foreach($v as $k => $value){
 					if(!isset(self::$value[$c]) || !array_key_exists($k,self::$value[$c])){
 						self::$value[$c][$k] = $value;
@@ -38,8 +36,6 @@ class Conf{
 				}
 			}
 		}else if(!empty($key)){
-			$class_name = \ebi\Util::get_class_name($class_name);
-			
 			if(func_num_args() > 3){
 				$value = func_get_args();
 				array_shift($value);
@@ -100,24 +96,19 @@ class Conf{
 	/**
 	 * Pluginに遅延セットする
 	 * @param string $class_name
-	 * @param string $obj
+	 * @param string[] $plugin_class_names
 	 */
-	public static function set_class_plugin($class_name,$obj=null){
+	public static function set_class_plugin($class_name,$plugin_class_names=null){
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
 				static::set_class_plugin($c,$v);
 			}
-		}else if(!empty($obj)){
-			$class_name = \ebi\Util::get_class_name($class_name);
-			
-			if(!is_array($obj)){
-				$obj = [$obj];
+		}else if(!empty($plugin_class_names)){
+			if(!is_array($plugin_class_names)){
+				$plugin_class_names = [$plugin_class_names];
 			}
-			foreach($obj as $o){
-				if(is_string($o)){
-					$o = \ebi\Util::get_class_name($o);
-				}
-				self::$plugins[$class_name][] = $o;
+			foreach($plugin_class_names as $plugin_class_name){
+				self::$plugins[$class_name][] = $plugin_class_name;
 			}
 		}
 	}

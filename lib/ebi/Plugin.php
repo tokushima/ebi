@@ -7,13 +7,14 @@ trait Plugin{
 	
 	/**
 	 * クラスにプラグインをセットする
-	 * @param object $o
-	 * @param string $n
+	 * @param object $o string / object / callable
+	 * @param string $n callableの場合のみplugin名
 	 */
 	public static function set_class_plugin($o,$n=null){
 		if(is_array($o)){
 			foreach($o as $c => $plugins){
-				$r = new \ReflectionClass('\\'.str_replace('.','\\',$c));
+				$r = new \ReflectionClass($c);
+				
 				if(in_array(__CLASS__,$r->getTraitNames())){
 					foreach($plugins as $p){
 						call_user_func_array([$r->getName(),'set_class_plugin'],[$p]);
@@ -22,8 +23,11 @@ trait Plugin{
 			}
 		}else{
 			$g = get_called_class();
-			if(is_string($o) && class_exists(($c='\\'.str_replace('.','\\',$o)))) $o = new $c();
+			if(is_string($o) && class_exists($o)){
+				$o = new $o();
+			}
 			$t = (is_object($o) ? 1 : 0) + (is_callable($o) ? 2 : 0);
+			
 			if($t === 1){
 				self::$_plug_funcs[$g][] = $o;
 			}else if($t === 3 && !empty($n)){
