@@ -96,13 +96,10 @@ class Annotation{
 								}
 							}
 							if(!ctype_lower($t=$result[$n]['type'])){
-								if($t[0]!='\\'){
-									$t='\\'.$t;
-								}
-								if(!class_exists($t=str_replace('.','\\',$t))){
+								if(!class_exists($t)){
 									throw new \ebi\exception\InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
 								}
-								$result[$n]['type'] = (($t[0] !== '\\') ? '\\' : '').str_replace('.','\\',$t);
+								$result[$n]['type'] = $t;
 							}
 						}else{
 							$result = array_merge($result,$decode);

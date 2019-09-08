@@ -423,34 +423,16 @@ class Util{
 		return $rtn;
 	}
 	/**
-	 * 文字列からインスタンスを返す
-	 * @param string $class
-	 * @return object
-	 */
-	public static function strtoinstance($class){
-		if(is_object($class)){
-			return $class;
-		}
-		$class = str_replace(['.','/'],'\\',$class);
-		$r = new \ReflectionClass($class);
-		return $r->newInstance();
-	}
-	/**
 	 * クラス名
 	 * @param string $class_name
 	 * @return string
 	 */
 	public static function get_class_name($class_name){
 		if(class_exists($class_name)){
-			return $class_name;
+			$r = new \ReflectionClass($class_name);
+			return $r->getName();
 		}
-		$class_name = str_replace('.','\\',$class_name);
-	
-		if(!class_exists($class_name)){
-			throw new \ebi\exception\ClassNotFoundException('Class `'.$class_name.'` not found');
-		}
-		$r = new \ReflectionClass($class_name);
-		return $r->getName();
+		throw new \ebi\exception\ClassNotFoundException('Class `'.$class_name.'` not found');
 	}
 	
 	/**

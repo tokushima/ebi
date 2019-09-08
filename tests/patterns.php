@@ -6,11 +6,11 @@ include_once('bootstrap.php');
 		'patterns'=>[
 			'a0'=>[
 				'name'=>'a0',
-				'action'=>'test.flow.LoginRequestAction1::aaa',
+				'action'=>'test\flow\LoginRequestAction1::aaa',
 			],
 			'a1'=>[
 				'name'=>'a1',
-				'action'=>'test.flow.LoginRequestAction1::aaa',
+				'action'=>'test\flow\LoginRequestAction1::aaa',
 			],
 		],
 	],
@@ -18,19 +18,19 @@ include_once('bootstrap.php');
 		'patterns'=>[
 			'b0'=>[
 				'name'=>'b0',
-				'action'=>'test.flow.LoginRequestAction1::aaa',
+				'action'=>'test\flow\LoginRequestAction1::aaa',
 			],
 			'b1'=>[
 				'name'=>'b1',
-				'action'=>'test.flow.LoginRequestAction1::aaa',
+				'action'=>'test\flow\LoginRequestAction1::aaa',
 			],
 		],
 	],
 	'z1'=>[
 			'name'=>'z1',
-			'action'=>'test.flow.LoginRequestAction1::aaa',
+			'action'=>'test\flow\LoginRequestAction1::aaa',
 	],
-	'dt'=>['action'=>'ebi.Dt']
+	'dt'=>['action'=>'ebi\Dt']
 ]);
 
 

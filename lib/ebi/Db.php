@@ -41,11 +41,6 @@ class Db implements \Iterator{
 		if(empty($encode)){
 			$encode = 'utf8';
 		}
-		try{
-			$type = \ebi\Util::get_class_name($type);
-		}catch(\InvalidArgumentException $e){
-			throw new \ebi\exception\ConnectionException('could not find connector `'.$type.'`');
-		}
 		
 		$r = new \ReflectionClass($type);
 		$this->dbname = $dbname;

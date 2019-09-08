@@ -3,6 +3,8 @@
  * Check
  */
 
+\ebi\Conf::memory_limit(-1);
+
 $failure = ['db'=>0,'entry'=>0,'mail'=>0];
 
 \cmdman\Std::println_info('Database (Check Existence):');
@@ -35,12 +37,10 @@ foreach(\ebi\Util::ls(getcwd()) as $f){
 
 		foreach($map['patterns'] as $p){
 			if(array_key_exists('action',$p) && is_string($p['action'])){
-				try{
-					list($c,$m) = explode('::',$p['action']);
-					$mr = new \ReflectionMethod(\ebi\Util::get_class_name($c),$m);
-					
+				list($c,$m) = explode('::',$p['action']);
+				if(method_exists(\ebi\Util::get_class_name($c), $m)){
 					\cmdman\Std::println_success('OK   '.$entry.' '.$p['name']);
-				}catch(\ReflectionException $e){
+				}else{
 					$failure['entry']++;
 					\cmdman\Std::println_danger('Fail '.$entry.' '.$p['name']);
 				}
@@ -58,7 +58,7 @@ foreach(\ebi\Dt::classes() as $info){
 
 	if($class_info->has_opt('config_list')){
 		foreach($class_info->opt('config_list') as $info){
-			$key = '\\'.$class_info->name().'@'.$info->name();
+			$key = $class_info->name().'@'.$info->name();
 			
 			if($info->opt('def')){
 				cmdman\Std::println_success('o '.$key);

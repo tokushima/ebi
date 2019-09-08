@@ -156,7 +156,7 @@ class Flow{
 	 */
 	public static function app($map=[]){
 		if(empty($map)){
-			$map = ['patterns'=>[''=>['action'=>'ebi.Dt','mode'=>'local']]];
+			$map = ['patterns'=>[''=>['action'=>'ebi\Dt','mode'=>'local']]];
 		}else if(is_string($map)){
 			$map = ['patterns'=>[''=>['action'=>$map]]];
 		}else if(is_array($map) && !isset($map['patterns'])){
@@ -341,17 +341,17 @@ class Flow{
 						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
 						(array_key_exists('plugins',$selfmap) ? (is_array($selfmap['plugins']) ? $selfmap['plugins'] : [$selfmap['plugins']]) : [])
 					) as $m){
-						$o = \ebi\Util::strtoinstance($m);
+						$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
 						self::set_class_plugin($o);
 						$plugins[] = $o;
 					}
 					if(!isset($funcs) && isset($class)){
-						$ins = \ebi\Util::strtoinstance($class);
+						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
 						$traits = \ebi\Util::get_class_traits(get_class($ins));
 						
 						if($has_flow_plugin = in_array('ebi\\FlowPlugin',$traits)){
 							foreach($ins->get_flow_plugins() as $m){
-								$o = \ebi\Util::strtoinstance($m);
+								$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
 								$plugins[] = $o;
 								self::set_class_plugin($o);
 							}
@@ -642,7 +642,7 @@ class Flow{
 		
 		try{
 			$m = null;
-			$r = new \ReflectionClass(str_replace('.','\\',$class));
+			$r = new \ReflectionClass($class);
 			$d = substr($r->getFilename(),0,-4);
 			$group_parents = (preg_match('/\\\\[A-Z](.+)$/',$r->getNamespaceName(),$m)) ? (substr_count($m[1],'\\') + 1) : null;
 			$urlcaps = 0;

@@ -11,11 +11,11 @@ include_once('bootstrap.php');
 	'patterns'=>[
 		'login_url'=>[
 			'name'=>'login_url',
-			'action'=>'ebi.flow.Request::do_login',
+			'action'=>'ebi\flow\Request::do_login',
 		],
 		'aaa'=>[
 			'name'=>'aaa',
-			'action'=>'test.flow.LoginRequestAction1::aaa',
+			'action'=>'test\flow\LoginRequestAction1::aaa',
 		],
 	]
 ]);

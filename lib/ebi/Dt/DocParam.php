@@ -15,7 +15,7 @@ class DocParam extends \ebi\Obj{
 	
 	public function __construct($name,$type,$summary='',$opt=[]){
 		$this->name = trim($name);
-		$this->type = $this->type(trim($type));
+		$this->type = trim($type);
 		$this->summary = trim($summary);
 		
 		$this->opt = $opt;
@@ -26,14 +26,6 @@ class DocParam extends \ebi\Obj{
 	public function opt($n,$def=null){
 		return (isset($this->opt[$n])) ? $this->opt[$n] : $def;
 	}
-	private function type($type){
-		$type = str_replace('.','\\',$type);
-	
-		if(substr($type,0,1) == '.'){
-			$type = substr($type,1);
-		}
-		return $type;
-	}
 	
 	public function is_type_class(){
 		return (boolean)preg_match('/[A-Z]/',$this->type);
@@ -41,11 +33,7 @@ class DocParam extends \ebi\Obj{
 	public function fm_type(){
 		if(preg_match('/[A-Z]/',$this->type)){
 			$type = $this->type;
-			$type = str_replace('.','\\',$type);
 			
-			if(substr($type,0,1) != '\\'){
-				$type = '\\'.$type;
-			}
 			return $type;
 		}
 		return $this->type;

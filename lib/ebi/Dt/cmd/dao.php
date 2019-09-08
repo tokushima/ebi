@@ -40,12 +40,29 @@ $cmd = array_shift($values);
 
 switch($cmd){
 	case 'show':
-		$connector = empty($values) ? 'ebi.SqliteConnector' : array_shift($values);
+		$connector = 'ebi\SqliteConnector';
+		
+		if(!empty($values)){
+			switch($values){
+				case 'mysql':
+				case 'ebi\MysqlConnector':
+					$connector = 'ebi\MysqlConnector';
+					break;
+				case 'pgsql':
+				case 'postgresql':
+				case 'ebi\PgsqlConnector':
+					$connector = 'ebi\PgsqlConnector';
+					break;
+				default:
+					$connector = $values;
+			}
+		}
+		$r = new \ReflectionClass($connector);
+		$connector_inst = $r->newInstance();
 		
 		foreach($model_list as $m){
 			$dao = (new \ReflectionClass($m))->newInstance();
 			
-			$connector_inst = \ebi\Util::strtoinstance($connector);
 			print($connector_inst->create_table_sql($dao).PHP_EOL);
 		}
 		break;

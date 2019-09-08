@@ -733,9 +733,6 @@ class Dt{
 					$class = substr($class,0,-1);
 					$find_package = true;
 				}
-	
-				$class = str_replace('.','\\',$class);
-	
 				if(class_exists($class)){
 					if($find_package){
 						$r = new \ReflectionClass($class);
