@@ -22,7 +22,7 @@
 	'ebi\Dt'=>[
 		'test_dir'=>dirname(__DIR__).'/test',
 		'ignore'=>[
-//			'test.*',
+			'test\*',
 		],
 		'use_vendor'=>[
 			'ebi\SmtpBlackholeDao',
@@ -30,10 +30,6 @@
 			'ebi\UserRememberMeDao',
 			'test\model\DeprecatedClass',
 		],
-//		'phpinfo'=>false,
-//		'config'=>false,
-//		'model'=>false,
-//		'data'=>false,
 	],
 	'ebi\Dao'=>[
 		'connection'=>[

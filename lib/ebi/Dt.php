@@ -75,23 +75,18 @@ class Dt{
 			}
 			if(isset($m['action']) && is_string($m['action'])){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
-				
-				if(substr($m['class'],0,1) == '\\'){
-					$m['class'] = substr($m['class'],1);
-				}
-				$m['class'] = str_replace('\\','.',$m['class']);
 			}
 			if(!isset($m['class']) || $m['class'] != $this->self_class){
 				try{
 					$m['error'] = null;
 					$m['url'] = $k;
-	
+					
 					if(isset($m['method'])){
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
-						}					
+						}
 						if(empty($m['summary'])){
 							list($summary) = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
@@ -425,7 +420,7 @@ class Dt{
 	public function test_view(){
 		$req = new \ebi\Request();
 		$testdir = $this->test_path();
-		$req_path = $req->in_vars('path');		
+		$req_path = $req->in_vars('path');
 		$path = \ebi\Util::path_absolute($testdir,$req_path);
 		
 		if(strpos($path,$testdir) === false){
@@ -470,7 +465,7 @@ class Dt{
 			}
 		}catch(\Exception $e){
 		}
-			
+		
 		$template_list = \ebi\Dt\Man::mail_template_list();
 		
 		foreach($template_list as $k => $info){
@@ -584,10 +579,10 @@ class Dt{
 		
 				$signature = $body_xml->in_attr('signature');
 				$signature_text = '';
-					
+				
 				if(!empty($signature)){
 					$sig_path = \ebi\Util::path_absolute($path,$signature);
-						
+					
 					$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
 					$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
 				}
@@ -618,7 +613,7 @@ class Dt{
 			$paginator,
 			Q::order('-id')
 		);
-	
+		
 		$mail_info = new \ebi\Dt\DocInfo();
 		foreach(\ebi\Dt\Man::mail_template_list() as $info){
 			if($info->opt('x_t_code') == $req->in_vars('tcode')){
@@ -662,7 +657,7 @@ class Dt{
 	 */
 	public static function classes($parent_class=null){
 		$include_path = [];
-	
+		
 		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
 			$include_path[] = realpath(getcwd().DIRECTORY_SEPARATOR.'lib');
 		}
@@ -677,7 +672,7 @@ class Dt{
 				foreach($loader->getPrefixes() as $ns){
 					foreach($ns as $path){
 						$path = realpath($path);
-	
+						
 						if(strpos($path,$vendor_dir) === false){
 							$include_path[] = $path;
 						}
@@ -685,7 +680,7 @@ class Dt{
 				}
 			}
 		}
-	
+		
 		$valid_find_class_file = function($f){
 			if(strpos($f->getPathname(),DIRECTORY_SEPARATOR.'.') === false
 				&& strpos($f->getPathname(),DIRECTORY_SEPARATOR.'_') === false
@@ -712,7 +707,7 @@ class Dt{
 		 * @param string[] $vendor 利用するvendorのクラス
 		 */
 		$use_vendor = \ebi\Conf::gets('use_vendor');
-	
+		
 		/**
 		 * @param callback $callback 利用するvendorのクラス配列を返すメソッド
 		 */
@@ -720,7 +715,7 @@ class Dt{
 	
 		if(!empty($use_vendor_callback)){
 			$callback_result = call_user_func($use_vendor_callback);
-				
+			
 			if(is_array($callback_result)){
 				$use_vendor = array_merge($use_vendor,$callback_result);
 			}
@@ -728,7 +723,7 @@ class Dt{
 		if(is_array($use_vendor)){
 			foreach($use_vendor as $class){
 				$find_package = false;
-	
+				
 				if(substr($class,-1) == '*'){
 					$class = substr($class,0,-1);
 					$find_package = true;
@@ -736,7 +731,7 @@ class Dt{
 				if(class_exists($class)){
 					if($find_package){
 						$r = new \ReflectionClass($class);
-	
+						
 						foreach(\ebi\Util::ls(dirname($r->getFileName()),true) as $f){
 							$valid_find_class_file($f);
 						}
@@ -744,7 +739,7 @@ class Dt{
 				}
 			}
 		}
-	
+		
 		$valid_find_class = function($r,$parent_class){
 			if(!$r->isInterface()
 				&& (empty($parent_class) || is_subclass_of($r->getName(),$parent_class))
