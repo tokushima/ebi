@@ -61,7 +61,7 @@ abstract class Dao extends \ebi\Obj{
 			try{
 				$con->commit();
 			}catch(\ebi\exception\ConnectionException $e){
-			}				
+			}
 		}
 	}
 	private static function get_db_settings($database,$class){
@@ -185,10 +185,10 @@ abstract class Dao extends \ebi\Obj{
 				$name = strtolower($name);
 			}
 			return $name;
-		};		
+		};
 		self::$_co_anon_[$p] = $anon;
 		self::$_co_anon_[$p][1] = $set_table_name(self::$_co_anon_[$p][1],$p);
-			
+		
 		$has_hierarchy = (isset($this->_hierarchy_)) ? $this->_hierarchy_ - 1 : $this->_has_hierarchy_;
 		$root_table_alias = 't'.self::$_cnt_++;
 		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = [];
@@ -504,7 +504,7 @@ abstract class Dao extends \ebi\Obj{
 			$statement = $this->query($daq);
 		}catch(\PDOException $e){
 			throw new \ebi\exception\InvalidQueryException($e->getMessage());
-		}				
+		}
 		if($statement->columnCount() == 0){
 			return ($is_list) ? [] : null;
 		}
@@ -558,25 +558,6 @@ abstract class Dao extends \ebi\Obj{
 						\ebi\Exceptions::add(new \ebi\exception\UniqueException($name.' unique'),$name);
 					}
 				}
-				$master = $this->prop_anon($name,'master');
-				if(!empty($master)){
-					$master = str_replace('.',"\\",$master);
-					
-					if($master[0] !== '\\'){
-						$master = '\\'.$master;
-					}
-					try{
-						$r = new \ReflectionClass($master);
-					}catch(\ReflectionException $e){
-						$self = new \ReflectionClass(get_class($this));
-						$r = new \ReflectionClass("\\".$self->getNamespaceName().$master);
-					}
-					$mo = $r->newInstanceArgs();
-					$primarys = $mo->primary_columns();
-					if(empty($primarys) || 0 === call_user_func_array([$mo,'find_count'],[Q::eq(key($primarys),$this->{$name})])){
-						\ebi\Exceptions::add(new \ebi\exception\NotFoundException($name.' master not found'),$name);
-					}
-				}
 				try{
 					if(method_exists($this,'__verify_'.$column->name().'__') && call_user_func([$this,'__verify_'.$column->name().'__']) === false){
 						\ebi\Exceptions::add(
@@ -588,7 +569,7 @@ abstract class Dao extends \ebi\Obj{
 					}
 				}catch(\ebi\Exceptions $e){
 				}catch(\Exception $e){
-					\ebi\Exceptions::add($e,$column->name());				
+					\ebi\Exceptions::add($e,$column->name());
 				}
 			}
 		}
