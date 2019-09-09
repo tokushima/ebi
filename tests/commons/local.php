@@ -37,7 +37,8 @@
 	],
 	'ebi\Dao'=>[
 		'connection'=>[
-			'*'=>['type'=>\ebi\SqliteConnector::class,'timezone'=>'+09:00'],
+			'*'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
+			'test\db\Abc'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
 ]);
