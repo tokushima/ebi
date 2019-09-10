@@ -20,6 +20,19 @@ class Conf{
 		list($class_name,$key) = explode('@',$key,2);
 		return [$class_name,$key];
 	}
+	
+	/**
+	 * 定義済みの定義名一覧
+	 * @return string[]
+	 */
+	public static function get_defined_keys(){
+		$rtn = [];
+		foreach(self::$value as $c => $p){
+			$rtn[$c] = array_keys($p);
+		}
+		return $rtn;
+	}
+	
 	/**
 	 * 定義情報をセットする
 	 * @param string $class_name 

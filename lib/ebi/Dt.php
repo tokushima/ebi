@@ -14,7 +14,7 @@ class Dt{
 	
 	public function __construct($entryfile=null){
 		if(empty($entryfile)){
-			$this->self_class = str_replace('\\','.',__CLASS__);
+			$this->self_class = __CLASS__;
 			$trace = debug_backtrace(false);
 			krsort($trace);
 			
@@ -49,7 +49,7 @@ class Dt{
 	 */
 	public function index(){
 		$flow_output_maps = [];
-	
+		
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
@@ -258,12 +258,12 @@ class Dt{
 
 		if(!empty($parent)){
 			$parent = \ebi\Util::get_class_name($parent);
-
+			
 			switch($parent){
-				case '\ebi\Dao':
+				case 'ebi\Dao':
 					$select = 'model';
 					break;
-				case '\ebi\flow\Request':
+				case 'ebi\flow\Request':
 					$select = 'request';
 					break;
 				default:

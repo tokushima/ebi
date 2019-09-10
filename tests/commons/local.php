@@ -16,6 +16,12 @@
 // 		'secure'=>false,
 		'accept_debug'=>true,
 	],
+	'ebi\flow\plugin\No'=>[ // x
+		'abc'=>1,
+	],
+	'ebi.flow.plugin.Cors'=>[ // x
+		'abc'=>1,
+	],
 	'ebi\flow\plugin\Cors'=>[
 		'origin'=>'http://localhost:8000',
 	],

@@ -64,7 +64,7 @@ class Flow{
 	 */
 	public static function get_map($file){
 		self::$is_get_map = true;
-
+		
 		ob_start();
 			include($file);
 		ob_end_clean();

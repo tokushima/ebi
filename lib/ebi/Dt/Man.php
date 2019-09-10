@@ -12,7 +12,7 @@ class Man{
 			($r->getEndLine()-$r->getStartLine()-1)
 		));
 	}
-
+	
 	private static function get_method_document(\ReflectionMethod $method){
 		$method_document = $method->getDocComment();
 		
@@ -22,7 +22,7 @@ class Man{
 			while($p !== false){
 				try{
 					$method_document = $p->getMethod($method->getName())->getDocComment();
-						
+					
 					if($method_document !== false){
 						break;
 					}
@@ -38,9 +38,9 @@ class Man{
 	 * クラスのドキュメント
 	 * @param string $class
 	 */
-	public static function class_info($class){
+	public static function class_info($class,$strict=false){
 		$info = new \ebi\Dt\DocInfo();
-		$r = new \ReflectionClass(self::get_class_name($class));
+		$r = new \ReflectionClass($strict ? $class : self::get_class_name($class));
 		
 		if($r->getFilename() === false || !is_file($r->getFileName())){
 			throw new \ebi\exception\InvalidArgumentException('`'.$class.'` file not found.');
@@ -94,7 +94,7 @@ class Man{
 						$method_document = self::get_method_document($method);
 						$method_document = self::find_deprecate($method_document,$method_info);
 						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
-	
+						
 						$method_info->document($summary);
 						
 						if($method->isStatic()){
@@ -147,13 +147,13 @@ class Man{
 					$properties[$name]->set_opt(
 						'hash',
 						($prop->isPublic() || !(isset($anon[$name]['hash']) && $anon[$name]['hash'] === false))
-					);					
+					);
 				}
 			}
 		}
 		$info->set_opt('properties',$properties);
 		
-		$config_list = [];		
+		$config_list = [];
 		foreach([
 			"/Conf::gets\(([\"\'])(.+?)\\1/"=>'mixed[]',
 			"/Conf::get\(([\"\'])(.+?)\\1/"=>'mixed',
@@ -165,7 +165,7 @@ class Man{
 					if(!array_key_exists($v[0],$config_list) || !$config_list[$v[0]]->has_params()){
 						$conf_info = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
 						$conf_info->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
-		
+						
 						if(!$conf_info->has_params()){
 							$conf_info->add_params(new \ebi\Dt\DocParam('val',$default_type));
 						}
@@ -333,7 +333,7 @@ class Man{
 					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
 					"/->call_object_plugin_func\(([\"\'])(.+?)\\1/",
-					"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",						
+					"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",
 				] as $preg){
 					if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 						foreach($m[2] as $k => $v){
@@ -343,7 +343,7 @@ class Man{
 				}
 				$class_info = self::class_info($ref->getDeclaringClass()->getName());
 				$class_plugins = $class_info->opt('plugins');
-			
+				
 				foreach(array_keys($plugins) as $plugin_method_name){
 					if(array_key_exists($plugin_method_name, $class_plugins)){
 						$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
@@ -351,7 +351,7 @@ class Man{
 				}
 			}
 			$info->set_opt('plugins',$call_plugins);
-	
+			
 			if($deep){
 				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
 				$use_method_list = array_merge($use_method_list,[$method_fullname]);
@@ -430,7 +430,7 @@ class Man{
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
-
+								
 								if(empty($doc->document())){
 									if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$use_method_src,$m)){
 										$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
@@ -472,7 +472,7 @@ class Man{
 	public static function mail_template_list(){
 		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
 		$template_list = [];
-	
+		
 		try{
 			foreach(\ebi\Util::ls($path,true,'/\.xml$/') as $f){
 				$info = new \ebi\Dt\DocInfo();
@@ -508,7 +508,7 @@ class Man{
 		}
 		return $template_list;
 	}
-
+	
 	public static function method_src(\ReflectionMethod $ref){
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
@@ -520,14 +520,14 @@ class Man{
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){
 		$list = [];
-	
+		
 		try{
 			$ref = new \ReflectionMethod($class,$method);
 			$kname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
 			if(isset($loaded_method_src[$kname])) return [];
 			$loaded_method_src[$kname] = true;
 			$list[$kname] = true;
-	
+			
 			if(is_file($ref->getDeclaringClass()->getFileName())){
 				$src = self::method_src($ref);
 				$vars = ['$this'=>$class];
@@ -536,7 +536,7 @@ class Man{
 				foreach($ref->getParameters() as $param){
 					if($param->hasType()){
 						$type_class = (string)$param->getType();
-				
+						
 						if(class_exists($type_class)){
 							$vars['$'.$param->getName()] = $type_class;
 						}
@@ -563,7 +563,7 @@ class Man{
 						}catch(\ReflectionException $e){
 						}
 					}
-				}				
+				}
 				if(preg_match_all('/(\$\w+)->(\w+)/',$src,$m)){
 					foreach($m[1] as $k => $v){
 						if(isset($vars[$v])){
@@ -582,7 +582,7 @@ class Man{
 				foreach(array_keys($list) as $mcm){
 					if(!isset($loaded_method_src[$mcm])){
 						list($c,$m) = explode('::',$mcm);
-	
+						
 						foreach(self::use_method_list($c,$m,$loaded_method_src) as $k){
 							$list[$k] = true;
 						}
