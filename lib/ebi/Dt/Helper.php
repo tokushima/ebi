@@ -12,7 +12,7 @@ class Helper{
 	 */
 	public function dump($obj){
 		$result = [];
-
+		
 		foreach($obj as $k => $v){
 			if(isset($obj[$k])){
 				if(!is_array($obj[$k]) || !empty($obj[$k])){
@@ -28,7 +28,7 @@ class Helper{
 		}
 		return json_encode($result,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 	}
-
+	
 	/**
 	 * parse md
 	 * @param string $v

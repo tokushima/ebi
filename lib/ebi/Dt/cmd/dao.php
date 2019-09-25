@@ -40,12 +40,26 @@ $cmd = array_shift($values);
 
 switch($cmd){
 	case 'show':
-		$connector = empty($values) ? 'ebi.SqliteConnector' : array_shift($values);
+		$connector = $values[0] ?? 'ebi\SqliteConnector';
+		
+		switch(strtolower($connector)){
+			case 'mysql':
+				$connector = 'ebi\MysqlConnector';
+				break;
+			case 'pgsql':
+			case 'postgresql':
+				$connector = 'ebi\PgsqlConnector';
+				break;
+			case 'sqlite':
+				$connector = 'ebi\SqliteConnector';
+		}
+		
+		$r = new \ReflectionClass($connector);
+		$connector_inst = $r->newInstance();
 		
 		foreach($model_list as $m){
 			$dao = (new \ReflectionClass($m))->newInstance();
 			
-			$connector_inst = \ebi\Util::strtoinstance($connector);
 			print($connector_inst->create_table_sql($dao).PHP_EOL);
 		}
 		break;
@@ -58,7 +72,7 @@ switch($cmd){
 			}
 		}
 		break;
-	case 'drop':		
+	case 'drop':
 		foreach($model_list as $m){
 			if(call_user_func([$m,'drop_table'])){
 				\cmdman\Std::println_success('drop table '.$m);
@@ -155,4 +169,3 @@ switch($cmd){
 	default:
 		\cmdman\Std::println('usage: [create <model> ... ] [drop <model> ... ] [import <input file>] [export <output file>] [show <connector>]');
 }
-

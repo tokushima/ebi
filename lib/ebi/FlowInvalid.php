@@ -35,15 +35,6 @@ class FlowInvalid implements \Iterator{
 	public function next(){
 		$this->pos++;
 	}
-	private static function type($type){
-		if(!empty($type)){
-			$type = str_replace('.','\\',$type);
-			if($type[0] != '\\'){
-				$type = '\\'.$type;
-			}
-		}
-		return $type;
-	}
 	public static function set(\Exception $exception){
 		self::$self = new self();
 		if($exception instanceof \ebi\Exceptions){
@@ -63,7 +54,7 @@ class FlowInvalid implements \Iterator{
 	public static function get($group=null,$type=null){
 		if(self::$self === null) return [];
 		self::$self->group = $group;
-		self::$self->type = self::type($type);
+		self::$self->type = $type;
 		return self::$self;
 	}
 	/**
@@ -82,7 +73,7 @@ class FlowInvalid implements \Iterator{
 	public static function has($group=null,$type=null){
 		if(self::$self === null) return false;
 		self::$self->group = $group;
-		self::$self->type = self::type($type);
+		self::$self->type = $type;
 		
 		reset(self::$self);
 		return (next(self::$self) !== false);

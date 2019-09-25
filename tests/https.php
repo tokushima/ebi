@@ -6,7 +6,7 @@ include_once('bootstrap.php');
 	'patterns'=>[
 		'auto'=>[
 			'name'=>'auto',
-			'action'=>'test.flow.AutoAction',
+			'action'=>'test\flow\AutoAction',
 		],
 		'abc'=>[
 			'secure'=>false,

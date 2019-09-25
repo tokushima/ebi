@@ -1,54 +1,57 @@
 <?php
 \ebi\Conf::set([
-	\ebi\Conf::class=>[
+	'ebi\Conf'=>[
 		'appmode_group'=>[
 			'dev'=>['local'],
 		],
 		'session_lifetime'=>60,
 	],
-	\ebi\Log::class=>[
+	'ebi\Log'=>[
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
 	],
-	'ebi.Flow'=>[
+	'ebi\Flow'=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
 	],
-	\ebi\flow\plugin\Cors::class=>[
+	'ebi\flow\plugin\No'=>[ // x
+		'abc'=>1,
+	],
+	'ebi.flow.plugin.Cors'=>[ // x
+		'abc'=>1,
+	],
+	'ebi\flow\plugin\Cors'=>[
 		'origin'=>'http://localhost:8000',
 	],
-	'ebi.Dt'=>[
+	'ebi\Dt'=>[
 		'test_dir'=>dirname(__DIR__).'/test',
 		'ignore'=>[
-//			'test.*',
+			'test\*',
 		],
 		'use_vendor'=>[
-			\ebi\SmtpBlackholeDao::class,
-			\ebi\SessionDao::class,
-			\ebi\UserRememberMeDao::class,
-			\test\model\DeprecatedClass::class,
+			'ebi\SmtpBlackholeDao',
+			'ebi\SessionDao',
+			'ebi\UserRememberMeDao',
+			'test\model\DeprecatedClass',
 		],
-//		'phpinfo'=>false,
-//		'config'=>false,
-//		'model'=>false,
-//		'data'=>false,
 	],
-	\ebi\Dao::class=>[
+	'ebi\Dao'=>[
 		'connection'=>[
-			'*'=>['type'=>\ebi\SqliteConnector::class,'timezone'=>'+09:00'],
+			'*'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
+			'test\db\Abc'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
 ]);
 
 \ebi\Conf::set_class_plugin([
-	'ebi.Mail'=>[\ebi\SmtpBlackholeDao::class],
-	'ebi.Session'=>[\ebi\SessionDao::class],
-// 	'ebi.Log'=>[\ebi\LogMailSender::class],
-	'ebi.Log'=>['ebi.LogMailSender'],
-	\test\flow\RequestFlow::class=>[\test\plugin\RequestPlugin::class],
-	'ebi.Flow'=>[\test\flow\plugin\ErrorLog::class],
+	'ebi\Mail'=>['ebi\SmtpBlackholeDao'],
+	'ebi\Session'=>['ebi\SessionDao'],
+// 	'ebi\Log'=>['ebi\LogMailSender'],
+	'ebi\Log'=>['ebi\LogMailSender'],
+	'test\flow\RequestFlow'=>['test\plugin\RequestPlugin'],
+	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
 ]);
 
 
