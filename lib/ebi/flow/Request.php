@@ -59,41 +59,7 @@ class Request extends \ebi\Request{
 	 * __before__メソッドを定義することで拡張する
 	 */
 	public function before(){
-		list(,$method) = explode('::',$this->get_selected_pattern()['action']);
-		$annon = \ebi\Annotation::get_method(get_class($this), $method,['http_method','request','user_role']);
-		
-		if(isset($annon['http_method']['value']) && strtoupper($annon['http_method']['value']) != \ebi\Request::method()){
-			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
-		}
-		if(isset($annon['request'])){
-			foreach($annon['request'] as $k => $an){
-				if(isset($an['type'])){
-					if($an['type'] == 'file'){
-						if(isset($an['require']) && $an['require'] === true){
-							if(!$this->has_file($k)){
-								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'),$k);
-							}else{
-								if(isset($an['max'])){
-									$filesize = is_file($this->file_path($k)) ? filesize($this->file_path($k)) : 0;
-									
-									if($filesize <= 0 || ($filesize/1024/1024) > $an['max']){
-										\ebi\Exceptions::add(new \ebi\exception\MaxSizeExceededException($k.' exceeds maximum'),$k);
-									}
-								}
-							}
-						}
-					}else{
-						try{
-							\ebi\Validator::type($k,$this->in_vars($k),$an);
-						}catch(\ebi\exception\InvalidArgumentException $e){
-							\ebi\Exceptions::add($e,$k);
-						}
-						\ebi\Validator::value($k, $this->in_vars($k), $an);
-					}
-				}
-			}
-		}
-		\ebi\Exceptions::throw_over();
+		$annon = $this->request_validation(['user_role']);
 		
 		if(!$this->is_user_logged_in()){
 			if($this->has_object_plugin('remember_me')){
@@ -107,7 +73,6 @@ class Request extends \ebi\Request{
 				}
 			}
 			
-			// ログインが必要な条件
 			if(!$this->is_user_logged_in() && (isset($this->login_anon) || $this->has_object_plugin('login_condition'))){
 				$selected_pattern = $this->get_selected_pattern();
 				
@@ -137,10 +102,9 @@ class Request extends \ebi\Request{
 			}
 		}
 		
-		// ロールの確認
 		if($this->is_user_logged_in() && (isset($annon['user_role']) || isset($this->login_anon['user_role']))){
 			if(
-				!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) || 
+				!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) ||
 				(isset($this->login_anon['user_role']) && !in_array($this->login_anon['user_role'],$this->user()->get_role())) ||
 				(isset($annon['user_role']['value']) && !in_array($annon['user_role']['value'],$this->user()->get_role()))
 			){
