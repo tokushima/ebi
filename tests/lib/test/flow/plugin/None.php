@@ -5,7 +5,7 @@ namespace test\flow\plugin;
  */
 class None{
 	/*
-	 * @plugin ebi.Flow
+	 * @plugin \ebi\Flow
 	 */
 	public function flow_output($array){
 	}

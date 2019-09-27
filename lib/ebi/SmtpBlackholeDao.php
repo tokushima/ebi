@@ -27,7 +27,7 @@ class SmtpBlackholeDao extends \ebi\Dao{
 	
 	/**
 	 * メールの内容をDBに保存する
-	 * @param ebi.Mail $mail
+	 * @param \ebi\Mail $mail
 	 */
 	public function send_mail(\ebi\Mail $mail){
 		$data = $mail->get();

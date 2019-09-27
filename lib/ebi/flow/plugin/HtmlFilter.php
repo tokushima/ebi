@@ -7,7 +7,7 @@ namespace ebi\flow\plugin;
  */
 class HtmlFilter{
 	/**
-	 * @plugin ebi.Template
+	 * @plugin \ebi\Template
 	 * @param string $src
 	 * @return string|mixed
 	 */	

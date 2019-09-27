@@ -3,7 +3,7 @@ namespace test\flow;
 /**
  * 
  * @author tokushima
- * @login @['type'=>'test.model.Member1']
+ * @login @['type'=>'test\model\Member1']
  */
 class LoginRequestAction1 extends \ebi\flow\AutomapLoginRequest{
 	/**

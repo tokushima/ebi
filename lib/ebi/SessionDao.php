@@ -19,7 +19,7 @@ class SessionDao extends \ebi\Dao{
 		$this->data = ($value === null) ? '' : $value;
 	}
 	/**
-	 * @plugin ebi.Session
+	 * @plugin \ebi\Session
 	 * @param string $id
 	 * @return string
 	 */
@@ -32,7 +32,7 @@ class SessionDao extends \ebi\Dao{
 		return '';
 	}
 	/**
-	 * @plugin ebi.Session
+	 * @plugin \ebi\Session
 	 * @param string $id
 	 * @param string $sess_data
 	 */
@@ -46,7 +46,7 @@ class SessionDao extends \ebi\Dao{
 		}
 	}
 	/**
-	 * @plugin ebi.Session
+	 * @plugin \ebi\Session
 	 * @param string $id
 	 * @return boolean
 	 */
@@ -59,7 +59,7 @@ class SessionDao extends \ebi\Dao{
 		return false;
 	}
 	/**
-	 * @plugin ebi.Session
+	 * @plugin \ebi\Session
 	 * @param int $maxlifetime
 	 * @return boolean
 	 */
