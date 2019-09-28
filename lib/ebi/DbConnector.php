@@ -310,9 +310,9 @@ abstract class DbConnector{
 	 * @return Daq
 	 */
 	public function distinct_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('distinct',$dao,$target_column,$gorup_column,$query);
+		return $this->which_aggregator_sql('distinct',$dao,$target_column,$gorup_column,$query,true);
 	}
-	protected function which_aggregator_sql($exe,\ebi\Dao $dao,$target_name,$gorup_name,\ebi\Q $query){
+	protected function which_aggregator_sql($exe,\ebi\Dao $dao,$target_name,$gorup_name,\ebi\Q $query,$sort=false){
 		$select = $from = [];
 		$target_column = $group_column = null;
 		
@@ -345,7 +345,7 @@ abstract class DbConnector{
 			if(isset($date_format[$group_column->name()])){
 				$column_map = $this->date_format($column_map,$dao,$group_column,$date_format[$group_column->name()]);
 			}
-			$select[] = $column_map.' key_column';			
+			$select[] = $column_map.' key_column';
 		}
 		foreach($dao->columns() as $column){
 			$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
@@ -353,11 +353,11 @@ abstract class DbConnector{
 		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		
 		return new \ebi\Daq(('select '.$exe.'('.$exec_map.') target_column'
-			.(empty($select) ? '' : ','.implode(',',$select))
-			.' from '.implode(',',$from)
-			.(empty($where_sql) ? '' : ' where '.$where_sql)
-			.(empty($group_column) ? '' : ' group by key_column')
-			.' order by target_column'
+				.(empty($select) ? '' : ','.implode(',',$select))
+				.' from '.implode(',',$from)
+				.(empty($where_sql) ? '' : ' where '.$where_sql)
+				.(empty($group_column) ? '' : ' group by key_column')
+				.(($sort || !empty($group_column)) ? ' order by target_column' : '')
 			)
 			,$where_vars
 		);

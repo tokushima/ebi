@@ -2,7 +2,7 @@
 namespace ebi\flow;
 /**
  * ログイン、リクエストやセッションを処理する
- * @login @['type'=>'ebi.User']
+ * @login @['type'=>'ebi\User']
  */
 class AutomapLoginRequest extends \ebi\flow\Request{
 	/**

@@ -7,7 +7,7 @@ namespace ebi\flow\plugin;
  */
 class HtmlMinifier{
 	/**
-	 * @plugin ebi.Template
+	 * @plugin \ebi\Template
 	 * @param string $src
 	 * @return mixed
 	 */

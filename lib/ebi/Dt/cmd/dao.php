@@ -105,7 +105,7 @@ switch($cmd){
 		$file = empty($values) ? getcwd().'/dao.dump' : array_shift($values);
 		
 		if(!is_file($file)){
-			\cmdman\Std::println_danger('usage: php cmdman.phar  ebi.Dt::dao import <input file>');
+			\cmdman\Std::println_danger('usage: php cmdman.phar ebi.Dt::dao import <input file>');
 			exit;
 		}
 		$get_dao_dump_func = function($file){

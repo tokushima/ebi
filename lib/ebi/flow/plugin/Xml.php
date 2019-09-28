@@ -6,7 +6,7 @@ namespace ebi\flow\plugin;
  */
 class Xml{
 	/*
-	 * @plugin ebi.Flow
+	 * @plugin \ebi\Flow
 	 */
 	public function flow_output($array){
 		if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') !== false){
@@ -24,7 +24,7 @@ class Xml{
 		}
 	}
 	/**
-	 * @plugin ebi.Flow
+	 * @plugin \ebi\Flow
 	 * @param \Exception $exception
 	 */
 	public function flow_exception(\Exception $exception){
