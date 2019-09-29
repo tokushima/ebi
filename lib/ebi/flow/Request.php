@@ -102,13 +102,20 @@ class Request extends \ebi\Request{
 			}
 		}
 		
-		if($this->is_user_logged_in() && (isset($annon['user_role']) || isset($this->login_anon['user_role']))){
-			if(
-				!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) ||
-				(isset($this->login_anon['user_role']) && !in_array($this->login_anon['user_role'],$this->user()->get_role())) ||
-				(isset($annon['user_role']['value']) && !in_array($annon['user_role']['value'],$this->user()->get_role()))
-			){
-				throw new \ebi\exception\NotPermittedException();
+		if($this->is_user_logged_in()){
+			if(isset($this->login_anon['type']) && !($this->user() instanceof $this->login_anon['type'])){
+				\ebi\HttpHeader::send_status(401);
+				throw new \ebi\exception\UnauthorizedException();
+			}
+			if(isset($annon['user_role']) || isset($this->login_anon['user_role'])){
+				if(
+					!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) ||
+					(isset($this->login_anon['user_role']) && !in_array($this->login_anon['user_role'],$this->user()->get_role())) ||
+					(isset($annon['user_role']['value']) && !in_array($annon['user_role']['value'],$this->user()->get_role()))
+				){
+					\ebi\HttpHeader::send_status(403);
+					throw new \ebi\exception\AccessDeniedException();
+				}
 			}
 		}
 		if(method_exists($this,'__before__')){
@@ -177,15 +184,8 @@ class Request extends \ebi\Request{
 		if(func_num_args() > 0){
 			$user = func_get_arg(0);
 			
-			if(isset($this->login_anon) && isset($this->login_anon['type'])){
-				$class = str_replace('.',"\\",$this->login_anon['type']);
-				
-				if($class[0] != "\\"){
-					$class= "\\".$class;
-				}
-				if(!($user instanceof $class)){
-					throw new \ebi\exception\UnauthorizedTypeException();
-				}
+			if(isset($this->login_anon['type']) && !($user instanceof $this->login_anon['type'])){
+				throw new \ebi\exception\IllegalDataTypeException();
 			}
 			$this->sessions($this->login_id.'USER',$user);
 		}
