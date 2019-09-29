@@ -1,7 +1,7 @@
 <?php
 include_once('bootstrap.php');
 /**
- * remember_me plugin
+ * after_login_redirect
  */
 \ebi\Flow::app([
 	'plugins'=>[

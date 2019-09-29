@@ -37,6 +37,10 @@ include_once('bootstrap.php');
 			'name'=>'notype',
 			'action'=>'test\flow\LoginRequestNoTypeAction::aaa',
 		],
+		'othertype'=>[
+			'name'=>'othertype',
+			'action'=>'test\flow\LoginRequestOtherTypeAction::aaa',
+		],
 		'automap'=>[
 			'name'=>'automap',
 			'action'=>'test\flow\LoginRequestAction1'
