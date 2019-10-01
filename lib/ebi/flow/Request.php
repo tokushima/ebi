@@ -175,7 +175,7 @@ class Request extends \ebi\Request{
 	public function get_after_vars(){
 		return $this->after_vars;
 	}
-
+	
 	/**
 	 * ログインしているユーザのモデル
 	 * @return mixed
