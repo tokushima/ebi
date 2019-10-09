@@ -22,6 +22,7 @@ class Session{
 			$cookie_params = \ebi\Conf::cookie_params();
 			
 			session_name($cookie_params['session_name']);
+			ini_set('session.sid_length',$cookie_params['session_sid_length']);
 			
 			if($cookie_params['session_maxlifetime'] > 0){
 				ini_set('session.gc_maxlifetime',$cookie_params['session_maxlifetime']);
