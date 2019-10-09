@@ -20,14 +20,14 @@ class Q{
 	const ORDER_RAND = 13;
 	const ORDER = 14;
 	const MATCH = 15;
-
+	
 	const OR_BLOCK = 16;
 	const AND_BLOCK = 17;
 	const DATE_FORMAT = 18;
 	
 	const IGNORE = 2;
 	const NOT = 4;
-
+	
 	private $arg1;
 	private $arg2;
 	private $type;
@@ -96,7 +96,7 @@ class Q{
 	public function ar_and_block(){
 		return $this->ar_value($this->and_block);
 	}
-
+	
 	public function ar_or_block(){
 		return $this->ar_value($this->or_block);
 	}
@@ -114,7 +114,7 @@ class Q{
 	}
 	public function ar_date_format(){
 		return $this->ar_value($this->date_format);
-	}	
+	}
 	/**
 	 * ソート順がランダムか
 	 * @return boolean
@@ -159,7 +159,7 @@ class Q{
 						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 					}else{
 						$this->and_block[] = $arg;
-					}	
+					}
 				}else if($arg instanceof \ebi\Paginator){
 					$this->paginator = $arg;
 				}else if($arg instanceof \ebi\Request){
@@ -335,7 +335,7 @@ class Q{
 					
 					if($v !== ''){
 						$result[] = $v;
-					}					
+					}
 				}
 			}else{
 				foreach($words as $w){

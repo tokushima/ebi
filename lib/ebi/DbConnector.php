@@ -674,10 +674,10 @@ abstract class DbConnector{
 	public function error_info(array $error_info){
 		if($error_info[0] == 23000){
 			if(strpos($error_info[2] ?? '','UNIQUE') !== false){
-				throw new \ebi\exception\UniqueException('Duplicate entry');
+				throw new \ebi\exception\DuplicateKeyException();
 			}
 			if(strpos($error_info[2] ?? '','NOT NULL') !== false){
-				throw new \ebi\exception\RequiredException('Entry is required');
+				throw new \ebi\exception\RequiredException();
 			}
 		}
 	}

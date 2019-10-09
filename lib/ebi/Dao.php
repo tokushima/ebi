@@ -415,7 +415,7 @@ abstract class Dao extends \ebi\Obj{
 		foreach($resultset as $alias => $value){
 			if(isset(self::$_dao_[$this->_class_id_]->_alias_[$alias])){
 				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1') $this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
-
+				
 				if($this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has') === true){
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->cast_resultset([$alias=>$value]);
 				}else{
@@ -465,7 +465,7 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public static function stop_record(){
 		self::$recording_query = false;
-		return self::$record_query;	
+		return self::$record_query;
 	}
 	/**
 	 * クエリを実行する
@@ -509,23 +509,6 @@ abstract class Dao extends \ebi\Obj{
 			return ($is_list) ? [] : null;
 		}
 		return ($is_list) ? $statement->fetchAll(\PDO::FETCH_ASSOC) : $statement->fetchAll(\PDO::FETCH_COLUMN,0);
-	}
-	private function save_verify_primary_unique(){
-		$q = new \ebi\Q();
-		$primary = false;
-		
-		foreach($this->primary_columns() as $column){
-			$value = $this->{$column->name()}();
-			if($this->prop_anon($column->name(),'type') === 'serial'){
-				$primary = false;
-				break;
-			}
-			$q->add(Q::eq($column->name(),$value));
-			$primary = true;
-		}
-		if($primary && static::find_count($q) > 0){
-			throw new \ebi\exception\UniqueException('duplicate entry',$this);
-		}
 	}
 	/**
 	 * 値の妥当性チェックを行う
@@ -1034,7 +1017,7 @@ abstract class Dao extends \ebi\Obj{
 		if($this->_saving_[0]){
 			throw new \ebi\exception\BadMethodCallException('save can not be used during __before_save__');
 		}
-		$q = new \ebi\Q();
+		$primary_q = new \ebi\Q();
 		$new = false;
 		
 		foreach($this->primary_columns() as $column){
@@ -1044,10 +1027,9 @@ abstract class Dao extends \ebi\Obj{
 				$new = true;
 				break;
 			}
-			$q->add(Q::eq($column->name(),$value));
+			$primary_q->add(Q::eq($column->name(),$value));
 		}
-		$self = get_class($this);
-		if(!$new && $self::find_count($q) === 0){
+		if(!$new && !$primary_q->none() && static::find_count($primary_q) === 0){
 			$new = true;
 		}
 		
@@ -1083,7 +1065,7 @@ abstract class Dao extends \ebi\Obj{
 		}
 		
 		if($new){
-			if(self::$_co_anon_[$self][2]){
+			if(self::$_co_anon_[get_called_class()][2]){
 				throw new \ebi\exception\BadMethodCallException('create save is not permitted');
 			}
 			if(!$this->_saving_[1]){ // after中は実行しない
@@ -1093,7 +1075,6 @@ abstract class Dao extends \ebi\Obj{
 				$this->_saving_[0] = false;
 			}
 			
-			$this->save_verify_primary_unique();
 			$this->validate();
 			$daq = self::$_con_[get_called_class()]->create_sql($this);
 			
@@ -1114,7 +1095,7 @@ abstract class Dao extends \ebi\Obj{
 				$this->_saving_[1] = false;
 			}
 		}else{
-			if(self::$_co_anon_[$self][2]){
+			if(self::$_co_anon_[get_called_class()][2]){
 				throw new \ebi\exception\BadMethodCallException('update save is not permitted');
 			}
 			if(!$this->_saving_[1]){ // after中は実行しない
