@@ -37,13 +37,10 @@ class SessionDao extends \ebi\Dao{
 	 * @param string $sess_data
 	 */
 	public function session_write($id,$sess_data){
-		try{
-			$obj = new self();
-			$obj->id($id);
-			$obj->data($sess_data);
-			$obj->save();
-		}catch(\Exception $e){
-		}
+		$obj = new self();
+		$obj->id($id);
+		$obj->data($sess_data);
+		$obj->save();
 	}
 	/**
 	 * @plugin \ebi\Session

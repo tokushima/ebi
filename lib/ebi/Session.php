@@ -38,7 +38,7 @@ class Session{
 					$cookie_params['cookie_domain'],
 					$cookie_params['cookie_secure']
 				);
-			}			
+			}
 			
 			if(static::has_class_plugin('session_read')){
 				session_set_save_handler(
