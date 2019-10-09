@@ -271,12 +271,19 @@ class Conf{
 		 * @param string $val 消去されるまでの秒数を指定します。
 		 */
 		$session_maxlifetime = self::get_self_conf_get('session_maxlifetime',1440);
-
+		
 		if($session_maxlifetime < $session_lifetime){
 			$session_maxlifetime = $session_lifetime;
 		}
+		
+		/**
+		 * @param integer $val セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
+		 */
+		$session_sid_length = self::get_self_conf_get('session_sid_length',32);
+		
 		return [
 			'session_name'=>$session_name,
+			'session_sid_length'=>$session_sid_length,
 			'session_maxlifetime'=>$session_maxlifetime,
 			'session_lifetime'=>$session_lifetime,
 			'cookie_lifetime'=>$cookie_lifetime,

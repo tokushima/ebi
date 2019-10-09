@@ -5,6 +5,7 @@
 			'dev'=>['local'],
 		],
 		'session_lifetime'=>60,
+		'session_sid_length'=>255,
 	],
 	'ebi\Log'=>[
 		'level'=>'debug',

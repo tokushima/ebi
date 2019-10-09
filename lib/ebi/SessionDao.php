@@ -3,7 +3,7 @@ namespace ebi;
 /**
  * Daoでセッションを扱うモジュール
  * @author tokushima
- * @var string $id @['primary'=>true,'max'=>128]
+ * @var string $id @['primary'=>true,'max'=>256]
  * @var text $data
  * @var number $expires
  */
