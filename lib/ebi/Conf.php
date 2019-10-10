@@ -279,7 +279,7 @@ class Conf{
 		/**
 		 * @param integer $val セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
 		 */
-		$session_sid_length = self::get_self_conf_get('session_sid_length',32);
+		$session_sid_length = self::get_self_conf_get('session_sid_length');
 		
 		return [
 			'session_name'=>$session_name,
