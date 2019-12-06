@@ -78,7 +78,7 @@ class WorkingStorage{
 	 */
 	public static function tmpfile($src='',$postfix=''){
 		for($i=0;$i<100;$i++){
-			$uniq = str_replace('.','',microtime(true).uniqid('',true)).$postfix;
+			$uniq = microtime(true).uniqid('',true).$postfix;
 			
 			if(!file_exists(\ebi\Conf::work_path($uniq))){
 				return self::set($uniq,$src);
@@ -93,7 +93,7 @@ class WorkingStorage{
 	 */
 	public static function tmpdir(){
 		for($i=0;$i<100;$i++){
-			$uniq = str_replace('.','',microtime(true).uniqid('',true));
+			$uniq = microtime(true).uniqid('',true);
 			
 			if(!file_exists(\ebi\Conf::work_path($uniq))){
 				return self::mkdir($uniq);
