@@ -506,14 +506,17 @@ class Image{
 	}
 	
 	private static function judge_orientation($w,$h){
-		$d = $h / $w;
-		
-		if($d <= 1.02 && $d >= 0.98){
-			return self::ORIENTATION_SQUARE;
-		}else if($d > 1){
-			return self::ORIENTATION_PORTRAIT;
+		if($w > 0 && $h > 0){
+			$d = $h / $w;
+			
+			if($d <= 1.02 && $d >= 0.98){
+				return self::ORIENTATION_SQUARE;
+			}else if($d > 1){
+				return self::ORIENTATION_PORTRAIT;
+			}
+			return self::ORIENTATION_LANDSCAPE;
 		}
-		return self::ORIENTATION_LANDSCAPE;
+		return null;
 	}
 	
 	private static function check_file_type($filename,$header,$footer){
