@@ -544,6 +544,9 @@ class Image{
 	 * @see http://jp2.php.net/manual/ja/function.image-type-to-mime-type.php
 	 */
 	public static function get_info($filename){
+		if(!is_file($filename)){
+			throw new \ebi\exception\AccessDeniedException($filename.' not found');
+		}
 		$info = getimagesize($filename);
 		$mime = $info['mime'] ?? null;
 		$broken = null;
