@@ -78,7 +78,7 @@ class DocInfo extends \ebi\Obj{
 		}else{
 			$doc = $src;
 		}
-
+		
 		$params = \ebi\Dt\DocParam::parse('param',$doc);
 		
 		if(!empty($params)){

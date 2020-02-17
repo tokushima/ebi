@@ -145,16 +145,57 @@ class Dt{
 		
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
-				list($m['class'],$m['method']) = explode('::',$m['action']);
-				list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
-				
-				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
-				$info->set_opt('name',$name);
-				$info->set_opt('url',$m['format']);
-				$info->set_opt('user_model',$user_model);
-				$info->reset_params(array_slice($info->params(),0,$m['num']));
-				
-				
+				if(isset($m['action'])){
+					if($m['action'] instanceof \Closure){
+						$info = \ebi\Dt\Man::closure_info($m['action']);
+					}else{
+						list($m['class'],$m['method']) = explode('::',$m['action']);
+						list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
+						
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
+						$info->set_opt('user_model',$user_model);
+						
+						foreach(['get_after_vars','get_after_vars_request'] as $mn){
+							try{
+								$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
+								
+								foreach(['requests','contexts'] as $k){
+									$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
+								}
+							}catch(\ReflectionException $e){
+							}
+						}
+						
+						// ログイン プラグイン情報をマージ
+						foreach($info->opt('plugins') as $plugin){
+							if($plugin->name() == 'login_condition'){
+								foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
+									$plugin_class = \ebi\Util::get_class_name($map_plugin);
+									$ref = new \ReflectionClass($plugin_class);
+									$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
+									$info->document(trim($info->document().PHP_EOL.$document));
+									
+									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
+										if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
+											$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+											
+											if($login_method->has_opt('http_method')){
+												$info->set_opt('http_method',$login_method->opt('http_method'));
+											}
+											foreach(['requests','contexts'] as $k){
+												$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
+											}
+										}
+									}
+									break;
+								}
+								break;
+							}
+						}
+					}
+				}else{
+					$info = new \ebi\Dt\DocInfo();
+				}
 				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
 					if(isset($m['deprecated'])){
 						$deprecated = is_bool($m['deprecated']) ? time() : strtotime($m['deprecated']);
@@ -163,45 +204,15 @@ class Dt{
 					}
 					$info->set_opt('deprecated',$deprecated);
 				}
-				foreach(['get_after_vars','get_after_vars_request'] as $mn){
-					try{
-						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
-						
-						foreach(['requests','contexts'] as $k){
-							$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
-						}
-					}catch(\ReflectionException $e){
-					}
-				}
 				
-				// ログイン プラグイン情報をマージ
-				foreach($info->opt('plugins') as $plugin){
-					if($plugin->name() == 'login_condition'){
-						foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
-							$plugin_class = \ebi\Util::get_class_name($map_plugin);
-							$ref = new \ReflectionClass($plugin_class);
-							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
-							$info->document(trim($info->document().PHP_EOL.$document));
-							
-							foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
-								if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
-									$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
-									
-									if($login_method->has_opt('http_method')){
-										$info->set_opt('http_method',$login_method->opt('http_method'));
-									}
-									foreach(['requests','contexts'] as $k){
-										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
-									}
-								}
-							}
-							break;
-						}
-						break;
-					}
-				}
+				
+				$info->set_opt('name',$name);
+				$info->set_opt('url',$m['format']);
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
-				return ['method_info'=>$info];
+				
+				$info->reset_params(array_slice($info->params(),0,$m['num']));
+				
+				return ['action_info'=>$info];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
@@ -485,6 +496,9 @@ class Dt{
 							'count',
 							\ebi\SmtpBlackholeDao::find_count(Q::eq('tcode',$info->opt('x_t_code')))
 						);
+						if(\ebi\SmtpBlackholeDao::find_count(Q::eq('tcode',$info->opt('x_t_code')),Q::gt('create_date',time() - 600)) > 0){
+							$template_list[$k]->set_opt('new',true);
+						}
 					}
 				}
 			}

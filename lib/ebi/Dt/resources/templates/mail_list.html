@@ -42,8 +42,8 @@
 	</td>
 	
 	<rt:if param="{$is_test}">
-		<td>
-			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}">
+		<td class="text-right">
+			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}" class="{$t.cond_switch($info.opt('new'),'text-danger font-weight-bold')}">
 				{$info.opt('count')}
 			</a>
 		</td>

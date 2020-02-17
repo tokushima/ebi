@@ -2,36 +2,12 @@
 
 <rt:block name="content">
 
-<h1 class="display-3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
-	{$method_info.opt('name')}
-</h1>
+<p class="h3 {$t.cond_switch($action_info.opt('deprecated'),'deprecated;','')}">
+	{$action_info.opt('name')}
+</p>
 
-<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
-{$t.noop($f.md2html($method_info.document()))}
-</div>
-
-
-
-<div class="modal" tabindex="-1" role="dialog" id="link">
-	<div class="modal-dialog modal-lg" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				<form name="linkdata">
-					<input type="text" name="url" value="{$method_info.opt('url')}" class="form-control" />
-					<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
-				</form>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" onclick="submit_linkform(linkdata,'post')">POST</button>
-				<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata,'get')">GET</button>
-			</div>
-		</div>
-	</div>
+<div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px; min-height: 50px;">
+{$t.noop($f.md2html($action_info.document()))}
 </div>
 
 <div class="card mb-3">
@@ -43,29 +19,27 @@
 		<tr>
 			<th>Version</th>
 			<td>
-				<a href="{$t.package_method_url('index')}?version={$method_info.version()}">
-					{$method_info.version()}
+				<a href="{$t.package_method_url('index')}?version={$action_info.version()}">
+					{$action_info.version()}
 				</a>
 			</td>
 		</tr>
 		<tr>
 			<th>URL</th>
 			<td>
-				<a href="#" data-toggle="modal" data-target="#link">
-					{$method_info.opt('url')}
-				</a>
+				{$action_info.opt('url')}
 			</td>
-		</tr>		
+		</tr>
 		<tr>
 			<th>Action</th>
 			<td>
-				<div class="{$t.cond_switch($method_info.opt('deprecated'),'deprecated','')}">
-					<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
-						{$method_info.opt('class')}
+				<div class="{$t.cond_switch($action_info.opt('deprecated'),'deprecated','')}">
+					<a href="{$t.package_method_url('class_doc',$action_info.opt('class'))}">
+						{$action_info.opt('class')}
 					</a>
 					::
-					<a href="{$t.package_method_url('class_method_doc',$method_info.opt('class'),$method_info.opt('method'))}">
-						{$method_info.opt('method')}
+					<a href="{$t.package_method_url('class_method_doc',$action_info.opt('class'),$action_info.opt('method'))}">
+						{$action_info.opt('method')}
 					</a>
 				</div>
 			</td>
@@ -73,8 +47,8 @@
 		<tr>
 			<th>HTTP Method</th>
 			<td>
-				<rt:if param="{$method_info.opt('http_method')}">
-					{$method_info.opt('http_method')}
+				<rt:if param="{$action_info.opt('http_method')}">
+					{$action_info.opt('http_method')}
 				<rt:else/>
 					GET / POST
 				</rt:if>
@@ -84,22 +58,22 @@
 		<tr>
 			<th>User model</th>
 			<td>
-				<rt:if param="{$method_info.opt('user_model')}">
-					<a href="{$t.package_method_url('class_doc',$method_info.opt('user_model'))}">
-						{$method_info.opt('user_model')}
+				<rt:if param="{$action_info.opt('user_model')}">
+					<a href="{$t.package_method_url('class_doc',$action_info.opt('user_model'))}">
+						{$action_info.opt('user_model')}
 					</a>
 				<rt:else/>
 					-
 				</rt:if>
 			</td>
-		</tr>		
+		</tr>
 		
-		<rt:if param="{$method_info.opt('deprecated')}">
+		<rt:if param="{$action_info.opt('deprecated')}">
 			<tr>
 				<th class="text-danger">Deprecated</th>
 				<td>
 					<div class="text-danger">
-						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
+						{$t.date_format('Y-m-d',$action_info.opt('deprecated'))}
 					</div>
 				</td>
 			</tr>
@@ -111,25 +85,25 @@
 
 
 
-<rt:if param="{$method_info.params()}">
+<rt:if param="{$action_info.params()}">
 
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-secondary">Params</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				{$param.name()}
 			</td>
 			<td>
-				<rt:if param="{$method_info.is_type_class()}">
-					<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
+				<rt:if param="{$action_info.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$action_info.plain_type())}">
 						{$param.fm_type()}
 					</a>
 				<rt:else />
 					{$param.fm_type()}
 				</rt:if>
-			</td>				
+			</td>
 			<td>
 				{$t.html($param.summary())}
 			</td>
@@ -140,11 +114,11 @@
 </rt:if>
 
 
-<rt:if param="{$method_info.opt('requests')}">
+<rt:if param="{$action_info.opt('requests')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-success">Request</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('requests')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('requests')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 			<td>
 				{$param.name()}
@@ -175,18 +149,61 @@
 				</rt:if>
 			</td>
 		</tr>
-		</table>	
+		</table>
 	</div>
 </div>
 </rt:if>
 
 
 
-<rt:if param="{$method_info.opt('contexts')}">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Send</div>
+	<div class="card-body text-white bg-light">
+		<script type="text/javascript">
+			function submit_linkform(datafrm,method){
+				linkform.action = datafrm.url.value;
+				linkform.method = method;
+				
+				try{
+					data = [];
+					datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
+					
+					if(datafrm.query.value){
+						data = $.parseJSON(datafrm.query.value);
+					}				
+					for(key in data){
+						$('<input />')
+						.attr('type','hidden')
+						.attr('name',key)
+						.attr('value',data[key])
+						.appendTo('#linkform');
+					}
+					linkform.submit();
+				}catch(e){
+					alert('query invalid: ' + e);
+				}
+			}
+		</script>
+		
+		<form name="linkdata">
+			<input type="text" name="url" value="{$action_info.opt('url')}" class="form-control" />
+			<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
+			
+			<div>
+				<button type="button" class="btn btn-sm btn-outline-primary" onclick="submit_linkform(linkdata,'post')" style="margin: 5px 5px 5px 0;">POST</button>
+				<button type="button" class="btn btn-sm btn-outline-success" onclick="submit_linkform(linkdata,'get')" style="margin: 5px 5px 5px 0;">GET</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+
+
+<rt:if param="{$action_info.opt('contexts')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-success">Context</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('contexts')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('contexts')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 			<td>
 				{$param.name()}
@@ -218,11 +235,11 @@
 
 
 
-<rt:if param="{$method_info.opt('throws')}">
+<rt:if param="{$action_info.opt('throws')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-danger">Throws</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				<rt:if param="{$param.is_type_class()}">
@@ -244,11 +261,11 @@
 
 
 
-<rt:if param="{$method_info.opt('mail_list')}">
+<rt:if param="{$action_info.opt('mail_list')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-info">Mail</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
@@ -256,7 +273,7 @@
 				</a>
 			</td>
 			<td>
-				{$info.name()}				
+				{$info.name()}
 			</td>
 			<td>
 				<a href="{$t.package_method_url('index')}?version={$info.version()}">
@@ -274,18 +291,18 @@
 
 
 
-<rt:if param="{$method_info.opt('plugins')}">
+<rt:if param="{$action_info.opt('plugins')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-info">Plugins</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
-				<a href="{$t.package_method_url('plugin_doc',$method_info.opt('class'),$info.name())}">
+				<a href="{$t.package_method_url('plugin_doc',$action_info.opt('class'),$info.name())}">
 					{$info.name()}
 				</a>
 			</td>
-
+			
 			<td>
 				{$t.html($info.summary(),200,1)}
 			</td>				
@@ -297,7 +314,7 @@
 						</a>
 					</div>
 				</rt:loop>
-			</td>			
+			</td>
 		</tr>
 		</table>
 	</div>
@@ -305,11 +322,11 @@
 </rt:if>
 
 
-<rt:if param="{$method_info.opt('see_list')}">
+<rt:if param="{$action_info.opt('see_list')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-info">See</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				<rt:if param="{$t.eq($see['type'],'url')}">
@@ -330,11 +347,11 @@
 </rt:if>
 
 
-<rt:if param="{$method_info.opt('test_list')}">
+<rt:if param="{$action_info.opt('test_list')}">
 <div class="card border-light mb-3">
 	<div class="card-header">Tests</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('test_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$action_info.opt('test_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				<a href="{$t.package_method_url('test_view')}?path={$info.name()}">

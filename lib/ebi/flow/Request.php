@@ -290,6 +290,16 @@ class Request extends \ebi\Request{
 				)){
 					throw new \ebi\exception\UnauthorizedException();
 				}
+				
+				/**
+				 * ログイン失敗時にアクションに連想配列を追加する
+				 * @param \ebi\flow\Request $arg1
+				 */
+				$vars = $this->call_object_plugin_funcs('get_after_vars_unauthorized',$this);
+				
+				if(!empty($vars) && is_array($vars)){
+					$rtn_vars = array_merge($rtn_vars,$vars);
+				}
 			}
 		}
 		return $rtn_vars;

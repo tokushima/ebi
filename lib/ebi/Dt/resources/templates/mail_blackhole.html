@@ -24,8 +24,8 @@
 	<td>
 		{$obj.to()}
 	</td>
-	<td>
-		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}">
+	<td nowrap>
+		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}" class="{$t.cond_switch($t.gt($obj.create_date(),$t.time() - 600),'text-danger')}">
 			{$obj.fm_create_date()}
 		</a>
 	</td>

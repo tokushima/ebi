@@ -2,11 +2,11 @@
 
 <rt:block name="content">
 
-<h1 class="display-3">
+<p class="h5">
 	{$mail_info.opt('x_t_code')}
-</h1>
+</p>
 
-<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
+<div class="alert alert-secondary">
 	{$t.html($mail_info.document())}
 </div>
 
@@ -50,7 +50,7 @@
 									( <span style="font-size: small;">
 										Version: {$method_info.version()}
 									</span> )
-								</span>							
+								</span>
 							</rt:if>
 						</div>
 					</rt:loop>
@@ -121,14 +121,14 @@
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-primary">Body</div>
 	<div class="card-body text-secondary">
-		<pre class="source"><code>{$t.html($mail_info.opt('body'),0,0,null,false)}</code></pre>
+		<pre class="source"><code>{$t.html($mail_info.opt('body'))}</code></pre>
 	</div>
 </div>
 
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-secondary">HTML</div>
 	<div class="card-body text-secondary">
-		<pre class="source"><code>{$t.html($mail_info.opt('html'),0,0,null,false)}</code></pre>
+		<pre class="prettyprint"><code>{$t.html($mail_info.opt('html'))}</code></pre>
 	</div>
 </div>
 

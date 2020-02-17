@@ -225,10 +225,26 @@ include_once('bootstrap.php');
 		'action'=>'test\flow\Action::working_storagea', // 存在しないaction
 	],
 	
-	''=>['action'=>'test\flow\Main'],
+	''=>[
+		'action'=>'test\flow\Main',
+		'name'=>'main',
+	],
 	'info'=>['action'=>function(){
 		phpinfo();
 	}],
+	'funcargs/(.+)/(.+)'=>[
+		/**
+		 * クロージャアクション
+		 * @param string $a AAAA
+		 */
+		'action'=>function($a,$b){
+			// TODO 
+			return [
+				'A'=>$a,
+				'B'=>$b,
+			];
+		}
+	],
 	'dt'=>['action'=>'ebi\Dt','mode'=>'@dev'],
 ]);
 

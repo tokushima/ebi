@@ -250,8 +250,12 @@ class Man{
 	 * クラスドメソッドのキュメント
 	 * @param string $class
 	 * @param string $method
+	 * 
+	 * @throws \ebi\exception\NotFoundException
+	 * @return \ebi\Dt\DocInfo
 	 */
 	public static function method_info($class,$method,$detail=false,$deep=false){
+		// TODO
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -273,8 +277,26 @@ class Man{
 				}
 			}
 			$document = $document.self::get_method_document($ref);
-			$src = self::method_src($ref);			
+			$src = self::method_src($ref);
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
+			
+			// TODO 
+			$doc_params = $info->params();
+			$info->rm_params();
+			foreach($ref->getParameters() as $param){
+				$has = false;
+				
+				foreach($doc_params as $doc_param){
+					if($doc_param->name() == $param->getName()){
+						$info->add_params($doc_param);
+						$has = true;
+						break;
+					}
+				}
+				if(!$has){
+					$info->add_params(new \ebi\Dt\DocParam($param->getName(),'mixed'));
+				}
+			}
 			
 			$match = [];
 			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
@@ -288,11 +310,13 @@ class Man{
 			if(!$info->is_version()){
 				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}
+			
+			// TODO 
 			$see = [];
 			if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
 				foreach($m[1] as $v){
 					$v = trim($v);
-			
+					
 					if(strpos($v,'://') !== false){
 						$see[$v] = ['type'=>'url','url'=>$v];
 					}else if(strpos($v,'::') !== false){
@@ -304,11 +328,15 @@ class Man{
 				}
 			}
 			$info->set_opt('see_list',$see);
+			
+			
 			$info->set_opt('class',self::get_class_name($class));
 			$info->set_opt('method',$ref->getName());
 			
+			// TODO 
 			self::find_deprecate($document,$info);
 			
+			// TODO 
 			$requests = \ebi\Dt\DocParam::parse('request',$document);
 			$contexts = \ebi\Dt\DocParam::parse('context',$document);
 			
@@ -323,6 +351,7 @@ class Man{
 			if(!$info->is_return() && $info->has_opt('contexts')){
 				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
 			}
+			
 			
 			$call_plugins = $plugins = [];
 			$throws = $throw_param = $mail_list = [];
@@ -397,6 +426,7 @@ class Man{
 						$use_method_src = self::method_src($ref);
 						$use_method_doc = self::trim_doc($ref->getDocComment());
 						
+						// TODO 
 						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
 							foreach($m[1] as $k => $n){
 								if(false !== ($class_name = $get_class_name_func($n))){
@@ -427,6 +457,7 @@ class Man{
 							}
 						}
 						
+						// TODO 
 						foreach($mail_template_list as $k => $mail_info){
 							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
 								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
@@ -469,6 +500,27 @@ class Man{
 		}
 		throw new \ebi\exception\NotFoundException();
 	}
+	
+	/**
+	 * クロージャのキュメント
+	 * @param \Closure $closure
+	 * @return \ebi\Dt\DocInfo
+	 */
+	public static function closure_info(\Closure $closure){
+		$ref = new \ReflectionFunction($closure);
+		$doc = self::trim_doc($ref->getDocComment());
+		
+		$src = implode(array_slice(file($ref->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
+		// TODO 
+		$info = \ebi\Dt\DocInfo::parse(null,$doc);
+		\ebi\Log::trace($src);
+		return $info;
+	}
+	
+	/**
+	 * メールテンプレート
+	 * @return \ebi\Dt\DocInfo[]
+	 */
 	public static function mail_template_list(){
 		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
 		$template_list = [];
@@ -535,9 +587,9 @@ class Man{
 				
 				foreach($ref->getParameters() as $param){
 					if($param->hasType()){
-						$type_class = (string)$param->getType();
+						$type_class = ($param->getType() instanceof \ReflectionNamedType) ? $param->getType()->getName() : null;
 						
-						if(class_exists($type_class)){
+						if(!empty($type_class) && class_exists($type_class)){
 							$vars['$'.$param->getName()] = $type_class;
 						}
 					}

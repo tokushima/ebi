@@ -1,17 +1,9 @@
 
-.style-table-borderless td{
-	border: 0;
-}
-.style-table-borderless th{
-	border: 0;
+.prettyprint ol.linenums > li {
+	list-style-type: decimal; 
 }
 
-body {
-  padding-top: 5rem;
-}
 
-.source{
-	margin-top: 20px;
-	border: 1px dashed #ccc;
-	padding: 20px;
+main{
+	margin-top: 30px;
 }
