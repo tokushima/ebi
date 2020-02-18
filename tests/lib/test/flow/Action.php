@@ -34,6 +34,12 @@ class Action{
 	 * @version 20160102
 	 */
 	public function raise(){
+		if(1){
+			throw new \ebi\exception\IllegalDataTypeException();
+		}
+		if(2){
+			throw new \ebi\exception\ConnectionException();
+		}
 		throw new \LogicException('raise test');
 	}
 	public function exceptions_group(){
@@ -41,6 +47,8 @@ class Action{
 		\ebi\Exceptions::add(new \LogicException('logic'),'newgroup');
 		\ebi\Exceptions::throw_over();
 	}
+	
+	
 	public function exceptions(){
 		\ebi\Exceptions::add(new \InvalidArgumentException('invalid argument'));
 		\ebi\Exceptions::add(new \LogicException('logic'));

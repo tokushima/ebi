@@ -235,7 +235,11 @@ include_once('bootstrap.php');
 	'funcargs/(.+)/(.+)'=>[
 		/**
 		 * クロージャアクション
-		 * @param string $a AAAA
+		 * @param string $b BBB
+		 * @see https://google.com
+		 * @request string $hoge ホゲホゲ
+		 * @context string $A AABBCC
+		 * @context string $B XXYYZZ
 		 */
 		'action'=>function($a,$b){
 			// TODO 

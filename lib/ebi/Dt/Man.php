@@ -54,26 +54,11 @@ class Man{
 		$info->set_opt('filename',$r->getFileName());
 		$info->set_opt('extends',(($r->getParentClass() === false) ? null : $r->getParentClass()->getName()));
 		$info->set_opt('abstract',$r->isAbstract());
+		$info->set_opt('see_list',self::find_see($document));
 		
-		self::find_deprecate($document,$info);
+		self::find_merge_deprecate($info,$document);
 		
-		$see = $m = [];
-		if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
-			foreach($m[1] as $v){
-				$v = trim($v);
-				
-				if(strpos($v,'://') !== false){
-					$see[$v] = ['type'=>'url','url'=>$v];
-				}else if(strpos($v,'::') !== false){
-					list($class,$method) = explode('::',$v,2);
-					$see[$v] = ['type'=>'method','class'=>$class,'method'=>$method];
-				}else if(substr($v,-1) != ':'){
-					$see[$v] = ['type'=>'class','class'=>$v];
-				}
-			}
-		}
-		$info->set_opt('see_list',$see);
-		
+		$m = [];
 		$methods = $static_methods = [];
 		foreach($r->getMethods() as $method){
 			if(substr($method->getName(),0,1) != '_' && $method->isPublic()){
@@ -92,7 +77,7 @@ class Man{
 						$method_info->name($method->getName());
 						
 						$method_document = self::get_method_document($method);
-						$method_document = self::find_deprecate($method_document,$method_info);
+						$method_document = self::find_merge_deprecate($method_info,$method_document);
 						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 						
 						$method_info->document($summary);
@@ -137,9 +122,9 @@ class Man{
 						$get_type_format(isset($anon[$name]) ? $anon[$name] : 'mixed')
 					);
 					$properties[$name]->summary(
-						self::find_deprecate(
-							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
+						self::find_merge_deprecate(
 							$properties[$name],
+							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
 							$info,
 							true
 						)
@@ -223,11 +208,42 @@ class Man{
 		
 		return $info;
 	}
-	private static function get_class_name($class){
-		return str_replace(['.','/'],['\\','\\'],$class);
+	
+	private static function get_class_name($class_name){
+		$class_name = str_replace(['.','/'],['\\','\\'],$class_name);
+		
+		if(class_exists($class_name)){
+			$r = new \ReflectionClass($class_name);
+			$name = $r->getName();
+			
+			if(substr($name,0,1) !== '\\'){
+				$name = '\\'.$name;
+			}
+			return $name;
+		}
+		return false;
 	}
 	
-	private static function find_deprecate($summary,$obj,$rootobj=null,$containt=false){
+	private static function find_merge_params($info,$parameters){
+		$doc_params = $info->params();
+		$info->rm_params();
+		
+		foreach($parameters as $param){
+			$has = false;
+			
+			foreach($doc_params as $doc_param){
+				if($doc_param->name() == $param->getName()){
+					$info->add_params($doc_param);
+					$has = true;
+					break;
+				}
+			}
+			if(!$has){
+				$info->add_params(new \ebi\Dt\DocParam($param->getName(),'mixed'));
+			}
+		}
+	}
+	private static function find_merge_deprecate($info,$summary,$rootobj=null,$containt=false){
 		$m = $mm = [];
 		
 		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
@@ -236,7 +252,7 @@ class Man{
 			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$m[1],$mm)){
 				$d = strtotime($mm[0]);
 			}
-			$obj->set_opt('deprecated',$d);
+			$info->set_opt('deprecated',$d);
 			
 			if(isset($rootobj)){
 				if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
@@ -246,6 +262,122 @@ class Man{
 		}
 		return trim(preg_replace('/@.+/','',$summary));
 	}
+	private static function find_merge_request_context($info,$document){
+		$requests = \ebi\Dt\DocParam::parse('request',$document);
+		$contexts = \ebi\Dt\DocParam::parse('context',$document);
+		
+		foreach([$requests,$contexts] as $v){
+			foreach($v as $r){
+				$r->summary(self::find_merge_deprecate($r,$r->summary(),$info,true));
+			}
+		}
+		$info->set_opt('requests',$requests);
+		$info->set_opt('contexts',$contexts);
+		
+		if(!$info->is_return() && $info->has_opt('contexts')){
+			$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
+		}
+	}
+	
+	private static function find_throws($throws,$doc,$src){
+		$m = [];
+		
+		if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$doc,$m)){
+			foreach($m[1] as $k => $n){
+				if(false !== ($class_name = self::get_class_name($n))){
+					if(isset($throws[$class_name])){
+						$throws[$class_name] = [$class_name,$throws[$class_name][1].trim(PHP_EOL.$m[2][$k])];
+					}else{
+						$throws[$class_name] = [$class_name,$m[2][$k]];
+					}
+				}
+			}
+		}
+		if(preg_match_all("/throw new\s([\w\\\\]+)/",$src,$m)){
+			foreach($m[1] as $k => $n){
+				if(false !== ($class_name = self::get_class_name($n))){
+					if(!isset($throws[$class_name])){
+						$throws[$n] = [$n,''];
+					}
+				}
+			}
+		}
+		if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$src,$m)){
+			foreach($m[1] as $k => $n){
+				if(false !== ($class_name = self::get_class_name($n))){
+					if(array_key_exists($class_name,$throws)){
+						unset($throws[$class_name]);
+					}
+				}
+			}
+		}
+		return $throws;
+	}
+	
+	private static function merge_find_throws(array $throws){
+		$throw_param = [];
+		
+		foreach($throws as $n => $t){
+			try{
+				$ref = new \ReflectionClass($n);
+				$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
+				
+				$throw_param[$n] = new \ebi\Dt\DocParam(
+					$ref->getName(),
+					$ref->getName(),
+					trim($doc)
+				);
+			}catch(\ReflectionException $e){
+			}
+		}
+		return $throw_param;
+	}
+	
+	private static function find_mail_info($mail_list,$mail_template_list,$src){
+		$m = [];
+		
+		foreach($mail_template_list as $mail_info){
+			if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
+				$doc = \ebi\Dt\DocInfo::parse('',$src,$m[0][0][1]);
+				
+				if(empty($doc->document())){
+					if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$src,$m)){
+						$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
+					}
+				}
+				$mail_info->set_opt('use',true);
+				$mail_info->set_opt('description',$doc->document());
+				
+				foreach($doc->params() as $p){
+					$mail_info->add_params($p);
+				}
+				$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
+			}
+		}
+		return $mail_list;
+	}
+	private static function find_see($document){
+		$see = $m = [];
+		
+		if(preg_match_all("/@see\s+([\w\.\:\\\\]+.+)/",$document,$m)){
+			\ebi\Log::trace($m);
+			
+			foreach($m[1] as $v){
+				$v = trim($v);
+				
+				if(strpos($v,'://') !== false){
+					$see[$v] = ['type'=>'url','url'=>$v];
+				}else if(strpos($v,'::') !== false){
+					list($see_class,$see_method) = explode('::',$v,2);
+					$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
+				}else if(substr($v,-1) != ':'){
+					$see[$v] = ['type'=>'class','class'=>$v];
+				}
+			}
+		}
+		return $see;
+	}
+	
 	/**
 	 * クラスドメソッドのキュメント
 	 * @param string $class
@@ -255,7 +387,6 @@ class Man{
 	 * @return \ebi\Dt\DocInfo
 	 */
 	public static function method_info($class,$method,$detail=false,$deep=false){
-		// TODO
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -278,83 +409,33 @@ class Man{
 			}
 			$document = $document.self::get_method_document($ref);
 			$src = self::method_src($ref);
+			
 			$info = \ebi\Dt\DocInfo::parse($method_fullname,$document);
 			
-			// TODO 
-			$doc_params = $info->params();
-			$info->rm_params();
-			foreach($ref->getParameters() as $param){
-				$has = false;
-				
-				foreach($doc_params as $doc_param){
-					if($doc_param->name() == $param->getName()){
-						$info->add_params($doc_param);
-						$has = true;
-						break;
-					}
-				}
-				if(!$has){
-					$info->add_params(new \ebi\Dt\DocParam($param->getName(),'mixed'));
-				}
-			}
+			self::find_merge_deprecate($info,$document);
+			self::find_merge_params($info,$ref->getParameters());
+			self::find_merge_request_context($info, $document);
 			
-			$match = [];
-			if(preg_match("/@http_method\s+([^\s]+)/",$document,$match)){
-				$info->set_opt('http_method',strtoupper(trim($match[1])));
-			}else{
-				$info->set_opt('http_method',(
-					(strpos($src,'$this->is_post()') !== false) && 
-					(strpos($src,'!$this->is_post()') === false)
-				) ? ' POST' : null);
-			}
+			$info->set_opt('class',self::get_class_name($class));
+			$info->set_opt('method',$ref->getName());
+			$info->set_opt('see_list',self::find_see($document));
+			
 			if(!$info->is_version()){
 				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}
 			
-			// TODO 
-			$see = [];
-			if(preg_match_all("/@see\s+([\w\.\:\\\\]+)/",$document,$m)){
-				foreach($m[1] as $v){
-					$v = trim($v);
-					
-					if(strpos($v,'://') !== false){
-						$see[$v] = ['type'=>'url','url'=>$v];
-					}else if(strpos($v,'::') !== false){
-						list($see_class,$see_method) = explode('::',$v,2);
-						$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
-					}else if(substr($v,-1) != ':'){
-						$see[$v] = ['type'=>'class','class'=>$v];
-					}
-				}
+			$m = [];
+			if(preg_match("/@http_method\s+([^\s]+)/",$document,$m)){
+				$info->set_opt('http_method',strtoupper(trim($m[1])));
+			}else{
+				$info->set_opt('http_method',(
+					(strpos($src,'$this->is_post()') !== false) &&
+					(strpos($src,'!$this->is_post()') === false)
+				) ? ' POST' : null);
 			}
-			$info->set_opt('see_list',$see);
-			
-			
-			$info->set_opt('class',self::get_class_name($class));
-			$info->set_opt('method',$ref->getName());
-			
-			// TODO 
-			self::find_deprecate($document,$info);
-			
-			// TODO 
-			$requests = \ebi\Dt\DocParam::parse('request',$document);
-			$contexts = \ebi\Dt\DocParam::parse('context',$document);
-			
-			foreach([$requests,$contexts] as $v){
-				foreach($v as $r){
-					$r->summary(self::find_deprecate($r->summary(),$r,$info,true));
-				}
-			}
-			$info->set_opt('requests',$requests);
-			$info->set_opt('contexts',$contexts);
-			
-			if(!$info->is_return() && $info->has_opt('contexts')){
-				$info->return(new \ebi\Dt\DocParam('return','mixed{}'));
-			}
-			
 			
 			$call_plugins = $plugins = [];
-			$throws = $throw_param = $mail_list = [];
+			$throws = $mail_list = [];
 			
 			if($detail){
 				foreach([
@@ -405,19 +486,6 @@ class Man{
 			if($detail){
 				$mail_template_list = self::mail_template_list();
 				
-				$get_class_name_func = function($class_name){
-					if(class_exists($class_name)){
-						$r = new \ReflectionClass($class_name);
-						$name = $r->getName();
-						
-						if(substr($name,0,1) !== '\\'){
-							$name = '\\'.$name;
-						}
-						return $name;
-					}
-					return false;
-				};
-				
 				foreach($use_method_list as $class_method){
 					list($uclass,$umethod) = explode('::',$class_method);
 					
@@ -426,75 +494,14 @@ class Man{
 						$use_method_src = self::method_src($ref);
 						$use_method_doc = self::trim_doc($ref->getDocComment());
 						
-						// TODO 
-						if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$use_method_doc,$m)){
-							foreach($m[1] as $k => $n){
-								if(false !== ($class_name = $get_class_name_func($n))){
-									if(isset($throws[$class_name])){
-										$throws[$class_name] = [$class_name,$throws[$class_name][1].trim(PHP_EOL.$m[2][$k])];
-									}else{
-										$throws[$class_name] = [$class_name,$m[2][$k]];
-									}
-								}
-							}
-						}
-						if(preg_match_all("/throw new\s([\w\\\\]+)/",$use_method_src,$m)){
-							foreach($m[1] as $k => $n){
-								if(false !== ($class_name = $get_class_name_func($n))){
-									if(!isset($throws[$class_name])){
-										$throws[$n] = [$n,''];
-									}
-								}
-							}
-						}
-						if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$use_method_src,$m)){
-							foreach($m[1] as $k => $n){
-								if(false !== ($class_name = $get_class_name_func($n))){
-									if(array_key_exists($class_name,$throws)){
-										unset($throws[$class_name]);
-									}
-								}
-							}
-						}
-						
-						// TODO 
-						foreach($mail_template_list as $k => $mail_info){
-							if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$use_method_src,$m,PREG_OFFSET_CAPTURE)){
-								$doc = \ebi\Dt\DocInfo::parse('',$use_method_src,$m[0][0][1]);
-								
-								if(empty($doc->document())){
-									if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$use_method_src,$m)){
-										$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
-									}
-								}
-								$mail_info->set_opt('use',true);
-								$mail_info->set_opt('description',$doc->document());
-								
-								foreach($doc->params() as $p){
-									$mail_info->add_params($p);
-								}
-								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
-							}
-						}
-					}catch(\ReflectionException $e){
-					}
-				}
-				foreach($throws as $n => $t){
-					try{
-						$ref = new \ReflectionClass($n);
-						$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
-						
-						$throw_param[$n] = new \ebi\Dt\DocParam(
-							$ref->getName(),
-							$ref->getName(),
-							trim($doc)
-						);
+						$throws = self::find_throws($throws,$use_method_doc,$use_method_src);
+						$mail_list = self::find_mail_info($mail_list,$mail_template_list,$use_method_src);
 					}catch(\ReflectionException $e){
 					}
 				}
 			}
 			$info->set_opt('mail_list',$mail_list);
-			$info->set_opt('throws',$throw_param);
+			$info->set_opt('throws',self::merge_find_throws($throws));
 			
 			return $info;
 		}
@@ -509,11 +516,17 @@ class Man{
 	public static function closure_info(\Closure $closure){
 		$ref = new \ReflectionFunction($closure);
 		$doc = self::trim_doc($ref->getDocComment());
-		
 		$src = implode(array_slice(file($ref->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
-		// TODO 
+		
 		$info = \ebi\Dt\DocInfo::parse(null,$doc);
-		\ebi\Log::trace($src);
+		self::find_merge_params($info,$ref->getParameters());
+		self::find_merge_deprecate($info,$doc);
+		self::find_merge_request_context($info, $doc);
+		
+		$info->set_opt('mail_list',self::find_mail_info([],self::mail_template_list(),$src));
+		$info->set_opt('throws',self::merge_find_throws(self::find_throws([],$doc,$src)));
+		$info->set_opt('see_list',self::find_see($doc));
+		
 		return $info;
 	}
 	

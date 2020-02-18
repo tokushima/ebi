@@ -19,9 +19,13 @@
 		<tr>
 			<th>Version</th>
 			<td>
-				<a href="{$t.package_method_url('index')}?version={$action_info.version()}">
-					{$action_info.version()}
-				</a>
+				<rt:if param="{$action_info.version()}">
+					<a href="{$t.package_method_url('index')}?version={$action_info.version()}">
+						{$action_info.version()}
+					</a>
+				<rt:else />
+					-
+				</rt:if>
 			</td>
 		</tr>
 		<tr>
@@ -30,6 +34,9 @@
 				{$action_info.opt('url')}
 			</td>
 		</tr>
+		
+		
+		<rt:if param="{$action_info.opt('method')}">
 		<tr>
 			<th>Action</th>
 			<td>
@@ -44,6 +51,9 @@
 				</div>
 			</td>
 		</tr>
+		</rt:if>
+		
+		
 		<tr>
 			<th>HTTP Method</th>
 			<td>
@@ -55,6 +65,7 @@
 			</td>
 		</tr>
 		
+		<rt:if param="{$action_info.opt('user_model')}">
 		<tr>
 			<th>User model</th>
 			<td>
@@ -67,6 +78,7 @@
 				</rt:if>
 			</td>
 		</tr>
+		</rt:if>
 		
 		<rt:if param="{$action_info.opt('deprecated')}">
 			<tr>
