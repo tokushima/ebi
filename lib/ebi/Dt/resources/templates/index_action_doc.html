@@ -94,7 +94,7 @@
 		<tr class="text-secondary">
 			<th>Raw</th>
 			<td>
-				<table rt:param="{$map}" rt:key="prop" rt:var="value" class="table">
+				<table rt:param="{$map}" rt:key="prop" rt:var="value" class="table text-secondary">
 				<tr>
 					<th>{$prop}</th>
 					<td>{$value}</td>
@@ -164,11 +164,8 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<div>
-						<span class="badge badge-warning">
-							Deprecated
-							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
-						</span>
+					<div class="text-warning">
+						<strong>Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}</strong>
 					</div>
 				</rt:if>
 			</td>
@@ -179,53 +176,9 @@
 </rt:if>
 
 
-
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-warning">Send</div>
-	<div class="card-body text-white bg-light">
-		<script type="text/javascript">
-			function submit_linkform(datafrm,method){
-				linkform.action = datafrm.url.value;
-				linkform.method = method;
-				
-				try{
-					data = [];
-					datafrm.query.value = datafrm.query.value.replace(/(^\s+)|(\s+$)/g,'');
-					
-					if(datafrm.query.value){
-						data = $.parseJSON(datafrm.query.value);
-					}				
-					for(key in data){
-						$('<input />')
-						.attr('type','hidden')
-						.attr('name',key)
-						.attr('value',data[key])
-						.appendTo('#linkform');
-					}
-					linkform.submit();
-				}catch(e){
-					alert('query invalid: ' + e);
-				}
-			}
-		</script>
-		
-		<form name="linkdata">
-			<input type="text" name="url" value="{$action_info.opt('url')}" class="form-control" />
-			<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
-			
-			<div>
-				<button type="button" class="btn btn-sm btn-outline-primary" onclick="submit_linkform(linkdata,'post')" style="margin: 5px 5px 5px 0;">POST</button>
-				<button type="button" class="btn btn-sm btn-outline-success" onclick="submit_linkform(linkdata,'get')" style="margin: 5px 5px 5px 0;">GET</button>
-			</div>
-		</form>
-	</div>
-</div>
-
-
-
 <rt:if param="{$action_info.opt('contexts')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-success">Context</div>
+	<div class="card-header text-white bg-warning">Context</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('contexts')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">

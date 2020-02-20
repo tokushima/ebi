@@ -2,15 +2,15 @@
 
 <rt:block name="content">
 
-<h1 class="display-3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+<p class="h3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
 	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
 		{$method_info.opt('class')}
 	</a>
 	::
 	{$method_info.opt('method')}
-</h1>
+</p>
 
-<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
+<div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px;">
 {$t.noop($f.md2html($method_info.document()))}
 </div>
 
@@ -87,7 +87,7 @@
 				<rt:else />
 					{$method_info.return().fm_type()}
 				</rt:if>
-			</td>				
+			</td>
 			<td>
 				{$t.html($method_info.return().summary())}
 			</td>
