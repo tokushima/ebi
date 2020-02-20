@@ -91,6 +91,18 @@
 			</tr>
 		</rt:if>
 		
+		<tr class="text-secondary">
+			<th>Raw</th>
+			<td>
+				<table rt:param="{$map}" rt:key="prop" rt:var="value" class="table">
+				<tr>
+					<th>{$prop}</th>
+					<td>{$value}</td>
+				</tr>
+				</table>
+			</td>
+		</tr>
+		
 		</table>
 	</div>
 </div>
@@ -317,7 +329,7 @@
 			
 			<td>
 				{$t.html($info.summary(),200,1)}
-			</td>				
+			</td>
 			<td>
 				<rt:loop param="{$info.opt('added')}" var="class_name">
 					<div>
@@ -360,7 +372,7 @@
 
 
 <rt:if param="{$action_info.opt('test_list')}">
-<div class="card border-light mb-3">
+<div class="card border-secondary mb-3">
 	<div class="card-header">Tests</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('test_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
@@ -378,6 +390,5 @@
 	</div>
 </div>
 </rt:if>
-
 
 </rt:block>

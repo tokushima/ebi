@@ -184,7 +184,7 @@ class Template{
 		
 		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$m)){
 			foreach($m[2] as $k => $p){
-				list($url) = explode('?',$m[4][$k]);		
+				list($url) = explode('?',$m[4][$k]);
 				if(strpos($url,'$') === false){
 					$t = null;
 					if(strtolower($p) === 'href'){

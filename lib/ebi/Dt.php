@@ -212,7 +212,10 @@ class Dt{
 				
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
-				return ['action_info'=>$info];
+				return [
+					'action_info'=>$info,
+					'map'=>$m,
+				];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();

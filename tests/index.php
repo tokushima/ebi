@@ -118,7 +118,11 @@ include_once('bootstrap.php');
 	'form/select'=>['name'=>'form_select','template'=>'form_select.html','action'=>'test\flow\Action::select'],
 	'form/select/obj'=>['name'=>'form_select_obj','template'=>'form_select_obj.html','action'=>'test\flow\Action::select_obj'],
 		
-	'abc'=>['name'=>'abc','action'=>'test\db\Abc::create'],
+	'abc'=>[
+		'name'=>'abc',
+		'action'=>'test\db\Abc::create',
+		'post_action'=>'test\db\Abc::create',
+	],
 	
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test\flow\RequestFlow::file_upload'],
@@ -242,7 +246,6 @@ include_once('bootstrap.php');
 		 * @context string $B XXYYZZ
 		 */
 		'action'=>function($a,$b){
-			// TODO 
 			return [
 				'A'=>$a,
 				'B'=>$b,
