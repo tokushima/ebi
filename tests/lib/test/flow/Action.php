@@ -34,12 +34,6 @@ class Action{
 	 * @version 20160102
 	 */
 	public function raise(){
-		if(1){
-			throw new \ebi\exception\IllegalDataTypeException();
-		}
-		if(2){
-			throw new \ebi\exception\ConnectionException();
-		}
 		throw new \LogicException('raise test');
 	}
 	public function exceptions_group(){
