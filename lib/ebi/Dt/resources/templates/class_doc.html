@@ -7,7 +7,27 @@
 </p>
 
 <div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px;">
-{$t.noop($f.md2html($class_info.document()))}
+	<div>
+		{$t.noop($f.md2html($class_info.document()))}
+	</div>
+	
+	<rt:if param="{$class_info.opt('see_list')}">
+		<div style="margin-top: 30px;" class="small">
+			<rt:loop param="{$class_info.opt('see_list')}" var="see">
+				<div>
+					<rt:if param="{$t.eq($see['type'],'url')}">
+						<a href="{$see['url']}">{$see['url']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'method')}">
+						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'class')}">
+						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>
+					</rt:if>
+				</div>
+			</rt:loop>
+		</div>
+	</rt:if>
 </div>
 
 
@@ -37,7 +57,7 @@
 					</div>
 				</td>
 			</tr>
-		</rt:if>		
+		</rt:if>
 		</table>
 	</div>
 </div>
@@ -45,9 +65,9 @@
 
 
 <rt:if param="{$class_info.opt('properties')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-primary">Properties</div>
-	<div class="card-body text-secondary">
+<div class="card border-primary mb-3">
+	<div class="card-header text-primary"><b>Properties</b></div>
+	<div class="card-body text-primary">
 		<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 			<td>
@@ -61,7 +81,7 @@
 				<rt:else />
 					{$param.fm_type()}
 				</rt:if>
-			</td>				
+			</td>
 			<td>
 				{$t.html($param.summary())}
 				
@@ -70,7 +90,7 @@
 						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
-				</rt:if>	
+				</rt:if>
 			</td>
 			<td>
 				<rt:if param="{$t.not($param.opt('hash'))}">
@@ -86,9 +106,9 @@
 
 
 <rt:if param="{$class_info.opt('methods')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-success">Methods</div>
-	<div class="card-body text-secondary">
+<div class="card border-success mb-3">
+	<div class="card-header text-success"><b>Methods</b></div>
+	<div class="card-body text-success">
 		<table rt:param="{$class_info.opt('methods')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 			<td>
@@ -105,7 +125,7 @@
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 						</span>
 					</div>
-				</rt:if>					
+				</rt:if>
 			</td>
 		</tr>
 		</table>
@@ -115,9 +135,9 @@
 
 
 <rt:if param="{$class_info.opt('static_methods')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-success">Static Methods</div>
-	<div class="card-body text-secondary">
+<div class="card border-success mb-3">
+	<div class="card-header text-success"><b>Static Methods</b></div>
+	<div class="card-body text-success">
 		<table rt:param="{$class_info.opt('static_methods')}" rt:var="param" class="table table-sm style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
 			<td>
@@ -133,10 +153,10 @@
 						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
-				</rt:if>					
+				</rt:if>
 			</td>
 		</tr>
-		</table>	
+		</table>
 	</div>
 </div>
 </rt:if>
@@ -144,7 +164,7 @@
 
 <rt:if param="{$class_info.opt('plugins')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Plugins</div>
+	<div class="card-header text-white bg-secondary">Plugins</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
@@ -164,7 +184,7 @@
 						</a>
 					</div>
 				</rt:loop>
-			</td>			
+			</td>
 		</tr>
 		</table>
 	</div>
@@ -173,11 +193,11 @@
 
 
 
-<rt:if param="{$class_info.opt('conf_list')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Config</div>
-	<div class="card-body text-secondary">
-		<table rt:param="{$class_info.opt('conf_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+<rt:if param="{$class_info.opt('config_list')}">
+<div class="card border-dark mb-3">
+	<div class="card-header text-dark"><b>Config</b></div>
+	<div class="card-body text-dark">
+		<table rt:param="{$class_info.opt('config_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				{$info.name()}
@@ -190,30 +210,5 @@
 	</div>
 </div>
 </rt:if>
-
-
-<rt:if param="{$class_info.opt('see_list')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">See</div>
-	<div class="card-body text-secondary">
-		<table rt:param="{$class_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
-		<tr>
-			<td>
-				<rt:if param="{$t.eq($see['type'],'url')}">
-					<a href="{$see['url']}">{$see['url']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'method')}">
-					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'class')}">
-					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
-				</rt:if>
-			</td>
-		</tr>
-		</table>
-	</div>
-</div>
-</rt:if>
-
 
 </rt:block>

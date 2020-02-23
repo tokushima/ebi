@@ -8,7 +8,7 @@
 </p>
 
 <div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px;">
-{$t.noop($f.md2html($plugin_info.document()))}
+	{$t.noop($f.md2html($plugin_info.document()))}
 </div>
 
 
@@ -32,7 +32,7 @@
 
 <rt:if param="{$plugin_info.params()}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-secondary">Params</div>
+	<div class="card-header text-white bg-primary">Params</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-sm style-table-borderless">
 		<tr>
@@ -47,7 +47,7 @@
 				<rt:else />
 					{$param.fm_type()}
 				</rt:if>
-			</td>				
+			</td>
 			<td class="t3">
 				{$t.html($param.summary())}
 			</td>

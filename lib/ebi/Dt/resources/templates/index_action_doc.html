@@ -7,13 +7,36 @@
 </p>
 
 <div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px; min-height: 50px;">
-{$t.noop($f.md2html($action_info.document()))}
+<div>
+	{$t.noop($f.md2html($action_info.document()))}
 </div>
+
+<rt:if param="{$action_info.opt('see_list')}">
+	<div style="margin-top: 30px;" class="small">
+		<rt:loop param="{$action_info.opt('see_list')}" var="see">
+			<div>
+				<rt:if param="{$t.eq($see['type'],'url')}">
+					<a href="{$see['url']}">{$see['url']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'method')}">
+					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+				</rt:if>
+				<rt:if param="{$t.eq($see['type'],'class')}">
+					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>
+				</rt:if>
+			</div>
+		</rt:loop>
+	</div>
+</rt:if>
+</div>
+
+
 
 <div class="card mb-3">
 	<div class="card-header text-white bg-info">
 		Infomation
 	</div>
+	
 	<div class="card-body">
 		<table class="table table-sm style-table-borderless">
 		<tr>
@@ -112,7 +135,7 @@
 <rt:if param="{$action_info.params()}">
 
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-secondary">Params</div>
+	<div class="card-header text-white bg-primary">Params</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
@@ -164,9 +187,7 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<div class="text-warning">
-						<strong>Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}</strong>
-					</div>
+					<span class="badge badge-danger badge-margin">Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}</span>
 				</rt:if>
 			</td>
 		</tr>
@@ -196,11 +217,10 @@
 			</td>
 			<td>
 				{$t.html($param.summary())}
-
+				
 				<rt:if param="{$param.opt('deprecated')}">
-					<span class="badge badge-warning">
-						Deprecated
-						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
+					<span class="badge badge-warning badge-margin">
+						Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
 				</rt:if>
 			</td>
@@ -240,7 +260,7 @@
 
 <rt:if param="{$action_info.opt('mail_list')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Mail</div>
+	<div class="card-header text-white bg-dark">Mail</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
@@ -270,7 +290,7 @@
 
 <rt:if param="{$action_info.opt('plugins')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Plugins</div>
+	<div class="card-header text-white bg-secondary">Plugins</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
@@ -299,34 +319,9 @@
 </rt:if>
 
 
-<rt:if param="{$action_info.opt('see_list')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">See</div>
-	<div class="card-body text-secondary">
-		<table rt:param="{$action_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
-		<tr>
-			<td>
-				<rt:if param="{$t.eq($see['type'],'url')}">
-					<a href="{$see['url']}">{$see['url']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'method')}">
-					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'class')}">
-					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
-				</rt:if>
-			</td>
-		</tr>
-		</table>
-
-	</div>
-</div>
-</rt:if>
-
-
 <rt:if param="{$action_info.opt('test_list')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header">Tests</div>
+	<div class="card-header bg-light">Tests</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('test_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>

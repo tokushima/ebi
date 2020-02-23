@@ -1,7 +1,14 @@
 <?php
 namespace test\flow;
 
-
+/**
+ * リクエストフロー
+ * 様々な
+ * @author tokushima
+ * @see https://google.com
+ * @see \test\flow\RequestFlow::sendmail
+ * @see \test\flow\RequestFlow
+ */
 class RequestFlow extends \ebi\flow\Request{
 	/**
 	 * 前処理
@@ -63,6 +70,9 @@ class RequestFlow extends \ebi\flow\Request{
 	
 	/**
 	 * メールを送信する
+	 * @see https://google.com
+	 * @see \test\flow\RequestFlow::sendmail
+	 * @see \test\flow\RequestFlow
 	 */
 	public function sendmail(){
 		$vars = ['abc'=>'ABC'];

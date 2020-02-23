@@ -249,7 +249,7 @@ class Man{
 		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
 			$d = time();
 			
-			if(preg_match('/\d{4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,2}/',$m[1],$mm)){
+			if(preg_match('/\d{4}[\-\/\.]*\d{1,2}[\-\/\.]*\d{1,2}/',$m[1],$mm)){
 				$d = strtotime($mm[0]);
 			}
 			$info->set_opt('deprecated',$d);
@@ -360,8 +360,6 @@ class Man{
 		$see = $m = [];
 		
 		if(preg_match_all("/@see\s+([\w\.\:\\\\]+.+)/",$document,$m)){
-			\ebi\Log::trace($m);
-			
 			foreach($m[1] as $v){
 				$v = trim($v);
 				

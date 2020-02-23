@@ -610,7 +610,7 @@ class Flow{
 					}
 				}
 				$pt = (empty($pk) ? '' : $pk.'/').$k;
-		
+				
 				if(array_key_exists('patterns',$v)){
 					if(!array_key_exists('mode',$v) || \ebi\Conf::in_mode($v['mode'])){
 						$vp = $v['patterns'];

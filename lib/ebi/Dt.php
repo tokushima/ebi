@@ -82,7 +82,7 @@ class Dt{
 					$m['url'] = $k;
 					
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
 						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
@@ -96,6 +96,9 @@ class Dt{
 						}
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
+						}
+						if(!empty($info->opt('mail_list'))){
+							$m['mail'] = true;
 						}
 						list($m['login']) = $this->get_login_annotation($m['class'],$m['method']);
 					}
@@ -111,6 +114,7 @@ class Dt{
 						}
 					}
 				}
+				
 				if(!isset($m['version'])){
 					$m['version'] = $file_version;
 				}

@@ -7,3 +7,12 @@
 main{
 	margin-top: 30px;
 }
+
+.deprecated{
+	text-decoration: line-through;
+}
+
+.badge-margin{
+	margin: 0 0 0 10px
+}
+

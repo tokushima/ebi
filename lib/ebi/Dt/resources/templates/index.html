@@ -26,7 +26,7 @@
 			{$map['url']}
 			
 			<rt:if param="{$map['login']}">
-				<span class="badge badge-pill badge-secondary" style="margin-left: 5px">Auth</span>
+				<span class="badge badge-primary badge-margin">Auth</span>
 			</rt:if>
 		</td>
 		<td>
@@ -39,19 +39,23 @@
 				{$t.html($map['summary'])}
 			</span>
 			
-			<rt:if param="{$map['error']}">
-				<div>
-					<span class="text-danger">{$map['error']}</span>
-				</div>
+			
+			<rt:if param="{$map['mail']}">
+				<span class="badge badge-dark badge-margin">Mail</span>
 			</rt:if>
 			
 			<rt:if param="{$map['first_depricated_date']}">
+				<rt:if param="{$map['deprecated']}">
+					<span class="badge badge-danger badge-margin">Deprecated</span>
+				<rt:else />
+					<span class="badge badge-warning badge-margin">Deprecated</span>
+				</rt:if>
+			</rt:if>
+			
+			
+			<rt:if param="{$map['error']}">
 				<div>
-					<rt:if param="{$map['deprecated']}">
-						<span class="text-danger">Deprecated Action</span>
-					<rt:else />
-						<span class="text-warning">Deprecated Request / Context</span>
-					</rt:if>
+					<span class="text-danger">{$map['error']}</span>
 				</div>
 			</rt:if>
 		</td>
