@@ -42,10 +42,8 @@
 							</a>
 							
 							<rt:if param="{$t.neq($mail_info.version(),$method_info.version())}">
-								<span class="text-danger">
-									( <span style="font-size: small;">
-										method version mismatch: {$method_info.version()}
-									</span> )
+								<span class="badge badge-warning badge-margin">
+									{$method_info.version()}
 								</span>
 							</rt:if>
 						</div>
@@ -67,64 +65,55 @@
 </div>
 
 
-
-<rt:if param="{$multiple_method}">
+<rt:if param="{$mail_info.params()}">
 	<div class="card border-secondary mb-3">
 		<div class="card-header text-white bg-primary">Vars</div>
 		<div class="card-body text-secondary">
-			Multiple method
-		</div>
-	</div>
-<rt:else />
-	<rt:if param="{$mail_info.params()}">
-		<div class="card border-secondary mb-3">
-			<div class="card-header text-white bg-primary">Vars</div>
-			<div class="card-body text-secondary">
-				<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
-				<tr>
-					<td>
-						{$param.name()}
-					</td>
-					<td>
-						<rt:if param="{$param.is_type_class()}">
-							<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
-								{$param.fm_type()}
-							</a>
-						<rt:else />
+			<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+			<tr>
+				<td>
+					{$param.name()}
+				</td>
+				<td>
+					<rt:if param="{$param.is_type_class()}">
+						<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 							{$param.fm_type()}
-						</rt:if>
-					</td>
+						</a>
+					<rt:else />
+						{$param.fm_type()}
+					</rt:if>
+				</td>
 
-					<td>
-						{$t.html($param.summary())}
-					</td>
-				</tr>	
-				</table>
-			</div>
-		</div>	
-	</rt:if>
+				<td>
+					{$t.html($param.summary())}
+				</td>
+			</tr>	
+			</table>
+		</div>
+	</div>	
 </rt:if>
 
 
+
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Subject</div>
+	<div class="card-header text-white text-primary"><b>Subject</b></div>
 	<div class="card-body text-secondary">
-		<h5 class="card-title">{$mail_info.opt('subject')}</h5>
+		<h5 class="card-title">{$t.html($mail_info.opt('subject'))}</h5>
 	</div>
 </div>
 
 
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-success">Body</div>
+	<div class="card-header text-white text-success"><b>Body</b></div>
 	<div class="card-body text-secondary">
-		<pre class="prettyprint" style="padding: 5px;">{$mail_info.opt('body')}</pre>
+		<pre class="prettyprint" style="padding: 10px;">{$t.html($mail_info.opt('body'))}</pre>
 	</div>
 </div>
 
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-warning">HTML</div>
+	<div class="card-header text-white text-warning"><b>HTML</b></div>
 	<div class="card-body text-secondary">
-		<pre class="prettyprint" style="padding: 5px;">{$mail_info.opt('html')}</pre>
+		<pre class="prettyprint" style="padding: 10px;">{$t.html($mail_info.opt('html'))}</pre>
 	</div>
 </div>
 

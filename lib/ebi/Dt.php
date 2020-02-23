@@ -545,11 +545,11 @@ class Dt{
 				}
 			}
 		}
-		if(sizeof($method_list) == 1){
+		foreach($method_list as $method){
 			$desc = $method_mail_info->opt('description');
 			
 			if(empty(trim($desc))){
-				$desc = $method_list[0]->document();
+				$desc = $method->document();
 			}
 			$mail_info->set_opt('method_summary',$desc);
 			
@@ -560,35 +560,6 @@ class Dt{
 		return [
 			'mail_info'=>$mail_info,
 			'method_list'=>$method_list,
-			'multiple_method'=>(sizeof($method_list) > 1),
-		];
-	}
-	/**
-	 * @automap
-	 */
-	public function mail_info_method(){
-		$req = new \ebi\Request();
-		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
-		$method_info = \ebi\Dt\Man::method_info($req->in_vars('class'),$req->in_vars('method'),true);
-		
-		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-			if($x_t_code == $mail_info->opt('x_t_code')){
-				$desc = $mmi->opt('description');
-			
-				if(empty(trim($desc))){
-					$desc = $method_info->document();
-				}
-				$mail_info->set_opt('method_summary',$desc);
-			
-				foreach($mmi->params() as $p){
-					$mail_info->add_params($p);
-				}
-				break;
-			}
-		}
-		return [
-			'mail_info'=>$mail_info,
-			'method_info'=>$method_info,
 		];
 	}
 	private function find_mail_template_info($tcode){

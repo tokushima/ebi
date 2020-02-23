@@ -2,17 +2,11 @@
 
 <rt:block name="content">
 
-<ul class="nav nav-tabs">
-	<li class="nav-item">
-		<a class="nav-link {$t.cond_switch($t.eq($select,'model'),'active')}" href="?parent=\ebi\Dao">Model</a>
-	</li>
-	<li class="nav-item">
-		<a class="nav-link {$t.cond_switch($t.eq($select,'request'),'active')}" href="?parent=\ebi\flow\Request">Request</a>
-	</li>
-	<li class="nav-item">
-		<a class="nav-link {$t.cond_switch($t.eq($select,'other'),'active')}" href="?">Other</a>
-	</li>
-</ul>
+<div class="btn-group btn-group-toggle"  style="margin-bottom: 10px; width: 100%;">
+	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'model'),'active')}" href="?parent=\ebi\Dao">Model</a>
+	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'request'),'active')}" href="?parent=\ebi\flow\Request">Request</a>
+	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'other'),'active')}" href="?">Other</a>
+</div>
 
 
 <table rt:param="{$class_info_list}" rt:var="class_info" class="table table-sm table-condensed table-striped">
