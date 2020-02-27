@@ -24,7 +24,7 @@ class FlowInvalid implements \Iterator{
 	public function valid(){
 		while($this->pos < sizeof($this->messages)){
 			if((empty($this->group) || $this->messages[$this->pos]['group'] === $this->group) &&
-				(empty($this->type) || ($this->messages[$this->pos]['exception'] instanceof $this->type))
+				(empty($this->type) || preg_match('/\\\\'.preg_quote($this->type).'$/','\\'.get_class($this->messages[$this->pos]['exception'])))
 			){
 				return true;
 			}
@@ -35,6 +35,11 @@ class FlowInvalid implements \Iterator{
 	public function next(){
 		$this->pos++;
 	}
+	
+	/**
+	 * Exceptionをセットする
+	 * @param \Exception $exception
+	 */
 	public static function set(\Exception $exception){
 		self::$self = new self();
 		if($exception instanceof \ebi\Exceptions){
@@ -45,8 +50,9 @@ class FlowInvalid implements \Iterator{
 			self::$self->messages[] = ['exception'=>$exception,'group'=>''];
 		}
 	}
+	
 	/**
-	 * 追加されたExceptionからException配列を取得
+	 * セットされたExceptionからException配列を取得
 	 * @param string $group グループ名
 	 * @param string $type 例外クラス名
 	 * @return Exception[]
@@ -57,14 +63,16 @@ class FlowInvalid implements \Iterator{
 		self::$self->type = $type;
 		return self::$self;
 	}
+	
 	/**
-	 * 追加されたExceptionのクリア
+	 * セットされたExceptionのクリア
 	 */
 	public static function clear(){
 		if(isset(self::$self)){
 			self::$self->messages = [];
 		}
 	}
+	
 	/**
 	 * Exceptionが追加されているか
 	 * @param string $group グループ名
@@ -75,9 +83,16 @@ class FlowInvalid implements \Iterator{
 		self::$self->group = $group;
 		self::$self->type = $type;
 		
-		reset(self::$self);
-		return (next(self::$self) !== false);
+		self::$self->rewind();
+		return self::$self->valid();
 	}
+	
+	/**
+	 * Template plugin
+	 * @param string $src
+	 * @return string
+	 * @see \ebi\Template
+	 */
 	public function before_template($src){
 		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
 			$param = $xml->in_attr('param');
@@ -101,11 +116,11 @@ class FlowInvalid implements \Iterator{
 				);
 			}
 			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
-					."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
-					.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
-					."<?php } ?>"
-					,$param,$type
-					,$var,$param,$type
+				."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
+				.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
+				."<?php } ?>"
+				,$param,$type
+				,$var,$param,$type
 			);
 		});
 	}

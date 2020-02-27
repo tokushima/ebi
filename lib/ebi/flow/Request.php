@@ -191,6 +191,16 @@ class Request extends \ebi\Request{
 		}
 		return $this->in_sessions($this->login_id.'USER');
 	}
+	
+	/**
+	 * ログイン状態にする
+	 * @param mixed $user
+	 */
+	protected function force_user_login($user){
+		$this->user($user);
+		$this->after_user_login();
+	}
+	
 	/**
 	 * ログインセッション識別子
 	 * @return string

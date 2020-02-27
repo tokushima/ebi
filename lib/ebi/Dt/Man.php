@@ -587,7 +587,10 @@ class Man{
 		try{
 			$ref = new \ReflectionMethod($class,$method);
 			$kname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
-			if(isset($loaded_method_src[$kname])) return [];
+			
+			if(isset($loaded_method_src[$kname])){
+				return [];
+			}
 			$loaded_method_src[$kname] = true;
 			$list[$kname] = true;
 			
@@ -643,9 +646,10 @@ class Man{
 					}
 				}
 				foreach(array_keys($list) as $mcm){
-					if(!isset($loaded_method_src[$mcm])){
-						list($c,$m) = explode('::',$mcm);
-						
+					list($c,$m) = explode('::',$mcm);
+					$c = str_replace('\\\\','\\',($c[0] !== '\\') ? '\\'.$c : $c);
+					
+					if(!isset($loaded_method_src[$c.'::'.$m])){
 						foreach(self::use_method_list($c,$m,$loaded_method_src) as $k){
 							$list[$k] = true;
 						}
