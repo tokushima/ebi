@@ -545,6 +545,8 @@ class Dt{
 				}
 			}
 		}
+		
+		$params = [];
 		foreach($method_list as $method){
 			$desc = $method_mail_info->opt('description');
 			
@@ -554,8 +556,11 @@ class Dt{
 			$mail_info->set_opt('method_summary',$desc);
 			
 			foreach($method_mail_info->params() as $p){
-				$mail_info->add_params($p);
+				$params[$p->name()] = $p;
 			}
+		}
+		foreach($params as $p){
+			$mail_info->add_params($p);
 		}
 		return [
 			'mail_info'=>$mail_info,

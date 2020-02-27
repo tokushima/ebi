@@ -89,17 +89,24 @@ class FlowInvalid implements \Iterator{
 	
 	/**
 	 * Template plugin
+	 * 
+	 * ```
+	 * <rt:invalid type="Exception" group="email" var="exceptions">
+	 *  <rt:loop param="{$exceptions}" var="e">{$e.getMessage()}</rt:loop>
+	 * </rt:invalid>
+	 * ```
+	 * 
 	 * @param string $src
 	 * @return string
-	 * @see \ebi\Template
+	 * @plugin \ebi\Template
 	 */
 	public function before_template($src){
 		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
-			$param = $xml->in_attr('param');
+			$group = $xml->in_attr('group');
 			$type = $xml->in_attr('type');
 			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));
-			if(!isset($param[0]) || $param[0] !== '$'){
-				$param = '"'.$param.'"';
+			if(!isset($group[0]) || $group[0] !== '$'){
+				$group = '"'.$group.'"';
 			}
 			if(!isset($type[0]) || $type[0] !== '$'){
 				$type = '"'.$type.'"';
@@ -119,8 +126,8 @@ class FlowInvalid implements \Iterator{
 				."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
 				.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
 				."<?php } ?>"
-				,$param,$type
-				,$var,$param,$type
+				,$group,$type
+				,$var,$group,$type
 			);
 		});
 	}
