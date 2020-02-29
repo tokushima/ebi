@@ -38,9 +38,9 @@ class Man{
 	 * クラスのドキュメント
 	 * @param string $class
 	 */
-	public static function class_info($class,$strict=false){
+	public static function class_info($class){
 		$info = new \ebi\Dt\DocInfo();
-		$r = new \ReflectionClass($strict ? $class : self::get_class_name($class));
+		$r = new \ReflectionClass(self::get_class_name($class));
 		
 		if($r->getFilename() === false || !is_file($r->getFileName())){
 			throw new \ebi\exception\InvalidArgumentException('`'.$class.'` file not found.');
@@ -77,7 +77,12 @@ class Man{
 						$method_info->name($method->getName());
 						
 						$method_document = self::get_method_document($method);
+						
+						if(preg_match("/@plugin\s+([^\s]+)/",$method_document,$m)){
+							$method_info->set_opt('plugin_caller', trim($m[1]));
+						}
 						$method_document = self::find_merge_deprecate($method_info,$method_document);
+						
 						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 						
 						$method_info->document($summary);
@@ -191,7 +196,7 @@ class Man{
 		if(in_array('ebi\\Plugin',$traits)){
 			foreach(\ebi\Conf::get_class_plugin($r->getName()) as $o){
 				$pr = new \ReflectionClass(is_object($o) ? get_class($o) : $o);
-
+				
 				foreach($pr->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 					foreach(array_keys($call_plugins) as $method_name){
 						if($m->getName() == $method_name){
@@ -204,7 +209,7 @@ class Man{
 			}
 			ksort($call_plugins);
 		}
-		$info->set_opt('plugins',$call_plugins);
+		$info->set_opt('call_plugins',$call_plugins);
 		
 		return $info;
 	}
@@ -418,6 +423,9 @@ class Man{
 			$info->set_opt('method',$ref->getName());
 			$info->set_opt('see_list',self::find_see($document));
 			
+			if(preg_match("/@plugin\s+([^\s]+)/",$document,$m)){
+				$info->set_opt('plugin_caller',trim($m[1]));
+			}
 			if(!$info->is_version()){
 				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}
@@ -458,7 +466,7 @@ class Man{
 					}
 				}
 			}
-			$info->set_opt('plugins',$call_plugins);
+			$info->set_opt('call_plugins',$call_plugins);
 			
 			if($deep){
 				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());

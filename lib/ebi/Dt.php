@@ -171,7 +171,7 @@ class Dt{
 						}
 						
 						// ログイン プラグイン情報をマージ
-						foreach($info->opt('plugins') as $plugin){
+						foreach($info->opt('call_plugins') as $plugin){
 							if($plugin->name() == 'login_condition'){
 								foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
 									$plugin_class = \ebi\Util::get_class_name($map_plugin);
@@ -359,7 +359,7 @@ class Dt{
 	 */
 	public function plugin_doc($class,$plugin){
 		$class_info = \ebi\Dt\Man::class_info($class);
-		$plugins = $class_info->opt('plugins');
+		$plugins = $class_info->opt('call_plugins');
 
 		if(!empty($plugins)){
 			foreach($plugins as $p){
@@ -371,7 +371,7 @@ class Dt{
 				}
 			}
 		}
-		throw new \ebi\exception\NotFoundException();
+		throw new \ebi\exception\NotFoundException($plugin.' not found');
 	}
 	private function test_path(){
 		/**

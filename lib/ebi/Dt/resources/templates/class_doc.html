@@ -58,6 +58,7 @@
 				</td>
 			</tr>
 		</rt:if>
+		
 		</table>
 	</div>
 </div>
@@ -114,6 +115,10 @@
 			<td>
 				<a href="{$t.package_method_url('class_method_doc',$class_info.name(),$param.name())}">
 					{$param.name()}
+					
+					<rt:if param="{$param.opt('plugin_caller')}">
+						<span style="margin-left: 10px;" class="badge badge-secondary">Plugin</span>
+					</rt:if>
 				</a>
 			</td>
 			<td>
@@ -162,11 +167,11 @@
 </rt:if>
 
 
-<rt:if param="{$class_info.opt('plugins')}">
+<rt:if param="{$class_info.opt('call_plugins')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header text-white bg-secondary">Plugins</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$class_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$class_info.opt('call_plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
 			<td>
 				<a href="{$t.package_method_url('plugin_doc',$class_info.name(),$info.name())}">

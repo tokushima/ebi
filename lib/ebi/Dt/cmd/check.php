@@ -25,6 +25,9 @@ foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 	}
 }
 
+
+$map_action_method_list = [];
+
 \cmdman\Std::println();
 \cmdman\Std::println_info('Entry (Check mapping):');
 \cmdman\Std::println_info(str_repeat('-',50));
@@ -40,7 +43,10 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 			if(array_key_exists('action',$p) && is_string($p['action'])){
 				try{
 					list($c,$m) = explode('::',$p['action']);
-					new \ReflectionMethod(\ebi\Util::get_class_name($c),$m);
+					$c = \ebi\Util::get_class_name($c);
+					
+					new \ReflectionMethod($c,$m);
+					$map_action_method_list[$c.'::'.$m] = [$c,$m];
 					
 					\cmdman\Std::println_success(' o   '.$entry.' '.$p['name']);
 				}catch(\ReflectionException $e){
@@ -104,10 +110,19 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 	}
 }
 
-
+// TODO 
 \cmdman\Std::println();
-\cmdman\Std::println_info('Mail (Check version):');
+\cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
+
+foreach($map_action_method_list as $action){
+	$method_info = \ebi\Dt\Man::method_info($action[0], $action[1],true,true);
+	
+	var_dump($method_info->name());
+}
+
+
+
 
 
 $mail_template = \ebi\Dt\Man::mail_template_list();
@@ -123,18 +138,20 @@ foreach(\ebi\Dt::classes() as $class_info){
 		}
 	}
 }
+
+var_dump($class_list);
 foreach($class_list as $class){
 	$ref_class = new \ReflectionClass($class);
-			
+	
 	foreach($ref_class->getMethods() as $ref_method){
-		$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
-				
+		$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true,true);
+		
 		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
 			$label = $ref_class->getName().'::'.$ref_method->getName()
 						.' ('.$method_info->version().') '
 						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->version().')';
 			
-			if($mmi->version() == $method_info->version()){
+			if($mmi->version() === $method_info->version()){
 				cmdman\Std::println_success(' o '.$label);
 			}else{
 				$failure['mail']++;
