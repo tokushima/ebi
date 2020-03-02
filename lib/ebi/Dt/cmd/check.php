@@ -38,7 +38,7 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 	if(strpos($src,'\ebi\Flow::app(') !== false){
 		$map = \ebi\Flow::get_map($f->getPathname());
 		$entry = str_replace(getcwd(),'',$f->getPathname());
-
+		
 		foreach($map['patterns'] as $p){
 			if(array_key_exists('action',$p) && is_string($p['action'])){
 				try{
@@ -47,7 +47,6 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 					
 					new \ReflectionMethod($c,$m);
 					$map_action_method_list[$c.'::'.$m] = [$c,$m];
-					
 					\cmdman\Std::println_success(' o   '.$entry.' '.$p['name']);
 				}catch(\ReflectionException $e){
 					$failure['entry']++;
@@ -115,31 +114,47 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 \cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
 
+
 foreach($map_action_method_list as $action){
-	$method_info = \ebi\Dt\Man::method_info($action[0], $action[1],true,true);
-	
-	var_dump($method_info->name());
-}
+	try{
+		$method_info = \ebi\Dt\Man::method_info($action[0], $action[1], true, true);
+		
+		foreach($method_info->opt('mail_list') as $x_t_code => $mail){
+			$label = $method_info->name()
+					.' ('.$method_info->version().') '
+					.' .. ['.$x_t_code.'] '.$mail->name().' ('.$mail->version().')';
 
-
-
-
-
-$mail_template = \ebi\Dt\Man::mail_template_list();
-$class_list = [];
-
-foreach(\ebi\Dt::classes() as $class_info){
-	$class_src = \ebi\Util::file_read($class_info['filename']);
-	
-	foreach($mail_template as $mail_info){
-		if(strpos($class_src,$mail_info->name()) !== false){
-			$class_list[] = $class_info['class'];
-			break;
+			if($mail->version() === $method_info->version()){
+				cmdman\Std::println_success(' o '.$label);
+			}else{
+				$failure['mail']++;
+				\cmdman\Std::println_danger(' x '.$label);
+			}
 		}
+	}catch(\Exception $e){
 	}
 }
 
-var_dump($class_list);
+
+
+
+
+// TODO 
+// $mail_template = \ebi\Dt\Man::mail_template_list();
+// $class_list = [];
+
+// foreach(\ebi\Dt::classes() as $class_info){
+// 	$class_src = \ebi\Util::file_read($class_info['filename']);
+	
+// 	foreach($mail_template as $mail_info){
+// 		if(strpos($class_src,$mail_info->name()) !== false){
+// 			$class_list[] = $class_info['class'];
+// 			break;
+// 		}
+// 	}
+// }
+
+
 foreach($class_list as $class){
 	$ref_class = new \ReflectionClass($class);
 	
@@ -160,6 +175,11 @@ foreach($class_list as $class){
 		}
 	}
 }
+
+
+
+
+
 
 \cmdman\Std::println();
 \cmdman\Std::println();
