@@ -458,7 +458,7 @@ class Man{
 					}
 				}
 				$class_info = self::class_info($ref->getDeclaringClass()->getName());
-				$class_plugins = $class_info->opt('plugins');
+				$class_plugins = $class_info->opt('call_plugins');
 				
 				foreach(array_keys($plugins) as $plugin_method_name){
 					if(array_key_exists($plugin_method_name, $class_plugins)){
@@ -537,11 +537,21 @@ class Man{
 	}
 	
 	/**
-	 * メールテンプレート
+	 * メールテンプレートパス
+	 * @param string $path
+	 * @return string
+	 */
+	public static function mail_template_path($path){
+		$dir = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
+		return \ebi\Util::path_absolute($dir, $path);
+	}
+	
+	/**
+	 * メールテンプレート一覧
 	 * @return \ebi\Dt\DocInfo[]
 	 */
 	public static function mail_template_list(){
-		$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
+		$path = self::mail_template_path('');
 		$template_list = [];
 		
 		try{

@@ -158,7 +158,6 @@ class Dt{
 						
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 						$info->set_opt('user_model',$user_model);
-						
 						foreach(['get_after_vars','get_after_vars_request'] as $mn){
 							try{
 								$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
