@@ -109,7 +109,6 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 	}
 }
 
-// TODO 
 \cmdman\Std::println();
 \cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
@@ -120,65 +119,36 @@ foreach($map_action_method_list as $action){
 		$method_info = \ebi\Dt\Man::method_info($action[0], $action[1], true, true);
 		
 		foreach($method_info->opt('mail_list') as $x_t_code => $mail){
+			$mail_src = \ebi\Util::file_read(\ebi\Dt\Man::mail_template_path($mail->name()));
+			$bool = true;
+			
+			if(preg_match_all('/\{\$([\w_]+)/', $mail_src,$m)){
+				$varnames = $m[1];
+				
+				foreach($varnames as $k => $varname){
+					foreach($mail->params() as $param){
+						if($varname === $param->name()){
+							unset($varnames[$k]);
+						}
+					}
+				}
+				$bool = empty($varnames);
+			}
+			
 			$label = $method_info->name()
 					.' ('.$method_info->version().') '
 					.' .. ['.$x_t_code.'] '.$mail->name().' ('.$mail->version().')';
-
-			if($mail->version() === $method_info->version()){
+					
+					if($bool){
 				cmdman\Std::println_success(' o '.$label);
 			}else{
 				$failure['mail']++;
-				\cmdman\Std::println_danger(' x '.$label);
+				\cmdman\Std::println_danger(' x '.$label.' [ '.implode(', ',$varnames).' ]');
 			}
 		}
 	}catch(\Exception $e){
 	}
 }
-
-
-
-
-
-// TODO 
-// $mail_template = \ebi\Dt\Man::mail_template_list();
-// $class_list = [];
-
-// foreach(\ebi\Dt::classes() as $class_info){
-// 	$class_src = \ebi\Util::file_read($class_info['filename']);
-	
-// 	foreach($mail_template as $mail_info){
-// 		if(strpos($class_src,$mail_info->name()) !== false){
-// 			$class_list[] = $class_info['class'];
-// 			break;
-// 		}
-// 	}
-// }
-
-
-foreach($class_list as $class){
-	$ref_class = new \ReflectionClass($class);
-	
-	foreach($ref_class->getMethods() as $ref_method){
-		$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true,true);
-		
-		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-			$label = $ref_class->getName().'::'.$ref_method->getName()
-						.' ('.$method_info->version().') '
-						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->version().')';
-			
-			if($mmi->version() === $method_info->version()){
-				cmdman\Std::println_success(' o '.$label);
-			}else{
-				$failure['mail']++;
-				\cmdman\Std::println_danger(' x '.$label);
-			}
-		}
-	}
-}
-
-
-
-
 
 
 \cmdman\Std::println();
