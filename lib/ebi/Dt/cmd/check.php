@@ -122,7 +122,7 @@ foreach($map_action_method_list as $action){
 			$mail_src = \ebi\Util::file_read(\ebi\Dt\Man::mail_template_path($mail->name()));
 			$bool = true;
 			
-			if(preg_match_all('/\{\$([\w_]+)/', $mail_src,$m)){
+			if(preg_match_all('/\$([\w_]+)/', $mail_src,$m)){
 				$varnames = $m[1];
 				
 				foreach($varnames as $k => $varname){

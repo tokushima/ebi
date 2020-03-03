@@ -356,6 +356,10 @@ class Man{
 				foreach($doc->params() as $p){
 					$mail_info->add_params($p);
 				}
+				
+				$mail_info->add_params(new \ebi\Dt\DocParam('t', '\ebi\FlowHelper','Helper'));
+				$mail_info->add_params(new \ebi\Dt\DocParam('xtc', 'string{}','Template Code'));
+				
 				$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 			}
 		}

@@ -366,7 +366,7 @@ class Mail{
 			}
 			
 			/**
-			 * @param string $xtc_name xtc query key
+			 * @param string $xtc_name xtc(x-template-code) query key
 			 */
 			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
 			$xtc = self::xtc($template_path);
@@ -383,7 +383,7 @@ class Mail{
 					$template->vars($k,$v);
 				}
 			}
-			$body_xml = $xml->find_get('body');		
+			$body_xml = $xml->find_get('body');
 			$signature = $body_xml->in_attr('signature');
 			$signature_text = '';
 			
