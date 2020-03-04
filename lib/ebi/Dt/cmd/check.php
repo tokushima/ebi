@@ -113,43 +113,47 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 \cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
 
-
-foreach($map_action_method_list as $action){
-	try{
-		$method_info = \ebi\Dt\Man::method_info($action[0], $action[1], true, true);
-		
-		foreach($method_info->opt('mail_list') as $x_t_code => $mail){
-			$mail_src = \ebi\Util::file_read(\ebi\Dt\Man::mail_template_path($mail->name()));
-			$bool = true;
+$template_list = \ebi\Dt\Man::mail_template_list();
+foreach(\ebi\Dt::classes() as $class){
+	foreach($template_list as $mail_info){
+		if(strpos(\ebi\Util::file_read($class['filename']),$mail_info->name()) !== false){
+			$ref_class = new \ReflectionClass($class['class']);
 			
-			if(preg_match_all('/\$([\w_]+)/', $mail_src,$m)){
-				$varnames = $m[1];
-				
-				foreach($varnames as $k => $varname){
-					foreach($mail->params() as $param){
-						if($varname === $param->name()){
-							unset($varnames[$k]);
+			foreach($ref_class->getMethods() as $ref_method){
+				if(strpos(\ebi\Dt\Man::method_src($ref_method),$mail_info->name()) !== false){
+					$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+					
+					$mail_src = \ebi\Util::file_read(\ebi\Dt\Man::mail_template_path($mail_info->name()));
+					$bool = true;
+					
+					if(preg_match_all('/\$([\w_]+)/',$mail_src,$m)){
+						$varnames = $m[1];
+						
+						foreach($varnames as $k => $varname){
+							foreach($mail_info->params() as $param){
+								if($varname === $param->name()){
+									unset($varnames[$k]);
+								}
+							}
 						}
+						$bool = empty($varnames);
 					}
-				}
-				$bool = empty($varnames);
-			}
-			
-			$label = $method_info->name()
-					.' ('.$method_info->version().') '
-					.' .. ['.$x_t_code.'] '.$mail->name().' ('.$mail->version().')';
+					
+					$label = $method_info->name()
+						.' ('.$method_info->version().') '
+						.' .. ['.$mail_info->opt('x_t_code').'] '.$mail_info->name().' ('.$mail_info->version().')';
 					
 					if($bool){
-				cmdman\Std::println_success(' o '.$label);
-			}else{
-				$failure['mail']++;
-				\cmdman\Std::println_danger(' x '.$label.' [ '.implode(', ',$varnames).' ]');
+						cmdman\Std::println_success(' o '.$label);
+					}else{
+						$failure['mail']++;
+						\cmdman\Std::println_danger(' x '.$label.' [ '.implode(', ',$varnames).' ]');
+					}
+				}
 			}
 		}
-	}catch(\Exception $e){
 	}
 }
-
 
 \cmdman\Std::println();
 \cmdman\Std::println();
