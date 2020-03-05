@@ -342,7 +342,7 @@ class Man{
 		$m = [];
 		
 		foreach($mail_template_list as $mail_info){
-			if(preg_match_all('/[^\w\/]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
+			if(preg_match_all('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
 				$doc = \ebi\Dt\DocInfo::parse('',$src,$m[0][0][1]);
 				
 				if(empty($doc->document())){

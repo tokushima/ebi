@@ -520,7 +520,7 @@ class Dt{
 	public function mail_info(){
 		$req = new \ebi\Request();
 		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
-	
+		
 		$method_list = [];
 		$method_mail_info = null;
 		$method_info = null;

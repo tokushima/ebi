@@ -11,7 +11,8 @@ namespace ebi;
 class LogMailSender{
 	/**
 	 * @param \ebi\Log $log
-	 * @version 1.3.4
+	 * @plugin \ebi\Log
+	 * @version 3.1.0
 	 */
 	public function log_output(\ebi\Log $log){
 		$mail = new \ebi\Mail();
@@ -19,7 +20,7 @@ class LogMailSender{
 		/**
 		 * @param mixed{} $arg1 メールにバインドする変数
 		 */
-		$vars = \ebi\Conf::gets('vars');
+		$conf_vars = \ebi\Conf::gets('vars');
 		/**
 		 * @param string $arg1 fromのメールアドレス
 		 */
@@ -49,16 +50,11 @@ class LogMailSender{
 				}
 			}
 		}
-		if(!is_array($vars)){
-			$vars = [];
-		}
-		$vars = array_merge(
-			$vars,
-			[
-				'log'=>$log,
-				'env'=>new \ebi\Env(),
-			]
-		);
+		
+		$vars = [
+			'log'=>$log,
+			'env'=>new \ebi\Env($conf_vars),
+		];
 		
 		try{
 			switch($log->level()){
