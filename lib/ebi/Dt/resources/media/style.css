@@ -23,3 +23,11 @@ main{
 	border: 1px dashed #ccc;
 	background-color: #f8f9fa;
 }
+
+.card-body table .cell-1{
+	width: 34%;
+}
+
+.card-body table .cell-2{
+	width: 33%;
+}

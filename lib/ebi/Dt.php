@@ -340,10 +340,10 @@ class Dt{
 	public function plugin_list(){
 		$list = [];
 		
-		foreach(self::classes() as $class_info){
-			$class_info = \ebi\Dt\Man::class_info($class_info['class']);
+		foreach(self::classes() as $class){
+			$class_info = \ebi\Dt\Man::class_info($class['class']);
 			
-			if($class_info->has_opt('plugins')){
+			if($class_info->has_opt('call_plugins')){
 				$list[$class_info->name()] = $class_info;
 			}
 		}

@@ -40,7 +40,7 @@
 	<div class="card-body">
 		<table class="table table-sm style-table-borderless">
 		<tr>
-			<th>Version</th>
+			<th class="cell-1">Version</th>
 			<td>
 				<rt:if param="{$action_info.version()}">
 					<a href="{$t.package_method_url('index')}?version={$action_info.version()}">
@@ -139,10 +139,10 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				{$param.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				<rt:if param="{$action_info.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$action_info.plain_type())}">
 						{$param.fm_type()}
@@ -167,14 +167,14 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('requests')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-			<td>
+			<td class="cell-1">
 				{$param.name()}
 				
 				<rt:if param="{$param.opt('require')}">
 					<span style="color: #ffbbbb;">*</span>
 				</rt:if>
 			</td>
-			<td>
+			<td class="cell-2">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -203,10 +203,10 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('contexts')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-			<td>
+			<td class="cell-1">
 				{$param.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -238,7 +238,7 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -264,12 +264,12 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 					{$info.opt('x_t_code')}
 				</a>
 			</td>
-			<td>
+			<td class="cell-2">
 				{$info.name()}
 			</td>
 			<td>
@@ -294,13 +294,13 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('call_plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<a href="{$t.package_method_url('plugin_doc',$action_info.opt('class'),$info.name())}">
 					{$info.name()}
 				</a>
 			</td>
 			
-			<td>
+			<td class="cell-2">
 				{$t.html($info.summary(),200,1)}
 			</td>
 			<td>
@@ -325,7 +325,7 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$action_info.opt('test_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<a href="{$t.package_method_url('test_view')}?path={$info.name()}">
 					{$info.opt('short_name')}
 				</a>

@@ -111,64 +111,39 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 \cmdman\Std::println_info(str_repeat('-',50));
 
 $template_list = \ebi\Dt\Man::mail_template_list();
+$mail_check_result = [];
+$class_name_max_length = 0;
 foreach(\ebi\Dt::classes() as $class){
 	$class_src = \ebi\Util::file_read($class['filename']);
 	
 	foreach($template_list as $mail_info){
-		if(strpos($class_src,$mail_info->name()) !== false){
-			$xtcode = $mail_info->opt('x_t_code');
-			
-			$ref_class = new \ReflectionClass($class['class']);
-			
-			foreach($ref_class->getMethods() as $ref_method){
-				$method_src = \ebi\Dt\Man::method_src($ref_method);
+		if(preg_match('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$class_src)){
+			if(\ebi\Dt\Man::find_mail_doc($mail_info, $class_src)){
+				$mail_check_result[] = [
+					$class['class'],
+					'['.$mail_info->opt('x_t_code').'] '.$mail_info->name(),
+					$mail_info->opt('undefined_vars')
+				];
 				
-				if(strpos($method_src,$ref_method->getName()) !== false && 
-					preg_match('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$method_src)
-				){
-					$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
-					$mail_src = \ebi\Util::file_read(\ebi\Dt\Man::mail_template_path($mail_info->name()));
-					$varnames = [];
-					
-					if(preg_match_all('/\$([\w_]+)/',$mail_src,$m)){
-						$varnames = array_unique($m[1]);
-						
-						if(preg_match_all('/[ :](var=|counter=)["\']([\w_]+)["\']/',$mail_src,$m)){
-							foreach($m[2] as $rtvar){
-								foreach($varnames as $k => $v){
-									if($v === $rtvar){
-										unset($varnames[$k]);
-										break;
-									}
-								}
-							}
-						}
-						
-						$method_mail_list = $method_info->opt('mail_list');
-						foreach($varnames as $k => $varname){
-							foreach($method_mail_list[$xtcode]->params() as $param){
-								if($varname === $param->name()){
-									unset($varnames[$k]);
-								}
-							}
-						}
-					}
-					
-					$label = $method_info->name()
-						.' ('.$method_info->version().') '
-						.' .. ['.$xtcode.'] '.$mail_info->name().' ('.$mail_info->version().')';
-					
-					if(empty($varnames)){
-						cmdman\Std::println_success(' o '.$label);
-					}else{
-						$failure['mail']++;
-						\cmdman\Std::println_danger(' x '.$label.' [ '.implode(', ',$varnames).' ]');
-					}
+				if(!empty($mail_info->opt('undefined_vars'))){
+					$failure['mail']++;
+				}
+				
+				if($class_name_max_length < strlen($class['class'])){
+					$class_name_max_length = strlen($class['class']);
 				}
 			}
 		}
 	}
 }
+foreach($mail_check_result as $result){
+	if(empty($result[2])){
+		cmdman\Std::println_success(' o '.str_pad($result[0],$class_name_max_length + 2).$result[1]);
+	}else{
+		cmdman\Std::println_danger(' x '.str_pad($result[0],$class_name_max_length + 2).$result[1].' [ '.implode(', ',$result[2]).' ]');
+	}
+}
+
 
 \cmdman\Std::println();
 \cmdman\Std::println();
@@ -188,4 +163,3 @@ if(empty($failure['db']) &&
 	);
 }
 \cmdman\Std::println();
-

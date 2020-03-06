@@ -48,7 +48,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm style-table-borderless">
 		<tr>
-			<th>Version</th>
+			<th class="cell-1">Version</th>
 			<td>
 				<a href="{$t.package_method_url('index')}?version={$method_info.version()}">
 					{$method_info.version()}
@@ -78,10 +78,10 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				{$param.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				<rt:if param="{$method_info.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
 						{$param.fm_type()}
@@ -107,7 +107,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm table-striped style-table-borderles">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<rt:if param="{$method_info.return().is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
 						{$method_info.return().fm_type()}
@@ -132,7 +132,7 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -159,12 +159,12 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 					{$info.opt('x_t_code')}
 				</a>
 			</td>
-			<td>
+			<td class="cell-2">
 				{$info.name()}
 			</td>
 			<td>
@@ -184,10 +184,10 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.opt('call_plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				{$info.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				{$t.html($info.summary(),200,1)}
 			</td>
 			<td>

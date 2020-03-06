@@ -338,32 +338,57 @@ class Man{
 		return $throw_param;
 	}
 	
-	private static function find_mail_info($mail_list,$mail_template_list,$src){
+	// TODO 
+	public static function find_mail_doc($mail_info,$src){
 		$m = [];
 		
-		foreach($mail_template_list as $mail_info){
-			if(preg_match_all('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
-				$doc = \ebi\Dt\DocInfo::parse('',$src,$m[0][0][1]);
+		if(preg_match_all('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
+			$doc = \ebi\Dt\DocInfo::parse('',$src,$m[0][0][1]);
+			
+			if(empty($doc->document())){
+				if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$src,$m)){
+					$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
+				}
+			}
+			$mail_info->set_opt('use',true);
+			$mail_info->set_opt('description',$doc->document());
+			
+			foreach($doc->params() as $p){
+				$mail_info->add_params($p);
+			}
+			
+			$mail_info->add_params(new \ebi\Dt\DocParam('t', '\ebi\FlowHelper','Helper'));
+			$mail_info->add_params(new \ebi\Dt\DocParam('xtc', 'string{}','Template Code'));
+			
+			$mail_src = \ebi\Util::file_read(self::mail_template_path($mail_info->name()));
+			$varnames = [];
+			
+			if(preg_match_all('/\$([\w_]+)/',$mail_src,$m)){
+				$varnames = array_unique($m[1]);
 				
-				if(empty($doc->document())){
-					if(preg_match('/\/\*\*(((?!\/\*\*).)*@real\s'.preg_quote($mail_info->name(),'/').'((?!\/\*\*).)*?\*\/)/s',$src,$m)){
-						$doc = \ebi\Dt\DocInfo::parse('',$m[1]);
+				if(preg_match_all('/[ :](var=|counter=)["\']([\w_]+)["\']/',$mail_src,$m)){
+					foreach($m[2] as $rtvar){
+						foreach($varnames as $k => $v){
+							if($v === $rtvar){
+								unset($varnames[$k]);
+								break;
+							}
+						}
 					}
 				}
-				$mail_info->set_opt('use',true);
-				$mail_info->set_opt('description',$doc->document());
-				
-				foreach($doc->params() as $p){
-					$mail_info->add_params($p);
+				foreach($varnames as $k => $varname){
+					foreach($mail_info->params() as $param){
+						if($varname === $param->name()){
+							unset($varnames[$k]);
+						}
+					}
 				}
-				
-				$mail_info->add_params(new \ebi\Dt\DocParam('t', '\ebi\FlowHelper','Helper'));
-				$mail_info->add_params(new \ebi\Dt\DocParam('xtc', 'string{}','Template Code'));
-				
-				$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
 			}
+			$mail_info->set_opt('undefined_vars',$varnames);
+			
+			return true;
 		}
-		return $mail_list;
+		return false;
 	}
 	private static function find_see($document){
 		$see = $m = [];
@@ -505,7 +530,13 @@ class Man{
 						$use_method_doc = self::trim_doc($ref->getDocComment());
 						
 						$throws = self::find_throws($throws,$use_method_doc,$use_method_src);
-						$mail_list = self::find_mail_info($mail_list,$mail_template_list,$use_method_src);
+						
+						
+						foreach($mail_template_list as $mail_info){
+							if(self::find_mail_doc($mail_info, $use_method_src)){
+								$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
+							}
+						}
 					}catch(\ReflectionException $e){
 					}
 				}
@@ -533,7 +564,13 @@ class Man{
 		self::find_merge_deprecate($info,$doc);
 		self::find_merge_request_context($info, $doc);
 		
-		$info->set_opt('mail_list',self::find_mail_info([],self::mail_template_list(),$src));
+		$mail_list = [];
+		foreach(self::mail_template_list() as $mail_info){
+			if(self::find_mail_doc($mail_info, $src)){
+				$mail_list[$mail_info->opt('x_t_code')] = $mail_info;
+			}
+		}
+		$info->set_opt('mail_list',$mail_list);
 		$info->set_opt('throws',self::merge_find_throws(self::find_throws([],$doc,$src)));
 		$info->set_opt('see_list',self::find_see($doc));
 		

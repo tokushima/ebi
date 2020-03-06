@@ -54,7 +54,6 @@
 	'test\flow\RequestFlow'=>['test\plugin\RequestPlugin'],
 	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
 ]);
-var_dump(__FILE__);
 
-\ebi\Benchmark::register_shutdown(\ebi\Conf::work_path('benchmark.csv'));
+\ebi\Benchmark::register_shutdown(\ebi\Conf::work_path('benchmark.tsv'));
 

@@ -36,10 +36,10 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$plugin_info.params()}" rt:var="param" class="table table-sm style-table-borderless">
 		<tr>
-			<td class="t1">
+			<td class="cell-1">
 				{$param.name()}
 			</td>
-			<td class="t2">
+			<td class="cell-2">
 				<rt:if param="{$plugin_info.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$plugin_info.plain_type())}">
 						{$param.fm_type()}
@@ -48,7 +48,7 @@
 					{$param.fm_type()}
 				</rt:if>
 			</td>
-			<td class="t3">
+			<td>
 				{$t.html($param.summary())}
 			</td>
 		</tr>
@@ -65,7 +65,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm style-table-borderless">
 		<tr>
-			<td class="t2">
+			<td class="cell-1">
 				<rt:if param="{$plugin_info.return().is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$plugin_info.return().plain_type())}">
 						{$plugin_info.return().fm_type()}
@@ -74,7 +74,7 @@
 					{$plugin_info.return().fm_type()}
 				</rt:if>
 			</td>
-			<td class="t3">
+			<td>
 				{$t.html($plugin_info.return().summary())}
 			</td>
 		</tr>

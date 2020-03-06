@@ -16,7 +16,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<th>Template</th>
+			<th class="cell-1">Template</th>
 			<td>
 				{$mail_info.name()}
 			</td>
@@ -71,10 +71,10 @@
 		<div class="card-body text-secondary">
 			<table rt:param="{$mail_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 			<tr>
-				<td>
+				<td class="cell-1">
 					{$param.name()}
 				</td>
-				<td>
+				<td class="cell-2">
 					<rt:if param="{$param.is_type_class()}">
 						<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 							{$param.fm_type()}
