@@ -118,7 +118,11 @@ include_once('bootstrap.php');
 	'form/select'=>['name'=>'form_select','template'=>'form_select.html','action'=>'test\flow\Action::select'],
 	'form/select/obj'=>['name'=>'form_select_obj','template'=>'form_select_obj.html','action'=>'test\flow\Action::select_obj'],
 		
-	'abc'=>['name'=>'abc','action'=>'test\db\Abc::create'],
+	'abc'=>[
+		'name'=>'abc',
+		'action'=>'test\db\Abc::create',
+		'post_action'=>'test\db\Abc::create',
+	],
 	
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test\flow\RequestFlow::file_upload'],
@@ -225,10 +229,29 @@ include_once('bootstrap.php');
 		'action'=>'test\flow\Action::working_storagea', // 存在しないaction
 	],
 	
-	''=>['action'=>'test\flow\Main'],
+	''=>[
+		'action'=>'test\flow\Main',
+		'name'=>'main',
+	],
 	'info'=>['action'=>function(){
 		phpinfo();
 	}],
+	'funcargs/(.+)/(.+)'=>[
+		/**
+		 * クロージャアクション
+		 * @param string $b BBB
+		 * @see https://google.com
+		 * @request string $hoge ホゲホゲ
+		 * @context string $A AABBCC
+		 * @context string $B XXYYZZ
+		 */
+		'action'=>function($a,$b){
+			return [
+				'A'=>$a,
+				'B'=>$b,
+			];
+		}
+	],
 	'dt'=>['action'=>'ebi\Dt','mode'=>'@dev'],
 ]);
 

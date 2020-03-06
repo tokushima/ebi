@@ -1,17 +1,33 @@
 
-.style-table-borderless td{
-	border: 0;
-}
-.style-table-borderless th{
-	border: 0;
+.prettyprint ol.linenums > li {
+	list-style-type: decimal; 
 }
 
-body {
-  padding-top: 5rem;
+
+main{
+	margin-top: 30px;
 }
 
-.source{
-	margin-top: 20px;
+.deprecated{
+	text-decoration: line-through;
+}
+
+.badge-margin{
+	margin: 0 0 0 10px
+}
+
+
+.doc pre{
+	padding: 10px 10px 10px 10px;
+	margin: 5px 5px 5px 5px;
 	border: 1px dashed #ccc;
-	padding: 20px;
+	background-color: #f8f9fa;
+}
+
+.card-body table .cell-1{
+	width: 34%;
+}
+
+.card-body table .cell-2{
+	width: 33%;
 }

@@ -588,7 +588,7 @@ class Flow{
 	private static function expand_patterns($pk,$patterns,$extends,&$automap_idx){
 		$result = [];
 		$ext_arr = ['plugins'=>[],'vars'=>[]];
-				
+		
 		foreach($ext_arr as $k =>$v){
 			if(array_key_exists($k,$extends)){
 				$ext_arr[$k] = $extends[$k];
@@ -610,7 +610,7 @@ class Flow{
 					}
 				}
 				$pt = (empty($pk) ? '' : $pk.'/').$k;
-		
+				
 				if(array_key_exists('patterns',$v)){
 					if(!array_key_exists('mode',$v) || \ebi\Conf::in_mode($v['mode'])){
 						$vp = $v['patterns'];

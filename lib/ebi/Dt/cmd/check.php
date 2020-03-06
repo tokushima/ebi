@@ -25,6 +25,7 @@ foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 	}
 }
 
+
 \cmdman\Std::println();
 \cmdman\Std::println_info('Entry (Check mapping):');
 \cmdman\Std::println_info(str_repeat('-',50));
@@ -35,13 +36,14 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 	if(strpos($src,'\ebi\Flow::app(') !== false){
 		$map = \ebi\Flow::get_map($f->getPathname());
 		$entry = str_replace(getcwd(),'',$f->getPathname());
-
+		
 		foreach($map['patterns'] as $p){
 			if(array_key_exists('action',$p) && is_string($p['action'])){
 				try{
 					list($c,$m) = explode('::',$p['action']);
-					new \ReflectionMethod(\ebi\Util::get_class_name($c),$m);
+					$c = \ebi\Util::get_class_name($c);
 					
+					new \ReflectionMethod($c,$m);
 					\cmdman\Std::println_success(' o   '.$entry.' '.$p['name']);
 				}catch(\ReflectionException $e){
 					$failure['entry']++;
@@ -104,45 +106,44 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 	}
 }
 
-
 \cmdman\Std::println();
-\cmdman\Std::println_info('Mail (Check version):');
+\cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
 
-
-$mail_template = \ebi\Dt\Man::mail_template_list();
-$class_list = [];
-
-foreach(\ebi\Dt::classes() as $class_info){
-	$class_src = \ebi\Util::file_read($class_info['filename']);
+$template_list = \ebi\Dt\Man::mail_template_list();
+$mail_check_result = [];
+$class_name_max_length = 0;
+foreach(\ebi\Dt::classes() as $class){
+	$class_src = \ebi\Util::file_read($class['filename']);
 	
-	foreach($mail_template as $mail_info){
-		if(strpos($class_src,$mail_info->name()) !== false){
-			$class_list[] = $class_info['class'];
-			break;
-		}
-	}
-}
-foreach($class_list as $class){
-	$ref_class = new \ReflectionClass($class);
-			
-	foreach($ref_class->getMethods() as $ref_method){
-		$method_info = \ebi\Dt\Man::method_info($ref_class->getName(),$ref_method->getName(),true);
+	foreach($template_list as $mail_info){
+		if(preg_match('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$class_src)){
+			if(\ebi\Dt\Man::find_mail_doc($mail_info, $class_src)){
+				$mail_check_result[] = [
+					$class['class'],
+					'['.$mail_info->opt('x_t_code').'] '.$mail_info->name(),
+					$mail_info->opt('undefined_vars')
+				];
 				
-		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-			$label = $ref_class->getName().'::'.$ref_method->getName()
-						.' ('.$method_info->version().') '
-						.' .. ['.$x_t_code.'] '.$mmi->name().' ('.$mmi->version().')';
-			
-			if($mmi->version() == $method_info->version()){
-				cmdman\Std::println_success(' o '.$label);
-			}else{
-				$failure['mail']++;
-				\cmdman\Std::println_danger(' x '.$label);
+				if(!empty($mail_info->opt('undefined_vars'))){
+					$failure['mail']++;
+				}
+				
+				if($class_name_max_length < strlen($class['class'])){
+					$class_name_max_length = strlen($class['class']);
+				}
 			}
 		}
 	}
 }
+foreach($mail_check_result as $result){
+	if(empty($result[2])){
+		cmdman\Std::println_success(' o '.str_pad($result[0],$class_name_max_length + 2).$result[1]);
+	}else{
+		cmdman\Std::println_danger(' x '.str_pad($result[0],$class_name_max_length + 2).$result[1].' [ '.implode(', ',$result[2]).' ]');
+	}
+}
+
 
 \cmdman\Std::println();
 \cmdman\Std::println();
@@ -162,5 +163,3 @@ if(empty($failure['db']) &&
 	);
 }
 \cmdman\Std::println();
-
-

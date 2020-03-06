@@ -9,7 +9,7 @@ class Request implements \IteratorAggregate{
 	private $files = [];
 	private $args;
 	private $_method;
-
+	
 	public function __construct(){
 		if('' != ($pathinfo = array_key_exists('PATH_INFO',$_SERVER) ? $_SERVER['PATH_INFO'] : '')){
 			if($pathinfo[0] != '/') $pathinfo = '/'.$pathinfo;
@@ -20,9 +20,7 @@ class Request implements \IteratorAggregate{
 		if(isset($this->_method)){
 			if($this->_method == 'POST'){
 				if(isset($_POST) && is_array($_POST)){
-					foreach($_POST as $k => $v){
-						$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
-					}
+					$this->vars = array_merge($this->vars,$_POST);
 				}
 				if(isset($_FILES) && is_array($_FILES)){
 					$marge_func = null;
@@ -50,9 +48,7 @@ class Request implements \IteratorAggregate{
 					}
 				}
 			}else if(isset($_GET) && is_array($_GET)){
-				foreach($_GET as $k => $v){
-					$this->vars[$k] = (get_magic_quotes_gpc() && is_string($v)) ? stripslashes($v) : $v;
-				}
+				$this->vars = array_merge($this->vars,$_GET);
 			}
 			if(array_key_exists('_method',$this->vars)){
 				if(empty($this->_method)){
@@ -69,9 +65,7 @@ class Request implements \IteratorAggregate{
 			){
 				$json = json_decode(file_get_contents('php://input'),true);
 				if(is_array($json)){
-					foreach($json as $k => $v){
-						$this->vars[$k] = $v;
-					}
+					$this->vars = array_merge($this->vars,$json);
 				}
 			}
 		}else if(isset($_SERVER['argv'])){
@@ -101,7 +95,7 @@ class Request implements \IteratorAggregate{
 	public static function method(){
 		if(array_key_exists('REQUEST_METHOD',$_SERVER)){
 			$method = $_SERVER['REQUEST_METHOD'];
-	
+			
 			if($_SERVER['REQUEST_METHOD'] == 'POST'){
 				if(array_key_exists('HTTP_X_HTTP_METHOD_OVERRIDE',$_SERVER)){
 					$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
@@ -126,10 +120,13 @@ class Request implements \IteratorAggregate{
 	 */
 	public static function current_url($port_https=443,$port_http=80){
 		$server = self::host($port_https,$port_http);
-		if(empty($server)) return null;
+		
+		if(empty($server)){
+			return null;
+		}
 		$path = isset($_SERVER['REQUEST_URI']) ?
-					preg_replace("/^(.+)\?.*$/","\\1",$_SERVER['REQUEST_URI']) :
-					(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'].(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '') : '');
+			preg_replace("/^(.+)\?.*$/","\\1",$_SERVER['REQUEST_URI']) :
+			(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'].(isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '') : '');
 		return $server.$path;
 	}
 	/**
@@ -387,7 +384,7 @@ class Request implements \IteratorAggregate{
 		}
 		if(array_key_exists($n,$this->vars)){
 			$value = base64_decode($this->vars[$n],true);
-
+			
 			if($value !== false){
 				$path = \ebi\WorkingStorage::tmpfile($value);
 				$this->file_vars($n,$path);
@@ -443,7 +440,7 @@ class Request implements \IteratorAggregate{
 	public function move_file($file_info,$newname){
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
-		}		
+		}
 		if(!$this->has_file($file_info)){
 			throw new \ebi\exception\NotFoundException('file not found ');
 		}

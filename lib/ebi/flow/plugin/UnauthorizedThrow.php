@@ -6,7 +6,7 @@ namespace ebi\flow\plugin;
  */
 class UnauthorizedThrow{
 	/**
-	 * @plugin ebi\flow\Request
+	 * @plugin \ebi\flow\Request
 	 * @param \ebi\flow\Request $req
 	 */
 	public function before_login_redirect(\ebi\flow\Request $req){

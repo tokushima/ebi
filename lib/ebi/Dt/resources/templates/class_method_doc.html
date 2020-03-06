@@ -2,16 +2,43 @@
 
 <rt:block name="content">
 
-<h1 class="display-3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+<p class="h3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
 	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
 		{$method_info.opt('class')}
 	</a>
 	::
 	{$method_info.opt('method')}
-</h1>
+	
+	<rt:if param="{$method_info.opt('plugin_caller')}">
+		<a style="margin-left: 10px;" class="badge badge-secondary" href="{$t.package_method_url('plugin_doc',$method_info.opt('plugin_caller'),$method_info.opt('method'))}">
+			Plugin
+		</a>
+	</rt:if>
+</p>
 
-<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
-{$t.noop($f.md2html($method_info.document()))}
+<div class="alert alert-warning doc" style="margin-top: 10px; margin-bottom: 50px;">
+	<div>
+		{$t.noop($f.md2html($method_info.document()))}
+	</div>
+	
+	<rt:if param="{$method_info.opt('see_list')}">
+		<div style="margin-top: 30px;" class="small">
+			<rt:loop param="{$method_info.opt('see_list')}" var="see">
+				<div>
+					<rt:if param="{$t.eq($see['type'],'url')}">
+						<a href="{$see['url']}">{$see['url']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'method')}">
+						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'class')}">
+						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>
+					</rt:if>
+				</div>
+			</rt:loop>
+		</div>
+	</rt:if>
+
 </div>
 
 
@@ -21,7 +48,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm style-table-borderless">
 		<tr>
-			<th>Version</th>
+			<th class="cell-1">Version</th>
 			<td>
 				<a href="{$t.package_method_url('index')}?version={$method_info.version()}">
 					{$method_info.version()}
@@ -38,7 +65,8 @@
 					</div>
 				</td>
 			</tr>
-		</rt:if>		
+		</rt:if>
+		
 		</table>
 	</div>
 </div>
@@ -46,14 +74,14 @@
 
 <rt:if param="{$method_info.params()}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-secondary">Params</div>
+	<div class="card-header text-white bg-primary">Params</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				{$param.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				<rt:if param="{$method_info.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
 						{$param.fm_type()}
@@ -79,7 +107,7 @@
 	<div class="card-body text-secondary">
 		<table class="table table-sm table-striped style-table-borderles">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<rt:if param="{$method_info.return().is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
 						{$method_info.return().fm_type()}
@@ -87,7 +115,7 @@
 				<rt:else />
 					{$method_info.return().fm_type()}
 				</rt:if>
-			</td>				
+			</td>
 			<td>
 				{$t.html($method_info.return().summary())}
 			</td>
@@ -104,7 +132,7 @@
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -127,17 +155,17 @@
 
 <rt:if param="{$method_info.opt('mail_list')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Mail</div>
+	<div class="card-header text-white bg-dark">Mail</div>
 	<div class="card-body text-secondary">
 		<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>				
-				<a href="{$t.package_method_url('mail_info_method')}?tcode={$info.opt('x_t_code')}&class={$method_info.opt('class')}&method={$method_info.opt('method')}">
+			<td class="cell-1">
+				<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
 					{$info.opt('x_t_code')}
 				</a>
 			</td>
-			<td>
-				{$info.name()}	
+			<td class="cell-2">
+				{$info.name()}
 			</td>
 			<td>
 				{$t.html($info.document())}
@@ -150,16 +178,16 @@
 
 
 
-<rt:if param="{$method_info.opt('plugins')}">
+<rt:if param="{$method_info.opt('call_plugins')}">
 <div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">Plugins</div>
+	<div class="card-header text-white bg-secondary">Plugins</div>
 	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<table rt:param="{$method_info.opt('call_plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
 		<tr>
-			<td>
+			<td class="cell-1">
 				{$info.name()}
 			</td>
-			<td>
+			<td class="cell-2">
 				{$t.html($info.summary(),200,1)}
 			</td>
 			<td>
@@ -170,33 +198,9 @@
 						</a>
 					</div>
 				</rt:loop>
-			</td>			
-		</tr>
-		</table>
-	</div>
-</div>
-</rt:if>
-
-<rt:if param="{$method_info.opt('see_list')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-info">See</div>
-	<div class="card-body text-secondary">
-		<table rt:param="{$method_info.opt('see_list')}" rt:var="see" class="table table-sm table-striped style-table-borderless">
-		<tr>
-			<td>
-				<rt:if param="{$t.eq($see['type'],'url')}">
-					<a href="{$see['url']}">{$see['url']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'method')}">
-					<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
-				</rt:if>
-				<rt:if param="{$t.eq($see['type'],'class')}">
-					<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>					
-				</rt:if>
 			</td>
 		</tr>
 		</table>
-
 	</div>
 </div>
 </rt:if>

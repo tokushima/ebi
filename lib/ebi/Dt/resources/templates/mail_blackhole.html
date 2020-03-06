@@ -2,9 +2,9 @@
 
 <rt:block name="content">
 
-<h1 class="display-3">{$mail_info.opt('x_t_code')} ({$mail_info.name()})</h1>
+<p class="h3">{$mail_info.opt('x_t_code')} ({$mail_info.name()})</p>
 
-<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
+<div class="alert alert-secondary" style="margin-top: 10px; margin-bottom: 50px;">
 	{$t.html($mail_info.document())}
 </div>
 
@@ -24,8 +24,8 @@
 	<td>
 		{$obj.to()}
 	</td>
-	<td>
-		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}">
+	<td nowrap>
+		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}" class="{$t.cond_switch($t.gt($obj.create_date(),$t.time() - 600),'text-danger')}">
 			{$obj.fm_create_date()}
 		</a>
 	</td>

@@ -2,16 +2,16 @@
 
 <rt:block name="content">
 
-<h1 class="display-3">{$info.name()}</h1>
+<p class="h3">{$info.name()}</p>
 
 <rt:if param="{$info.document()}">
-	<div class="alert alert-info" role="alert" style="margin-top: 10px; margin-bottom: 50px;">
-	{$info.document()}
+	<div class="alert alert-secondary">
+		{$info.document()}
 	</div>
 </rt:if>
 
-<pre class="source"><code>
+<pre class="prettyprint" style="padding: 5px;">
 {$t.htmlspecialchars($src)}
-</code></pre>
+</pre>
 </rt:block>
 

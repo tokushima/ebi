@@ -55,6 +55,5 @@
 	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
 ]);
 
-
-\ebi\Benchmark::register_shutdown(\ebi\Conf::work_path('benchmark.csv'));
+\ebi\Benchmark::register_shutdown(\ebi\Conf::work_path('benchmark.tsv'));
 

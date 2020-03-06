@@ -6,16 +6,13 @@ namespace ebi;
  */
 class FlowHelper{
 	private $name;
-	
-	private $is_user_logged_in = false;
-	private $user;
+	private $req;
 	
 	public function __construct($name=null,$obj=null){
 		$this->name = $name;
 		
 		if($obj instanceof \ebi\flow\Request){
-			$this->is_user_logged_in = $obj->is_user_logged_in();
-			$this->user = $obj->user();
+			$this->req = $obj;
 		}
 	}
 	/**
@@ -42,22 +39,32 @@ class FlowHelper{
 	 * @return boolean
 	 */
 	public function is_post(){
-		return  (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST');
+		return (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST');
 	}
 	/**
 	 * ログイン済みか
 	 * @return boolean
 	 */
 	public function is_user_logged_in(){
-		return $this->is_user_logged_in;
+		return (isset($this->req)) ? $this->req->is_user_logged_in() : false;
 	}
 	/**
 	 * ログインユーザを返す
 	 * @return mixed
 	 */
 	public function user(){
-		return $this->user;
+		return (isset($this->req)) ? $this->req->user() : null;
 	}
+	
+	/**
+	 * リクエストに含まれているか
+	 * @param string $name
+	 * @return boolean
+	 */
+	public function is_vars($name){
+		return (isset($this->req)) ? $this->req->is_vars($name) : false;
+	}
+	
 	/**
 	 * handlerでpackageを呼び出してる場合にメソッド名でURLを生成する
 	 * 引数を与える事も可能

@@ -196,7 +196,7 @@ class Calc{
 			case 'PAPAERBACK': return [114,178]; // ペーパーバック
 			case 'B6S':
 			case 'B6SMALL': return [112,174]; // 新書判、少年・少女コミック
-
+			
 			case 'MEISHI': return [55,91]; // 名刺（９号）
 			case 'SMARTSIZE': return [51,89]; // 名刺 スマートサイズ
 			

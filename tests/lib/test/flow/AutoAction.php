@@ -30,7 +30,7 @@ class AutoAction{
 		 */
 		$mail->send_template('auto_action/abc.xml',['bbb'=>1]);
 		
-		return ['aaaa'=>'abc'];		
+		return ['aaaa'=>'abc'];
 	}
 	/**
 	 * @automap

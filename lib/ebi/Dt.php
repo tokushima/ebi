@@ -82,7 +82,7 @@ class Dt{
 					$m['url'] = $k;
 					
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
 						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
@@ -96,6 +96,9 @@ class Dt{
 						}
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
+						}
+						if(!empty($info->opt('mail_list'))){
+							$m['mail'] = true;
 						}
 						list($m['login']) = $this->get_login_annotation($m['class'],$m['method']);
 					}
@@ -111,6 +114,7 @@ class Dt{
 						}
 					}
 				}
+				
 				if(!isset($m['version'])){
 					$m['version'] = $file_version;
 				}
@@ -145,16 +149,56 @@ class Dt{
 		
 		foreach($map['patterns'] as $m){
 			if($m['name'] == $name){
-				list($m['class'],$m['method']) = explode('::',$m['action']);
-				list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
-				
-				$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
-				$info->set_opt('name',$name);
-				$info->set_opt('url',$m['format']);
-				$info->set_opt('user_model',$user_model);
-				$info->reset_params(array_slice($info->params(),0,$m['num']));
-				
-				
+				if(isset($m['action'])){
+					if($m['action'] instanceof \Closure){
+						$info = \ebi\Dt\Man::closure_info($m['action']);
+					}else{
+						list($m['class'],$m['method']) = explode('::',$m['action']);
+						list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
+						
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
+						$info->set_opt('user_model',$user_model);
+						foreach(['get_after_vars','get_after_vars_request'] as $mn){
+							try{
+								$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
+								
+								foreach(['requests','contexts'] as $k){
+									$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
+								}
+							}catch(\ReflectionException $e){
+							}
+						}
+						
+						// ログイン プラグイン情報をマージ
+						foreach($info->opt('call_plugins') as $plugin){
+							if($plugin->name() == 'login_condition'){
+								foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
+									$plugin_class = \ebi\Util::get_class_name($map_plugin);
+									$ref = new \ReflectionClass($plugin_class);
+									$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
+									$info->document(trim($info->document().PHP_EOL.$document));
+									
+									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
+										if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
+											$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+											
+											if($login_method->has_opt('http_method')){
+												$info->set_opt('http_method',$login_method->opt('http_method'));
+											}
+											foreach(['requests','contexts'] as $k){
+												$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
+											}
+										}
+									}
+									break;
+								}
+								break;
+							}
+						}
+					}
+				}else{
+					$info = new \ebi\Dt\DocInfo();
+				}
 				if(!empty($info->opt('deprecated')) || isset($m['deprecated'])){
 					if(isset($m['deprecated'])){
 						$deprecated = is_bool($m['deprecated']) ? time() : strtotime($m['deprecated']);
@@ -163,45 +207,18 @@ class Dt{
 					}
 					$info->set_opt('deprecated',$deprecated);
 				}
-				foreach(['get_after_vars','get_after_vars_request'] as $mn){
-					try{
-						$ex_info = \ebi\Dt\Man::method_info($m['class'],$mn,true,true);
-						
-						foreach(['requests','contexts'] as $k){
-							$info->set_opt($k,array_merge($ex_info->opt($k),$info->opt($k)));
-						}
-					}catch(\ReflectionException $e){
-					}
-				}
 				
-				// ログイン プラグイン情報をマージ
-				foreach($info->opt('plugins') as $plugin){
-					if($plugin->name() == 'login_condition'){
-						foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
-							$plugin_class = \ebi\Util::get_class_name($map_plugin);
-							$ref = new \ReflectionClass($plugin_class);
-							$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
-							$info->document(trim($info->document().PHP_EOL.$document));
-							
-							foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
-								if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
-									$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
-									
-									if($login_method->has_opt('http_method')){
-										$info->set_opt('http_method',$login_method->opt('http_method'));
-									}
-									foreach(['requests','contexts'] as $k){
-										$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
-									}
-								}
-							}
-							break;
-						}
-						break;
-					}
-				}
+				
+				$info->set_opt('name',$name);
+				$info->set_opt('url',$m['format']);
 				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
-				return ['method_info'=>$info];
+				
+				$info->reset_params(array_slice($info->params(),0,$m['num']));
+				
+				return [
+					'action_info'=>$info,
+					'map'=>$m,
+				];
 			}
 		}
 		throw new \ebi\exception\NotFoundException();
@@ -323,10 +340,10 @@ class Dt{
 	public function plugin_list(){
 		$list = [];
 		
-		foreach(self::classes() as $class_info){
-			$class_info = \ebi\Dt\Man::class_info($class_info['class']);
+		foreach(self::classes() as $class){
+			$class_info = \ebi\Dt\Man::class_info($class['class']);
 			
-			if($class_info->has_opt('plugins')){
+			if($class_info->has_opt('call_plugins')){
 				$list[$class_info->name()] = $class_info;
 			}
 		}
@@ -341,7 +358,7 @@ class Dt{
 	 */
 	public function plugin_doc($class,$plugin){
 		$class_info = \ebi\Dt\Man::class_info($class);
-		$plugins = $class_info->opt('plugins');
+		$plugins = $class_info->opt('call_plugins');
 
 		if(!empty($plugins)){
 			foreach($plugins as $p){
@@ -353,7 +370,7 @@ class Dt{
 				}
 			}
 		}
-		throw new \ebi\exception\NotFoundException();
+		throw new \ebi\exception\NotFoundException($plugin.' not found');
 	}
 	private function test_path(){
 		/**
@@ -485,6 +502,9 @@ class Dt{
 							'count',
 							\ebi\SmtpBlackholeDao::find_count(Q::eq('tcode',$info->opt('x_t_code')))
 						);
+						if(\ebi\SmtpBlackholeDao::find_count(Q::eq('tcode',$info->opt('x_t_code')),Q::gt('create_date',time() - 600)) > 0){
+							$template_list[$k]->set_opt('new',true);
+						}
 					}
 				}
 			}
@@ -500,7 +520,7 @@ class Dt{
 	public function mail_info(){
 		$req = new \ebi\Request();
 		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
-	
+		
 		$method_list = [];
 		$method_mail_info = null;
 		$method_info = null;
@@ -524,50 +544,26 @@ class Dt{
 				}
 			}
 		}
-		if(sizeof($method_list) == 1){
+		
+		$params = [];
+		foreach($method_list as $method){
 			$desc = $method_mail_info->opt('description');
 			
 			if(empty(trim($desc))){
-				$desc = $method_list[0]->document();
+				$desc = $method->document();
 			}
 			$mail_info->set_opt('method_summary',$desc);
 			
 			foreach($method_mail_info->params() as $p){
-				$mail_info->add_params($p);
+				$params[$p->name()] = $p;
 			}
+		}
+		foreach($params as $p){
+			$mail_info->add_params($p);
 		}
 		return [
 			'mail_info'=>$mail_info,
 			'method_list'=>$method_list,
-			'multiple_method'=>(sizeof($method_list) > 1),
-		];
-	}
-	/**
-	 * @automap
-	 */
-	public function mail_info_method(){
-		$req = new \ebi\Request();
-		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
-		$method_info = \ebi\Dt\Man::method_info($req->in_vars('class'),$req->in_vars('method'),true);
-		
-		foreach($method_info->opt('mail_list') as $x_t_code => $mmi){
-			if($x_t_code == $mail_info->opt('x_t_code')){
-				$desc = $mmi->opt('description');
-			
-				if(empty(trim($desc))){
-					$desc = $method_info->document();
-				}
-				$mail_info->set_opt('method_summary',$desc);
-			
-				foreach($mmi->params() as $p){
-					$mail_info->add_params($p);
-				}
-				break;
-			}
-		}
-		return [
-			'mail_info'=>$mail_info,
-			'method_info'=>$method_info,
 		];
 	}
 	private function find_mail_template_info($tcode){

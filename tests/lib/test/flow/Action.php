@@ -41,6 +41,8 @@ class Action{
 		\ebi\Exceptions::add(new \LogicException('logic'),'newgroup');
 		\ebi\Exceptions::throw_over();
 	}
+	
+	
 	public function exceptions(){
 		\ebi\Exceptions::add(new \InvalidArgumentException('invalid argument'));
 		\ebi\Exceptions::add(new \LogicException('logic'));

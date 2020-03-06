@@ -1,21 +1,23 @@
 <rt:extends href="base.html" />
 
 <rt:block name="content">
-	<div>
-		<form class="form-inline" name="version_select_frm">
-			<label class="my-1 mr-2" for="version">Version: </label>
-			<select class="custom-select my-1 mr-sm-2" id="version" rt:param="{$version_list}" name="version" rt:null="ALL" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
+	<div style="margin-bottom: 30px;">
+		<form name="version_select_frm">
+			<div class="input-group">
+				<div class="input-group-prepend">
+					<div class="input-group-text">Version</div>
+				</div>
+				<select class="custom-select" id="version" rt:param="{$version_list}" name="version" rt:null="ALL" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
+			</div>
 		</form>
 	</div>
-
-
+	
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">
 		<th>Url</th>
 		<th>Name</th>
 		<th>Summary</th>
-		<th></th>
 	</tr>
 	</thead>
 	<tbody>
@@ -24,96 +26,40 @@
 			{$map['url']}
 			
 			<rt:if param="{$map['login']}">
-				<span class="badge badge-pill badge-secondary" style="margin-left: 5px">Auth</span>
-			</rt:if>			
+				<span class="badge badge-primary badge-margin">Auth</span>
+			</rt:if>
 		</td>
 		<td>
-			<rt:if param="{$map['class']}">
-				<a href="{$t.package_method_url('index_action_doc',$map['name'])}" class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
-					{$map['name']}
-				</a>
-			<rt:else />
-				<div class="modal" tabindex="-1" role="dialog" id="link{$count}">
-					<div class="modal-dialog modal-lg" role="document">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title">{$map['name']}</h5>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">&times;</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="alert alert-info" role="alert">
-									{$t.html($map['summary'])}
-								</div>
-							
-								<form name="linkdata{$count}">
-									<input type="text" name="url" value="{$map['format']}" class="form-control" />
-									<textarea name="query" class="form-control" rows="5" style="margin-top: 10px;" placeholder='{"key1":"value","key2":"value"}'></textarea>
-								</form>
-							</div>
-							<div class="modal-footer">
-								<button type="button" class="btn btn-primary" onclick="submit_linkform(linkdata{$count},'post')">POST</button>
-								<button type="button" class="btn btn-info" onclick="submit_linkform(linkdata{$count},'get')">GET</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			
-				<a href="#" data-toggle="modal" data-target="#link{$count}">
-					{$map['name']}
-				</a>
-				
-			</rt:if>
+			<a href="{$t.package_method_url('index_action_doc',$map['name'])}" class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
+				{$map['name']}
+			</a>
 		</td>
 		<td>
 			<span >
 				{$t.html($map['summary'])}
 			</span>
 			
-			<rt:if param="{$map['error']}">
-				<div>
-					<h4><span class="badge badge-pill badge-danger">{$map['error']}</span></h4>
-				</div>
+			
+			<rt:if param="{$map['mail']}">
+				<span class="badge badge-dark badge-margin">Mail</span>
 			</rt:if>
 			
 			<rt:if param="{$map['first_depricated_date']}">
+				<rt:if param="{$map['deprecated']}">
+					<span class="badge badge-danger badge-margin">Deprecated</span>
+				<rt:else />
+					<span class="badge badge-warning badge-margin">Deprecated</span>
+				</rt:if>
+			</rt:if>
+			
+			
+			<rt:if param="{$map['error']}">
 				<div>
-					<rt:if param="{$map['deprecated']}">
-						<span class="badge badge-danger">Deprecated Action</span>
-					<rt:else />
-						<span class="badge badge-warning">Deprecated Request / Context</span>
-					</rt:if>
+					<span class="text-danger">{$map['error']}</span>
 				</div>
 			</rt:if>
 		</td>
-		
-		<td>		
-			<div class="modal" tabindex="-1" role="dialog" id="info{$count}">
-				<div class="modal-dialog  modal-lg" role="document">
-					<div class="modal-content">
-						<div class="modal-header">
-							{$map['name']}
-
-							<rt:if param="{$map['deprecated']}">
-								(Deprecated)
-							</rt:if>
-							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-						</div>
-						<div class="modal-body">
-							<pre class="text-secondary">{$f.dump($map)}</pre>
-						</div>
-						<div class="modal-footer">
-						</div>
-					</div>
-				</div>
-			</div>
-		
-			<a href="#" data-toggle="modal" data-target="#info{$count}" class="badge badge-pill badge-info">i</a>
-		</td>
 	</tr>
 	</tbody>
-	</table>	
+	</table>
 </rt:block>

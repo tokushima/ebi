@@ -1,7 +1,11 @@
 <mail version="1.2">
-<subject>テストサブジェクト</subject>
+<subject>テスト{$bbb}サブジェクト</subject>
 <body signature="signature.xml">
+{$t.one_liner($aaa)}
+{$T.one_liner($aaa)}
 123{$abc}456
+
+{$xyz}
 </body>
 
 <summary>

@@ -307,7 +307,7 @@ class Xml implements \IteratorAggregate{
 		if($bool){
 			if(sizeof(array_keys($children)) == 1){
 				foreach($children as $k => $v){
-					if($k == 'data' || preg_match('/^[\A-Z]/',$k)){
+					if($k == 'data' || preg_match('/^[A-Z]/',$k)){
 						return !isset($v[0]) ? [$v] : $v;
 					}
 				}

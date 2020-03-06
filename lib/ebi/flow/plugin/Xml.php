@@ -23,6 +23,7 @@ class Xml{
 			print($xml->get(\ebi\Conf::get('encoding')));
 		}
 	}
+	
 	/**
 	 * @plugin \ebi\Flow
 	 * @param \Exception $exception
@@ -33,7 +34,7 @@ class Xml{
 		}
 		if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') !== false){
 			$message = [];
-				
+			
 			foreach($exception as $g => $e){
 				$em = [
 					'message'=>$e->getMessage(),

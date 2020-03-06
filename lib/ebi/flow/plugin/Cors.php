@@ -6,6 +6,9 @@ namespace ebi\flow\plugin;
  *
  */
 class Cors{
+	/**
+	 * @plugin \ebi\Flow
+	 */
 	public function before_flow_action(){
 		$env = new \ebi\Env();
 		$request_origin = $env->get('HTTP_ORIGIN');

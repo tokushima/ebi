@@ -8,7 +8,7 @@ class Csrf{
 	private $token;
 	
 	/**
-	 * @plugin \ebi\Flow
+	 * @plugin \ebi\flow\Request
 	 * @param \ebi\flow\Request $req
 	 */
 	public function before_flow_action_request(\ebi\flow\Request $req){
