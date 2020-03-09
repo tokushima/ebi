@@ -24,10 +24,6 @@
 	<tr class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
 		<td>
 			{$map['url']}
-			
-			<rt:if param="{$map['login']}">
-				<span class="badge badge-primary badge-margin">Auth</span>
-			</rt:if>
 		</td>
 		<td>
 			<a href="{$t.package_method_url('index_action_doc',$map['name'])}" class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
@@ -38,11 +34,6 @@
 			<span >
 				{$t.html($map['summary'])}
 			</span>
-			
-			
-			<rt:if param="{$map['mail']}">
-				<span class="badge badge-dark badge-margin">Mail</span>
-			</rt:if>
 			
 			<rt:if param="{$map['first_depricated_date']}">
 				<rt:if param="{$map['deprecated']}">

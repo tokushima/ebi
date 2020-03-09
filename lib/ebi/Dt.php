@@ -82,7 +82,7 @@ class Dt{
 					$m['url'] = $k;
 					
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true);
+						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 						
 						if(!isset($m['version'])){
 							$m['version'] = $info->version();
@@ -97,10 +97,6 @@ class Dt{
 						if($m['deprecated'] || !empty($info->opt('first_depricated_date'))){
 							$m['first_depricated_date'] = $info->opt('first_depricated_date', time());
 						}
-						if(!empty($info->opt('mail_list'))){
-							$m['mail'] = true;
-						}
-						list($m['login']) = $this->get_login_annotation($m['class'],$m['method']);
 					}
 				}catch(\Exception $e){
 					$m['error'] = $e->getMessage();
@@ -130,7 +126,7 @@ class Dt{
 		$entry_desc = (preg_match('/\/\*\*.+?\*\//s',\ebi\Util::file_read($this->entry),$m)) ?
 			trim(preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$m[0]))) :
 			'';
-	
+		
 		return [
 			'map_list'=>$flow_output_maps,
 			'description'=>$entry_desc,
