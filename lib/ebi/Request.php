@@ -222,10 +222,13 @@ class Request implements \IteratorAggregate{
 		setcookie(
 			$name,
 			$value,
-			$expire,
-			$cookie_params['cookie_path'],
-			$cookie_params['cookie_domain'],
-			$cookie_params['cookie_secure']
+			[
+				'expires'=>$expire,
+				'path'=>$cookie_params['cookie_path'],
+				'domain'=>$cookie_params['cookie_domain'],
+				'secure'=>$cookie_params['cookie_secure'],
+				'samesite'=>$cookie_params['cookie_samesite'],
+			]
 		);
 	}
 	/**
@@ -248,10 +251,13 @@ class Request implements \IteratorAggregate{
 		setcookie(
 			$name,
 			null,
-			(time() - 1209600),
-			$cookie_params['cookie_path'],
-			$cookie_params['cookie_domain'],
-			$cookie_params['cookie_secure']
+			[
+				'expires'=>(time() - 1209600),
+				'path'=>$cookie_params['cookie_path'],
+				'domain'=>$cookie_params['cookie_domain'],
+				'secure'=>$cookie_params['cookie_secure'],
+				'samesite'=>$cookie_params['cookie_samesite'],
+			]
 		);
 	}
 	/**
