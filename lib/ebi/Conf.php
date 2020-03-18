@@ -252,6 +252,13 @@ class Conf{
 		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
 		/**
+		 * デフォルトは、Lax です
+		 * @param strig $val クロスサイトリクエスト設定 ( Strict, Lax, None )
+		 */
+		$cookie_samesite = self::get_self_conf_get('cookie_samesite','Lax');
+		
+		
+		/**
 		 * デフォルトは、SID です
 		 * @param string $val セッション名
 		 */
@@ -290,6 +297,7 @@ class Conf{
 			'cookie_path'=>$cookie_path,
 			'cookie_domain'=>$cookie_domain,
 			'cookie_secure'=>$cookie_secure,
+			'cookie_samesite'=>$cookie_samesite,
 		];
 	}
 	/**
