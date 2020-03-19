@@ -26,7 +26,7 @@ class Cors{
 		$max_age = (int)\ebi\Conf::get('max_age',0);
 		
 		/**
-		 * boolean $debug ORIGINを常に許可する
+		 * @param boolean $debug ORIGINを常に許可する
 		 */
 		if(empty($origin) && \ebi\Conf::get('debug',false) === true){
 			$origin = [$request_origin];
