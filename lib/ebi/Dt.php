@@ -10,11 +10,9 @@ class Dt{
 	
 	private $entry;
 	private $entry_name;
-	private $self_class;
 	
 	public function __construct($entryfile=null){
 		if(empty($entryfile)){
-			$this->self_class = __CLASS__;
 			$trace = debug_backtrace(false);
 			krsort($trace);
 			
@@ -58,6 +56,10 @@ class Dt{
 		$target_version = $req->in_vars('version');
 		$file_version = date('Ymd',filemtime($this->entry));
 		$version_list = [];
+		$self_class = get_class($this);
+		$class_name = function($name){
+			return ($name[0] === '\\') ? substr($name,1) : $name;
+		};
 		
 		foreach($patterns as $k => $m){
 			foreach([
@@ -67,7 +69,6 @@ class Dt{
 				'template'=>null,
 				'version'=>null,
 				'error'=>null,
-				'login'=>false,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -76,7 +77,7 @@ class Dt{
 			if(isset($m['action']) && is_string($m['action'])){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
 			}
-			if(!isset($m['class']) || $m['class'] != $this->self_class){
+			if(!isset($m['class']) || $class_name($m['class']) != $self_class){
 				try{
 					$m['error'] = null;
 					$m['url'] = $k;
