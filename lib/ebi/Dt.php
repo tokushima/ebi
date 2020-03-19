@@ -174,9 +174,9 @@ class Dt{
 									$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
 									$info->document(trim($info->document().PHP_EOL.$document));
 									
-									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
-										if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
-											$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
+										if($method->getName() == 'login_condition' || $method->getName() == 'get_after_vars_login'){
+											$login_method = \ebi\Dt\Man::method_info($plugin_class,$method->getName());
 											
 											if($login_method->has_opt('http_method')){
 												$info->set_opt('http_method',$login_method->opt('http_method'));
