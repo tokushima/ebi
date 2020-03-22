@@ -10,11 +10,9 @@ class Dt{
 	
 	private $entry;
 	private $entry_name;
-	private $self_class;
 	
 	public function __construct($entryfile=null){
 		if(empty($entryfile)){
-			$this->self_class = __CLASS__;
 			$trace = debug_backtrace(false);
 			krsort($trace);
 			
@@ -58,6 +56,10 @@ class Dt{
 		$target_version = $req->in_vars('version');
 		$file_version = date('Ymd',filemtime($this->entry));
 		$version_list = [];
+		$self_class = get_class($this);
+		$class_name = function($name){
+			return ($name[0] === '\\') ? substr($name,1) : $name;
+		};
 		
 		foreach($patterns as $k => $m){
 			foreach([
@@ -67,7 +69,6 @@ class Dt{
 				'template'=>null,
 				'version'=>null,
 				'error'=>null,
-				'login'=>false,
 			] as $i => $d){
 				if(!isset($m[$i])){
 					$m[$i] = $d;
@@ -76,7 +77,7 @@ class Dt{
 			if(isset($m['action']) && is_string($m['action'])){
 				list($m['class'],$m['method']) = explode('::',$m['action']);
 			}
-			if(!isset($m['class']) || $m['class'] != $this->self_class){
+			if(!isset($m['class']) || $class_name($m['class']) != $self_class){
 				try{
 					$m['error'] = null;
 					$m['url'] = $k;
@@ -174,9 +175,9 @@ class Dt{
 									$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
 									$info->document(trim($info->document().PHP_EOL.$document));
 									
-									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
-										if($m->getName() == 'login_condition' || $m->getName() == 'get_after_vars_login'){
-											$login_method = \ebi\Dt\Man::method_info($plugin_class,$m->getName());
+									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
+										if($method->getName() == 'login_condition' || $method->getName() == 'get_after_vars_login'){
+											$login_method = \ebi\Dt\Man::method_info($plugin_class,$method->getName());
 											
 											if($login_method->has_opt('http_method')){
 												$info->set_opt('http_method',$login_method->opt('http_method'));
