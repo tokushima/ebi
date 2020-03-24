@@ -31,9 +31,10 @@ class Session{
 			}
 			if(
 				$cookie_params['session_lifetime'] > 0 || 
-				$cookie_params['cookie_path'] != '/' ||
-				!empty($cookie_params['cookie_domain']) ||
-				$cookie_params['cookie_secure'] !== false
+				$cookie_params['cookie_secure'] !== false ||
+				$cookie_params['cookie_samesite'] !== null ||
+				$cookie_params['cookie_path'] !== '/' ||
+				!empty($cookie_params['cookie_domain'])
 			){
 				session_set_cookie_params([
 					'lifetime'=>$cookie_params['session_lifetime'],
