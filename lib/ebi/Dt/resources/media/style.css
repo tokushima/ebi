@@ -31,3 +31,16 @@ main{
 .card-body table .cell-2{
 	width: 33%;
 }
+
+.card-body table .cell-s-1{
+	width: 20%;
+}
+
+.card-body table .cell-s-2{
+	width: 20%;
+}
+
+.card-body table .cell-s-flag{
+	width: 5%;
+}
+

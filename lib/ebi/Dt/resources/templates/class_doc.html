@@ -72,10 +72,10 @@
 	<div class="card-body text-primary">
 		<table rt:param="{$class_info.opt('properties')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
 		<tr class="{$t.cond_switch($param.opt('deprecated'),'deprecated','')}">
-			<td class="cell-1">
+			<td class="cell-s-1">
 				{$param.name()}
 			</td>
-			<td>
+			<td class="cell-s-2">
 				<rt:if param="{$param.is_type_class()}">
 					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
 						{$param.fm_type()}
@@ -84,7 +84,7 @@
 					{$param.fm_type()}
 				</rt:if>
 			</td>
-			<td class="cell-2">
+			<td>
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
@@ -94,7 +94,7 @@
 					</span>
 				</rt:if>
 			</td>
-			<td>
+			<td class="cell-s-flag">
 				<rt:if param="{$t.not($param.opt('hash'))}">
 					-
 				</rt:if>
