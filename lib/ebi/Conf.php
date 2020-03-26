@@ -11,7 +11,7 @@ class Conf{
 	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
 			list(,,$d) = debug_backtrace(false);
-	
+			
 			if(!array_key_exists('class',$d)){
 				throw new \ebi\exception\BadMethodCallException('is not allowed');
 			}
@@ -252,10 +252,10 @@ class Conf{
 		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
 		/**
-		 * デフォルトは、Lax です
+		 * デフォルトは、NULL です
 		 * @param strig $val クロスサイトリクエスト設定 ( Strict, Lax, None )
 		 */
-		$cookie_samesite = self::get_self_conf_get('cookie_samesite','Lax');
+		$cookie_samesite = self::get_self_conf_get('cookie_samesite',null);
 		
 		
 		/**
