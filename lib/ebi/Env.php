@@ -16,7 +16,7 @@ class Env{
 	 * @param string $name
 	 */
 	public function get($name,$default=null){
-		if(array_keys($this->vars,$name)){
+		if(array_key_exists($name,$this->vars)){
 			return $this->vars[$name];
 		}
 		return (isset($_ENV[$name]) && $_ENV[$name] != '') ? $_ENV[$name] : (
