@@ -338,7 +338,6 @@ class Man{
 		return $throw_param;
 	}
 	
-	// TODO 
 	public static function find_mail_doc($mail_info,$src){
 		$m = [];
 		
@@ -366,7 +365,7 @@ class Man{
 			if(preg_match_all('/\$([\w_]+)/',$mail_src,$m)){
 				$varnames = array_unique($m[1]);
 				
-				if(preg_match_all('/[ :](var=|counter=)["\']([\w_]+)["\']/',$mail_src,$m)){
+				if(preg_match_all('/[ :](var=|counter=|key=)["\']([\w_]+)["\']/',$mail_src,$m)){
 					foreach($m[2] as $rtvar){
 						foreach($varnames as $k => $v){
 							if($v === $rtvar){
