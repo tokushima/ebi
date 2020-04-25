@@ -73,8 +73,8 @@ class Image{
 	
 	/**
 	 * フォントファイルパスに名前を設定する
-	 * @param string $font_path
-	 * @param string $font_name
+	 * @param string $font_path ttfファイルパス
+	 * @param string $font_name フォント名
 	 */
 	public static function set_font($font_path,$font_name=null){
 		if(empty($font_name)){

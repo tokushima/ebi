@@ -206,7 +206,6 @@ class Barcode{
 				$x += ($bw * $module_width);
 			}
 		}
-		$barcord .= '</g>';
 		$x += 10 * $module_width;
 		$y += $bar_height;
 		
@@ -225,6 +224,8 @@ class Barcode{
 				$tx += $module_width * (preg_match('/[\d\-\$]/',$code[$i]) ? 12 : 14);
 			}
 		}
+		$barcord .= '</g>';
+		
 		return self::svg($x,$y,$barcord);
 	}
 }
