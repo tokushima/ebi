@@ -9,7 +9,10 @@ class Archive{
 	private $tree = [5=>[],0=>[]];
 
 	public function __construct($dir=null){
-		if(isset($dir) &&  is_dir($dir)){
+		if(isset($dir)){
+			if(!is_dir($dir)){
+				throw new \ebi\exception\AccessDeniedException((string)$dir);
+			}
 			$this->base_dir = $dir;
 			$this->add($dir);
 		}
