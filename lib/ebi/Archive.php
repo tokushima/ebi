@@ -74,7 +74,7 @@ class Archive{
 		}
 		fwrite($fp,pack('a1024',null));
 		fclose($fp);
-		return $this;		
+		return $this;
 	}
 	private function tar_head($type,$filename,$filesize=0,$fileperms=0777,$uid=0,$gid=0,$update_date=null){
 		if(strlen($filename) > 99){
@@ -118,13 +118,18 @@ class Archive{
 	/**
 	 * zipを出力する
 	 * @param string $filename 出力するファイルパス
-	 * @param boolean $compress 圧縮する
-	 * @param boolean $append 追記とする
+	 * @param boolean $append 追記する
 	 * @return $this
 	 */
-	public function zipwrite($filename,$compress=true,$append=false){
+	public function zipwrite($filename,$append=false){
 		$zip = new \ZipArchive();
-		$mode = $compress ? \ZipArchive::CREATE : (\ZipArchive::CM_STORE|\ZipArchive::CREATE);
+		
+		$mode = is_file($filename) ? 
+			((filesize($filename) === 0 || !$append) ? 
+				\ZipArchive::OVERWRITE : 
+				\ZipArchive::CREATE
+			) :
+			\ZipArchive::CREATE;
 		
 		if($zip->open($filename,$mode) === true){
 			foreach([5,0] as $t){
@@ -141,6 +146,8 @@ class Archive{
 			}
 			$zip->close();
 			chmod($filename,0777);
+		}else{
+			throw new \ebi\exception\AccessDeniedException('Failed to write ZIP file');
 		}
 		return $this;
 	}
