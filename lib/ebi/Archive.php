@@ -112,7 +112,7 @@ class Archive{
 			fclose($fr);
 		gzclose($fp);
 		unlink($filename.'.tar');
-		chmod($filename,0777);
+		chmod($filename,0666);
 		return $this;
 	}
 	/**
@@ -124,8 +124,8 @@ class Archive{
 	public function zipwrite($filename,$append=false){
 		$zip = new \ZipArchive();
 		
-		$mode = is_file($filename) ? 
-			((filesize($filename) === 0 || !$append) ? 
+		$mode = file_exists($filename) ? 
+			((!$append || filesize($filename) === 0) ? 
 				\ZipArchive::OVERWRITE : 
 				\ZipArchive::CREATE
 			) :
@@ -145,7 +145,7 @@ class Archive{
 				}
 			}
 			$zip->close();
-			chmod($filename,0777);
+			chmod($filename,0666);
 		}else{
 			throw new \ebi\exception\AccessDeniedException('Failed to write ZIP file');
 		}
