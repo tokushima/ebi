@@ -40,7 +40,7 @@ class Util{
 	 * @return mixed
 	 */
 	public static function file_read_json($filename){
-		return \ebi\Json::decode(self::file_read($filename));		
+		return \ebi\Json::decode(self::file_read($filename));
 	}
 	/**
 	 * CSVファイルとして配列を書き出す
@@ -343,8 +343,8 @@ class Util{
 				
 				$match = [];
 				return preg_match("/^([\040\t]+)/",$lines[0],$match) ? 
-							preg_replace('/^'.$match[1].'/m','',implode("\n",$lines)) : 
-							implode("\n",$lines);
+						preg_replace('/^'.$match[1].'/m','',implode("\n",$lines)) : 
+						implode("\n",$lines);
 			}
 		}
 		return $text;
