@@ -16,7 +16,7 @@ class Archive{
 			$this->base_dir = $dir;
 			$this->add($dir);
 		}
-	}	
+	}
 	/**
 	 * エントリ名から取り除くパスを設定する
 	 * @param string $base_dir アーカイブ内部での名前から取り除く文字
@@ -33,12 +33,21 @@ class Archive{
 	 * @return $this
 	 */	
 	public function add($path,$base_dir=null){
-		if(!isset($base_dir)) $base_dir = $this->base_dir;
+		if(!isset($base_dir)){
+			$base_dir = $this->base_dir;
+		}
 		if(is_dir($path)){
-			if($base_dir != $path) $this->tree[5][$this->source($path,$base_dir)] = $path;
+			if($base_dir != $path){
+				$this->tree[5][$this->source($path,$base_dir)] = $path;
+			}
 			$l = $this->dirs($path);
-			foreach($l[0] as $p) $this->tree[0][$this->source($p,$base_dir)] = $p;
-			foreach($l[5] as $p) $this->tree[5][$this->source($p,$base_dir)] = $p;
+			
+			foreach($l[0] as $p){
+				$this->tree[0][$this->source($p,$base_dir)] = $p;
+			}
+			foreach($l[5] as $p){
+				$this->tree[5][$this->source($p,$base_dir)] = $p;
+			}
 		}else if(is_file($path)){
 			$this->tree[0][$this->source($path,$base_dir)] = $path;
 		}
@@ -51,6 +60,7 @@ class Archive{
 	 */
 	public function write($filename){
 		$fp = fopen($filename,'wb');
+		
 		foreach([5,0] as $t){
 			if(!empty($this->tree[$t])){
 				ksort($this->tree[$t]);
@@ -61,9 +71,12 @@ class Archive{
 						$i = stat($n);
 						$rp = fopen($n,'rb');
 							fwrite($fp,$this->tar_head($t,$a,filesize($n),fileperms($n),$i[4],$i[5],filemtime($n)));
+							
 							while(!feof($rp)){
 								$buf = fread($rp,512);
-								if($buf !== '') fwrite($fp,pack('a512',$buf));
+								if($buf !== ''){
+									fwrite($fp,pack('a512',$buf));
+								}
 							}
 						fclose($rp);
 					}else{
@@ -84,9 +97,11 @@ class Archive{
 			$update_date = time();
 		}
 		$checksum = 256;
-		$first = pack('a100a8a8a8a12A12',$filename,
-						sprintf('%06s ',decoct($fileperms)),sprintf('%06s ',decoct($uid)),sprintf('%06s ',decoct($gid)),
-						sprintf('%011s ',decoct(($type === 0) ? $filesize : 0)),sprintf('%11s',decoct($update_date)));
+		$first = pack(
+			'a100a8a8a8a12A12',$filename,
+			sprintf('%06s ',decoct($fileperms)),sprintf('%06s ',decoct($uid)),sprintf('%06s ',decoct($gid)),
+			sprintf('%011s ',decoct(($type === 0) ? $filesize : 0)),sprintf('%11s',decoct($update_date))
+		);
 		$last = pack('a1a100a6a2a32a32a8a8a155a12',$type,null,null,null,null,null,null,null,null,null);
 		
 		for($i=0;$i<strlen($first);$i++){
@@ -123,6 +138,7 @@ class Archive{
 	 */
 	public function zipwrite($filename,$append=false){
 		$zip = new \ZipArchive();
+		\ebi\Util::mkdir(dirname($filename));
 		
 		$mode = file_exists($filename) ? 
 			((!$append || filesize($filename) === 0) ? 
@@ -134,6 +150,7 @@ class Archive{
 		if($zip->open($filename,$mode) === true){
 			foreach([5,0] as $t){
 				ksort($this->tree[$t]);
+				
 				foreach($this->tree[$t] as $a => $n){
 					if(strpos($n,'/.') === false){
 						if($t == 0){
@@ -177,7 +194,7 @@ class Archive{
 		}
 		return $list;
 	}
-
+	
 	/**
 	 * tarを解凍する
 	 * @param string $inpath 解凍するファイルパス
@@ -194,23 +211,33 @@ class Archive{
 		$outpath = \ebi\Util::path_slash($outpath,null,false);
 		
 		$fr = fopen($inpath,'rb');
-
+		
 		while(!feof($fr)){
 			$buf = fread($fr,512);
-			if(strlen($buf) < 512) break;
-			$data = unpack('a100name/a8mode/a8uid/a8gid/a12size/a12mtime/'
-							.'a8chksum/'
-							.'a1typeflg/a100linkname/a6magic/a2version/a32uname/a32gname/a8devmajor/a8devminor/a155prefix',
-							$buf);
+			
+			if(strlen($buf) < 512){
+				break;
+			}
+			$data = unpack(
+				'A100name/a8mode/a8uid/a8gid/a12size/a12mtime/'
+				.'a8chksum/'
+				.'a1typeflg/a100linkname/a6magic/a2version/a32uname/a32gname/a8devmajor/a8devminor/a155prefix',
+				$buf
+			);
+			
 			if(!empty($data['name'])){
-				if($data['name'][0] == '/') $data['name'] = substr($data['name'],1);
+				if($data['name'][0] == '/'){
+					$data['name'] = substr($data['name'],1);
+				}
 				$f = $outpath.'/'.$data['name'];
+				
 				switch((int)$data['typeflg']){
 					case 0:	
 						$size = base_convert($data['size'],8,10);
 						$cur = ftell($fr);
+						
 						if(!is_dir(dirname($f))){
-							\ebi\Util::mkdir(dirname($f),0777);
+							\ebi\Util::mkdir(dirname($f),0775);
 						}
 						$fw = fopen($f,'wb');
 							for($i=0;$i<=$size;$i+=512){
@@ -222,7 +249,7 @@ class Archive{
 						break;
 					case 5:
 						if(!is_dir($f)){
-							\ebi\Util::mkdir($f,0777);
+							\ebi\Util::mkdir($f,775);
 						}
 						break;
 				}
@@ -246,7 +273,7 @@ class Archive{
 			\ebi\Util::mkdir($outpath);
 		}
 		$outpath = \ebi\Util::path_slash($outpath,null,false);
-		$untar_path = $outpath.'.tar';
+		$untar_path = $outpath.'/'.uniqid().'.tar';
 		
 		$fr = gzopen($tarfile,'rb');
 		$ft = fopen($untar_path,'wb');
@@ -260,7 +287,7 @@ class Archive{
 		
 		$outpath = self::untar($untar_path,$outpath);
 		unlink($untar_path);
-
+		
 		return $outpath;
 	}
 	/**
