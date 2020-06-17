@@ -141,7 +141,14 @@ class Barcode{
 		$x = $module_width * 11;
 		$y = 0;
 		
-		$image = \ebi\Image::create(400, 100);
+		$w = ($x * 2);
+		foreach($this->data as $d){
+			foreach($d as $bw){
+				$w += ($bw < 0) ? ($bw * -1) * $module_width : ($bw * $module_width);
+			}
+		}
+		
+		$image = \ebi\Image::create($w, $bar_height + ($y * 2));
 		foreach($this->data as $d){
 			foreach($d as $bw){
 				if($bw < 0){
