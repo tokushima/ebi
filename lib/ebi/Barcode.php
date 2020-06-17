@@ -6,40 +6,63 @@ namespace ebi;
  *
  */
 class Barcode{
-	private static function svg($width,$height,$barcord){
-		return sprintf(
-			'<?xml version="1.0" standalone="no" ?>'.PHP_EOL.
-			'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.PHP_EOL.
-			'<svg viewBox="0 0 %s %s" version="1.1" xmlns="http://www.w3.org/2000/svg">'.PHP_EOL.
-			'%s'.PHP_EOL.
-			'</svg>',
-			$width,$height,$barcord);
+	private $data = [];
+	
+	public function __construct($data){
+		$this->data = $data;
 	}
 	
 	/**
-	 * JAN13のSVG文字列を返す
-	 * @param string $code バーコードにする数値
-	 * @param mixed{} $opt 
-	 * 
+	 * NW-7 (CODABAR)
+	 * @param string $code
+	 * @param mixed{} $opt
+	 *
 	 * opt:
 	 * 	string $color #000000
 	 * 	number $bar_height バーコードの高さ
 	 * 	number $module_width 1モジュールの幅
-	 *  boolean $show_text コード文字列を表示する
-	 * 	number $font_size フォントサイズ
-	 * 	string $font_family フォント名
-	 * 
-	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return string
+	 *
+	 * @return array
 	 */
-	public static function JAN13($code,$opt=[]){
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 22.85 / 2;
-		$module_width = $opt['module_width'] ?? 0.33;
-		$show_text = $opt['show_text'] ?? true;
-		$font_size = $opt['font_size'] ?? 2;
-		$font_family = $opt['font_family'] ?? 'OCRB';
+	public static function NW7($code){
+		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
+			throw new \ebi\exception\InvalidArgumentException('invalid characters detected');
+		}
+		if(!preg_match('/^[ABCD]/i',$code) || !preg_match('/[ABCD]$/i',$code)){
+			throw new \ebi\exception\InvalidArgumentException('Start / Stop code is not [A, B, C, D]');
+		}
+		$bits = [
+			'0'=>[1,-1,1,-1,1,-3,3,-1],
+			'1'=>[1,-1,1,-1,3,-3,1,-1],
+			'2'=>[1,-1,1,-3,1,-1,3,-1],
+			'3'=>[3,-3,1,-1,1,-1,1,-1],
+			'4'=>[1,-1,3,-1,1,-3,1,-1],
+			'5'=>[3,-1,1,-1,1,-3,1,-1],
+			'6'=>[1,-3,1,-1,1,-1,3,-1],
+			'7'=>[1,-3,1,-1,3,-1,1,-1],
+			'8'=>[1,-3,3,-1,1,-1,1,-1],
+			'9'=>[3,-1,1,-3,1,-1,1,-1],
+			'-'=>[1,-1,1,-3,3,-1,1,-1],
+			'$'=>[1,-1,3,-3,1,-1,1,-1],
+			':'=>[3,-1,1,-1,3,-1,3,-1],
+			'/'=>[3,-1,3,-1,1,-1,3,-1],
+			'.'=>[3,-1,3,-1,3,-1,1,-1],
+			'+'=>[1,-1,3,-1,3,-1,3,-1],
+			'A'=>[1,-1,3,-3,1,-3,1,-1],
+			'B'=>[1,-3,1,-3,1,-1,3,-1],
+			'C'=>[1,-1,1,-3,1,-3,3,-1],
+			'D'=>[1,-1,1,-3,3,-3,1,-1],
+		];
 		
+		$fcode = strtoupper($code);
+		$data = [];
+		for($i=0;$i<strlen($fcode);$i++){
+			$data = array_merge($data,$bits[$fcode[$i]]);
+		}
+		return new self([$data]);
+	}
+	
+	public static function JAN13($code){
 		$get_checkdigit_JAN = function($code){
 			$odd = $even = 0;
 			for($i=0;$i<12;$i+=2){
@@ -91,19 +114,73 @@ class Barcode{
 				[[1,-1,1]]
 			);
 		};
-		
-		$barcord = sprintf('<g fill="%s">',$color);
-		$x = $module_width * 11;
-		$y = 0;
 		$code = sprintf('%012d',$code);
 		
 		if(!ctype_digit($code)){
 			throw new \ebi\exception\InvalidArgumentException();
 		}
 		$code = (strlen($code) > 12) ? $code : $code.$get_checkdigit_JAN($code);
-		$data = $get_data_JAN($code);
+		return new self($get_data_JAN($code));
+	}
+	
+	/**
+	 * Imageで返す
+	 * @param array $opt
+	 * 
+	 * opt:
+	 * 	string $color #000000
+	 * 	number $bar_height バーコードの高さ
+	 * 	number $module_width 1モジュールの幅
+	 * 
+	 * @return \ebi\Image
+	 */
+	public function image($opt=[]){
+		$color = $opt['color'] ?? '#000000';
+		$bar_height = $opt['bar_height'] ?? 50;
+		$module_width = $opt['module_width'] ?? 2;
+		$x = $module_width * 11;
+		$y = 0;
 		
-		foreach($data as $d){
+		$image = \ebi\Image::create(400, 100);
+		foreach($this->data as $d){
+			foreach($d as $bw){
+				if($bw < 0){
+					$x += ($bw * -1) * $module_width;
+				}else{
+					$image->rectangle($x, $y, ($bw * $module_width), $bar_height, $color,1,true);
+					$x += ($bw * $module_width);
+				}
+			}
+		}
+		return $image;
+	}
+	
+	/**
+	 * SVG文字列を返す
+	 * @param mixed{} $opt
+	 *
+	 * opt:
+	 * 	string $color #000000
+	 * 	number $bar_height バーコードの高さ
+	 * 	number $module_width 1モジュールの幅
+	 *  number $width
+	 *  number $height
+	 *
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return string
+	 */
+	public function svg($opt=[]){
+		$color = $opt['color'] ?? '#000000';
+		$bar_height = $opt['bar_height'] ?? 50;
+		$module_width = $opt['module_width'] ?? 2;
+		$width = $opt['width'] ?? 0;
+		$height = $opt['height'] ?? 0;
+		
+		$x = $module_width * 11;
+		$y = 0;
+		$barcord = sprintf('<g fill="%s">',$color);
+		
+		foreach($this->data as $d){
 			foreach($d as $bw){
 				if($bw < 0){
 					$x += ($bw * -1) * $module_width;
@@ -113,120 +190,17 @@ class Barcode{
 				}
 			}
 		}
-		$x += (7 * $module_width);
-		$y += $bar_height;
-		
-		if($show_text){
-			$y += $font_size;
-			$tx = 11 * $module_width;
-			$step = ($x - (18 * $module_width)) / strlen($code);
-			
-			for($i=0;$i<strlen($code);$i++){
-				$barcord .= sprintf('<text x="%s" y="%s" font-family="%s" font-size="%s">%s</text>',
-					$tx,
-					$y,
-					$font_family,
-					$font_size,
-					$code[$i]
-				);
-				$tx += $step;
-			}
-		}
 		$barcord .= '</g>';
+		$viewbix = (!empty($width) && !empty($height)) ? sprintf('viewBox="0 0 %s %s"',$width,$height) : '';
 		
-		return self::svg($x,$y,$barcord);
-	}
-	
-	/**
-	 * NW-7 (CODABAR)
-	 * @param string $code
-	 * @param mixed{} $opt 
-	 * 
-	 * opt:
-	 * 	string $color #000000
-	 * 	number $bar_height バーコードの高さ
-	 * 	number $module_width 1モジュールの幅
-	 *  boolean $show_text コード文字列を表示する
-	 * 	number $font_size フォントサイズ
-	 * 	string $font_family フォント名
-	 * 
-	 * @return string
-	 */
-	public static function NW7($code,$opt=[]){
-		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
-			throw new \ebi\exception\InvalidArgumentException('invalid characters detected');
-		}
-		if(!preg_match('/^[ABCD]/i',$code) || !preg_match('/[ABCD]$/i',$code)){
-			throw new \ebi\exception\InvalidArgumentException('Start / Stop code is not [A, B, C, D]');
-		}
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 22.85 / 2;
-		$module_width = $opt['module_width'] ?? 0.191;
-		$show_text = $opt['show_text'] ?? true;
-		$font_size = $opt['font_size'] ?? 2;
-		$font_family = $opt['font_family'] ?? 'OCRB';
-		
-		$bits = [
-			'0'=>[1,-1,1,-1,1,-3,3,-1],
-			'1'=>[1,-1,1,-1,3,-3,1,-1],
-			'2'=>[1,-1,1,-3,1,-1,3,-1],
-			'3'=>[3,-3,1,-1,1,-1,1,-1],
-			'4'=>[1,-1,3,-1,1,-3,1,-1],
-			'5'=>[3,-1,1,-1,1,-3,1,-1],
-			'6'=>[1,-3,1,-1,1,-1,3,-1],
-			'7'=>[1,-3,1,-1,3,-1,1,-1],
-			'8'=>[1,-3,3,-1,1,-1,1,-1],
-			'9'=>[3,-1,1,-3,1,-1,1,-1],
-			'-'=>[1,-1,1,-3,3,-1,1,-1],
-			'$'=>[1,-1,3,-3,1,-1,1,-1],
-			':'=>[3,-1,1,-1,3,-1,3,-1],
-			'/'=>[3,-1,3,-1,1,-1,3,-1],
-			'.'=>[3,-1,3,-1,3,-1,1,-1],
-			'+'=>[1,-1,3,-1,3,-1,3,-1],
-			'A'=>[1,-1,3,-3,1,-3,1,-1],
-			'B'=>[1,-3,1,-3,1,-1,3,-1],
-			'C'=>[1,-1,1,-3,1,-3,3,-1],
-			'D'=>[1,-1,1,-3,3,-3,1,-1],
-		];
-		
-		$fcode = strtoupper($code);
-		$data = [];
-		for($i=0;$i<strlen($fcode);$i++){
-			$data = array_merge($data,$bits[$fcode[$i]]);
-		}
-		$x = 10 * $module_width;
-		$y = 0;
-		$barcord = sprintf('<g fill="%s">',$color);
-		
-		foreach($data as $bw){
-			if($bw < 0){
-				$x += ($bw * -1) * $module_width;
-			}else{
-				$barcord .= sprintf('<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,$x,$y,($bw * $module_width),$bar_height);
-				$x += ($bw * $module_width);
-			}
-		}
-		$x += 10 * $module_width;
-		$y += $bar_height;
-		
-		if($show_text){
-			$y += $font_size;
-			$tx = 10 * $module_width;
-			
-			for($i=0;$i<strlen($fcode);$i++){
-				$barcord .= sprintf('<text x="%s" y="%s" font-family="%s" font-size="%s">%s</text>',
-					$tx,
-					$y,
-					$font_family,
-					$font_size,
-					$code[$i]
-				);
-				$tx += $module_width * (preg_match('/[\d\-\$]/',$code[$i]) ? 12 : 14);
-			}
-		}
-		$barcord .= '</g>';
-		
-		return self::svg($x,$y,$barcord);
+		return sprintf(
+			'<?xml version="1.0" standalone="no" ?>'.PHP_EOL.
+			'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.PHP_EOL.
+			'<svg version="1.1" xmlns="http://www.w3.org/2000/svg" %s>'.PHP_EOL.
+			'%s'.PHP_EOL.
+			'</svg>',
+			$viewbix,$barcord
+		);
 	}
 }
 
