@@ -15,14 +15,8 @@ class Barcode{
 	/**
 	 * NW-7 (CODABAR)
 	 * @param string $code
-	 * @param mixed{} $opt
-	 *
-	 * opt:
-	 * 	string $color #000000
-	 * 	number $bar_height バーコードの高さ
-	 * 	number $module_width 1モジュールの幅
-	 *
-	 * @return array
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return \ebi\Barcode
 	 */
 	public static function NW7($code){
 		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
@@ -62,7 +56,13 @@ class Barcode{
 		return new self([$data]);
 	}
 	
-	public static function JAN13($code){
+	/**
+	 * EAN13 (JAN13)
+	 * @param string $code
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return \ebi\Barcode
+	 */
+	public static function EAN13($code){
 		$get_checkdigit_JAN = function($code){
 			$odd = $even = 0;
 			for($i=0;$i<12;$i+=2){
