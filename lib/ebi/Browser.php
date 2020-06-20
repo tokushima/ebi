@@ -358,17 +358,22 @@ class Browser{
 			case 'PUT': curl_setopt($this->resource,CURLOPT_PUT,true); break;
 			case 'DELETE': curl_setopt($this->resource,CURLOPT_CUSTOMREQUEST,'DELETE'); break;
 		}
+		
+		$http_build_query = function($vars){
+			return preg_replace('/%5B%5D%5B[0-9]+%5D/ms','%5B%5D',http_build_query($vars));
+		};
+		
 		switch($method){
 			case 'POST':
 				if(!empty($this->request_file_vars)){
 					$vars = [];
 					if(!empty($this->request_vars)){
-						foreach(explode('&',http_build_query($this->request_vars)) as $q){
+						foreach(explode('&',$http_build_query($this->request_vars)) as $q){
 							$s = explode('=',$q,2);
 							$vars[urldecode($s[0])] = isset($s[1]) ? urldecode($s[1]) : null;
 						}
 					}
-					foreach(explode('&',http_build_query($this->request_file_vars)) as $q){
+					foreach(explode('&',$http_build_query($this->request_file_vars)) as $q){
 						$s = explode('=',$q,2);
 						
 						if(isset($s[1])){
@@ -380,7 +385,7 @@ class Browser{
 					}
 					curl_setopt($this->resource,CURLOPT_POSTFIELDS,$vars);
 				}else{
-					curl_setopt($this->resource,CURLOPT_POSTFIELDS,http_build_query($this->request_vars));
+					curl_setopt($this->resource,CURLOPT_POSTFIELDS,$http_build_query($this->request_vars));
 				}
 				break;
 			case 'RAW':
@@ -393,7 +398,7 @@ class Browser{
 			case 'HEAD':
 			case 'PUT':
 			case 'DELETE':
-				$url = $url.(!empty($this->request_vars) ? '?'.http_build_query($this->request_vars) : '');
+				$url = $url.(!empty($this->request_vars) ? '?'.$http_build_query($this->request_vars) : '');
 		}
 		curl_setopt($this->resource,CURLOPT_URL,$url);
 		curl_setopt($this->resource,CURLOPT_FOLLOWLOCATION,false);
