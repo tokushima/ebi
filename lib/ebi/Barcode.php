@@ -7,9 +7,31 @@ namespace ebi;
  */
 class Barcode{
 	private $data = [];
+	private $type = [];
 	
-	public function __construct($data){
+	private $color;
+	private $bar_height;
+	private $module_width;
+	private $div6;
+	
+	public function __construct($data,$type=[]){
 		$this->data = $data;
+		$this->type = $type;
+	}
+	
+	/**
+	 * 登録されたデータ [data[], type[]]
+	 * @return array [number[],$number[]]
+	 */
+	public function raw(){
+		return [$this->data,$this->type];
+	}
+	
+	private function setopt($opt){
+		$this->color = $opt['color'] ?? '#000000';
+		$this->bar_height = $opt['bar_height'] ?? 36;
+		$this->div6 = $this->bar_height / 6;
+		$this->module_width = $opt['module_width'] ?? 2;
 	}
 	
 	/**
@@ -20,7 +42,7 @@ class Barcode{
 	 */
 	public static function NW7($code){
 		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
-			throw new \ebi\exception\InvalidArgumentException('invalid characters detected');
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
 		}
 		if(!preg_match('/^[ABCD]/i',$code) || !preg_match('/[ABCD]$/i',$code)){
 			throw new \ebi\exception\InvalidArgumentException('Start / Stop code is not [A, B, C, D]');
@@ -49,10 +71,11 @@ class Barcode{
 		];
 		
 		$fcode = strtoupper($code);
-		$data = [];
+		$data = [-11]; // quietzone
 		for($i=0;$i<strlen($fcode);$i++){
 			$data = array_merge($data,$bits[$fcode[$i]]);
 		}
+		$data[] = -11; // quietzone
 		return new self([$data]);
 	}
 	
@@ -107,20 +130,141 @@ class Barcode{
 			}
 			
 			return array_merge(
+				[[-11]], // quietzone
 				[[1,-1,1]],
 				$data[0],
 				[[-1,1,-1,1,-1]],
 				$data[1],
-				[[1,-1,1]]
+				[[1,-1,1]],
+				[[-7]] // quietzone
 			);
 		};
 		$code = sprintf('%012d',$code);
 		
 		if(!ctype_digit($code)){
-			throw new \ebi\exception\InvalidArgumentException();
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
 		}
 		$code = (strlen($code) > 12) ? $code : $code.$get_checkdigit_JAN($code);
 		return new self($get_data_JAN($code));
+	}
+	
+	/**
+	 * 郵便カスタマーバーコードード
+	 * @param string $zip
+	 * @param string $address
+	 * @return \ebi\Barcode
+	 * @see https://www.post.japanpost.jp/zipcode/zipmanual/index.html
+	 */
+	public static function CustomerBarcode($zip,$address=''){
+		$data = $type = [];
+		// CC1=!, CC2=#, CC3=%, CC4=@, CC5=(, CC6=), CC7=[, CC8=]
+		
+		$bits = [
+			'0'=>[1,4,4],'1'=>[1,1,4],'2'=>[1,3,2],'3'=>[3,1,2],'4'=>[1,2,3],
+			'5'=>[1,4,1],'6'=>[3,2,1],'7'=>[2,1,3],'8'=>[2,3,1],'9'=>[4,1,1],
+			'!'=>[3,2,4],'#'=>[3,4,2],'%'=>[2,3,4],'@'=>[4,3,2],'('=>[2,4,3],
+			')'=>[4,2,3],'['=>[4,4,1],']'=>[1,1,1],'-'=>[4,1,4],
+		];
+		$alphabits = [
+			'A'=>'!0','B'=>'!1','C'=>'!2','D'=>'!3','E'=>'!4','F'=>'!5','G'=>'!6','H'=>'!7','I'=>'!8','J'=>'!9',
+			'K'=>'#0','L'=>'#1','M'=>'#2','N'=>'#3','O'=>'#4','P'=>'#5','Q'=>'#6','R'=>'#7','S'=>'#8','T'=>'#9',
+			'U'=>'%0','V'=>'%1','W'=>'%2','X'=>'%3','Y'=>'%4','Z'=>'%5',
+		];
+		$cdbits = [
+			'0'=>0,'1'=>1,'2'=>2,'3'=>3,'4'=>4,'5'=>5,'6'=>6,'7'=>7,'8'=>8,'9'=>9,
+			'-'=>10,'!'=>11,'#'=>12,'%'=>13,'@'=>14,'('=>15,')'=>16,'['=>17,']'=>18,
+		];
+		
+		$zip = mb_convert_kana($zip,'a');
+		$zip = str_replace('-','',$zip);
+		
+		if(!ctype_digit($zip)){
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
+		}
+		if(!empty($address)){
+			$address = mb_convert_kana($address,'as');
+			$address = mb_strtoupper($address);
+			$address = preg_replace('/[&\/・.]/u','',$address);
+			$address = preg_replace('/[A-Z]{2,}/u','-',$address);
+			
+			$m = [];
+			if(preg_match_all('/([一二三四五六七八九十]+)(丁目|丁|番地|番|号|地割|線|の|ノ)/u',$address,$m)){
+				foreach($m[0] as $k => $v){
+					$v = preg_replace('/([一二三四五六七八九]+)十([一二三四五六七八九])/u','${1}${2}',$v);
+					$v = preg_replace('/([一二三四五六七八九]+)十/u','${1}0',$v);
+					$v = preg_replace('/十([一二三四五六七八九]+)/u','1${1}',$v);
+					
+					$address = str_replace($m[0][$k],str_replace(['一','二','三','四','五','六','七','八','九','十'],[1,2,3,4,5,6,7,8,9,10],$v),$address);
+				}
+			}
+			$address = preg_replace('/[^\w-]/','-',$address);
+			
+			$address = preg_replace('/(\d)F$/','$1',$address);
+			$address = preg_replace('/(\d)F/','$1-',$address);
+			$address = preg_replace('/[-]+/','-',$address);
+			$address = preg_replace('/-([A-Z]+)/','$1',$address);
+			$address = preg_replace('/([A-Z]+)-/','$1',$address);
+			
+			if($address[0] === '-'){
+				$address = substr($address,1);
+			}
+			if(substr($address,-1) === '-'){
+				$address = substr($address,0,-1);
+			}
+		}
+		
+		$chardata = '';
+		$str = $zip.$address;
+		for($i=0;$i<strlen($str);$i++){
+			$chardata .= ctype_alpha($str[$i]) ? $alphabits[$str[$i]] : $str[$i];
+		}
+		for($i=strlen($chardata);$i<20;$i++){
+			$chardata .= '@';
+		}
+		$chardata = substr($chardata,0,20);
+		
+		// start
+		array_push($data,-1,-1,-1,1,-1,1);
+		array_push($type,0,0,0,1,0,3);
+		
+		$cdsum = 0;
+		for($i=0;$i<strlen($chardata);$i++){
+			foreach($bits[$chardata[$i]] as $t){
+				array_push($data,-1,1);
+				array_push($type,0,$t);
+			}
+			$cdsum += $cdbits[$chardata[$i]];
+		}
+		
+		// ( N + sum ) % 19 === 0
+		$cd = array_search(($cdsum % 19 === 0) ? 0 : 19 - ($cdsum % 19),$cdbits);
+		
+		// check digit
+		foreach($bits[$cd] as $t){
+			array_push($data,-1,1);
+			array_push($type,0,$t);
+		}
+		
+		// end
+		array_push($data,-1,1,-1,1,-1,-1);
+		array_push($type,0,3,0,1,0,0);
+		
+		return new self([$data],[$type]);
+	}
+	
+	private function bar_type($i,$j){
+		switch($this->type[$i][$j] ?? 1){
+			case 1: // ロングバー
+				return [0,$this->bar_height];
+			case 2: // セミロングバー（上）
+				return [0,$this->div6 * 4];
+			case 3: // セミロングバー（下）
+				return [$this->div6 * 2,$this->div6 * 4];
+			case 4: // タイミングバー
+				return [$this->div6 * 2,$this->div6 * 2];
+			default:
+		}
+		return [0,$this->bar_height];
 	}
 	
 	/**
@@ -135,27 +279,25 @@ class Barcode{
 	 * @return \ebi\Image
 	 */
 	public function image($opt=[]){
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 50;
-		$module_width = $opt['module_width'] ?? 2;
-		$x = $module_width * 11;
-		$y = 0;
+		$this->setopt($opt);
 		
-		$w = ($x * 2);
+		$w = 0;
 		foreach($this->data as $d){
 			foreach($d as $bw){
-				$w += ($bw < 0) ? ($bw * -1) * $module_width : ($bw * $module_width);
+				$w += ($bw < 0) ? ($bw * -1) * $this->module_width : ($bw * $this->module_width);
 			}
 		}
 		
-		$image = \ebi\Image::create($w, $bar_height + ($y * 2));
-		foreach($this->data as $d){
-			foreach($d as $bw){
+		$x = 0;
+		$image = \ebi\Image::create($w, $this->bar_height);
+		foreach($this->data as $i => $d){
+			foreach($d as $j => $bw){
 				if($bw < 0){
-					$x += ($bw * -1) * $module_width;
+					$x += ($bw * -1) * $this->module_width;
 				}else{
-					$image->rectangle($x, $y, ($bw * $module_width), $bar_height, $color,1,true);
-					$x += ($bw * $module_width);
+					list($y,$h) = $this->bar_type($i,$j);
+					$image->rectangle($x, $y, ($bw * $this->module_width), $h, $this->color,0,true);
+					$x += ($bw * $this->module_width);
 				}
 			}
 		}
@@ -177,23 +319,24 @@ class Barcode{
 	 * @return string
 	 */
 	public function svg($opt=[]){
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 50;
-		$module_width = $opt['module_width'] ?? 2;
+		$this->setopt($opt);
 		$width = $opt['width'] ?? 0;
 		$height = $opt['height'] ?? 0;
+		$x = 0;
 		
-		$x = $module_width * 11;
-		$y = 0;
-		$barcord = sprintf('<g fill="%s">',$color);
+		$barcord = sprintf('<g fill="%s">',$this->color);
 		
-		foreach($this->data as $d){
-			foreach($d as $bw){
+		foreach($this->data as $i => $d){
+			foreach($d as $j => $bw){
 				if($bw < 0){
-					$x += ($bw * -1) * $module_width;
+					$x += ($bw * -1) * $this->module_width;
 				}else{
-					$barcord .= sprintf('<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,$x,$y,($bw * $module_width),$bar_height);
-					$x += ($bw * $module_width);
+					list($y,$h) = $this->bar_type($i,$j);
+					$barcord .= sprintf(
+						'<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,
+						$x,$y,($bw * $this->module_width),$h
+					);
+					$x += ($bw * $this->module_width);
 				}
 			}
 		}

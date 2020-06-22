@@ -80,6 +80,9 @@ class Image{
 		if(empty($font_name)){
 			$font_name = preg_replace('/^(.+)\..+$/','\\1',basename($font_path));
 		}
+		if(!is_file($font_path)){
+			throw new \ebi\exception\NotFoundException('font not found');
+		}
 		self::$font_path[$font_name] = $font_path;
 	}
 	
