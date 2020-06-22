@@ -104,7 +104,7 @@ class HttpHeader{
 	 */
 	public static function redirect($url,array $vars=[]){
 		if(!empty($vars)){
-			$requestString = \ebi\Query::get($vars);
+			$requestString = http_build_query($vars);
 			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);
 			$url = sprintf('%s?%s',$url,$requestString);
 		}

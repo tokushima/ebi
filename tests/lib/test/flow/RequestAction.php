@@ -23,4 +23,9 @@ class RequestAction{
 		header('Location: http://localhost:8000/index/request');
 		exit;
 	}
+	
+	public function plain(){
+		$req = new \ebi\Request();
+		return $req->ar_vars();
+	}
 }

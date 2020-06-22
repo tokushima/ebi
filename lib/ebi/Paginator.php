@@ -293,7 +293,7 @@ class Paginator implements \IteratorAggregate{
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
 		}
-		return \ebi\Query::get($vars);
+		return http_build_query($vars);
 	}
 	/**
 	 * 次のページを表すクエリ
@@ -307,7 +307,7 @@ class Paginator implements \IteratorAggregate{
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
 		}
-		return Query::get($vars);
+		return http_build_query($vars);
 	}
 	/**
 	 * orderを変更するクエリ
@@ -321,7 +321,7 @@ class Paginator implements \IteratorAggregate{
 			unset($this->vars['order']);
 			unset($this->vars['page']);
 		}
-		return Query::get(array_merge(
+		return http_build_query(array_merge(
 			$this->vars
 			,['order'=>$order,'porder'=>$this->order()]
 		));
@@ -336,7 +336,7 @@ class Paginator implements \IteratorAggregate{
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
 		}
-		return Query::get($vars);
+		return http_build_query($vars);
 	}
 	
 	/**

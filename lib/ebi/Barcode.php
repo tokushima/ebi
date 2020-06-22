@@ -6,40 +6,86 @@ namespace ebi;
  *
  */
 class Barcode{
-	private static function svg($width,$height,$barcord){
-		return sprintf(
-			'<?xml version="1.0" standalone="no" ?>'.PHP_EOL.
-			'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.PHP_EOL.
-			'<svg viewBox="0 0 %s %s" version="1.1" xmlns="http://www.w3.org/2000/svg">'.PHP_EOL.
-			'%s'.PHP_EOL.
-			'</svg>',
-			$width,$height,$barcord);
+	private $data = [];
+	private $type = [];
+	
+	private $color;
+	private $bar_height;
+	private $module_width;
+	private $div6;
+	
+	public function __construct($data,$type=[]){
+		$this->data = $data;
+		$this->type = $type;
 	}
 	
 	/**
-	 * JAN13のSVG文字列を返す
-	 * @param string $code バーコードにする数値
-	 * @param mixed{} $opt 
-	 * 
-	 * opt:
-	 * 	string $color #000000
-	 * 	number $bar_height バーコードの高さ
-	 * 	number $module_width 1モジュールの幅
-	 *  boolean $show_text コード文字列を表示する
-	 * 	number $font_size フォントサイズ
-	 * 	string $font_family フォント名
-	 * 
-	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return string
+	 * 登録されたデータ [data[], type[]]
+	 * @return array [number[],$number[]]
 	 */
-	public static function JAN13($code,$opt=[]){
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 22.85 / 2;
-		$module_width = $opt['module_width'] ?? 0.33;
-		$show_text = $opt['show_text'] ?? true;
-		$font_size = $opt['font_size'] ?? 2;
-		$font_family = $opt['font_family'] ?? 'OCRB';
+	public function raw(){
+		return [$this->data,$this->type];
+	}
+	
+	private function setopt($opt){
+		$this->color = $opt['color'] ?? '#000000';
+		$this->bar_height = $opt['bar_height'] ?? 36;
+		$this->div6 = $this->bar_height / 6;
+		$this->module_width = $opt['module_width'] ?? 2;
+	}
+	
+	/**
+	 * NW-7 (CODABAR)
+	 * @param string $code
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return \ebi\Barcode
+	 */
+	public static function NW7($code){
+		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
+		}
+		if(!preg_match('/^[ABCD]/i',$code) || !preg_match('/[ABCD]$/i',$code)){
+			throw new \ebi\exception\InvalidArgumentException('Start / Stop code is not [A, B, C, D]');
+		}
+		$bits = [
+			'0'=>[1,-1,1,-1,1,-3,3,-1],
+			'1'=>[1,-1,1,-1,3,-3,1,-1],
+			'2'=>[1,-1,1,-3,1,-1,3,-1],
+			'3'=>[3,-3,1,-1,1,-1,1,-1],
+			'4'=>[1,-1,3,-1,1,-3,1,-1],
+			'5'=>[3,-1,1,-1,1,-3,1,-1],
+			'6'=>[1,-3,1,-1,1,-1,3,-1],
+			'7'=>[1,-3,1,-1,3,-1,1,-1],
+			'8'=>[1,-3,3,-1,1,-1,1,-1],
+			'9'=>[3,-1,1,-3,1,-1,1,-1],
+			'-'=>[1,-1,1,-3,3,-1,1,-1],
+			'$'=>[1,-1,3,-3,1,-1,1,-1],
+			':'=>[3,-1,1,-1,3,-1,3,-1],
+			'/'=>[3,-1,3,-1,1,-1,3,-1],
+			'.'=>[3,-1,3,-1,3,-1,1,-1],
+			'+'=>[1,-1,3,-1,3,-1,3,-1],
+			'A'=>[1,-1,3,-3,1,-3,1,-1],
+			'B'=>[1,-3,1,-3,1,-1,3,-1],
+			'C'=>[1,-1,1,-3,1,-3,3,-1],
+			'D'=>[1,-1,1,-3,3,-3,1,-1],
+		];
 		
+		$fcode = strtoupper($code);
+		$data = [-11]; // quietzone
+		for($i=0;$i<strlen($fcode);$i++){
+			$data = array_merge($data,$bits[$fcode[$i]]);
+		}
+		$data[] = -11; // quietzone
+		return new self([$data]);
+	}
+	
+	/**
+	 * EAN13 (JAN13)
+	 * @param string $code
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return \ebi\Barcode
+	 */
+	public static function EAN13($code){
 		$get_checkdigit_JAN = function($code){
 			$odd = $even = 0;
 			for($i=0;$i<12;$i+=2){
@@ -84,149 +130,227 @@ class Barcode{
 			}
 			
 			return array_merge(
+				[[-11]], // quietzone
 				[[1,-1,1]],
 				$data[0],
 				[[-1,1,-1,1,-1]],
 				$data[1],
-				[[1,-1,1]]
+				[[1,-1,1]],
+				[[-7]] // quietzone
 			);
 		};
-		
-		$barcord = sprintf('<g fill="%s">',$color);
-		$x = $module_width * 11;
-		$y = 0;
 		$code = sprintf('%012d',$code);
 		
 		if(!ctype_digit($code)){
-			throw new \ebi\exception\InvalidArgumentException();
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
 		}
 		$code = (strlen($code) > 12) ? $code : $code.$get_checkdigit_JAN($code);
-		$data = $get_data_JAN($code);
-		
-		foreach($data as $d){
-			foreach($d as $bw){
-				if($bw < 0){
-					$x += ($bw * -1) * $module_width;
-				}else{
-					$barcord .= sprintf('<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,$x,$y,($bw * $module_width),$bar_height);
-					$x += ($bw * $module_width);
-				}
-			}
-		}
-		$x += (7 * $module_width);
-		$y += $bar_height;
-		
-		if($show_text){
-			$y += $font_size;
-			$tx = 11 * $module_width;
-			$step = ($x - (18 * $module_width)) / strlen($code);
-			
-			for($i=0;$i<strlen($code);$i++){
-				$barcord .= sprintf('<text x="%s" y="%s" font-family="%s" font-size="%s">%s</text>',
-					$tx,
-					$y,
-					$font_family,
-					$font_size,
-					$code[$i]
-				);
-				$tx += $step;
-			}
-		}
-		$barcord .= '</g>';
-		
-		return self::svg($x,$y,$barcord);
+		return new self($get_data_JAN($code));
 	}
 	
 	/**
-	 * NW-7 (CODABAR)
-	 * @param string $code
-	 * @param mixed{} $opt 
+	 * 郵便カスタマーバーコードード
+	 * @param string $zip
+	 * @param string $address
+	 * @return \ebi\Barcode
+	 * @see https://www.post.japanpost.jp/zipcode/zipmanual/index.html
+	 */
+	public static function CustomerBarcode($zip,$address=''){
+		$data = $type = [];
+		// CC1=!, CC2=#, CC3=%, CC4=@, CC5=(, CC6=), CC7=[, CC8=]
+		
+		$bits = [
+			'0'=>[1,4,4],'1'=>[1,1,4],'2'=>[1,3,2],'3'=>[3,1,2],'4'=>[1,2,3],
+			'5'=>[1,4,1],'6'=>[3,2,1],'7'=>[2,1,3],'8'=>[2,3,1],'9'=>[4,1,1],
+			'!'=>[3,2,4],'#'=>[3,4,2],'%'=>[2,3,4],'@'=>[4,3,2],'('=>[2,4,3],
+			')'=>[4,2,3],'['=>[4,4,1],']'=>[1,1,1],'-'=>[4,1,4],
+		];
+		$alphabits = [
+			'A'=>'!0','B'=>'!1','C'=>'!2','D'=>'!3','E'=>'!4','F'=>'!5','G'=>'!6','H'=>'!7','I'=>'!8','J'=>'!9',
+			'K'=>'#0','L'=>'#1','M'=>'#2','N'=>'#3','O'=>'#4','P'=>'#5','Q'=>'#6','R'=>'#7','S'=>'#8','T'=>'#9',
+			'U'=>'%0','V'=>'%1','W'=>'%2','X'=>'%3','Y'=>'%4','Z'=>'%5',
+		];
+		$cdbits = [
+			'0'=>0,'1'=>1,'2'=>2,'3'=>3,'4'=>4,'5'=>5,'6'=>6,'7'=>7,'8'=>8,'9'=>9,
+			'-'=>10,'!'=>11,'#'=>12,'%'=>13,'@'=>14,'('=>15,')'=>16,'['=>17,']'=>18,
+		];
+		
+		$zip = mb_convert_kana($zip,'a');
+		$zip = str_replace('-','',$zip);
+		
+		if(!ctype_digit($zip)){
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
+		}
+		if(!empty($address)){
+			$address = mb_convert_kana($address,'as');
+			$address = mb_strtoupper($address);
+			$address = preg_replace('/[&\/・.]/u','',$address);
+			$address = preg_replace('/[A-Z]{2,}/u','-',$address);
+			
+			$m = [];
+			if(preg_match_all('/([一二三四五六七八九十]+)(丁目|丁|番地|番|号|地割|線|の|ノ)/u',$address,$m)){
+				foreach($m[0] as $k => $v){
+					$v = preg_replace('/([一二三四五六七八九]+)十([一二三四五六七八九])/u','${1}${2}',$v);
+					$v = preg_replace('/([一二三四五六七八九]+)十/u','${1}0',$v);
+					$v = preg_replace('/十([一二三四五六七八九]+)/u','1${1}',$v);
+					
+					$address = str_replace($m[0][$k],str_replace(['一','二','三','四','五','六','七','八','九','十'],[1,2,3,4,5,6,7,8,9,10],$v),$address);
+				}
+			}
+			$address = preg_replace('/[^\w-]/','-',$address);
+			
+			$address = preg_replace('/(\d)F$/','$1',$address);
+			$address = preg_replace('/(\d)F/','$1-',$address);
+			$address = preg_replace('/[-]+/','-',$address);
+			$address = preg_replace('/-([A-Z]+)/','$1',$address);
+			$address = preg_replace('/([A-Z]+)-/','$1',$address);
+			
+			if($address[0] === '-'){
+				$address = substr($address,1);
+			}
+			if(substr($address,-1) === '-'){
+				$address = substr($address,0,-1);
+			}
+		}
+		
+		$chardata = '';
+		$str = $zip.$address;
+		for($i=0;$i<strlen($str);$i++){
+			$chardata .= ctype_alpha($str[$i]) ? $alphabits[$str[$i]] : $str[$i];
+		}
+		for($i=strlen($chardata);$i<20;$i++){
+			$chardata .= '@';
+		}
+		$chardata = substr($chardata,0,20);
+		
+		// start
+		array_push($data,-1,-1,-1,1,-1,1);
+		array_push($type,0,0,0,1,0,3);
+		
+		$cdsum = 0;
+		for($i=0;$i<strlen($chardata);$i++){
+			foreach($bits[$chardata[$i]] as $t){
+				array_push($data,-1,1);
+				array_push($type,0,$t);
+			}
+			$cdsum += $cdbits[$chardata[$i]];
+		}
+		
+		// ( N + sum ) % 19 === 0
+		$cd = array_search(($cdsum % 19 === 0) ? 0 : 19 - ($cdsum % 19),$cdbits);
+		
+		// check digit
+		foreach($bits[$cd] as $t){
+			array_push($data,-1,1);
+			array_push($type,0,$t);
+		}
+		
+		// end
+		array_push($data,-1,1,-1,1,-1,-1);
+		array_push($type,0,3,0,1,0,0);
+		
+		return new self([$data],[$type]);
+	}
+	
+	private function bar_type($i,$j){
+		switch($this->type[$i][$j] ?? 1){
+			case 1: // ロングバー
+				return [0,$this->bar_height];
+			case 2: // セミロングバー（上）
+				return [0,$this->div6 * 4];
+			case 3: // セミロングバー（下）
+				return [$this->div6 * 2,$this->div6 * 4];
+			case 4: // タイミングバー
+				return [$this->div6 * 2,$this->div6 * 2];
+			default:
+		}
+		return [0,$this->bar_height];
+	}
+	
+	/**
+	 * Imageで返す
+	 * @param array $opt
 	 * 
 	 * opt:
 	 * 	string $color #000000
 	 * 	number $bar_height バーコードの高さ
 	 * 	number $module_width 1モジュールの幅
-	 *  boolean $show_text コード文字列を表示する
-	 * 	number $font_size フォントサイズ
-	 * 	string $font_family フォント名
 	 * 
-	 * @return string
+	 * @return \ebi\Image
 	 */
-	public static function NW7($code,$opt=[]){
-		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
-			throw new \ebi\exception\InvalidArgumentException('invalid characters detected');
-		}
-		if(!preg_match('/^[ABCD]/i',$code) || !preg_match('/[ABCD]$/i',$code)){
-			throw new \ebi\exception\InvalidArgumentException('Start / Stop code is not [A, B, C, D]');
-		}
-		$color = $opt['color'] ?? '#000000';
-		$bar_height = $opt['bar_height'] ?? 22.85 / 2;
-		$module_width = $opt['module_width'] ?? 0.191;
-		$show_text = $opt['show_text'] ?? true;
-		$font_size = $opt['font_size'] ?? 2;
-		$font_family = $opt['font_family'] ?? 'OCRB';
+	public function image($opt=[]){
+		$this->setopt($opt);
 		
-		$bits = [
-			'0'=>[1,-1,1,-1,1,-3,3,-1],
-			'1'=>[1,-1,1,-1,3,-3,1,-1],
-			'2'=>[1,-1,1,-3,1,-1,3,-1],
-			'3'=>[3,-3,1,-1,1,-1,1,-1],
-			'4'=>[1,-1,3,-1,1,-3,1,-1],
-			'5'=>[3,-1,1,-1,1,-3,1,-1],
-			'6'=>[1,-3,1,-1,1,-1,3,-1],
-			'7'=>[1,-3,1,-1,3,-1,1,-1],
-			'8'=>[1,-3,3,-1,1,-1,1,-1],
-			'9'=>[3,-1,1,-3,1,-1,1,-1],
-			'-'=>[1,-1,1,-3,3,-1,1,-1],
-			'$'=>[1,-1,3,-3,1,-1,1,-1],
-			':'=>[3,-1,1,-1,3,-1,3,-1],
-			'/'=>[3,-1,3,-1,1,-1,3,-1],
-			'.'=>[3,-1,3,-1,3,-1,1,-1],
-			'+'=>[1,-1,3,-1,3,-1,3,-1],
-			'A'=>[1,-1,3,-3,1,-3,1,-1],
-			'B'=>[1,-3,1,-3,1,-1,3,-1],
-			'C'=>[1,-1,1,-3,1,-3,3,-1],
-			'D'=>[1,-1,1,-3,3,-3,1,-1],
-		];
-		
-		$fcode = strtoupper($code);
-		$data = [];
-		for($i=0;$i<strlen($fcode);$i++){
-			$data = array_merge($data,$bits[$fcode[$i]]);
-		}
-		$x = 10 * $module_width;
-		$y = 0;
-		$barcord = sprintf('<g fill="%s">',$color);
-		
-		foreach($data as $bw){
-			if($bw < 0){
-				$x += ($bw * -1) * $module_width;
-			}else{
-				$barcord .= sprintf('<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,$x,$y,($bw * $module_width),$bar_height);
-				$x += ($bw * $module_width);
+		$w = 0;
+		foreach($this->data as $d){
+			foreach($d as $bw){
+				$w += ($bw < 0) ? ($bw * -1) * $this->module_width : ($bw * $this->module_width);
 			}
 		}
-		$x += 10 * $module_width;
-		$y += $bar_height;
 		
-		if($show_text){
-			$y += $font_size;
-			$tx = 10 * $module_width;
-			
-			for($i=0;$i<strlen($fcode);$i++){
-				$barcord .= sprintf('<text x="%s" y="%s" font-family="%s" font-size="%s">%s</text>',
-					$tx,
-					$y,
-					$font_family,
-					$font_size,
-					$code[$i]
-				);
-				$tx += $module_width * (preg_match('/[\d\-\$]/',$code[$i]) ? 12 : 14);
+		$x = 0;
+		$image = \ebi\Image::create($w, $this->bar_height);
+		foreach($this->data as $i => $d){
+			foreach($d as $j => $bw){
+				if($bw < 0){
+					$x += ($bw * -1) * $this->module_width;
+				}else{
+					list($y,$h) = $this->bar_type($i,$j);
+					$image->rectangle($x, $y, ($bw * $this->module_width), $h, $this->color,0,true);
+					$x += ($bw * $this->module_width);
+				}
+			}
+		}
+		return $image;
+	}
+	
+	/**
+	 * SVG文字列を返す
+	 * @param mixed{} $opt
+	 *
+	 * opt:
+	 * 	string $color #000000
+	 * 	number $bar_height バーコードの高さ
+	 * 	number $module_width 1モジュールの幅
+	 *  number $width
+	 *  number $height
+	 *
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return string
+	 */
+	public function svg($opt=[]){
+		$this->setopt($opt);
+		$width = $opt['width'] ?? 0;
+		$height = $opt['height'] ?? 0;
+		$x = 0;
+		
+		$barcord = sprintf('<g fill="%s">',$this->color);
+		
+		foreach($this->data as $i => $d){
+			foreach($d as $j => $bw){
+				if($bw < 0){
+					$x += ($bw * -1) * $this->module_width;
+				}else{
+					list($y,$h) = $this->bar_type($i,$j);
+					$barcord .= sprintf(
+						'<rect x="%s" y="%s" width="%s" height="%s" />'.PHP_EOL,
+						$x,$y,($bw * $this->module_width),$h
+					);
+					$x += ($bw * $this->module_width);
+				}
 			}
 		}
 		$barcord .= '</g>';
+		$viewbix = (!empty($width) && !empty($height)) ? sprintf('viewBox="0 0 %s %s"',$width,$height) : '';
 		
-		return self::svg($x,$y,$barcord);
+		return sprintf(
+			'<?xml version="1.0" standalone="no" ?>'.PHP_EOL.
+			'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.PHP_EOL.
+			'<svg version="1.1" xmlns="http://www.w3.org/2000/svg" %s>'.PHP_EOL.
+			'%s'.PHP_EOL.
+			'</svg>',
+			$viewbix,$barcord
+		);
 	}
 }
 

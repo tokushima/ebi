@@ -80,6 +80,9 @@ class Image{
 		if(empty($font_name)){
 			$font_name = preg_replace('/^(.+)\..+$/','\\1',basename($font_path));
 		}
+		if(!is_file($font_path)){
+			throw new \ebi\exception\NotFoundException('font not found');
+		}
 		self::$font_path[$font_name] = $font_path;
 	}
 	
@@ -144,18 +147,71 @@ class Image{
 	 * @param integer $width
 	 * @param integer $height
 	 * @param string $color
+	 * @param integer $thickness 線の太さ (塗り潰し時無効)
+	 * @param boolean $fill 塗りつぶす
 	 * @param integer $alpha 0〜127 (透明) PNGでのみ有効
 	 * @return \ebi\Image
 	 */
-	public function rectangle($x,$y,$width,$height,$color,$fill=false,$alpha=0){
+	public function rectangle($x,$y,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
 		list($r,$g,$b) = self::color2rgb($color);
 		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
 		
 		if($fill){
 			imagefilledrectangle($this->canvas,$x,$y,$x + $width,$y + $height,$c);
 		}else{
+			imagesetthickness($this->canvas,$thickness);
 			imagerectangle($this->canvas,$x,$y,$x + $width,$y + $height,$c);
 		}
+		return $this;
+	}
+	
+	/**
+	 * 楕円を描画する
+	 * @param integer $cx 中心点x
+	 * @param integer $cy 中心点y
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string $color
+	 * @param number $thickness 線の太さ (塗り潰し時無効)
+	 * @param boolean $fill 塗りつぶす
+	 * @param number $alpha 0〜127 (透明) PNGでのみ有効
+	 * @return \ebi\Image
+	 */
+	public function ellipse($cx,$cy,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
+		list($r,$g,$b) = self::color2rgb($color);
+		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
+		
+		if($fill){
+			imagefilledellipse($this->canvas,$cx,$cy,$width,$height,$c);
+		}else{
+			imagesetthickness($this->canvas,$thickness);
+			
+			for($i=0;$i<$thickness;$i++){
+				$width--;
+				imageellipse($this->canvas,$cx,$cy,$width,$height,$c);
+				$height--;
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * 線を描画
+	 * @param integer $sx 始点x
+	 * @param integer $sy 始点y
+	 * @param integer $ex 終点x
+	 * @param integer $ey 終点y
+	 * @param string $color
+	 * @param number $thickness 線の太さ (塗り潰し時無効)
+	 * @param number $alpha 0〜127 (透明) PNGでのみ有効
+	 * @return \ebi\Image
+	 */
+	public function line($sx,$sy,$ex,$ey,$color,$thickness=1,$alpha=0){
+		list($r,$g,$b) = self::color2rgb($color);
+		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
+		
+		imagesetthickness($this->canvas,$thickness);
+		imageline($this->canvas,$sx,$sy,$ex,$ey,$c);
 		return $this;
 	}
 	
