@@ -470,7 +470,7 @@ class Image{
 		}
 		list($r,$g,$b) = self::color2rgb($font_color);
 		
-		imagefttext(
+		imagettftext(
 			$this->canvas,
 			$font_point_size,
 			($angle * -1),
