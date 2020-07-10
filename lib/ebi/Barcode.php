@@ -149,6 +149,42 @@ class Barcode{
 	}
 	
 	/**
+	 * CODE39
+	 * @param string $code
+	 * @throws \ebi\exception\InvalidArgumentException
+	 * @return \ebi\Barcode
+	 */	
+	public static function CODE39($code){
+		if(!preg_match('/^[\w\-\. \$\/\+%]+$/i',$code)){
+			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
+		}
+		
+		$pattern = [
+			'0'=>123,'1'=>334,'2'=>434,'3'=>531,'4'=>124,'5'=>321,'6'=>421,'7'=>135,'8'=>333,'9'=>433,
+			'A'=>344,'B'=>444,'C'=>541,'D'=>164,'E'=>361,'F'=>461,'G'=>145,'H'=>343,'I'=>443,'J'=>163,'K'=>316,'L'=>416,'M'=>517,
+			'N'=>176,'O'=>377,'P'=>477,'Q'=>118,'R'=>312,'S'=>412,'T'=>172,'U'=>214,'V'=>614,'W'=>811,'X'=>774,'Y'=>271,'Z'=>671,
+			'-'=>715,'.'=>213,' '=>613,'*'=>773,'$'=>751,'/'=>737,'+'=>747,'%'=>157
+		];
+		$cahrbar = [null,111,221,211,112,212,122,121,222];
+		
+		$data = [];
+		$data[] = -10; // quietzone
+		
+		$fcode = strtoupper('*'.$code.'*');
+		for($i=0;$i<strlen($fcode);$i++){
+			$ptn = (string)$pattern[$fcode[$i]];
+			$bits = $cahrbar[$ptn[0]].$cahrbar[$ptn[1]].$cahrbar[$ptn[2]];
+			
+			for($c=0;$c<9;$c++){
+				$data[] = $bits[$c] * (($c % 2 === 0) ? 1 : -1);
+			}
+			$data[] = -1; // gap
+		}
+		$data[] = -10; // quietzone
+		return new self([$data]);
+	}
+	
+	/**
 	 * 郵便カスタマーバーコードード
 	 * @param string $zip
 	 * @param string $address
