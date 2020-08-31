@@ -118,20 +118,6 @@ class Browser{
 		return $this;
 	}
 	/**
-	 * ACCEPT=application/debugを設定する
-	 * @return $this
-	 */
-	public function set_header_accept_debug(){
-		return $this->header('Accept','application/debug');
-	}
-	/**
-	 * ACCEPT=application/jsonを設定する
-	 * @return $this
-	 */
-	public function set_header_accept_json(){
-		return $this->header('Accept','application/json');
-	}
-	/**
 	 * クエリを設定
 	 * @param string $key
 	 * @param string $value
