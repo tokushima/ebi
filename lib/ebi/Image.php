@@ -139,7 +139,7 @@ class Image{
 		}
 		return $self;
 	}
-		
+	
 	/**
 	 * 矩形を描画する
 	 * @param integer $x
@@ -492,7 +492,7 @@ class Image{
 	 * @throws \ebi\exception\UndefinedException
 	 * @return number[] [width,height]
 	 */
-	public static function get_text_size($font_point_size,$font_name,$text,$angle=0){
+	public function get_text_size($font_point_size,$font_name,$text,$angle=0){
 		if(!isset(self::$font_path[$font_name])){
 			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}

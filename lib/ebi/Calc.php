@@ -128,6 +128,20 @@ class Calc{
 	}
 	
 	/**
+	 * アスペクト比　width, height
+	 * @param number $width
+	 * @param number $height
+	 * @return number[]
+	 */
+	public static function get_aspect_ratio_pt($width,$height){
+		$wpx = 	self::pt2px($width, 300);
+		$hpx = 	self::pt2px($height, 300);
+		$gcp = (gmp_strval(gmp_gcd((string)$wpx,(string)$hpx)));
+		
+		return [$wpx / $gcp, $hpx / $gcp];
+	}
+	
+	/**
 	 * サイズ width, height (mm)
 	 * @param string $type
 	 * @throws \ebi\exception\InvalidArgumentException
