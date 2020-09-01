@@ -26,14 +26,6 @@ class Image{
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
 	
-	const ALIGN_LEFT = 0;
-	const ALIGN_CENTER = 1;
-	const ALIGN_RIGHT = 2;
-	
-	const VALIGN_TOP = 0;
-	const VALIGN_MIDDLE = 1;
-	const VALIGN_BOTTOM = 2;
-
 	private static $font_path = [];
 	private $canvas;
 	
