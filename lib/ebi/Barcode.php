@@ -6,13 +6,13 @@ namespace ebi;
  *
  */
 class Barcode{
-	private $data = [];
-	private $type = [];
+	protected $data = [];
+	protected $type = [];
 	
-	private $color;
-	private $bar_height;
-	private $module_width;
-	private $div6;
+	protected $color;
+	protected $bar_height;
+	protected $module_width;
+	protected $div6;
 	
 	public function __construct($data,$type=[]){
 		$this->data = $data;
@@ -27,7 +27,7 @@ class Barcode{
 		return [$this->data,$this->type];
 	}
 	
-	private function setopt($opt){
+	protected function setopt($opt){
 		$this->color = $opt['color'] ?? '#000000';
 		$this->bar_height = $opt['bar_height'] ?? 36;
 		$this->div6 = $this->bar_height / 6;
@@ -38,7 +38,7 @@ class Barcode{
 	 * NW-7 (CODABAR)
 	 * @param string $code
 	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return \ebi\Barcode
+	 * @return $this
 	 */
 	public static function NW7($code){
 		if(!preg_match('/^[0123456789ABCD\-\$:\/\.\+]+$/i',$code)){
@@ -76,14 +76,14 @@ class Barcode{
 			$data = array_merge($data,$bits[$fcode[$i]]);
 		}
 		$data[] = -11; // quietzone
-		return new self([$data]);
+		return new static([$data]);
 	}
 	
 	/**
 	 * EAN13 (JAN13)
 	 * @param string $code
 	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return \ebi\Barcode
+	 * @return $this
 	 */
 	public static function EAN13($code){
 		$get_checkdigit_JAN = function($code){
@@ -145,14 +145,14 @@ class Barcode{
 			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
 		}
 		$code = (strlen($code) > 12) ? $code : $code.$get_checkdigit_JAN($code);
-		return new self($get_data_JAN($code));
+		return new static($get_data_JAN($code));
 	}
 	
 	/**
 	 * CODE39
 	 * @param string $code
 	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return \ebi\Barcode
+	 * @return $this
 	 */	
 	public static function CODE39($code){
 		if(!preg_match('/^[\w\-\. \$\/\+%]+$/i',$code)){
@@ -181,14 +181,14 @@ class Barcode{
 			$data[] = -1; // gap
 		}
 		$data[] = -10; // quietzone
-		return new self([$data]);
+		return new static([$data]);
 	}
 	
 	/**
 	 * 郵便カスタマーバーコードード
 	 * @param string $zip
 	 * @param string $address
-	 * @return \ebi\Barcode
+	 * @return $this
 	 * @see https://www.post.japanpost.jp/zipcode/zipmanual/index.html
 	 */
 	public static function CustomerBarcode($zip,$address=''){
@@ -285,10 +285,10 @@ class Barcode{
 		array_push($data,-1,1,-1,1,-1,-1);
 		array_push($type,0,3,0,1,0,0);
 		
-		return new self([$data],[$type]);
+		return new static([$data],[$type]);
 	}
 	
-	private function bar_type($i,$j){
+	protected function bar_type($i,$j){
 		switch($this->type[$i][$j] ?? 1){
 			case 1: // ロングバー
 				return [0,$this->bar_height];
