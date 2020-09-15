@@ -13,4 +13,5 @@
 /tests/__settings__.php
 /tests/data.sqlite3
 /tests/test.php
+/tests/testman.phar
 
