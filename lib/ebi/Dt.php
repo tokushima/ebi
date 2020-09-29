@@ -662,7 +662,7 @@ class Dt{
 				$loader = include($loader_php);
 	
 				// vendor以外の定義されているパスを探す
-				foreach($loader->getPrefixes() as $ns){
+				foreach(array_merge($loader->getPrefixes(),$loader->getPrefixesPsr4()) as $ns){
 					foreach($ns as $path){
 						$path = realpath($path);
 						
@@ -673,6 +673,7 @@ class Dt{
 				}
 			}
 		}
+		$include_path = array_unique($include_path);
 		
 		$valid_find_class_file = function($f){
 			if(strpos($f->getPathname(),DIRECTORY_SEPARATOR.'.') === false
