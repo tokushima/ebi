@@ -627,6 +627,10 @@ class Man{
 			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
 		}
+		usort($template_list, function($a,$b){
+			return strcasecmp($a->name(), $b->name());
+		});
+		
 		return $template_list;
 	}
 	
