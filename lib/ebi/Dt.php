@@ -506,6 +506,8 @@ class Dt{
 				}
 			}
 		}
+		ksort($template_list);
+		
 		return [
 			'is_test'=>$has_bh,
 			'template_list'=>$template_list,
