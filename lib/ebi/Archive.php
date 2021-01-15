@@ -5,54 +5,62 @@ namespace ebi;
  * @author tokushima
  */
 class Archive{
-	private $base_dir;
 	private $tree = [5=>[],0=>[]];
 
-	public function __construct($dir=null){
-		if(isset($dir)){
-			if(!is_dir($dir)){
-				throw new \ebi\exception\AccessDeniedException((string)$dir);
-			}
-			$this->base_dir = $dir;
-			$this->add($dir);
+	public function __construct($path=null){
+		if(isset($path) && is_dir($path)){
+			$this->add($path,false);
 		}
 	}
-	/**
-	 * エントリ名から取り除くパスを設定する
-	 * @param string $base_dir アーカイブ内部での名前から取り除く文字
-	 * @return $this
-	 */
-	public function base_dir($base_dir){
-		$this->base_dir = $base_dir;
-		return $this;
+
+	private function dirs($dir){
+		$list = [5=>[],0=>[]];
+		if($h = opendir($dir)){
+			while($p = readdir($h)){
+				if($p != '.' && $p != '..'){
+					$s = sprintf('%s/%s',$dir,$p);
+
+					if(is_dir($s)){
+						$list[5][$s] = $s;
+						$r = $this->dirs($s);
+						$list[5] = array_merge($list[5],$r[5]);
+						$list[0] = array_merge($list[0],$r[0]);
+					}else{
+						$list[0][$s] = $s;
+					}
+				}
+			}
+			closedir($h);
+		}
+		return $list;
 	}
+
 	/**
 	 * 指定したパスからアーカイブに追加する
 	 * @param string $path 追加するファイルへのパス
-	 * @param string $base_dir アーカイブ内部での名前から取り除く文字
+	 * @param string $key アーカイブ内部での名前
 	 * @return $this
 	 */	
-	public function add($path,$base_dir=null){
-		if(!isset($base_dir)){
-			$base_dir = $this->base_dir;
-		}
+	public function add($path,$key=null){
+		$path = str_replace('\\','/',$path);
+
 		if(is_dir($path)){
-			if($base_dir != $path){
-				$this->tree[5][$this->source($path,$base_dir)] = $path;
-			}
-			$l = $this->dirs($path);
-			
-			foreach($l[0] as $p){
-				$this->tree[0][$this->source($p,$base_dir)] = $p;
-			}
-			foreach($l[5] as $p){
-				$this->tree[5][$this->source($p,$base_dir)] = $p;
+			$key = ($key === false) ? '' : (empty($key) ? basename($path) : $key);
+			$rp = empty($key) ? $path.'/' : $path;
+
+			foreach($this->dirs($path) as $t => $list){
+				foreach($list as $p){
+					$this->tree[$t][str_replace($rp,$key,$p)] = $p;
+				}
 			}
 		}else if(is_file($path)){
-			$this->tree[0][$this->source($path,$base_dir)] = $path;
+			$this->tree[0][empty($key) ? basename($path) : $key] = $path;
+		}else{
+			throw new \ebi\exception\UnknownFileException();
 		}
 		return $this;
 	}
+
 	/**
 	 * tarを出力する
 	 * @param string $filename 出力するファイルパス
@@ -167,32 +175,6 @@ class Archive{
 			throw new \ebi\exception\AccessDeniedException('Failed to write ZIP file');
 		}
 		return $this;
-	}
-	private function source($path,$base_dir){
-		$source = (strpos($path,$base_dir) !== false) ? str_replace($base_dir,'',$path) : $path;
-		if(strpos($source,'://') !== false) $source = preg_replace('/^.*:\/\/(.+)$/','\\1',$source);
-		if($source[0] == '/') $source = substr($source,1);
-		return $source;		
-	}
-	private function dirs($dir){
-		$list = [5=>[],0=>[]];
-		if($h = opendir($dir)){
-			while($p = readdir($h)){
-				if($p != '.' && $p != '..'){
-					$s = sprintf('%s/%s',$dir,$p);
-					if(is_dir($s)){
-						$list[5][$s] = $s;
-						$r = $this->dirs($s);
-						$list[5] = array_merge($list[5],$r[5]);
-						$list[0] = array_merge($list[0],$r[0]);
-					}else{
-						$list[0][$s] = $s;
-					}
-				}
-			}
-			closedir($h);
-		}
-		return $list;
 	}
 	
 	/**
