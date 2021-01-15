@@ -70,7 +70,7 @@ class Obj implements \IteratorAggregate{
 	/**
 	 * アクセス可能なプロパティを取得する
 	 * @param boolean $format
-	 * @return mixed{}
+	 * @return array
 	 */
 	public function props($format=false){
 		$r = [];
@@ -139,11 +139,11 @@ class Obj implements \IteratorAggregate{
 				if($v === null){
 					return 0;
 				}
-				$h = floor($v / 3600);
-				$i = floor(($v - ($h * 3600)) / 60);
-				$s = floor($v - ($h * 3600) - ($i * 60));
-				$m = str_replace(' ','0',rtrim(str_replace('0',' ',(substr(($v - ($h * 3600) - ($i * 60) - $s),2,12)))));
-				return (($h == 0) ? '' : $h.':').(sprintf('%02d:%02d',$i,$s)).(($m == 0) ? '' : '.'.$m);
+				$h = (int)floor($v / 3600);
+				$i = (int)floor(($v - ($h * 3600)) / 60);
+				$s = (int)floor($v - ($h * 3600) - ($i * 60));
+				$m = (int)str_replace(' ','0',rtrim(str_replace('0',' ',(substr(($v - ($h * 3600) - ($i * 60) - $s),2,12)))));
+				return (($h === 0) ? '' : $h.':').(sprintf('%02d:%02d',$i,$s)).(($m === 0) ? '' : '.'.$m);
 			case 'intdate':
 				if($v === null){
 					return null;
