@@ -616,7 +616,7 @@ class Util{
 	}
 	
 	/**
-	 * 文字列を解凍する
+	 * 文字列を展開する
 	 * @param string $string
 	 * @param boolean $base64
 	 * @return string
