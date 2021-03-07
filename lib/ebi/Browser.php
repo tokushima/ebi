@@ -124,9 +124,6 @@ class Browser{
 	 * @return $this
 	 */
 	public function vars($key,$value=null){
-		if(is_bool($value)){
-			$value = ($value) ? 'true' : 'false';
-		}
 		$this->request_vars[$key] = $value;
 		
 		if(isset($this->request_file_vars[$key])){
@@ -360,6 +357,11 @@ class Browser{
 		}
 		
 		$http_build_query = function($vars){
+			foreach($vars as $v){
+				if(is_bool($v)){
+					$v = ($v) ? 'true' : 'false';
+				}
+			}
 			return preg_replace('/%5B%5D%5B[0-9]+%5D/ms','%5B%5D',http_build_query($vars));
 		};
 		
