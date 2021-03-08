@@ -60,6 +60,9 @@ class ZipArchive
 	 */
 	public function add($filename, $entryname = null)
 	{
+		if ($this->writed && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
+			$this->writed = false;
+		}
 		if (is_dir($filename)) {
 			$entryname = \ebi\Util::path_slash($entryname, null, false);
 			$dir = \ebi\Util::path_slash(realpath($filename), null, true);
@@ -73,9 +76,12 @@ class ZipArchive
 			}
 		} else {
 			if (is_file($filename)) {
+				if (empty($entryname)) {
+					$entryname = basename($filename);
+				}
 				$this->zip->addFile($filename, $entryname);
 			} else {
-				throw new \ebi\exception\UnknownFileException();
+				throw new \ebi\exception\UnknownFileException($filename);
 			}
 		}
 	}
@@ -87,6 +93,9 @@ class ZipArchive
 	 */
 	public function add_from_string($contents, $entryname)
 	{
+		if ($this->writed && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
+			$this->writed = false;
+		}
 		$this->zip->addFromString($entryname, $contents);
 	}
 
@@ -99,12 +108,18 @@ class ZipArchive
 
 	/**
 	 * 書き出す
+	 * @return string 書き出したZIPファイルパス
 	 */
 	public function write()
 	{
-		\ebi\Util::mkdir(dirname($this->filename));
-		$this->writed = true;
-		$this->zip->close();
+		if (!$this->writed) {
+			\ebi\Util::mkdir(dirname($this->filename));
+			$this->writed = true;
+			$this->zip->close();
+
+			$this->filename = realpath($this->filename);
+		}
+		return $this->filename;
 	}
 
 	/**
