@@ -96,7 +96,7 @@ class Xml implements \IteratorAggregate{
 				}
 			}
 			$v = $r;
-		}else if($this->esc && strpos($v,'<![CDATA[') === false && preg_match("/&|<|>|\&[^#\da-zA-Z]/",$v)){
+		}else if($this->esc && strpos($v,'<![CDATA[') === false && preg_match("/&|<|>|(\&[^#\da-zA-Z])/",$v)){
 			$v = '<![CDATA['.$v.']]>';
 		}
 		return $v;

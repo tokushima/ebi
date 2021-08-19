@@ -401,6 +401,23 @@ class Util{
 		}
 		return $rtn;
 	}
+
+	/**
+	 * 次回の営業日
+	 * @return integer 次回の営業日のタイムスタンプ
+	 */
+	public static function next_business_day($base, $days, $holidays=[], $regular_holiday=[0,6]){
+		$d = $base;
+
+		for($i=0;$i<$days;){
+			$d += 86400;
+
+			if(!in_array(date('w'), $regular_holiday) && !in_array(date('y-m-d', $d), $holidays)){
+				$i++;
+			}
+		}
+		return $d;
+	}
 	
 	/**
 	 * 文字列を丸める
