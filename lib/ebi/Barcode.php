@@ -29,9 +29,9 @@ class Barcode{
 	
 	protected function setopt($opt){
 		$this->color = $opt['color'] ?? '#000000';
-		$this->bar_height = $opt['bar_height'] ?? 36;
+		$this->bar_height = $opt['bar_height'] ?? \ebi\Calc::mm2px(8, 72);
 		$this->div6 = $this->bar_height / 6;
-		$this->module_width = $opt['module_width'] ?? 2;
+		$this->module_width = $opt['module_width'] ?? 1;
 	}
 	
 	/**
@@ -309,6 +309,7 @@ class Barcode{
 	 * 
 	 * opt:
 	 * 	string $color #000000
+	 *  string $bgcolor #FFFFFF
 	 * 	number $bar_height バーコードの高さ
 	 * 	number $module_width 1モジュールの幅
 	 * 
@@ -316,7 +317,6 @@ class Barcode{
 	 */
 	public function image($opt=[]){
 		$this->setopt($opt);
-		
 		$w = 0;
 		foreach($this->data as $d){
 			foreach($d as $bw){
@@ -325,15 +325,19 @@ class Barcode{
 		}
 		
 		$x = 0;
-		$image = \ebi\Image::create($w, $this->bar_height);
+		$image = \ebi\Image::create($w, $this->bar_height, $opt['bgcolor'] ?? null);
+		
 		foreach($this->data as $i => $d){
 			foreach($d as $j => $bw){
 				if($bw < 0){
 					$x += ($bw * -1) * $this->module_width;
 				}else{
-					list($y,$h) = $this->bar_type($i,$j);
-					$image->rectangle($x, $y, ($bw * $this->module_width), $h, $this->color,0,true);
-					$x += ($bw * $this->module_width);
+					list($sy,$ey) = $this->bar_type($i,$j);
+					
+					for($j=0;$j<$bw;$j++){
+						$x++;
+						$image->line($x, $sy, $x, $ey, $this->color);
+					}
 				}
 			}
 		}
