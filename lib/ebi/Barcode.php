@@ -12,31 +12,16 @@ class Barcode{
 	protected $color;
 	protected $bar_height;
 	protected $module_width;
-	protected $div6;
 	
-	public function __construct($data,$type=[]){
+	public function __construct($data, $type, $opt){
 		$this->data = $data;
 		$this->type = $type;
-	}
-	
-	/**
-	 * 登録されたデータ [data[], type[]]
-	 * @return array [number[],$number[]]
-	 */
-	public function raw(){
-		return [$this->data,$this->type];
-	}
-	
-	protected function setopt($opt){
-		$this->color = $opt['color'] ?? '#000000';
-		$this->bar_height = $opt['bar_height'] ?? \ebi\Calc::mm2px(8, 72);
-		$this->div6 = $this->bar_height / 6;
-		$this->module_width = $opt['module_width'] ?? 1;
+		$this->setopt($opt);
 	}
 	
 	/**
 	 * NW-7 (CODABAR)
-	 * @param string $code
+	 * @param string $code A0123456789A
 	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return $this
 	 */
@@ -76,11 +61,14 @@ class Barcode{
 			$data = array_merge($data,$bits[$fcode[$i]]);
 		}
 		$data[] = -11; // quietzone
-		return new static([$data]);
+		return new static([$data], [], [
+			'bar_height'=>\ebi\Calc::mm2px(10),
+			'module_width'=>\ebi\Calc::mm2px(0.6),
+		]);
 	}
 	
 	/**
-	 * EAN13 (JAN13)
+	 * EAN13 (JAN13) 4549995186550
 	 * @param string $code
 	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return $this
@@ -145,12 +133,15 @@ class Barcode{
 			throw new \ebi\exception\InvalidArgumentException('detected invalid characters');
 		}
 		$code = (strlen($code) > 12) ? $code : $code.$get_checkdigit_JAN($code);
-		return new static($get_data_JAN($code));
+		return new static($get_data_JAN($code), [], [
+			'bar_height'=>\ebi\Calc::mm2px(22.86),
+			'module_width'=>\ebi\Calc::mm2px(0.33),
+		]);
 	}
 	
 	/**
 	 * CODE39
-	 * @param string $code
+	 * @param string $code 1234567890ABCDEF
 	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return $this
 	 */	
@@ -181,13 +172,16 @@ class Barcode{
 			$data[] = -1; // gap
 		}
 		$data[] = -10; // quietzone
-		return new static([$data]);
+		return new static([$data], [], [
+			'bar_height'=>\ebi\Calc::mm2px(10),
+			'module_width'=>\ebi\Calc::mm2px(0.33),
+		]);
 	}
 	
 	/**
 	 * 郵便カスタマーバーコードード
-	 * @param string $zip
-	 * @param string $address
+	 * @param string $zip 1050011
+	 * @param string $address ４丁目２−８ （町域以降の住所）
 	 * @return $this
 	 * @see https://www.post.japanpost.jp/zipcode/zipmanual/index.html
 	 */
@@ -285,24 +279,37 @@ class Barcode{
 		array_push($data,-1,1,-1,1,-1,-1);
 		array_push($type,0,3,0,1,0,0);
 		
-		return new static([$data],[$type]);
+		return new static([$data], [$type], [
+			'bar_height'=>\ebi\Calc::mm2px(3.6),
+			'module_width'=>\ebi\Calc::mm2px(0.6),		
+		]);
 	}
 	
 	protected function bar_type($i,$j){
-		switch($this->type[$i][$j] ?? 1){
-			case 1: // ロングバー
-				return [0,$this->bar_height];
-			case 2: // セミロングバー（上）
-				return [0,$this->div6 * 4];
-			case 3: // セミロングバー（下）
-				return [$this->div6 * 2,$this->div6 * 4];
-			case 4: // タイミングバー
-				return [$this->div6 * 2,$this->div6 * 2];
-			default:
+		if(!empty($this->type)){
+			$div_bar = $this->bar_height / 3;
+
+			switch($this->type[$i][$j] ?? 1){
+				case 1: // ロングバー
+					return [0, $this->bar_height];
+				case 2: // セミロングバー（上）
+					return [0, $div_bar * 2];
+				case 3: // セミロングバー（下）
+					return [$div_bar, $this->bar_height];
+				case 4: // タイミングバー
+					return [$div_bar, $div_bar * 2];
+				default:
+			}
 		}
 		return [0,$this->bar_height];
 	}
-	
+
+	protected function setopt($opt){
+		$this->color = $opt['color'] ?? '#000000';
+		$this->bar_height = $opt['bar_height'] ?? $this->bar_height;
+		$this->module_width = $opt['module_width'] ?? $this->module_width;
+	}
+
 	/**
 	 * Imageで返す
 	 * @param array $opt
@@ -391,6 +398,14 @@ class Barcode{
 			'</svg>',
 			$viewbix,$barcord
 		);
+	}
+
+	/**
+	 * 登録されたデータ [data[], type[]]
+	 * @return array [number[],$number[]]
+	 */
+	public function raw(){
+		return [$this->data,$this->type];
 	}
 }
 
