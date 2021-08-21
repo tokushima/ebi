@@ -63,7 +63,7 @@ class Barcode{
 		$data[] = -11; // quietzone
 		return new static([$data], [], [
 			'bar_height'=>\ebi\Calc::mm2px(10),
-			'module_width'=>\ebi\Calc::mm2px(0.3),
+			'module_width'=>\ebi\Calc::mm2px(0.6),
 		]);
 	}
 	
