@@ -28,13 +28,4 @@ class Helper{
 		}
 		return json_encode($result,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 	}
-	
-	/**
-	 * parse md
-	 * @param string $v
-	 */
-	public function md2html($v){
-		$md = new \ebi\Md();
-		return $md->html($v);
-	}
 }
