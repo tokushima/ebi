@@ -24,6 +24,7 @@ class Q{
 	const OR_BLOCK = 16;
 	const AND_BLOCK = 17;
 	const DATE_FORMAT = 18;
+	const FOR_UPDATE = 19;
 	
 	const IGNORE = 2;
 	const NOT = 4;
@@ -37,6 +38,7 @@ class Q{
 	private $paginator;
 	private $order_by = [];
 	private $date_format = [];
+	private $for_update = false;
 
 	public function __construct($type=self::AND_BLOCK,$arg1=null,$arg2=null,$param=null){
 		if($type === self::AND_BLOCK){
@@ -115,6 +117,9 @@ class Q{
 	public function ar_date_format(){
 		return $this->ar_value($this->date_format);
 	}
+	public function is_for_update(){
+		return $this->for_update;
+	}
 	/**
 	 * ソート順がランダムか
 	 * @return boolean
@@ -152,6 +157,8 @@ class Q{
 						}
 					}else if($arg->type() == self::DATE_FORMAT){
 						$this->date_format[$arg->arg1] = $arg->arg2;
+					}else if($arg->type() == self::FOR_UPDATE){
+						$this->for_update = true;
 					}else if($arg->type() == self::AND_BLOCK){
 						call_user_func_array([$this,'add'],$arg->ar_and_block());
 						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
@@ -368,6 +375,14 @@ class Q{
 	public static function random_order(){
 		return new self(self::ORDER_RAND);
 	}
+	/**
+	 * FOR UPDATE
+	 * @return \ebi\Q
+	 */
+	public static function for_update(){
+		return new self(self::FOR_UPDATE);
+	}
+
 	/**
 	 * 検索文字列による検索条件
 	 * @param string $val 検索文字列 スペース区切り

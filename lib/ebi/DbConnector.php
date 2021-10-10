@@ -225,6 +225,7 @@ abstract class DbConnector{
 			'select '.implode(',',$select).' from '.implode(',',$from)
 			.(empty($where_sql) ? '' : ' where '.$where_sql)
 			.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
+			.$this->for_update($query->is_for_update())
 		),$where_vars);
 	}
 	protected function select_order($query,array $self_columns){
@@ -361,6 +362,9 @@ abstract class DbConnector{
 			)
 			,$where_vars
 		);
+	}
+	protected function for_update($bool){
+		return ($bool ? ' FOR UPDATE ' : '');
 	}
 	protected function where_cond_columns(array $cond_columns,array &$from){
 		$conds = [];

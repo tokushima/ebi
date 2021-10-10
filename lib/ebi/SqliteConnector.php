@@ -102,5 +102,8 @@ class SqliteConnector extends \ebi\DbConnector{
 		}
 		return 'strftime(\''.$f.'\','.$column_map.')';
 	}
+	protected function for_update($bool){
+		// 使えないので無視する
+	}
 }
 

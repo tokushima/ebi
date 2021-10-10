@@ -41,6 +41,7 @@
 	'ebi\Dao'=>[
 		'connection'=>[
 			'*'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
+			// '*'=>['type'=>'ebi\MysqlConnector','timezone'=>'+09:00','host'=>'127.0.0.1','user'=>'root','password'=>'root','name'=>'my_testdb'],
 			'test\db\Abc'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
