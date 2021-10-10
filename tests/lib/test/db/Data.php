@@ -22,5 +22,7 @@ class Data extends \ebi\Dao{
 		$static->val1(\ebi\Code::rand('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',100));
 		$static->val1(\ebi\Code::rand('abcdefghijklmnopqrstuvwxyz0123456789',100));
 		$static->save();
+
+		return $static;
 	}
 }
