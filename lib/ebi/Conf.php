@@ -252,10 +252,10 @@ class Conf{
 		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
 		/**
-		 * デフォルトは、NULL です
+		 * デフォルトは、空 です
 		 * @param strig $val クロスサイトリクエスト設定 ( Strict, Lax, None )
 		 */
-		$cookie_samesite = self::get_self_conf_get('cookie_samesite',null);
+		$cookie_samesite = self::get_self_conf_get('cookie_samesite','');
 		
 		
 		/**

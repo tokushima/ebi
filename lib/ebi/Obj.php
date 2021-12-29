@@ -13,7 +13,7 @@ class Obj implements \IteratorAggregate{
 	 * @param string $p プロパティ名
 	 * @param string $n アノテーション名
 	 * @param mixed $d デフォルト値
-	 * @parama boolean $f 値をデフォルト値で上書きするか
+	 * @param boolean $f 値をデフォルト値で上書きするか
 	 * @return mixed
 	 */
 	public function prop_anon($p,$n=null,$d=null,$f=false){
@@ -29,7 +29,7 @@ class Obj implements \IteratorAggregate{
 	 * プロパティの一覧を取得する、アノテーション hash=false のものは含まない
 	 * @see \IteratorAggregate::getIterator()
 	 */
-	public function getIterator(){
+	public function getIterator(): \Traversable{
 		$r = [];
 		foreach(array_keys($this->props()) as $n){
 			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){

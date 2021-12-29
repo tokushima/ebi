@@ -21,7 +21,7 @@ class Xml implements \IteratorAggregate{
 			$this->name = array_pop($n);
 			$this->value($name);
 		}else{
-			$this->name = trim($name);
+			$this->name = empty($name) ? $name : trim($name);
 			$this->value($value);
 		}
 	}
@@ -29,7 +29,7 @@ class Xml implements \IteratorAggregate{
 	 * (non-PHPdoc)
 	 * @see \IteratorAggregate::getIterator()
 	 */
-	public function getIterator(){
+	public function getIterator(): \Traversable{
 		return new \ArrayIterator($this->attr);
 	}
 	/**
@@ -96,7 +96,7 @@ class Xml implements \IteratorAggregate{
 				}
 			}
 			$v = $r;
-		}else if($this->esc && strpos($v,'<![CDATA[') === false && preg_match("/&|<|>|(\&[^#\da-zA-Z])/",$v)){
+		}else if(!empty($v) && $this->esc && strpos($v,'<![CDATA[') === false && preg_match("/&|<|>|(\&[^#\da-zA-Z])/",$v)){
 			$v = '<![CDATA['.$v.']]>';
 		}
 		return $v;
@@ -111,7 +111,7 @@ class Xml implements \IteratorAggregate{
 		if(func_num_args() > 0){
 			$this->value = $this->get_value(func_get_arg(0));
 		}
-		if(strpos($this->value,'<![CDATA[') !== false){
+		if(!empty($this->value) && strpos($this->value,'<![CDATA[') !== false){
 			return preg_replace('/<!\[CDATA\[(.+)\]\]>/s','\\1',$this->value);
 		}
 		return $this->value;
@@ -215,7 +215,9 @@ class Xml implements \IteratorAggregate{
 				try{
 					$it = $t->find($path,$offset,$length);
 					if($it->valid()){
-						reset($it);
+						if(is_array($it)){
+							reset($it);
+						}
 						return $it;
 					}
 				}catch(\ebi\exception\NotFoundException $e){}

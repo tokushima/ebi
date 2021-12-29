@@ -37,13 +37,13 @@ class ZipArchive
 					$s = sprintf('%s/%s', $dir, $p);
 
 					if (is_dir($s)) {
-						$ln = str_replace($basedir, $entryname, $s);
+						$ln = str_replace($basedir, $entryname ?? '', $s);
 						$list[5][$ln] = $s;
 						$r = $this->dirs($s, $basedir, $entryname);
 						$list[5] = array_merge($list[5], $r[5]);
 						$list[0] = array_merge($list[0], $r[0]);
 					} else {
-						$ln = str_replace($basedir, $entryname, $s);
+						$ln = str_replace($basedir, $entryname ?? '', $s);
 						$list[0][$ln] = $s;
 					}
 				}

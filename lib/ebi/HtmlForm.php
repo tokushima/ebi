@@ -19,9 +19,9 @@ class HtmlForm{
 				foreach($formtag->find('input') as $count => $input){
 					$obj = new \stdClass();
 					$obj->name = $input->in_attr('name',$input->in_attr('id','input_'.$count));
-					$obj->type = strtolower($input->in_attr('type','text'));
+					$obj->type = strtolower((string)$input->in_attr('type','text'));
 					$obj->value = self::htmldecode($input->in_attr('value'));
-					$obj->selected = ('selected' === strtolower($input->in_attr('checked',$input->in_attr('checked'))));
+					$obj->selected = ('selected' === strtolower((string)$input->in_attr('checked',$input->in_attr('checked'))));
 					$obj->multiple = false;
 					$form->element[] = $obj;
 				}
@@ -40,12 +40,12 @@ class HtmlForm{
 					$obj->type = 'select';
 					$obj->value = [];
 					$obj->selected = true;
-					$obj->multiple = ('multiple' == strtolower($input->param('multiple',$input->attr('multiple'))));
+					$obj->multiple = ('multiple' == strtolower((string)$input->param('multiple',$input->attr('multiple'))));
 		
 					foreach($input->find('option') as $count => $option){
 						$op = new \stdClass();
 						$op->value = self::htmldecode($option->in_attr('value',$option->value()));
-						$op->selected = ('selected' == strtolower($option->in_attr('selected',$option->in_attr('selected'))));
+						$op->selected = ('selected' == strtolower((string)$option->in_attr('selected',$option->in_attr('selected'))));
 						$obj->value[] = $op;
 					}
 					$form->element[] = $obj;

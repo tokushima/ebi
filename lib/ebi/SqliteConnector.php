@@ -32,7 +32,7 @@ class SqliteConnector extends \ebi\DbConnector{
 			if(strpos($name,'.') === false){
 				$name = $name.'.sqlite3';
 			}
-			$host = str_replace('\\','/',$host);
+			$host = str_replace('\\','/',$host ?? '');
 			if(substr($host,-1) != '/'){
 				$host = $host.'/';
 			}
@@ -59,16 +59,16 @@ class SqliteConnector extends \ebi\DbConnector{
 		if($value === null){
 			return null;
 		}
-		try{
+		try{		
 			switch($dao->prop_anon($name,'type')){
 				case 'timestamp':
-					if(!ctype_digit($value)){
+					if(!ctype_digit((string)$value)){
 						$value = strtotime($value);
 					}
 					// UTCとして扱う
 					return date('Y-m-d H:i:s',$value - $this->timezone_offset);
 				case 'date':
-					if(!ctype_digit($value)){
+					if(!ctype_digit((string)$value)){
 						$value = strtotime($value);
 					}
 					return date('Y-m-d',$value);

@@ -12,16 +12,16 @@ class FlowInvalid implements \Iterator{
 	private $group = null;
 	private $type = null;
 	
-	public function rewind(){
+	public function rewind(): void{
 		$this->pos = 0;
 	}
-	public function current(){
+	public function current(): mixed{
 		return $this->messages[$this->pos]['exception'];
 	}
-	public function key(){
+	public function key(): mixed{
 		return $this->messages[$this->pos]['group'];
 	}
-	public function valid(){
+	public function valid(): bool{
 		while($this->pos < sizeof($this->messages)){
 			if((empty($this->group) || $this->messages[$this->pos]['group'] === $this->group) &&
 				(empty($this->type) || preg_match('/\\\\'.preg_quote($this->type).'$/','\\'.get_class($this->messages[$this->pos]['exception'])))
@@ -32,7 +32,7 @@ class FlowInvalid implements \Iterator{
 		}
 		return false;
 	}
-	public function next(){
+	public function next(): void{
 		$this->pos++;
 	}
 	

@@ -18,7 +18,7 @@ class Paginator implements \IteratorAggregate{
 	private $dynamic = false;
 	private $tmp = [null,null,[],null,false];
 
-	public function getIterator(){
+	public function getIterator(): \Traversable{
 		return new \ArrayIterator([
 			'current'=>$this->current()
 			,'limit'=>$this->limit()
