@@ -16,7 +16,7 @@ class Annotation{
 	public static function get_class($class,$names,$doc_name=null,$parent=null){
 		$return = [];
 		$t = new \ReflectionClass($class);
-		$d = null;
+		$d = '';
 		
 		if(empty($parent)){
 			$parent = 'stdClass';

@@ -177,32 +177,32 @@ class Db implements \Iterator{
 	/**
 	 * @see \Iterator
 	 */
-	public function rewind(){
+	public function rewind(): void{
 		$this->resultset_counter = 0;
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);
 	}
 	/**
 	 * @see \Iterator
 	 */
-	public function current(){
+	public function current(): mixed{
 		return $this->resultset;
 	}
 	/**
 	 * @see \Iterator
 	 */
-	public function key(){
+	public function key(): mixed{
 		return $this->resultset_counter++;
 	}
 	/**
 	 * @see \Iterator
 	 */
-	public function valid(){
+	public function valid(): bool{
 		return ($this->resultset !== false);
 	}
 	/**
 	 * @see \Iterator
 	 */
-	public function next(){
+	public function next(): void{
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);
 	}
 }

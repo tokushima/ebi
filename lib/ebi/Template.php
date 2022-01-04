@@ -179,7 +179,7 @@ class Template{
 		if(!empty($media) && substr($media,-1) !== '/'){
 			$media = $media.'/';
 		}
-		$secure_base = ($this->secure) ? str_replace('http://','https://',$media) : null;
+		$secure_base = ($this->secure) ? str_replace('http://','https://',$media ?? '') : null;
 		$m = [];
 		
 		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$m)){
@@ -466,8 +466,9 @@ class Template{
 				if($obj->is_attr('rt:param')){
 					switch($tagname){
 						case 'select':
+							$value = $obj->value();
 							$value = sprintf('<rt:loop param="%s" var="%s" key="%s">'
-											.((trim($obj->value()) == '') ? '<option value="{$%s}">{$%s}</option>' : $obj->value())
+											.((trim($value ?? '') == '') ? '<option value="{$%s}">{$%s}</option>' : $value)
 											.'</rt:loop>'
 											,$obj->in_attr('rt:param'),$obj->in_attr('rt:var','loop_var'.$uid),$obj->in_attr('rt:key','loop_key'.$uid)
 											,$obj->in_attr('rt:key','loop_key'.$uid),$obj->in_attr('rt:var','loop_var'.$uid)

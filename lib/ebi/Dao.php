@@ -295,7 +295,10 @@ abstract class Dao extends \ebi\Obj{
 								if(strpos($cond_name,'.') !== false){
 									list($cond_name,$cond_var) = explode('.',$cond_name);
 								}
-								if(!isset($last_cond_column[$cond_name]) && in_array($cond_name,$props)){
+								if(!isset($last_cond_column[$cond_name])){
+									throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');
+								}
+								if(in_array($cond_name,$props)){
 									$props[] = $name;
 									continue;
 								}

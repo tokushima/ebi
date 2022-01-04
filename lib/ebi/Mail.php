@@ -214,7 +214,7 @@ class Mail{
 	private function jis($str){
 		return sprintf(
 			'=?ISO-2022-JP?B?%s?=',
-			base64_encode(mb_convert_encoding($str,'JIS',mb_detect_encoding($str)))
+			base64_encode(mb_convert_encoding($str ?? '','JIS',mb_detect_encoding($str ?? '')))
 		);
 	}
 	private function meta($type){
@@ -227,7 +227,7 @@ class Mail{
 			$this->line('Content-Transfer-Encoding: 7bit');
 	}
 	private function enc($message){
-		return mb_convert_encoding($message,'JIS',mb_detect_encoding($message));
+		return mb_convert_encoding($message ?? '','JIS',mb_detect_encoding($message ?? ''));
 	}
 	private function line($value=''){
 		return $value.$this->eol;

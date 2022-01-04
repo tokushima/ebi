@@ -4,7 +4,7 @@ namespace ebi;
  * リクエストを処理する
  * @author tokushima
  */
-class Request implements \IteratorAggregate{
+class Request  implements \IteratorAggregate{
 	private $vars = [];
 	private $files = [];
 	private $args;
@@ -109,9 +109,10 @@ class Request implements \IteratorAggregate{
 	 * varsを返す
 	 * @see \IteratorAggregate::getIterator()
 	 */
-	public function getIterator(){
+	public function getIterator(): \Traversable{
 		return new \ArrayIterator($this->vars);
 	}
+	
 	/**
 	 * 現在のURLを返す
 	 * @param integer $port_https
@@ -219,17 +220,16 @@ class Request implements \IteratorAggregate{
 		if(empty($expire)){
 			$expire = time() + $cookie_params['cookie_lifetime'];
 		}
-		setcookie(
-			$name,
-			$value,
-			[
-				'expires'=>$expire,
-				'path'=>$cookie_params['cookie_path'],
-				'domain'=>$cookie_params['cookie_domain'],
-				'secure'=>$cookie_params['cookie_secure'],
-				'samesite'=>$cookie_params['cookie_samesite'],
-			]
-		);
+		$opt = [
+			'expires'=>$expire,
+			'path'=>$cookie_params['cookie_path'],
+			'domain'=>$cookie_params['cookie_domain'],
+			'secure'=>$cookie_params['cookie_secure'],
+		];
+		if(!empty($cookie_params['cookie_samesite'])){
+			$opt['samesite'] = $cookie_params['cookie_samesite'];
+		}
+		setcookie($name, (string)$value, $opt);
 	}
 	/**
 	 * クッキーから取得
@@ -247,18 +247,16 @@ class Request implements \IteratorAggregate{
 	 */
 	public static function delete_cookie($name){
 		$cookie_params = \ebi\Conf::cookie_params();
-		
-		setcookie(
-			$name,
-			null,
-			[
-				'expires'=>(time() - 1209600),
-				'path'=>$cookie_params['cookie_path'],
-				'domain'=>$cookie_params['cookie_domain'],
-				'secure'=>$cookie_params['cookie_secure'],
-				'samesite'=>$cookie_params['cookie_samesite'],
-			]
-		);
+		$opt = [
+			'expires'=>(time() - 1209600),
+			'path'=>$cookie_params['cookie_path'],
+			'domain'=>$cookie_params['cookie_domain'],
+			'secure'=>$cookie_params['cookie_secure'],
+		];
+		if(!empty($cookie_params['cookie_samesite'])){
+			$opt['samesite'] = $cookie_params['cookie_samesite'];
+		}
+		setcookie($name, '', $opt);
 	}
 	/**
 	 * pathinfo または argv

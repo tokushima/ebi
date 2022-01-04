@@ -200,7 +200,7 @@ class Q{
 	 * @return boolean
 	 */
 	public function ignore_case(){
-		return (strlen($this->param) > 1 && substr($this->param,-2,1) === '1');
+		return (!empty($this->param) && strlen($this->param) > 1 && substr($this->param,-2,1) === '1');
 	}
 	/**
 	 * 否定式である
@@ -208,7 +208,7 @@ class Q{
 	 * @return boolean
 	 */
 	public function not(){
-		return (strlen($this->param) > 2 && substr($this->param,-3,1) === '1');
+		return (!empty($this->param) && strlen($this->param) > 2 && substr($this->param,-3,1) === '1');
 	}
 	/**
 	 * column_str == value

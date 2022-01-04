@@ -32,17 +32,20 @@ class Session{
 			if(
 				$cookie_params['session_lifetime'] > 0 || 
 				$cookie_params['cookie_secure'] !== false ||
-				$cookie_params['cookie_samesite'] !== null ||
+				$cookie_params['cookie_samesite'] !== '' ||
 				$cookie_params['cookie_path'] !== '/' ||
 				!empty($cookie_params['cookie_domain'])
 			){
-				session_set_cookie_params([
+				$opt = [
 					'lifetime'=>$cookie_params['session_lifetime'],
 					'path'=>$cookie_params['cookie_path'],
 					'domain'=>$cookie_params['cookie_domain'],
 					'secure'=>$cookie_params['cookie_secure'],
-					'samesite'=>$cookie_params['cookie_samesite'],
-				]);
+				];
+				if(!empty($cookie_params['cookie_samesite'])){
+					$opt['samesite'] = $cookie_params['cookie_samesite'];
+				}
+				session_set_cookie_params($opt);
 			}
 			
 			if(static::has_class_plugin('session_read')){
