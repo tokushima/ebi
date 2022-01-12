@@ -20,10 +20,14 @@ class XmlIterator implements \Iterator{
 		$this->length = $length;
 		$this->count = 0;
 	}
-	public function key(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function key(){
 		return $this->tag->name();
 	}
-	public function current(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function current(){
 		$this->plain = substr($this->plain,0,$this->tag->cur()).substr($this->plain,$this->tag->cur() + strlen($this->tag->plain()));
 		$this->count++;
 		return $this->tag;
