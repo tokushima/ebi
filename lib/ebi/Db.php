@@ -181,16 +181,14 @@ class Db implements \Iterator{
 		$this->resultset_counter = 0;
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);
 	}
-	/**
-	 * @see \Iterator
-	 */
-	public function current(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function current(){
 		return $this->resultset;
 	}
-	/**
-	 * @see \Iterator
-	 */
-	public function key(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function key(){
 		return $this->resultset_counter++;
 	}
 	/**

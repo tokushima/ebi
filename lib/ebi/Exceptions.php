@@ -13,10 +13,14 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	public function rewind(): void{
 		$this->pos = 0;
 	}
-	public function current(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function current(){
 		return $this->messages[$this->pos]['exception'];
 	}
-	public function key(): mixed{
+
+	#[\ReturnTypeWillChange]
+	public function key(){
 		return $this->messages[$this->pos]['group'];
 	}
 	public function valid(): bool{
