@@ -49,7 +49,7 @@ class Request extends \ebi\Request{
 	/**
 	 * 指定のキーが存在するか
 	 * @param string $n
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_sessions($n){
 		return $this->sess->is_vars($n);
@@ -66,7 +66,7 @@ class Request extends \ebi\Request{
 				/**
 				 * remember meの条件処理
 				 * @param \ebi\flow\Request $arg1
-				 * @return boolean ログイン成功時にはtrueを返す
+				 * @return bool ログイン成功時にはtrueを返す
 				 */
 				if($this->call_object_plugin_funcs('remember_me',$this) === true){
 					$this->after_user_login();
@@ -210,7 +210,7 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * ログイン済みか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_user_logged_in(){
 		return ($this->in_sessions($this->login_id) !== null);
@@ -244,7 +244,7 @@ class Request extends \ebi\Request{
 			/**
 			 * ログイン条件処理
 			 * @param \ebi\flow\Request $arg1
-			 * @return boolean ログイン成功時にはtrueを返す
+			 * @return bool ログイン成功時にはtrueを返す
 			 */
 			if($this->call_object_plugin_func('login_condition',$this) === true){
 				$this->after_user_login();

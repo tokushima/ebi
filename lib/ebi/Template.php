@@ -4,7 +4,7 @@ namespace ebi;
  * テンプレートを処理する
  * @author tokushima
  * @var mixed{} $vars バインドされる変数
- * @var boolean $secure http://をhttps://に置換するか
+ * @var bool $secure http://をhttps://に置換するか
  * @var string $media_url メディアファイルへのURLの基点
  */
 class Template{
@@ -18,11 +18,11 @@ class Template{
 	
 	/**
 	 * メディアURLをhttpsにする
-	 * @param boolean $bool
+	 * @param bool $bool
 	 * @return \ebi\Template
 	 */
 	public function secure($bool){
-		$this->secure = (boolean)$bool;
+		$this->secure = (bool)$bool;
 		return $this;
 	}
 	/**

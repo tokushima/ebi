@@ -34,19 +34,19 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * 値が無い場合は閉じを省略する
-	 * @param boolean
-	 * @return boolean
+	 * @param bool
+	 * @return bool
 	 */
 	public function close_empty($bool){
-		$this->close_empty = (boolean)$bool;
+		$this->close_empty = (bool)$bool;
 		return $this;
 	}
 	/**
 	 * エスケープするか
-	 * @param boolean $bool
+	 * @param bool $bool
 	 */
 	public function escape($bool){
-		$this->esc = (boolean)$bool;
+		$this->esc = (bool)$bool;
 		return $this;
 	}
 	/**
@@ -58,7 +58,7 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * 子要素検索時のカーソル
-	 * @return integer
+	 * @return int
 	 */
 	public function cur(){
 		return $this->pos;
@@ -104,7 +104,7 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * 値を設定、取得する
 	 * @param mixed
-	 * @param boolean
+	 * @param bool
 	 * @return string
 	 */
 	public function value(){
@@ -152,7 +152,7 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * アトリビュートがあるか
 	 * @param string $name
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_attr($name){
 		return array_key_exists($name,$this->attr);
@@ -175,7 +175,7 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * XML文字列を返す
 	 * @param string $encoding
-	 * @param boolean $format
+	 * @param bool $format
 	 * @param string $indent_str
 	 */
 	public function get($encoding=null,$format=false,$indent_str="\t"){
@@ -203,8 +203,8 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * 検索する
 	 * @param string $path
-	 * @param integer $offset
-	 * @param integer $length
+	 * @param int $offset
+	 * @param int $length
 	 * @return \ebi\XmlIterator
 	 */
 	public function find($path=null,$offset=0,$length=0){
@@ -229,9 +229,9 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * 対象の件数
 	 * @param string $name
-	 * @param integer $offset
-	 * @param integer $length
-	 * @return number
+	 * @param int $offset
+	 * @param int $length
+	 * @return int
 	 */
 	public function find_count($name,$offset=0,$length=0){
 		$cnt = 0;
@@ -244,7 +244,7 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * １件取得する
 	 * @param string $path
-	 * @param integer $offset
+	 * @param int $offset
 	 * @return $this
 	 */
 	public function find_get($path,$offset=0){
@@ -420,7 +420,7 @@ class Xml implements \IteratorAggregate{
 	 * 整形する
 	 * @param string $src XML文字列
 	 * @param string $indent_str インデント文字
-	 * @param integer $depth インデントの初期値
+	 * @param int $depth インデントの初期値
 	 * @return string
 	 */
 	public static function format($src,$indent_str="\t",$depth=0){

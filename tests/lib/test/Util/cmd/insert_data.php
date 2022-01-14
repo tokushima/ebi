@@ -1,6 +1,6 @@
 <?php
 /**
- * @param integer $n @['init'=>100]
+ * @param int $n @['init'=>100]
  */
 
 \cmdman\Std::println();

@@ -406,7 +406,7 @@ class Dt{
 							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
 						}
 						$info->set_opt('short_name',$short_name);
-						$info->set_opt('has_mail',(boolean)preg_match('/Dt::find_mail/',$src));
+						$info->set_opt('has_mail',(bool)preg_match('/Dt::find_mail/',$src));
 						
 						$test_list[$info->name()] = $info;
 					}
@@ -467,7 +467,7 @@ class Dt{
 	/**
 	 * Mail Templates
 	 * @context \ebi\Dt\DocInfo[] $template_list
-	 * @context boolean $is_test
+	 * @context bool $is_test
 	 * @automap
 	 */
 	public function mail_list(){

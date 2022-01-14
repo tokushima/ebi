@@ -39,15 +39,15 @@ class Browser{
 	}
 	/**
 	 * 最大リダイレクト回数を設定
-	 * @param integer $redirect_max
+	 * @param int $redirect_max
 	 */
 	public function redirect_max($redirect_max){
-		$this->redirect_max = (integer)$redirect_max;
+		$this->redirect_max = (int)$redirect_max;
 		return $this;
 	}
 	/**
 	 * タイムアウト時間を設定
-	 * @param integer $timeout
+	 * @param int $timeout
 	 * @return $this
 	 */
 	public function timeout($timeout){
@@ -96,7 +96,7 @@ class Browser{
 	
 	/**
 	 * SSL証明書を確認する
-	 * @param boolean $bool
+	 * @param bool $bool
 	 * @return $this
 	 */
 	public function ssl_verify($bool){
@@ -196,7 +196,7 @@ class Browser{
 	}
 	/**
 	 * 結果のステータスを取得
-	 * @return integer
+	 * @return int
 	 */
 	public function status(){
 		return empty($this->status) ? null : (int)$this->status;
@@ -292,7 +292,7 @@ class Browser{
 	 * ヘッダデータを書き込む処理
 	 * @param resource $resource
 	 * @param string $data
-	 * @return number
+	 * @return int
 	 */
 	private function callback_head($resource,$data){
 		$this->head .= $data;
@@ -302,7 +302,7 @@ class Browser{
 	 * データを書き込む処理
 	 * @param resource $resource
 	 * @param string $data
-	 * @return number
+	 * @return int
 	 */
 	private function callback_body($resource,$data){
 		$this->body .= $data;
@@ -414,7 +414,7 @@ class Browser{
 			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
 		}
 		/**
-		 * @param boolean $ssl_verify SSL証明書を確認するかの真偽値
+		 * @param bool $ssl_verify SSL証明書を確認するかの真偽値
 		 */
 		if($this->ssl_verify === false || \ebi\Conf::get('ssl-verify',true) === false){
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);
@@ -592,7 +592,7 @@ class Browser{
 	/**
 	 * FORMタグからform.action, form.method, varsを取得する
 	 * @param mixed $name form.name | form[index]
-	 * @param boolean $set varsにセットする
+	 * @param bool $set varsにセットする
 	 * @throws \ebi\exception\NotFoundException
 	 * @return array action, method, vars
 	 */

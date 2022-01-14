@@ -23,7 +23,7 @@ class HttpAuthorizationBearer{
 	
 	/**
 	 * create token (token68)
-	 * @param integer $length
+	 * @param int $length
 	 * @return string
 	 */
 	public static function create_token($length){
@@ -32,7 +32,7 @@ class HttpAuthorizationBearer{
 	
 	/**
 	 * エラーヘッダ
-	 * @param integer $statuscode
+	 * @param int $statuscode
 	 * @param string $realm
 	 * @param string $description
 	 */

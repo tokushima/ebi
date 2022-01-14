@@ -10,11 +10,11 @@ class MysqlUnbufferedConnector extends \ebi\MysqlConnector{
 	/**
 	 * @param string $name
 	 * @param string $host
-	 * @param number $port
+	 * @param int $port
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
-	 * @param boolean $autocommit
+	 * @param bool $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_mysql')){

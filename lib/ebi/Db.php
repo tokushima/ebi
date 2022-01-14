@@ -51,7 +51,7 @@ class Db implements \Iterator{
 		}
 		if(self::$autocommit === null){
 			/**
-			 * @param boolean $autocommit オートコミットを行うかの真偽値
+			 * @param bool $autocommit オートコミットを行うかの真偽値
 			 */
 			self::$autocommit = \ebi\Conf::get('autocommit',false);
 		}

@@ -18,7 +18,7 @@ class RequestPlugin{
 			
 			/**
 			 * 拡張で送信されるA
-			 * @param integer $abc 数値の変数A
+			 * @param int $abc 数値の変数A
 			 * @param string $def 文字列の変数A
 			 */
 			$mail->send_template('plugin/send.xml',$vars);
@@ -33,9 +33,9 @@ class RequestPlugin{
 			
 			/**
 			 * 拡張で送信されるB
-			 * @param integer $abc 数値の変数B
+			 * @param int $abc 数値の変数B
 			 * @param string $def 文字列の変数B
-			 * @param boolean $ghi 真偽値の変数B
+			 * @param bool $ghi 真偽値の変数B
 			 */
 			$mail->send_template('plugin/nosend.xml',$vars);
 		}

@@ -46,7 +46,7 @@ class Args{
 	/**
 	 * オプションが宣言されたか
 	 * @param string $name
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function has_opt($name){
 		if(!isset(self::$value)){

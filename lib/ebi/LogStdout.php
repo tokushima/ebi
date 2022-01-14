@@ -15,7 +15,7 @@ class LogStdout{
 		$msg = ((string)$log);
 		
 		/**
-		 * @param boolean $color 出力にカラーコードを適用する
+		 * @param bool $color 出力にカラーコードを適用する
 		 */
 		if(\ebi\Conf::get('color',true) === true){
 			

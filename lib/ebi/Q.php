@@ -122,7 +122,7 @@ class Q{
 	}
 	/**
 	 * ソート順がランダムか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_order_by_rand(){
 		if(empty($this->order_by)){
@@ -182,14 +182,14 @@ class Q{
 	}
 	/**
 	 * 条件が存在しない
-	 * @return boolean
+	 * @return bool
 	 */
 	public function none(){
 		return (empty($this->and_block) && empty($this->or_block));
 	}
 	/**
 	 * 条件ブロックか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_block(){
 		return ($this->type == self::AND_BLOCK || $this->type == self::OR_BLOCK);
@@ -197,7 +197,7 @@ class Q{
 	/**
 	 * 大文字小文字を区別しない
 	 * decbin(IGNORE)
-	 * @return boolean
+	 * @return bool
 	 */
 	public function ignore_case(){
 		return (!empty($this->param) && strlen($this->param) > 1 && substr($this->param,-2,1) === '1');
@@ -205,7 +205,7 @@ class Q{
 	/**
 	 * 否定式である
 	 * decbin(NOT)
-	 * @return boolean
+	 * @return bool
 	 */
 	public function not(){
 		return (!empty($this->param) && strlen($this->param) > 2 && substr($this->param,-3,1) === '1');
@@ -214,7 +214,7 @@ class Q{
 	 * column_str == value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function eq($column_str,$value,$param=null){
@@ -224,7 +224,7 @@ class Q{
 	 * column_str != value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function neq($column_str,$value,$param=null){
@@ -234,7 +234,7 @@ class Q{
 	 * column_str > value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function gt($column_str,$value,$param=null){
@@ -244,7 +244,7 @@ class Q{
 	 * column_str < value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function lt($column_str,$value,$param=null){
@@ -254,7 +254,7 @@ class Q{
 	 * column_str >= value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function gte($column_str,$value,$param=null){
@@ -264,7 +264,7 @@ class Q{
 	 * column_str <= value
 	 * @param string $column_str
 	 * @param string $value
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function lte($column_str,$value,$param=null){
@@ -274,7 +274,7 @@ class Q{
 	 * 前方一致
 	 * @param string $column_str
 	 * @param string $words
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function startswith($column_str,$words,$param=null){
@@ -288,7 +288,7 @@ class Q{
 	 * 後方一致
 	 * @param string $column_str
 	 * @param string $words
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function endswith($column_str,$words,$param=null){
@@ -302,7 +302,7 @@ class Q{
 	 * 部分一致
 	 * @param string $column_str
 	 * @param string $words
-	 * @param integer $param
+	 * @param int $param
 	 * @return \ebi\Q
 	 */
 	public static function contains($column_str,$words,$param=null){
@@ -316,7 +316,7 @@ class Q{
 	 * in
 	 * @param string $column_str 指定のプロパティ名
 	 * @param string[] $words 絞り込み文字列
-	 * @param integer $param 
+	 * @param int $param 
 	 * @return \ebi\Q
 	 */
 	public static function in($column_str,$words,$param=null){

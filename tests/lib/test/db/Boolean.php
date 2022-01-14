@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var boolean $value
+ * @var bool $value
  * @author tokushima
  *
  */

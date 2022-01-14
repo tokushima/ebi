@@ -7,7 +7,7 @@ namespace ebi;
  * @var string $level ログのレベル
  * @var timestamp $time 発生時間
  * @var string $file 発生したファイル名
- * @var integer $line 発生した行
+ * @var int $line 発生した行
  * @var mixed $message 内容
  */
 class Log{

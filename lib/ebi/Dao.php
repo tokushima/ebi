@@ -412,7 +412,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 結果配列から値を自身にセットする
 	 * @param $resultset array
-	 * @return integer
+	 * @return int
 	 */
 	protected function cast_resultset($resultset){
 		foreach($resultset as $alias => $value){
@@ -577,7 +577,7 @@ abstract class Dao extends \ebi\Obj{
 	private static function exec_aggregator_result_cast($dao,$target_name,$value,$cast){
 		switch($cast){
  			case 'float': return (float)$value;
- 			case 'integer': return (int)$value;
+ 			case 'int': return (int)$value;
 		}
 		$dao->{$target_name}($value);
 		return $dao->{$target_name}();
@@ -608,18 +608,18 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * カウントを取得する
-	 * @paaram string $target_name 対象となるプロパティ
-	 * @return integer
+	 * @param string $target_name 対象となるプロパティ
+	 * @return int
 	 */
 	public static function find_count($target_name=null){
 		$args = func_get_args();
-		return (int)static::exec_aggregator('count',$target_name,$args,'integer');
+		return (int)static::exec_aggregator('count',$target_name,$args,'int');
 	}
 	/**
 	 * グルーピングしてカウントを取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return integer{}
+	 * @return int{}
 	 */
 	public static function find_count_by($target_name,$gorup_name){
 		$args = func_get_args();
@@ -628,7 +628,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 合計を取得する
 	 * @param string $target_name 対象となるプロパティ
-	 * @return number
+	 * @return float
 	 */
 	public static function find_sum($target_name){
 		$args = func_get_args();
@@ -638,7 +638,7 @@ abstract class Dao extends \ebi\Obj{
 	 * グルーピングした合計を取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return integer{}
+	 * @return int{}
 	 */
 	public static function find_sum_by($target_name,$gorup_name){
 		$args = func_get_args();
@@ -648,7 +648,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 最大値を取得する
 	 *
 	 * @param string $target_name 対象となるプロパティ
-	 * @return number
+	 * @return float
 	 */
 	public static function find_max($target_name){
 		$args = func_get_args();
@@ -658,7 +658,7 @@ abstract class Dao extends \ebi\Obj{
 	 * グルーピングして最大値を取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return number
+	 * @return float
 	 */
 	public static function find_max_by($target_name,$gorup_name){
 		$args = func_get_args();
@@ -668,7 +668,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 最小値を取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return number
+	 * @return float
 	 */
 	public static function find_min($target_name){
 		$args = func_get_args();
@@ -678,7 +678,7 @@ abstract class Dao extends \ebi\Obj{
 	 * グルーピングして最小値を取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * return integer{}
+	 * @return int{}
 	 */
 	public static function find_min_by($target_name,$gorup_name){
 		$args = func_get_args();
@@ -687,7 +687,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 平均を取得する
 	 * @param string $target_name 対象となるプロパティ
-	 * @return number
+	 * @return float
 	 */
 	public static function find_avg($target_name){
 		$args = func_get_args();
@@ -697,7 +697,7 @@ abstract class Dao extends \ebi\Obj{
 	 * グルーピングして平均を取得する
 	 * @param string $target_name 対象となるプロパティ
 	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return number{}
+	 * @return float{}
 	 */
 	public static function find_avg_by($target_name,$gorup_name){
 		$args = func_get_args();
@@ -871,7 +871,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 条件により更新する
 	 * before/after/verifyは実行されない
-	 * @return integer 実行した件数
+	 * @return int 実行した件数
 	 */
 	public static function find_update(self $obj){
 		if(!($obj instanceof static)){
@@ -902,7 +902,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 条件により削除する
 	 * before/after/verifyは実行されない
-	 * @return integer 実行した件数
+	 * @return int 実行した件数
 	 */
 	public static function find_delete(){
 		$args = func_get_args();
@@ -936,7 +936,7 @@ abstract class Dao extends \ebi\Obj{
 	 * auto_code_addアノテーションで呼ばれる
 	 * 
 	 * @param string $prop_name
-	 * @param integer $size
+	 * @param int $size
 	 * @return string 生成されたユニークコード
 	 */
 	public function set_unique_code($prop_name,$size=null){
@@ -1179,7 +1179,7 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * テーブルの作成
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function create_table(){
 		$dao = new static();

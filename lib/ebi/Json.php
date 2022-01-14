@@ -41,8 +41,8 @@ class Json{
 	/**
 	 * 値を JSON 形式にして返す
 	 * @param mixed $val
-	 * @param boolean $pretty_print
-	 * @param boolean $unescaped_unicode
+	 * @param bool $pretty_print
+	 * @param bool $unescaped_unicode
 	 * @return string
 	 */
 	public static function encode($val,$pretty_print=false,$unescaped_unicode=false){

@@ -21,12 +21,12 @@ class Cors{
 		$origin = \ebi\Conf::get('origin');
 		
 		/**
-		 * @param integer $max_age プリフライトの応答をキャッシュする秒数
+		 * @param int $max_age プリフライトの応答をキャッシュする秒数
 		 */
 		$max_age = (int)\ebi\Conf::get('max_age',0);
 		
 		/**
-		 * @param boolean $debug ORIGINを常に許可する
+		 * @param bool $debug ORIGINを常に許可する
 		 */
 		if(empty($origin) && \ebi\Conf::get('debug',false) === true){
 			$origin = [$request_origin];

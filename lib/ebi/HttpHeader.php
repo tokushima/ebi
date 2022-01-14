@@ -10,8 +10,8 @@ class HttpHeader{
 
 	/**
 	 * statusを出力する
-	 * @param integer $code
-	 * @return integer
+	 * @param int $code
+	 * @return int
 	 */
 	public static function send_status($code){
 		if(!isset(self::$send_status)){
@@ -23,7 +23,7 @@ class HttpHeader{
 	
 	/**
 	 * キャッシュを指示する
-	 * @param integer $expires キャッシュさせる秒数
+	 * @param int $expires キャッシュさせる秒数
 	 */
 	public static function send_cache($expires){
 		self::send('Last-Modified',gmdate('D, d M Y H:i:s T',time() - $expires));
@@ -51,7 +51,7 @@ class HttpHeader{
 	}
 	/**
 	 * HTTPステータスを返す
-	 * @param integer $statuscode 出力したいステータスコード
+	 * @param int $statuscode 出力したいステータスコード
 	 */
 	public static function status_string($statuscode){
 		switch($statuscode){

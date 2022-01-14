@@ -10,12 +10,12 @@ class Conf{
 	
 	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
-			[,,$d] = debug_backtrace(false);
-			
-			if(!array_key_exists('class',$d)){
+			$trace = debug_backtrace(false);
+
+			if(!array_key_exists('class', $trace[2] ?? [])){
 				throw new \ebi\exception\BadMethodCallException('is not allowed');
 			}
-			return [$d['class'],$key];
+			return [$trace[2]['class'] ?? [], $key];
 		}
 		[$class_name, $key] = explode('@',$key,2);
 		return [$class_name,$key];
@@ -63,7 +63,7 @@ class Conf{
 	 * 定義されているか
 	 * @param string $class_name
 	 * @param string $key
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function exists($class_name,$key){
 		return (
@@ -157,7 +157,7 @@ class Conf{
 	/**
 	 * 現在のアプリケーションモードがモードに所属しているか
 	 * @param string $mode アプリケーションモード、　グループを指定する場合は「@グループ名」
-	 * @return  boolean
+	 * @return bool
 	 */
 	public static function in_mode($mode){
 		/**
@@ -228,7 +228,7 @@ class Conf{
 	 */
 	public static function cookie_params(){
 		/**
-		 * @param integer $val ブラウザに送信するクッキーの有効期間(秒)
+		 * @param int $val ブラウザに送信するクッキーの有効期間(秒)
 		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
 		 * デフォルトは、0 です
 		 */
@@ -247,7 +247,7 @@ class Conf{
 		
 		/**
 		 * デフォルトは、false です
-		 * @param boolean $val セキュアな接続を通じてのみCookieを送信できるか
+		 * @param bool $val セキュアな接続を通じてのみCookieを送信できるか
 		 */
 		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
@@ -265,7 +265,7 @@ class Conf{
 		$session_name = self::get_self_conf_get('session_name','SID');
 		
 		/**
-		 * @param integer $val ブラウザに送信するセッションIDの有効期間(秒)
+		 * @param int $val ブラウザに送信するセッションIDの有効期間(秒)
 		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
 		 * デフォルトは、0 です
 		 */
@@ -284,7 +284,7 @@ class Conf{
 		}
 		
 		/**
-		 * @param integer $val セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
+		 * @param int $val セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
 		 */
 		$session_sid_length = self::get_self_conf_get('session_sid_length');
 		
@@ -334,7 +334,7 @@ class Conf{
 		
 	/**
 	 * スクリプトが確保できる最大メモリを設定
-	 * @param integer $mem memory size (MB)
+	 * @param int $mem memory size (MB)
 	 */
 	public static function memory_limit($mem){
 		ini_set('memory_limit',($mem > 0) ? $mem.'M' : -1);

@@ -39,7 +39,7 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->user_id($req->user()->id());
 			}
 			/**
-			 * @param integer $lifetime クッキーの保存期間
+			 * @param int $lifetime クッキーの保存期間
 			 */
 			$expire = time() + \ebi\Conf::get('lifetime',5184000); // 60day
 			$codebase = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#%&@.';

@@ -28,7 +28,7 @@ class DocParam extends \ebi\Obj{
 	}
 	
 	public function is_type_class(){
-		return (boolean)preg_match('/[A-Z]/',$this->type);
+		return (bool)preg_match('/[A-Z]/',$this->type);
 	}
 	public function fm_type(){
 		if(preg_match('/[A-Z]/',$this->type)){

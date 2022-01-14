@@ -8,21 +8,21 @@ namespace ebi;
 class Image{
 	/**
 	 * 縦向き
-	 * @var integer
+	 * @var int
 	 */
 	const ORIENTATION_PORTRAIT = 1;
 	/**
 	 * 横向き
-	 * @var integer
+	 * @var int
 	 */
 	const ORIENTATION_LANDSCAPE = 2;
 	/**
 	 * 正方形
-	 * @var integer
+	 * @var int
 	 */
 	const ORIENTATION_SQUARE = 3;
 	
-	const CHANNELS_GLAY = 1;
+	const CHANNELS_GRAY = 1;
 	const CHANNELS_RGB = 3;
 	const CHANNELS_CMYK = 4;
 	
@@ -100,8 +100,8 @@ class Image{
 
 	/**
 	 * 塗りつぶした矩形を作成する
-	 * @param integer $width
-	 * @param integer $height
+	 * @param int $width
+	 * @param int $height
 	 * @param string $color #FFFFFF, nullの場合は透明
 	 * @return \ebi\Image
 	 */
@@ -134,14 +134,14 @@ class Image{
 	
 	/**
 	 * 矩形を描画する
-	 * @param integer $x
-	 * @param integer $y
-	 * @param integer $width
-	 * @param integer $height
+	 * @param int $x
+	 * @param int $y
+	 * @param int $width
+	 * @param int $height
 	 * @param string $color
-	 * @param integer $thickness 線の太さ (塗り潰し時無効)
-	 * @param boolean $fill 塗りつぶす
-	 * @param integer $alpha 0〜127 (透明) PNGでのみ有効
+	 * @param int $thickness 線の太さ (塗り潰し時無効)
+	 * @param bool$fill 塗りつぶす
+	 * @param int $alpha 0〜127 (透明) PNGでのみ有効
 	 * @return \ebi\Image
 	 */
 	public function rectangle($x,$y,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
@@ -159,14 +159,14 @@ class Image{
 	
 	/**
 	 * 楕円を描画する
-	 * @param integer $cx 中心点x
-	 * @param integer $cy 中心点y
-	 * @param integer $width
-	 * @param integer $height
+	 * @param int $cx 中心点x
+	 * @param int $cy 中心点y
+	 * @param int $width
+	 * @param int $height
 	 * @param string $color
-	 * @param number $thickness 線の太さ (塗り潰し時無効)
-	 * @param boolean $fill 塗りつぶす
-	 * @param number $alpha 0〜127 (透明) PNGでのみ有効
+	 * @param float $thickness 線の太さ (塗り潰し時無効)
+	 * @param bool $fill 塗りつぶす
+	 * @param float $alpha 0〜127 (透明) PNGでのみ有効
 	 * @return \ebi\Image
 	 */
 	public function ellipse($cx,$cy,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
@@ -189,13 +189,13 @@ class Image{
 	
 	/**
 	 * 線を描画
-	 * @param integer $sx 始点x
-	 * @param integer $sy 始点y
-	 * @param integer $ex 終点x
-	 * @param integer $ey 終点y
+	 * @param int $sx 始点x
+	 * @param int $sy 始点y
+	 * @param int $ex 終点x
+	 * @param int $ey 終点y
 	 * @param string $color
-	 * @param number $thickness 線の太さ (塗り潰し時無効)
-	 * @param number $alpha 0〜127 (透明) PNGでのみ有効
+	 * @param float $thickness 線の太さ (塗り潰し時無効)
+	 * @param float $alpha 0〜127 (透明) PNGでのみ有効
 	 * @return \ebi\Image
 	 */
 	public function line($sx,$sy,$ex,$ey,$color,$thickness=1,$alpha=0){
@@ -210,7 +210,7 @@ class Image{
 	/**
 	 * 画像にフィルタを適用する
 	 * 
-	 * filtertype
+	 * filter_type
 	 *  IMG_FILTER_NEGATE: 色反転
 	 *  IMG_FILTER_GRAYSCALE: グレイスケール
 	 *  IMG_FILTER_EDGEDETECT: エッジの強調
@@ -227,30 +227,30 @@ class Image{
 	 *  
 	 *  IMG_FILTER_COLORIZE: カラーバランス, arg1(R)=0〜255, arg2(G)=0〜255, arg3(B)=0〜255, arg4(Alpha)=0〜127 
 	 *  
-	 * @param integer $filtertype IMG_FILTER_*
-	 * @param integer $arg1
+	 * @param int $filter_type IMG_FILTER_*
+	 * @param int $arg1
 	 * @param mixed $arg2 IMG_FILTER_PIXELATE: boolean, IMG_FILTER_COLORIZE: integer
-	 * @param integer $arg3
-	 * @param integer $arg4
+	 * @param int $arg3
+	 * @param int $arg4
 	 * @return \ebi\Image
 	 * 
 	 * @see http://php.net/manual/ja/function.imagefilter.php
 	 */
-	public function filter($filtertype,$arg1=0,$arg2=0,$arg3=0,$arg4=0){
-		switch($filtertype){
+	public function filter($filter_type,$arg1=0,$arg2=0,$arg3=0,$arg4=0){
+		switch($filter_type){
 			case IMG_FILTER_BRIGHTNESS:
 			case IMG_FILTER_CONTRAST:
 			case IMG_FILTER_SMOOTH:
-				imagefilter($this->canvas,$filtertype,$arg1);
+				imagefilter($this->canvas,$filter_type,$arg1);
 				break;
 			case IMG_FILTER_PIXELATE:
-				imagefilter($this->canvas,$filtertype,$arg1,\ebi\Util::is_true($arg2));
+				imagefilter($this->canvas,$filter_type,$arg1,\ebi\Util::is_true($arg2));
 				break;
 			case IMG_FILTER_COLORIZE:
-				imagefilter($this->canvas,$filtertype,$arg1,$arg2,$arg3,$arg4);
+				imagefilter($this->canvas,$filter_type,$arg1,$arg2,$arg3,$arg4);
 				break;
 			default:
-				imagefilter($this->canvas,$filtertype);
+				imagefilter($this->canvas,$filter_type);
 		}
 		return $this;
 	}
@@ -345,8 +345,8 @@ class Image{
 	
 	/**
 	 * 指定した幅と高さに合うようにリサイズとトリミングをする
-	 * @param integer $width
-	 * @param integer $height
+	 * @param int $width
+	 * @param int $height
 	 */
 	public function crop_resize($width,$height){
 		$this->resize($width,$height,true)->crop($width, $height);
@@ -354,10 +354,10 @@ class Image{
 	}
 	/**
 	 * 画像の一部を抽出する
-	 * @param integer $width 抽出する幅
-	 * @param integer $height 抽出する高さ
-	 * @param integer $x 抽出する領域の左上の X 座標
-	 * @param integer $y 抽出する領域の左上の Y 座標
+	 * @param int $width 抽出する幅
+	 * @param int $height 抽出する高さ
+	 * @param int $x 抽出する領域の左上の X 座標
+	 * @param int $y 抽出する領域の左上の Y 座標
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
@@ -392,7 +392,7 @@ class Image{
 	}
 	/**
 	 * サイズ
-	 * @return integer[] width,height
+	 * @return int[] width,height
 	 */
 	public function get_size(){
 		$w = imagesx($this->canvas);
@@ -403,9 +403,9 @@ class Image{
 	
 	/**
 	 * 画像のサイズを変更する
-	 * @param integer $width 変更後の幅
-	 * @param integer $height 変更後の高さ
-	 * @param boolean $aspect_ratio アスペクト比を維持する
+	 * @param int $width 変更後の幅
+	 * @param int $height 変更後の高さ
+	 * @param bool $aspect_ratio アスペクト比を維持する
 	 * @throws \ebi\exception\ImageException
 	 * @return \ebi\Image
 	 */
@@ -430,7 +430,7 @@ class Image{
 	
 	/**
 	 * 回転 (右回り)
-	 * @param integer $angle 角度
+	 * @param int $angle 角度
 	 * @param string $background_color
 	 * @return \ebi\Image
 	 */
@@ -447,13 +447,13 @@ class Image{
 	
 	/**
 	 * テキストを画像に書き込む
-	 * @param integer $x 左上座標
-	 * @param integer $y　左上座標
+	 * @param int $x 左上座標
+	 * @param int $y　左上座標
 	 * @param string $font_color #FFFFFF
-	 * @param number $font_point_size フォントサイズ
+	 * @param float $font_point_size フォントサイズ
 	 * @param string $font_name set_fontで指定したフォント名
 	 * @param string $text テキスト
-	 * @param number $angle 回転軸は左下
+	 * @param float $angle 回転軸は左下
 	 * @return \ebi\Image
 	 */
 	public function text($x,$y,$font_color,$font_point_size,$font_name,$text,$angle=0){
@@ -477,12 +477,12 @@ class Image{
 	
 	/**
 	 * テキストの幅と高さ
-	 * @param number $font_point_size フォントサイズ
+	 * @param float $font_point_size フォントサイズ
 	 * @param string $font_name フォント名
 	 * @param string $text テキスト
-	 * @param number $angle 回転軸は左下
+	 * @param float $angle 回転軸は左下
 	 * @throws \ebi\exception\UndefinedException
-	 * @return number[] [width,height]
+	 * @return float[] [width,height]
 	 */
 	public function get_text_size($font_point_size,$font_name,$text,$angle=0){
 		if(!isset(self::$font_path[$font_name])){
@@ -506,10 +506,10 @@ class Image{
 	 * 画像を結合する
 	 * $pctを指定した場合はアルファ透過が有効になりPNGの透過情報が失われる
 	 * 
-	 * @param integer $x
-	 * @param integer $y
+	 * @param int $x
+	 * @param int $y
 	 * @param \ebi\Image $img
-	 * @param integer $pct 0〜100
+	 * @param int $pct 0〜100
 	 * @return \ebi\Image
 	 */
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
@@ -526,7 +526,7 @@ class Image{
 	/**
 	 * カラーモードからRGB（10進数）を返す
 	 * @param string $color_code
-	 * @return integer[] R,G,B
+	 * @return int[] R,G,B
 	 */
 	private static function color2rgb($color_code){
 		if(substr($color_code,0,1) == '#'){
@@ -546,7 +546,7 @@ class Image{
 		
 	/**
 	 * 画像の向き
-	 * @return  integer
+	 * @return int
 	 */
 	public function get_orientation(){
 		[$w, $h] = $this->get_size();
@@ -578,13 +578,13 @@ class Image{
 	
 	/**
 	 * 画像の情報
-	 *  integer width
-	 *  integer height
-	 *  integer orientation 画像の向き 1: PORTRAIT, 2: LANDSCAPE, 3: SQUARE
+	 *  int width
+	 *  int height
+	 *  int orientation 画像の向き 1: PORTRAIT, 2: LANDSCAPE, 3: SQUARE
 	 *  string mime 画像形式のMIMEタイプ
-	 *  integer bits
-	 *  integer channels 1: GRAY, 3: RGB, 4: CMYK
-	 *  boolean broken 画像ファイルとして破損しているか
+	 *  int bits
+	 *  int channels 1: GRAY, 3: RGB, 4: CMYK
+	 *  bool broken 画像ファイルとして破損しているか
 	 *  
 	 * @param string $filename
 	 * @return mixed{}
@@ -638,10 +638,10 @@ class Image{
 	
 	/**
 	 * 矩形(SVG)
-	 * @param integer $width (px)
-	 * @param integer $height (px)
+	 * @param int $width (px)
+	 * @param int $height (px)
 	 * @param string $color
-	 * @param number $opacity 0..1
+	 * @param float $opacity 0..1
 	 * @return string
 	 */
 	public static function get_rect_svg($width,$height,$color='#000000',$opacity=1){
@@ -657,12 +657,12 @@ class Image{
 	
 	/**
 	 * 拡大率
-	 * @param number $a_width
-	 * @param number $a_height
-	 * @param number $b_width
-	 * @param number $b_height
-	 * @param boolean $aspect_ratio アスペクト比を維持する
-	 * @return number
+	 * @param float $a_width
+	 * @param float $a_height
+	 * @param float $b_width
+	 * @param float $b_height
+	 * @param bool $aspect_ratio アスペクト比を維持する
+	 * @return float
 	 */
 	private static function magnification($a_width,$a_height,$b_width,$b_height=null,$aspect_ratio=true){
 		$rw = empty($b_width) ? 1 : $b_width;

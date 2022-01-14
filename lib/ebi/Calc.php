@@ -86,9 +86,9 @@ class Calc{
 	
 	/**
 	 * pixel -> dpi
-	 * @param integer $px
+	 * @param int $px
 	 * @param float $mm
-	 * @param integer $precision;
+	 * @param int $precision;
 	 * @return float
 	 */
 	public static function px2dpi($px,$mm,$precision=0){
@@ -99,7 +99,7 @@ class Calc{
 	/**
 	 * サイズ width, height (px)
 	 * @param string $type
-	 * @oaram integer $dpi
+	 * @param int $dpi
 	 * @throws \ebi\exception\InvalidArgumentException
 	 * @return float[]
 	 */

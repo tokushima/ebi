@@ -271,7 +271,7 @@ class Mail{
 	
 	/**
 	 * Get message 
-	 * @param boolean $eol
+	 * @param bool $eol
 	 * @return string
 	 */
 	public function manuscript($eol=true){
@@ -290,7 +290,7 @@ class Mail{
 	 * Send mail
 	 * @param string $subject
 	 * @param string $message
-	 * @return boolean
+	 * @return bool
 	 */
 	public function send($subject=null,$message=null){
 		if($subject !== null){

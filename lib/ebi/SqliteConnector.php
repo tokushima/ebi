@@ -11,11 +11,11 @@ class SqliteConnector extends \ebi\DbConnector{
 	/**
 	 * @param string $name
 	 * @param string $host
-	 * @param number $port
+	 * @param int $port
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
-	 * @param boolean $autocommit
+	 * @param bool $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		unset($port,$user,$password,$sock);
@@ -72,6 +72,7 @@ class SqliteConnector extends \ebi\DbConnector{
 						$value = strtotime($value);
 					}
 					return date('Y-m-d',$value);
+				case 'bool':
 				case 'boolean':
 					return (int)$value;
 			}

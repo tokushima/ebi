@@ -224,7 +224,7 @@ class Flow{
 		self::$workgroup = (array_key_exists('workgroup',$selfmap)) ? $selfmap['workgroup'] : basename($entry_file,'.php');
 		
 		/**
-		 * @param boolean $val HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
+		 * @param bool $val HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
 		 */
 		$conf_secure = \ebi\Conf::get('secure');
 		$map_secure = (array_key_exists('secure',$selfmap) && $selfmap['secure'] === true);
@@ -300,7 +300,7 @@ class Flow{
 				$result_vars = $plugins = [];
 				$accept_debug = (
 					/**
-					 * @param boolean $val Accept: application/debug を有効にする
+					 * @param bool $val Accept: application/debug を有効にする
 					 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
 					 * テンプレートやリダイレクト、出力プラグインを無視する
 					 */
@@ -543,7 +543,7 @@ class Flow{
 					}
 					
 					/**
-					 *  @param boolean $val Error Json出力時にException traceも出力するフラグ
+					 *  @param bool $val Error Json出力時にException traceも出力するフラグ
 					 */
 					$trace = \ebi\Conf::get('exception_trace',false);
 					$message = [];

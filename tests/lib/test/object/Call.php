@@ -2,13 +2,13 @@
 namespace test\object;
 /**
  * 
- * @var number $aaa
- * @var number[] $bbb
+ * @var int $aaa
+ * @var int[] $bbb
  * @var string{} $ccc
  * @var timestamp $eee
  * @var string $fff @['column'=>'Acol','table'=>'BTbl']
  * @var string $ggg @['set'=>false]
- * @var boolean $hhh
+ * @var bool $hhh
  * 
  * 
  */

@@ -80,7 +80,7 @@ class FlowInvalid implements \Iterator{
 	/**
 	 * Exceptionが追加されているか
 	 * @param string $group グループ名
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function has($group=null,$type=null){
 		if(self::$self === null) return false;

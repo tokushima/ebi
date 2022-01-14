@@ -67,7 +67,7 @@ class Util{
 	 * JSONを書き出す
 	 * @param string $filename
 	 * @param mixed $vars
-	 * @param boolean $format JSONを整形するか
+	 * @param bool $format JSONを整形するか
 	 */
 	public static function file_write_json($filename,$vars,$format=false){
 		self::file_write($filename,\ebi\Json::encode($vars,$format));
@@ -95,7 +95,7 @@ class Util{
 	 * ファイルに追記する
 	 * @param string $filename ファイルパス
 	 * @param string $src 追加する内容
-	 * @param integer $dir_permission モード　8進数(0644)
+	 * @param int $dir_permission モード　8進数(0644)
 	 */
 	public static function file_append($filename,$src=null,$lock=true){
 		self::mkdir(dirname($filename));
@@ -107,7 +107,7 @@ class Util{
 	/**
 	 * フォルダを作成する
 	 * @param string $source 作成するフォルダパス
-	 * @param integer $permission
+	 * @param int $permission
 	 */
 	public static function mkdir($source,$permission=0775){
 		$bool = true;
@@ -145,7 +145,7 @@ class Util{
 	 * 削除
 	 * $sourceがフォルダで$inc_selfがfalseの場合は$sourceフォルダ以下のみ削除
 	 * @param string $source 削除するパス
-	 * @param boolean $inc_self $sourceも削除するか
+	 * @param bool $inc_self $sourceも削除するか
 	 */
 	public static function rm($source,$inc_self=true){
 		if(is_dir($source)){
@@ -218,7 +218,7 @@ class Util{
 	/**
 	 * ディレクトリ内のイテレータ
 	 * @param string $directory  検索対象のファイルパス
-	 * @param boolean $recursive 階層を潜って取得するか
+	 * @param bool $recursive 階層を潜って取得するか
 	 * @param string $pattern 検索するパターンを表す文字列
 	 * @return \RecursiveDirectoryIterator
 	 */
@@ -300,8 +300,8 @@ class Util{
 	/**
 	 * パスの前後にスラッシュを追加／削除を行う
 	 * @param string $path ファイルパス
-	 * @param boolean $prefix 先頭にスラッシュを存在させるか
-	 * @param boolean $postfix 末尾にスラッシュを存在させるか
+	 * @param bool $prefix 先頭にスラッシュを存在させるか
+	 * @param bool $postfix 末尾にスラッシュを存在させるか
 	 * @return string
 	 */
 	public static function path_slash($path,$prefix,$postfix=null){
@@ -377,7 +377,7 @@ class Util{
 	 * 
 	 * @param string $time +2 month, -7 day, yesterday, today, tomorrow, first, last
 	 * @param mixed $date
-	 * @return number
+	 * @return int
 	 * @see http://jp2.php.net/manual/ja/datetime.formats.relative.php
 	 * @throws \ebi\exception\InvalidArgumentException 日付フォーマットが異常
 	 */
@@ -404,7 +404,7 @@ class Util{
 
 	/**
 	 * 次回の営業日
-	 * @return integer 次回の営業日のタイムスタンプ
+	 * @return int 次回の営業日のタイムスタンプ
 	 */
 	public static function next_business_day($base, $days, $holidays=[], $regular_holiday=[0,6]){
 		$d = $base;
@@ -422,7 +422,7 @@ class Util{
 	/**
 	 * 文字列を丸める
 	 * @param string $str 対象の文字列
-	 * @param integer $width 指定の幅
+	 * @param int $width 指定の幅
 	 * @param string $postfix 文字列がまるめられた場合に末尾に接続される文字列
 	 * @return string
 	 */
@@ -455,7 +455,7 @@ class Util{
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
 	 * @param  mixed $bool
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function is_true($bool){
 		foreach(func_get_args() as $arg){
@@ -512,7 +512,7 @@ class Util{
 	 * 指定のクラスと同階層にあるクラスの一覧
 	 * @param string $base_class 基点となるクラス名
 	 * @param string $parent_class_name 指定したサブクラスに属するクラスに絞り込む
-	 * @param boolean $recursive 階層を潜って取得するか
+	 * @param bool $recursive 階層を潜って取得するか
 	 * @return string[]
 	 */
 	public static function ls_classes($base_class,$parent_class_name=null,$recursive=false){
@@ -594,7 +594,7 @@ class Util{
 	 * 文字列を処理し数値配列を返す
 	 * @param string $str
 	 * @throws \ebi\exception\IllegalDataTypeException
-	 * @return number[]
+	 * @return int[]
 	 */
 	public static function parse_numbers($str){
 		$list = [];
@@ -625,7 +625,7 @@ class Util{
 	/**
 	 * 文字列を圧縮する
 	 * @param string $string
-	 * @param boolean $base64
+	 * @param bool $base64
 	 * @return string
 	 */
 	public static function compress($string,$base64=false){
@@ -635,7 +635,7 @@ class Util{
 	/**
 	 * 文字列を展開する
 	 * @param string $string
-	 * @param boolean $base64
+	 * @param bool $base64
 	 * @return string
 	 */
 	public static function uncompress($string,$base64=false){

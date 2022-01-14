@@ -139,8 +139,8 @@ class Command{
 	 * @param string $msg 入力待ちのメッセージ
 	 * @param string $default 入力が空だった場合のデフォルト値
 	 * @param string[] $choice 入力を選択式で求める
-	 * @param boolean $multiline 複数行の入力をまつ、終了は行頭.(ドット)
-	 * @param boolean $invisible 入力を非表示にする(Windowsでは非表示になりません)
+	 * @param bool $multiline 複数行の入力をまつ、終了は行頭.(ドット)
+	 * @param bool $invisible 入力を非表示にする(Windowsでは非表示になりません)
 	 * @return string
 	 */
 	public static function stdin($msg,$default=null,$choice=[],$multiline=false,$invisible=false){
@@ -167,7 +167,7 @@ class Command{
 	 * @param string $msg 入力待ちのメッセージ
 	 * @param string $default 入力が空だった場合のデフォルト値
 	 * @param string[] $choice 入力を選択式で求める
-	 * @param boolean $multiline 複数行の入力をまつ、終了は行頭.(ドット)
+	 * @param bool $multiline 複数行の入力をまつ、終了は行頭.(ドット)
 	 * @return string
 	 */
 	public static function stdin_invisible($msg,$default=null,$choice=[],$multiline=false){

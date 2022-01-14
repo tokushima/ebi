@@ -10,7 +10,7 @@ class Code{
 	 * コードから数値に変換する
 	 * @param string $codebase
 	 * @param string $code
-	 * @return integer
+	 * @return int
 	 */
 	public static function decode($codebase,$code){
 		$base = strlen($codebase);
@@ -26,7 +26,7 @@ class Code{
 	/**
 	 * 数値からコードに変換する
 	 * @param string $codebase
-	 * @param integer $num
+	 * @param int $num
 	 * @return string
 	 */
 	public static function encode($codebase,$num){
@@ -48,8 +48,8 @@ class Code{
 	/**
 	 * 指定桁で作成できる最大値
 	 * @param string $codebase
-	 * @param integer $length
-	 * @return integer
+	 * @param int $length
+	 * @return int
 	 */
 	public static function max($codebase,$length){
 		return pow(strlen($codebase),$length)-1;
@@ -57,8 +57,8 @@ class Code{
 	/**
 	 * 指定桁を作成する場合の最小値
 	 * @param string $codebase
-	 * @param integer $length
-	 * @return integer
+	 * @param int $length
+	 * @return int
 	 */
 	public static function min($codebase,$length){
 		return pow(strlen($codebase),$length-1);
@@ -66,7 +66,7 @@ class Code{
 	/**
 	 * 指定桁でランダムに作成する
 	 * @param string $codebase
-	 * @param integer $length
+	 * @param int $length
 	 * @return string
 	 */
 	public static function rand($codebase,$length=1){
@@ -93,7 +93,7 @@ class Code{
 	
 	/**
 	 * パスワードの生成
-	 * @param integer $length
+	 * @param int $length
 	 * @return string
 	 */
 	public static function password($length=8){

@@ -7,8 +7,8 @@ class Std{
 	 * @param string $msg 入力待ちのメッセージ
 	 * @param string $default 入力が空だった場合のデフォルト値
 	 * @param string[] $choice 入力を選択式で求める
-	 * @param boolean $multiline 複数行の入力をまつ、終了は行頭.(ドット)
-	 * @param boolean $silently 入力を非表示にする(Windowsでは非表示になりません)
+	 * @param bool $multiline 複数行の入力をまつ、終了は行頭.(ドット)
+	 * @param bool $silently 入力を非表示にする(Windowsでは非表示になりません)
 	 * @return string
 	 */
 	public static function read($msg,$default=null,$choice=[],$multiline=false,$silently=false){
@@ -34,7 +34,7 @@ class Std{
 	 * @param string $msg 入力待ちのメッセージ
 	 * @param string $default 入力が空だった場合のデフォルト値
 	 * @param string[] $choice 入力を選択式で求める
-	 * @param boolean $multiline 複数行の入力をまつ、終了は行頭.(ドット)
+	 * @param bool $multiline 複数行の入力をまつ、終了は行頭.(ドット)
 	 * @return string
 	 */
 	public static function silently($msg,$default=null,$choice=[],$multiline=false){
@@ -56,7 +56,7 @@ class Std{
 	}
 	/**
 	 * バックスペース
-	 * @param integer $len
+	 * @param int $len
 	 */
 	public static function backspace($len){
 		print("\033[".$len.'D'."\033[0K");

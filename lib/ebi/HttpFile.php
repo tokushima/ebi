@@ -9,7 +9,7 @@ class HttpFile{
 	/**
 	 * inlineで出力する
 	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param boolean $modified_status Last-Modifiedを見るか
+	 * @param bool $modified_status Last-Modifiedを見るか
 	 */
 	public static function inline($filename,$modified_status=true){
 		self::output_file_content($filename,'inline',$modified_status);
@@ -17,7 +17,7 @@ class HttpFile{
 	/**
 	 * attachmentで出力する
 	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param boolean $modified_status Last-Modifiedを見るか
+	 * @param bool $modified_status Last-Modifiedを見るか
 	 */
 	public static function attach($filename,$modified_status=true){
 		self::output_file_content($filename,'attachment',$modified_status);
@@ -54,7 +54,7 @@ class HttpFile{
 				\ebi\HttpHeader::send('Content-length',sprintf('%u',$length));
 				\ebi\HttpHeader::send('Content-Range',sprintf('bytes %u-%u/%u',$offset,$end,filesize($filename)));
 
-				print(file_get_contents($filename,null,null,$offset,$length));
+				print(file_get_contents($filename, false, null, $offset, $length));
 				exit;
 			}else{
 				\ebi\HttpHeader::send('Content-length',sprintf('%u',filesize($filename)));

@@ -22,11 +22,11 @@ abstract class DbConnector{
 	/**
 	 * @param string $name
 	 * @param string $host
-	 * @param number $port
+	 * @param int $port
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
-	 * @param boolean $autocommit
+	 * @param bool $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 	}
@@ -445,8 +445,10 @@ abstract class DbConnector{
 					}
 					switch($ct){
 						case 'number':
+						case 'float':
 						case 'serial': 
 						case 'integer':
+						case 'int':
 						case 'timestamp':
 						case 'date':
 						case 'time':
@@ -459,6 +461,7 @@ abstract class DbConnector{
 						case 'alnum':
 							$and[] = Q::contains($cn,$cond,$op);
 							break;
+						case 'bool':
 						case 'boolean':
 						case 'mixed':
 						default:
@@ -578,6 +581,7 @@ abstract class DbConnector{
 						$value = strtotime($value);
 					}
 					return date('Y-m-d',$value);
+				case 'bool':
 				case 'boolean':
 					return (int)$value;
 			}
@@ -616,15 +620,18 @@ abstract class DbConnector{
 			case 'text':
 				return $this->quotation($name).' VARCHAR(3000)';
 			case 'number':
+			case 'float':
 				return $this->quotation($name).' REAL';
 			case 'serial':
 				return $this->quotation($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
+			case 'bool':
 			case 'boolean':
 			case 'timestamp':
 			case 'date':
 			case 'time':
 			case 'intdate':
 			case 'integer':
+			case 'int':
 				return $this->quotation($name).' INTEGER';
 			case 'email':
 				return $this->quotation($name).' VARCHAR(255)';

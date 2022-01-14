@@ -12,7 +12,7 @@ namespace test\flow;
 class RequestFlow extends \ebi\flow\Request{
 	/**
 	 * 前処理
-	 * @request integer $zzz 前処理のリクエスト
+	 * @request int $zzz 前処理のリクエスト
 	 */
 	protected function __before__(){
 		
@@ -24,7 +24,7 @@ class RequestFlow extends \ebi\flow\Request{
 	 * 
 	 * @request string $abc @['require'=>true]
 	 * @request string $def @['require'=>true]
-	 * @request integer $ghi
+	 * @request int $ghi
 	 */
 	public function require_vars(){
 		$this->is_post();
@@ -34,7 +34,7 @@ class RequestFlow extends \ebi\flow\Request{
 	 * アノテーションエラー
 	 * @request string $abc @['require'=>true]
 	 * @request string $def @['require'=>true']
-	 * @request integer $ghi
+	 * @request int $ghi
 	 */
 	public function require_vars_annotation_error(){
 		$this->is_post();
@@ -61,8 +61,8 @@ class RequestFlow extends \ebi\flow\Request{
 	}
 	
 	/**
-	 * @context integer $abc
-	 * @context integer $def
+	 * @context int $abc
+	 * @context int $def
 	 */
 	public function get_vars(){
 		return ['abc'=>123,'def'=>456];

@@ -55,7 +55,7 @@ trait Plugin{
 	/**
 	 * クラスにプラグインがセットされているか
 	 * @param string $n
-	 * @return boolean
+	 * @return bool
 	 */
 	protected static function has_class_plugin($n){
 		$g = get_called_class();
@@ -76,7 +76,7 @@ trait Plugin{
 	/**
 	 * オブジェクトにプラグインがセットされているか
 	 * @param string $n
-	 * @return boolean
+	 * @return bool
 	 */
 	protected function has_object_plugin($n){
 		if(static::has_class_plugin($n)) return true;

@@ -36,14 +36,14 @@ class FlowHelper{
 	}
 	/**
 	 * POSTされたか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_post(){
 		return (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST');
 	}
 	/**
 	 * ログイン済みか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_user_logged_in(){
 		return (isset($this->req)) ? $this->req->is_user_logged_in() : false;
@@ -59,7 +59,7 @@ class FlowHelper{
 	/**
 	 * リクエストに含まれているか
 	 * @param string $name
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_vars($name){
 		return (isset($this->req)) ? $this->req->is_vars($name) : false;
@@ -146,7 +146,7 @@ class FlowHelper{
 	
 	/**
 	 * 真偽値により$trueまたは$falseを返す
-	 * @param boolean $cond 真偽値
+	 * @param bool $cond 真偽値
 	 * @param string $true 真の場合に返す文字列
 	 * @param string $false 偽の場合に返す文字列
 	 * @return string
@@ -156,7 +156,7 @@ class FlowHelper{
 	}
 	/**
 	 * $a == $bが真なら$true偽なら$falseを返す
-	 * @param boolean $cond 真偽値
+	 * @param bool $cond 真偽値
 	 * @param string $true 真の場合に返す文字列
 	 * @param string $false 偽の場合に返す文字列
 	 * @return string
@@ -182,8 +182,8 @@ class FlowHelper{
 	}
 	/**
 	 * ゼロを桁数分前に埋める
-	 * @param integer $int 対象の値
-	 * @param integer $dig 0埋めする桁数
+	 * @param int $int 対象の値
+	 * @param int $dig 0埋めする桁数
 	 * @return string
 	 */
 	public function zerofill($int,$dig=0){
@@ -191,8 +191,8 @@ class FlowHelper{
 	}
 	/**
 	 * 数字を千位毎にグループ化してフォーマットする
-	 * @param number $number 対象の値
-	 * @param integer $dec 小数点以下の桁数
+	 * @param float $number 対象の値
+	 * @param int $dec 小数点以下の桁数
 	 * @return string
 	 */
 	public function number_format($number,$dec=0){
@@ -200,7 +200,7 @@ class FlowHelper{
 	}
 	/**
 	 * フォーマットした日付を返す
-	 * @param integer $value 時間
+	 * @param int $value 時間
 	 * @param string $format フォーマット文字列 ( http://jp2.php.net/manual/ja/function.date.php )
 	 * @return string
 	 */
@@ -215,8 +215,8 @@ class FlowHelper{
 	}
 	/**
 	 * タイムスタンプを返す
-	 * @param number $add 加算する秒数
-	 * @return number
+	 * @param int $add 加算する秒数
+	 * @return int
 	 */
 	public function time($add=0,$time=null){
 		if(empty($time)){
@@ -237,7 +237,7 @@ class FlowHelper{
 	/**
 	 * 文字列を丸める
 	 * @param string $str 対象の文字列
-	 * @param integer $width 指定の幅
+	 * @param int $width 指定の幅
 	 * @param string $postfix 文字列がまるめられた場合に末尾に接続される文字列
 	 * @return string
 	 */
@@ -255,10 +255,10 @@ class FlowHelper{
 	/**
 	 * HTMLエスケープされた文字列を返す
 	 * @param string $value 対象の文字列
-	 * @param integer $length 取得する文字列の最大長
-	 * @param integer $lines 取得する文字列の最大行数
+	 * @param int $length 取得する文字列の最大長
+	 * @param int $lines 取得する文字列の最大行数
 	 * @param string $postfix 文字列が最大長または最大行数を超えた場合に末尾に接続される文字列
-	 * @param boolean $nl2br 改行コードを<br />にするか
+	 * @param bool $nl2br 改行コードを<br />にするか
 	 * @return string
 	 */
 	public function html($value,$length=0,$lines=0,$postfix=null,$nl2br=true){
@@ -298,8 +298,8 @@ class FlowHelper{
 	/**
 	 * 全てのタグを削除した文字列を返す
 	 * @param string $value 対象の文字列
-	 * @param integer $length 取得する文字列の最大長
-	 * @param integer $lines 取得する文字列の最大行数
+	 * @param int $length 取得する文字列の最大長
+	 * @param int $lines 取得する文字列の最大行数
 	 * @param string $postfix 文字列が最大長または最大行数を超えた場合に末尾に接続される文字列
 	 * @return string
 	 */
@@ -351,7 +351,7 @@ class FlowHelper{
 	/**
 	 * !
 	 * @param mixed $a
-	 * @return boolean 
+	 * @return bool
 	 */
 	public function not($a){
 		return !($a);
@@ -360,7 +360,7 @@ class FlowHelper{
 	 * ==
 	 * @param mixed $a
 	 * @param mixed $b
-	 * @return boolean
+	 * @return bool
 	 */
 	public function eq($a,$b){
 		$bool = ($a == $b);
@@ -374,52 +374,52 @@ class FlowHelper{
 	 * !=
 	 * @param mixed $a
 	 * @param mixed $b
-	 * @return boolean
+	 * @return bool
 	 */
 	public function neq($a,$b){
 		return !($this->eq($a,$b));
 	}
 	/**
 	 * aがbより小さい
-	 * @param integer $a
-	 * @param integer $b
-	 * @return boolean
+	 * @param int $a
+	 * @param int $b
+	 * @return bool
 	 */
 	public function lt($a,$b){
 		return ($a < $b);
 	}
 	/**
 	 * aがbより小さいか等しい
-	 * @param integer $a
-	 * @param integer $b
-	 * @return boolean
+	 * @param int $a
+	 * @param int $b
+	 * @return bool
 	 */
 	public function lte($a,$b){
 		return ($a <= $b);
 	}
 	/**
 	 * aがbより大きい
-	 * @param integer $a
-	 * @param integer $b
-	 * @return boolean
+	 * @param int $a
+	 * @param int $b
+	 * @return bool
 	 */
 	public function gt($a,$b){
 		return ($a > $b);
 	}
 	/**
 	 * aがbより大きいか等しい
-	 * @param integer $a
-	 * @param integer $b
-	 * @return boolean
+	 * @param int $a
+	 * @param int $b
+	 * @return bool
 	 */
 	public function gte($a,$b){
 		return ($a >= $b);
 	}
 	/**
 	 * 剰余
-	 * @param number $a
-	 * @param number $b
-	 * @return number
+	 * @param float $a
+	 * @param float $b
+	 * @return float
 	 */
 	public function remainder($a,$b){
 		return ($a % $b);
@@ -428,8 +428,8 @@ class FlowHelper{
 	 * ある範囲の整数を有する配列を作成します。
 	 * @param mixed  $start
 	 * @param mixed  $end
-	 * @param number $step
-	 * @return multitype:
+	 * @param int $step
+	 * @return mixed
 	 */
 	public function range($start,$end,$step=1){
 		$array = range($start,$end,$step);
@@ -455,7 +455,7 @@ class FlowHelper{
 	/**
 	 * FLowで例外が発生しているか
 	 * @param string $group
-	 * @return boolean
+	 * @return bool
 	 */
 	public function has_invalid($group=null){
 		return \ebi\FlowInvalid::has($group);
@@ -464,7 +464,7 @@ class FlowHelper{
 	 * 引数が空ではないか
 	 * 一つまたは複数の値で一つでも空でなければtrue
 	 * @param mixed $arg
-	 * @return boolean
+	 * @return bool
 	 */
 	public function has($arg){
 		foreach(func_get_args() as $arg){
@@ -478,7 +478,7 @@ class FlowHelper{
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
 	 * @param  mixed $bool
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_true($bool){
 		return call_user_func_array([\ebi\Util::class,'is_true'],func_get_args());
@@ -488,7 +488,7 @@ class FlowHelper{
 	 * varがarg1,arg2,arg3,,,に含まれるか
 	 * @param mixed $var
 	 * @param mixed $arg1
-	 * @return boolean
+	 * @return bool
 	 */
 	public function in($var,$arg1){
 		$args = func_get_args();
@@ -521,7 +521,7 @@ class FlowHelper{
 	/**
 	 * size
 	 * @param mixed $var
-	 * @return integer
+	 * @return int
 	 */
 	public function sizeof($var){
 		return is_array($var) ? sizeof($var) : 1;
@@ -529,9 +529,9 @@ class FlowHelper{
 	
 	/**
 	 * 加算
-	 * @param number $a
-	 * @param number $b
-	 * @return number
+	 * @param float $a
+	 * @param float $b
+	 * @return float
 	 */
 	public function sum($a,$b){
 		return $a + $b;

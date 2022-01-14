@@ -663,7 +663,7 @@ class Man{
 				
 				foreach($ref->getParameters() as $param){
 					if($param->hasType()){
-						$type_class = ($param->getType() instanceof \ReflectionNamedType) ? $param->getType()->getName() : null;
+						($param->getType() instanceof \ReflectionNamedType) ? $param->getType()->getName() : null;
 						
 						if(!empty($type_class) && class_exists($type_class)){
 							$vars['$'.$param->getName()] = $type_class;

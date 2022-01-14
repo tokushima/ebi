@@ -25,7 +25,7 @@ trait UserRole{
 	/**
 	 * 指定の権限があるか
 	 * @param string $role
-	 * @return boolean
+	 * @return bool
 	 */
 	public function has_role($role){
 		return in_array($role,$this->get_role());

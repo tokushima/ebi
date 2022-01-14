@@ -10,11 +10,11 @@ class MysqlConnector extends \ebi\DbConnector{
 	/**
 	 * @param string $name
 	 * @param string $host
-	 * @param number $port
+	 * @param int $port
 	 * @param string $user
 	 * @param string $password
 	 * @param string $sock
-	 * @param boolean $autocommit
+	 * @param bool $autocommit
 	 */
 	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
 		if(!extension_loaded('pdo_mysql')){
@@ -77,13 +77,16 @@ class MysqlConnector extends \ebi\DbConnector{
 			case 'text':
 				return $this->quotation($name).(($dao->prop_anon($name,'max') !== null) ? ' VARCHAR('.$dao->prop_anon($name,'max').')' : ' MEDIUMTEXT').' BINARY';
 			case 'number':
+			case 'float':
 				return $this->quotation($name).' '.(($dao->prop_anon($name,'decimal_places') !== null) ? sprintf('NUMERIC(%d,%d)',26-$dao->prop_anon($name,'decimal_places'),$dao->prop_anon($name,'decimal_places')) : 'DOUBLE');
 			case 'serial': return $this->quotation($name).' SERIAL';
+			case 'bool':
 			case 'boolean': return $this->quotation($name).' INT(1)';
 			case 'timestamp': return $this->quotation($name).' DATETIME';
 			case 'date': return $this->quotation($name).' DATE';
 			case 'time': return $this->quotation($name).' INT';
 			case 'intdate':
+			case 'int': 
 			case 'integer': return $this->quotation($name).' INT';
 			case 'email': return $this->quotation($name).' VARCHAR(255)';
 			default:

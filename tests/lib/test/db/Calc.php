@@ -3,10 +3,10 @@ namespace test\db;
 /**
  * 計算
  * @var serial $id
- * @var integer $price
+ * @var int $price
  * @var string $type
  * @var string $name
- * @var number $float
+ * @var float $float
  * 
  */
 class Calc extends \ebi\Dao{

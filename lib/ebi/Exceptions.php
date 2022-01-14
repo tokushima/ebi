@@ -68,7 +68,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	/**
 	 * Exceptionが追加されているか
 	 * @param string $group
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function has($group=null){
 		if(!isset(self::$self)){

@@ -6,8 +6,8 @@ namespace test\object;
  * @var mixed $aaa
  * @var string $bb
  * @var serial $cc
- * @var number $dd
- * @var boolean $ee
+ * @var float $dd
+ * @var bool $ee
  * @var timestamp $ff
  * @var time $gg
  * @var string{} $ii
@@ -16,9 +16,9 @@ namespace test\object;
  * @var date $ll
  * @var alnum $mm @['additional_chars'=>'_']
  * @var intdate $nn
- * @var integer $oo
+ * @var int $oo
  * @var text $pp
- * @var number $qq @["decimal_places"=>2]		
+ * @var float $qq @["decimal_places"=>2]		
 */
 class Types extends \ebi\Obj{
 	protected $aa;

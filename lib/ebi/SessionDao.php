@@ -5,7 +5,7 @@ namespace ebi;
  * @author tokushima
  * @var string $id @['primary'=>true,'max'=>256]
  * @var text $data
- * @var number $expires
+ * @var int $expires
  */
 class SessionDao extends \ebi\Dao{
 	protected $id;
@@ -45,7 +45,7 @@ class SessionDao extends \ebi\Dao{
 	/**
 	 * @plugin \ebi\Session
 	 * @param string $id
-	 * @return boolean
+	 * @return bool
 	 */
 	public function session_destroy($id){
 		try{
@@ -58,7 +58,7 @@ class SessionDao extends \ebi\Dao{
 	/**
 	 * @plugin \ebi\Session
 	 * @param int $maxlifetime
-	 * @return boolean
+	 * @return bool
 	 */
 	public function session_gc($maxlifetime){
 		try{

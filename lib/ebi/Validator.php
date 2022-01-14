@@ -33,6 +33,7 @@ class Validator{
 						return null;
 					}
 					switch($t){
+						case 'float':
 						case 'number':
 							if(!is_numeric($v)){
 								throw new \ebi\exception\InvalidArgumentException();
@@ -41,10 +42,12 @@ class Validator{
 							return (float)(isset($dp) ? (floor($v * pow(10,$dp)) / pow(10,$dp)) : $v);
 						case 'serial':
 						case 'integer':
+						case 'int':
 							if(!is_numeric($v) || (int)$v != $v){
 								throw new \ebi\exception\InvalidArgumentException();
 							}
 							return (int)$v;
+						case 'bool':
 						case 'boolean':
 							if(is_string($v)){
 								$v = (strtolower($v) === 'true' || $v === '1') ? true : ((strtolower($v) === 'false' || $v === '0') ? false : $v);
@@ -54,7 +57,7 @@ class Validator{
 							if(!is_bool($v)){
 								throw new \ebi\exception\InvalidArgumentException();
 							}
-							return (boolean)$v;
+							return (bool)$v;
 						case 'timestamp':
 						case 'date':
 							if(ctype_digit((string)$v) || (substr($v,0,1) == '-' && ctype_digit(substr($v,1)))){
@@ -143,6 +146,8 @@ class Validator{
 		}else if($v !== null){
 			switch($get('type')){
 				case 'number':
+				case 'float':
+				case 'int':
 				case 'integer':
 					if($get('min') !== null && (float)$get('min') > $v){
 						\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);

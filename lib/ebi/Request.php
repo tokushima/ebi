@@ -115,8 +115,8 @@ class Request  implements \IteratorAggregate{
 	
 	/**
 	 * 現在のURLを返す
-	 * @param integer $port_https
-	 * @param integer $port_http
+	 * @param int $port_https
+	 * @param int $port_http
 	 * @return string
 	 */
 	public static function current_url($port_https=443,$port_http=80){
@@ -132,8 +132,8 @@ class Request  implements \IteratorAggregate{
 	}
 	/**
 	 * 現在のホスト
-	 * @param integer $port_https
-	 * @param integer $port_http
+	 * @param int $port_https
+	 * @param int $port_http
 	 * @return string
 	 */
 	public static function host($port_https=443,$port_http=80){
@@ -159,7 +159,7 @@ class Request  implements \IteratorAggregate{
 	}
 	/**
 	 * 現在のリクエストクエリを返す
-	 * @param boolean $sep 先頭に?をつけるか
+	 * @param bool $sep 先頭に?をつけるか
 	 * @return string
 	 */
 	public static function request_string($sep=false){
@@ -168,35 +168,35 @@ class Request  implements \IteratorAggregate{
 	}
 	/**
 	 * GET
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_get(){
 		return ($this->_method == 'GET');
 	}
 	/**
 	 * POST
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_post(){
 		return ($this->_method == 'POST');
 	}
 	/**
 	 * PUT
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_put(){
 		return ($this->_method == 'PUT');
 	}
 	/**
-	 * DLETE
-	 * @return boolean
+	 * DELETE
+	 * @return bool
 	 */
 	public function is_delete(){
 		return ($this->_method == 'DELETE');
 	}
 	/**
 	 * CLIで実行されたか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_cli(){
 		return (php_sapi_name() == 'cli' || !isset($_SERVER['REQUEST_METHOD']));
@@ -309,7 +309,7 @@ class Request  implements \IteratorAggregate{
 	/**
 	 * キーが存在するか
 	 * @param string $n
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_vars($n){
 		return array_key_exists($n,$this->vars);
@@ -403,7 +403,7 @@ class Request  implements \IteratorAggregate{
 	/**
 	 * 添付されたファイルがあるか
 	 * @param array $file_info
-	 * @return boolean
+	 * @return bool
 	 */
 	public function has_file($file_info){
 		if(is_string($file_info)){

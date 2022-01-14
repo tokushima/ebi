@@ -13,7 +13,7 @@ class Obj implements \IteratorAggregate{
 	 * @param string $p プロパティ名
 	 * @param string $n アノテーション名
 	 * @param mixed $d デフォルト値
-	 * @param boolean $f 値をデフォルト値で上書きするか
+	 * @param bool $f 値をデフォルト値で上書きするか
 	 * @return mixed
 	 */
 	public function prop_anon($p,$n=null,$d=null,$f=false){
@@ -34,6 +34,7 @@ class Obj implements \IteratorAggregate{
 		foreach(array_keys($this->props()) as $n){
 			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){
 				switch($this->prop_anon($n,'type')){
+					case 'bool':
 					case 'boolean':
 						$r[$n] = $this->{$n}();
 						break;
@@ -69,7 +70,7 @@ class Obj implements \IteratorAggregate{
 	}
 	/**
 	 * アクセス可能なプロパティを取得する
-	 * @param boolean $format
+	 * @param bool $format
 	 * @return array
 	 */
 	public function props($format=false){
@@ -149,6 +150,7 @@ class Obj implements \IteratorAggregate{
 					return null;
 				}
 				return str_replace(['Y','m','d'],[substr($v,0,-4),substr($v,-4,2),substr($v,-2,2)],(empty($f) ? \ebi\Conf::date_format() : $f));
+			case 'bool':
 			case 'boolean':
 				return ($v) ? (isset($d) ? $d : 'true') : (empty($f) ? 'false' : $f);
 		}
@@ -183,7 +185,10 @@ class Obj implements \IteratorAggregate{
 		switch($this->prop_anon($this->_,'type')){
 			case 'string':
 			case 'text': return (isset($v) && $v !== '');
+			case 'bool':
+			case 'boolean':
+				return (bool)$v;
 		}
-		return (boolean)(($this->prop_anon($this->_,'type') == 'boolean') ? $v : isset($v));
+		return isset($v);
 	}
 }
