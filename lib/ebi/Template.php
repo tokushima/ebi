@@ -184,11 +184,11 @@ class Template{
 		
 		if(preg_match_all("/<([^<\n]+?[\s])(src|href|background)[\s]*=[\s]*([\"\'])([^\\3\n]+?)\\3[^>]*?>/i",$src,$m)){
 			foreach($m[2] as $k => $p){
-				list($url) = explode('?',$m[4][$k]);
+				[$url] = explode('?',$m[4][$k]);
 				if(strpos($url,'$') === false){
 					$t = null;
 					if(strtolower($p) === 'href'){
-						list($t) = (preg_split("/[\s]/",strtolower($m[1][$k])));
+						[$t] = (preg_split("/[\s]/",strtolower($m[1][$k])));
 					}
 					$src = $this->replace_parse_url($src,(($this->secure && $t !== 'a') ? $secure_base : $media),$m[0][$k],$m[4][$k]);
 				}

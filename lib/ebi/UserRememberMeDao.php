@@ -82,7 +82,7 @@ class UserRememberMeDao extends \ebi\Dao{
 			$sk = explode('/',\ebi\Request::read_cookie(self::name($req,'key')));
 			
 			if(isset($sk[1])){
-				list($key,$id) = $sk;
+				[$key, $id] = $sk;
 				
 				try{
 					$self = static::find_get(

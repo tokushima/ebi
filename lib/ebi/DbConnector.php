@@ -110,7 +110,7 @@ abstract class DbConnector{
 			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
 		$vars = array_merge($updatevars,$wherevars);
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		
 		return new \ebi\Daq(
 			'update '.$this->quotation($column->table()).' set '.
@@ -140,7 +140,7 @@ abstract class DbConnector{
 		if(empty($update) || (!$target_all && sizeof($target) != sizeof($update))){
 			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
-		list($where_sql,$where_vars) = $this->where_sql(
+		[$where_sql, $where_vars] = $this->where_sql(
 			$dao,
 			$from,
 			$query,
@@ -185,7 +185,7 @@ abstract class DbConnector{
 	 */
 	public function find_delete_sql(\ebi\Dao $dao,\ebi\Q $query){
 		$from = [];
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
 			'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
 			,$where_vars
@@ -220,7 +220,7 @@ abstract class DbConnector{
 		if(empty($select)){
 			throw new \ebi\exception\BadMethodCallException('select invalid');
 		}
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		return new \ebi\Daq((
 			'select '.implode(',',$select).' from '.implode(',',$from)
 			.(empty($where_sql) ? '' : ' where '.$where_sql)
@@ -351,7 +351,7 @@ abstract class DbConnector{
 		foreach($dao->columns() as $column){
 			$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
 		}
-		list($where_sql,$where_vars) = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
 		
 		return new \ebi\Daq(('select '.$exe.'('.$exec_map.') target_column'
 				.(empty($select) ? '' : ','.implode(',',$select))
@@ -384,7 +384,7 @@ abstract class DbConnector{
 			
 			$and_block_sql = [];
 			foreach($q->ar_and_block() as $qa){
-				list($where,$var) = $this->where_sql($dao,$from,$qa,$self_columns,null,$alias);
+				[$where, $var] = $this->where_sql($dao,$from,$qa,$self_columns,null,$alias);
 				
 				if(!empty($where)){
 					$and_block_sql[] = $where;
@@ -401,7 +401,7 @@ abstract class DbConnector{
 				$or_block_sql = [];
 				
 				foreach($or_blocks as $or_block){
-					list($where,$var) = $this->where_sql($dao,$from,$or_block,$self_columns,null,$alias);
+					[$where, $var] = $this->where_sql($dao,$from,$or_block,$self_columns,null,$alias);
 					
 					if(!empty($where)){
 						$or_block_sql[] = $where;

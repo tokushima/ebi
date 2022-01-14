@@ -53,7 +53,7 @@ class Obj implements \IteratorAggregate{
 	public function __call($n,$args){
 		if($n[0] != '_'){
 			$m = [];
-			list($c,$p) = (in_array($n,array_keys(get_object_vars($this)))) ? 
+			[$c, $p] = (in_array($n,array_keys(get_object_vars($this)))) ? 
 				[(empty($args) ? 'get' : 'set'),$n] : 
 				(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
 					[$m[1],$m[2]] : 

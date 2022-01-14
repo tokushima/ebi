@@ -347,7 +347,7 @@ class Browser{
 							$this->request_vars[$k] = $v;
 						}
 					}
-					list($url) = explode('?',$url,2);
+					[$url] = explode('?',$url,2);
 				}
 				curl_setopt($this->resource,CURLOPT_HTTPGET,true);
 				break;
@@ -520,7 +520,7 @@ class Browser{
 				foreach(explode(';',$cookies) as $cookie){
 					$cookie = trim($cookie);
 					if(strpos($cookie,'=') !== false){
-						list($k,$v) = explode('=',$cookie,2);
+						[$k, $v] = explode('=',$cookie,2);
 						$k = trim($k);
 						$v = trim($v);
 						switch(strtolower($k)){

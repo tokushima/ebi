@@ -72,7 +72,7 @@ trait TemplateVariable{
 	protected function match_variable($src){
 		$hash = $vars = [];
 		while(preg_match("/({(\\$[\$\w][^\t]*)})/s",$src,$vars,PREG_OFFSET_CAPTURE)){
-			list($value,$pos) = $vars[1];
+			[$value, $pos] = $vars[1];
 			if($value == '') break;
 			if(substr_count($value,'}') > 1){
 				for($i=0,$start=0,$end=0;$i<strlen($value);$i++){

@@ -233,7 +233,7 @@ class Mail{
 		return $value.$this->eol;
 	}
 	private function attach_string($list,$id=null){
-		list($filename,$src,$type) = $list;
+		[$filename, $src, $type] = $list;
 		$send = '';
 		$send .= $this->line(sprintf('Content-Type: %s; name="%s"',(empty($type) ? 'application/octet-stream' : $type),$filename));
 		$send .= $this->line(sprintf('Content-Transfer-Encoding: base64'));

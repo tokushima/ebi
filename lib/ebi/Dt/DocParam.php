@@ -56,7 +56,7 @@ class DocParam extends \ebi\Obj{
 				$opt = [];
 				
 				if(strpos($summary,'@[') !== false){
-					list($summary,$anon) = explode('@[',$summary,2);
+					[$summary, $anon] = explode('@[',$summary,2);
 					
 					try{
 						$opt = \ebi\Annotation::activation('@['.$anon);

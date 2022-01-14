@@ -84,7 +84,7 @@ class Annotation{
 						if(preg_match("/([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$mc,$m)){
 							$n = $m[2];
 							$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;
-							list($result[$n]['type'],$result[$n]['attr']) = (false != ($h = strpos($m[1],'{}')) || false !== strpos($m[1],'[]')) ? 
+							[$result[$n]['type'], $result[$n]['attr']] = (false != ($h = strpos($m[1],'{}')) || false !== strpos($m[1],'[]')) ? 
 																				[substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : 
 																				[$m[1],null];
 	

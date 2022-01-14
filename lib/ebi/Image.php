@@ -118,7 +118,7 @@ class Image{
 				imagesavealpha($self->canvas, true);
 				$alpha = 127;
 			}
-			list($r,$g,$b) = self::color2rgb($color);
+			[$r,$g,$b] = self::color2rgb($color);
 			
 			imagefill(
 				$self->canvas,
@@ -145,7 +145,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function rectangle($x,$y,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
-		list($r,$g,$b) = self::color2rgb($color);
+		[$r, $g, $b] = self::color2rgb($color);
 		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
 		
 		if($fill){
@@ -170,7 +170,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function ellipse($cx,$cy,$width,$height,$color,$thickness=1,$fill=false,$alpha=0){
-		list($r,$g,$b) = self::color2rgb($color);
+		[$r, $g, $b] = self::color2rgb($color);
 		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
 		
 		if($fill){
@@ -199,7 +199,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function line($sx,$sy,$ex,$ey,$color,$thickness=1,$alpha=0){
-		list($r,$g,$b) = self::color2rgb($color);
+		[$r, $g, $b] = self::color2rgb($color);
 		$c = ($alpha > 0) ? imagecolorallocatealpha($this->canvas,$r,$g,$b,$alpha) : imagecolorallocate($this->canvas,$r,$g,$b);
 		
 		imagesetthickness($this->canvas,$thickness);
@@ -362,7 +362,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function crop($width,$height,$x=null,$y=null){
-		list($w,$h) = $this->get_size();
+		[$w, $h] = $this->get_size();
 		
 		if($width >= $w && $height >= $h){
 			return $this;
@@ -410,7 +410,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function resize($width,$height=null,$aspect_ratio=true){
-		list($w,$h) = $this->get_size();
+		[$w, $h] = $this->get_size();
 		$m = self::magnification($w,$h,$width,$height,$aspect_ratio);
 		$cw = ceil($w * $m);
 		$ch = ceil($h * $m);
@@ -435,7 +435,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function rotate($angle,$background_color='#000000'){
-		list($r,$g,$b) = self::color2rgb($background_color);
+		[$r, $g, $b] = self::color2rgb($background_color);
 		
 		$color = imagecolorallocate($this->canvas,$r,$g,$b);
 		$canvas = imagerotate($this->canvas,$angle * -1,(($color === false) ? 0 : $color));
@@ -460,7 +460,7 @@ class Image{
 		if(!isset(self::$font_path[$font_name])){
 			throw new \ebi\exception\UndefinedException('undefined font `'.$font_name.'`');
 		}
-		list($r,$g,$b) = self::color2rgb($font_color);
+		[$r, $g, $b] = self::color2rgb($font_color);
 		
 		imagettftext(
 			$this->canvas,
@@ -513,7 +513,7 @@ class Image{
 	 * @return \ebi\Image
 	 */
 	public function merge($x,$y,\ebi\Image $img,$pct=100){
-		list($width,$height) = $img->get_size();
+		[$width, $height] = $img->get_size();
 		
 		if($pct == 100){
 			imagecopy($this->canvas,$img->canvas,ceil($x),ceil($y),0,0,$width,$height);
@@ -549,7 +549,7 @@ class Image{
 	 * @return  integer
 	 */
 	public function get_orientation(){
-		list($w,$h) = $this->get_size();
+		[$w, $h] = $this->get_size();
 		return self::judge_orientation($w, $h);
 	}
 	

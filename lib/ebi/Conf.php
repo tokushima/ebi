@@ -10,14 +10,14 @@ class Conf{
 	
 	private static function get_defined_class_key($key){
 		if(strpos($key,'@') === false){
-			list(,,$d) = debug_backtrace(false);
+			[,,$d] = debug_backtrace(false);
 			
 			if(!array_key_exists('class',$d)){
 				throw new \ebi\exception\BadMethodCallException('is not allowed');
 			}
 			return [$d['class'],$key];
 		}
-		list($class_name,$key) = explode('@',$key,2);
+		[$class_name, $key] = explode('@',$key,2);
 		return [$class_name,$key];
 	}
 	
@@ -79,7 +79,7 @@ class Conf{
 	 * @return mixed
 	 */
 	public static function get($key,$default=null){
-		list($class_name,$key) = self::get_defined_class_key($key);
+		[$class_name, $key] = self::get_defined_class_key($key);
 		return self::exists($class_name,$key) ? self::$value[$class_name][$key] : $default;
 	}
 
@@ -90,7 +90,7 @@ class Conf{
 	 * @return array
 	 */	
 	public static function gets($key,$default=[],$return_vars=[]){
-		list($class_name,$key) = self::get_defined_class_key($key);
+		[$class_name, $key] = self::get_defined_class_key($key);
 		$result = self::exists($class_name,$key) ? self::$value[$class_name][$key] : $default;
 		
 		if(!empty($result) && !is_array($result)){

@@ -109,7 +109,7 @@ trait FlowPlugin{
 	 */
 	protected function request_validation(array $doc_names=[]){
 		$doc_names = empty($doc_names) ? ['http_method','request'] : array_merge(['http_method','request'],$doc_names);
-		list(,$method) = explode('::',$this->get_selected_pattern()['action']);
+		[,$method] = explode('::',$this->get_selected_pattern()['action']);
 		$annon = \ebi\Annotation::get_method(get_class($this), $method,$doc_names);
 		
 		if(isset($annon['http_method']['value']) && strtoupper($annon['http_method']['value']) != \ebi\Request::method()){

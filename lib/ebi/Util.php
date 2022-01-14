@@ -280,7 +280,7 @@ class Util{
 		$b = preg_replace($p[2],$p[3],str_replace($p[0],$p[1],$b));
 		$d = $t = $r = '';
 		if(strpos($a,'#R#')){
-			list($r) = explode('/',$a,2);
+			[$r] = explode('/',$a,2);
 			$a = substr($a,strlen($r));
 			$b = str_replace('#T#','',$b);
 		}
@@ -606,7 +606,7 @@ class Util{
 				if(is_numeric($p)){
 					$list[$p] = $p;
 				}else if(strpos($p,'..') !== false){
-					list($start,$end) = explode('..',$p,2);
+					[$start, $end] = explode('..',$p,2);
 					
 					if(!is_numeric($start) || !is_numeric($end)){
 						throw new \ebi\exception\IllegalDataTypeException('value must be a number');

@@ -209,7 +209,7 @@ class Xml implements \IteratorAggregate{
 	 */
 	public function find($path=null,$offset=0,$length=0){
 		if(is_string($path) && strpos($path,'/') !== false){
-			list($name,$path) = explode('/',$path,2);
+			[$name, $path] = explode('/',$path,2);
 			
 			foreach(new \ebi\XmlIterator($name,$this->value(),0,0) as $t){
 				try{

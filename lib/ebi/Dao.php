@@ -244,7 +244,7 @@ abstract class Dao extends \ebi\Obj{
 				$matches = [];
 				
 				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$matches)){
-					list(,$self_var,$conds_string,$has_var) = $matches;
+					[, $self_var, $conds_string, $has_var] = $matches;
 					$conds = [];
 					$ref_table = $ref_table_alias = null;
 					
@@ -256,13 +256,13 @@ abstract class Dao extends \ebi\Obj{
 									$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->table(),$root_table_alias);
 									break;
 								case 2:
-									list($t,$c1) = $tcc;
+									[$t, $c1] = $tcc;
 									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									break;
 								case 3:
-									list($t,$c1,$c2) = $tcc;
+									[$t, $c1, $c2] = $tcc;
 									$ref_table = $set_table_name($t,$p);
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
@@ -293,7 +293,7 @@ abstract class Dao extends \ebi\Obj{
 								$cond_var = null;
 								$cond_name = substr($self_var,1);
 								if(strpos($cond_name,'.') !== false){
-									list($cond_name,$cond_var) = explode('.',$cond_name);
+									[$cond_name, $cond_var] = explode('.',$cond_name);
 								}
 								if(!isset($last_cond_column[$cond_name])){
 									throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');

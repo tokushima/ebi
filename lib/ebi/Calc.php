@@ -104,7 +104,7 @@ class Calc{
 	 * @return float[]
 	 */
 	public static function get_size_px($type,$dpi=72){
-		list($w,$h) = self::get_size_mm($type);
+		[$w, $h] = self::get_size_mm($type);
 		
 		return [
 			self::mm2px($w,$dpi),
@@ -119,7 +119,7 @@ class Calc{
 	 * @return float[]
 	 */
 	public static function get_size_pt($type){
-		list($w,$h) = self::get_size_mm($type);
+		[$w, $h] = self::get_size_mm($type);
 		
 		return [
 			self::mm2pt($w),

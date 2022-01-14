@@ -249,7 +249,7 @@ class Flow{
 			return [str_replace(['\\\\','\\.','_ESC_'],['_ESC_','.','\\'],$format),$num];
 		};
 		foreach($selfmap['patterns'] as $k => $v){
-			list($selfmap['patterns'][$k]['format'],$selfmap['patterns'][$k]['num']) = $url_format_func($k,$v);
+			[$selfmap['patterns'][$k]['format'], $selfmap['patterns'][$k]['num']] = $url_format_func($k,$v);
 		}
 		krsort($selfmap['patterns']);
 		
@@ -312,7 +312,7 @@ class Flow{
 				try{
 					if(array_key_exists('action',$pattern)){
 						if(is_string($pattern['action'])){
-							list($class,$method) = explode('::',$pattern['action']);
+							[$class, $method] = explode('::',$pattern['action']);
 						}else if(is_callable($pattern['action'])){
 							$funcs = $pattern['action'];
 						}else{
@@ -323,7 +323,7 @@ class Flow{
 						self::$url_pattern[$m['name']][$m['num']] = $m['format'];
 						
 						if(array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['idx'] == $m['idx']){
-							list(,$mm) = explode('::',$m['action']);
+							[,$mm] = explode('::',$m['action']);
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}

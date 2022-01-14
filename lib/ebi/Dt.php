@@ -75,7 +75,7 @@ class Dt{
 				}
 			}
 			if(isset($m['action']) && is_string($m['action'])){
-				list($m['class'],$m['method']) = explode('::',$m['action']);
+				[$m['class'], $m['method']] = explode('::',$m['action']);
 			}
 			if(!isset($m['class']) || $class_name($m['class']) != $self_class){
 				try{
@@ -89,7 +89,7 @@ class Dt{
 							$m['version'] = $info->version();
 						}
 						if(empty($m['summary'])){
-							list($summary) = explode(PHP_EOL,$info->document());
+							[$summary] = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
 						}
 						if($m['deprecated'] || $info->opt('deprecated')){
@@ -150,8 +150,8 @@ class Dt{
 					if($m['action'] instanceof \Closure){
 						$info = \ebi\Dt\Man::closure_info($m['action']);
 					}else{
-						list($m['class'],$m['method']) = explode('::',$m['action']);
-						list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
+						[$m['class'], $m['method']] = explode('::',$m['action']);
+						[,$user_model] = $this->get_login_annotation($m['class'],$m['method']);
 						
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 						$info->set_opt('user_model',$user_model);

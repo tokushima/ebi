@@ -19,7 +19,7 @@ class DocInfo extends \ebi\Obj{
 	private $opt = [];
 	
 	public function summary(){
-		list($summary) = explode(PHP_EOL,trim($this->document()));
+		[$summary] = explode(PHP_EOL,trim($this->document()));
 		return $summary;
 	}
 	public function add_params(\ebi\Dt\DocParam $p){

@@ -24,7 +24,7 @@ class HttpFile{
 	}
 	private static function output_file_content($filename,$disposition,$modified_status){
 		if(is_array($filename)){
-			list($filename,$src) = $filename;
+			[$filename, $src] = $filename;
 
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
@@ -46,7 +46,7 @@ class HttpFile{
 
 			$range = [];
 			if(isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\d+)\-(\d+)$/",$_SERVER['HTTP_RANGE'],$range)){
-				list(,$offset,$end) = $range;
+				[,$offset,$end] = $range;
 				$length = $end - $offset + 1;
 				
 				\ebi\HttpHeader::send_status(206);

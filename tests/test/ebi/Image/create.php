@@ -2,7 +2,7 @@
 
 $img = \ebi\Image::create(100,50,'#000000');
 
-list($w,$h) = $img->get_size();
+[$w, $h] = $img->get_size();
 
 eq(100,$w);
 eq(50,$h);
