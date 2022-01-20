@@ -2,24 +2,24 @@
 namespace ebi;
 /**
  * 添付ファイルの操作
- * @author tokushima
  *
  */
 class HttpFile{
 	/**
 	 * inlineで出力する
-	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param bool $modified_status Last-Modifiedを見るか
+	 * @param $file 出力するファイル、または[ファイル名,文字列]
+	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function inline($filename,$modified_status=true){
+	public static function inline(string|array $filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'inline',$modified_status);
 	}
+
 	/**
 	 * attachmentで出力する
-	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param bool $modified_status Last-Modifiedを見るか
+	 * @param $file 出力するファイル、または[ファイル名,文字列]
+	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function attach($filename,$modified_status=true){
+	public static function attach(string|array $filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'attachment',$modified_status);
 	}
 	private static function output_file_content($filename,$disposition,$modified_status){
@@ -71,7 +71,8 @@ class HttpFile{
 		\ebi\HttpHeader::send_status(404);
 		exit;
 	}
-	private static function mime($filename){
+
+	private static function mime(string $filename): string{
 		$ext = (false !== ($p = strrpos($filename,'.'))) ? strtolower(substr($filename,$p+1)) : null;
 		switch($ext){
 			case 'jpg':

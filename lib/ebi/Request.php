@@ -4,7 +4,7 @@ namespace ebi;
  * リクエストを処理する
  * @author tokushima
  */
-class Request  implements \IteratorAggregate{
+class Request implements \IteratorAggregate{
 	private $vars = [];
 	private $files = [];
 	private $args;

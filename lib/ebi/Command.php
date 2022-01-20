@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * コマンドを実行する
- * @author tokushima
- */
+
 class Command{
 	private $resource; #リソース
 	private $stdout; # 実行結果
@@ -49,10 +46,10 @@ class Command{
 		$this->close();
 
 		if(!empty($out_file)){
-			file_put_contents($out_file);
+			file_put_contents($out_file, '');
 		}
 		if(!empty($error_file)){
-			file_put_contents($error_file);
+			file_put_contents($error_file, '');
 		}
 		$out = (empty($out_file)) ? ['pipe','w'] : ['file',$out_file,'w'];
 		$err = (empty($error_file)) ? ['pipe','w'] : ['file',$error_file,'w'];

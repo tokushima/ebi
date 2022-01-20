@@ -119,7 +119,7 @@ class Request extends \ebi\Request{
 			}
 		}
 		if(method_exists($this,'__before__')){
-			$this->__before__();
+			call_user_func([$this, '__before__']);
 		}
 		if($this->has_object_plugin('before_flow_action_request')){
 			/**
@@ -144,7 +144,7 @@ class Request extends \ebi\Request{
 	 */
 	public function after(){
 		if(method_exists($this,'__after__')){
-			$this->__after__();
+			call_user_func([$this, '__after__']);
 		}
 		if($this->has_object_plugin('after_flow_action_request')){
 			/**

@@ -8,20 +8,15 @@ namespace ebi;
 class Json{
 	private $arr = [];
 	
-	/**
-	 * JSONからオブジェクトを生成する
-	 * @param string $json
-	 * @return \ebi\Json
-	 */
-	public function __construct($json){
+	public function __construct(string $json){
 		$this->arr = self::decode($json);
 	}
+
 	/**
 	 * パスから値を取得する
-	 * @param string $name
 	 * @return mixed
 	 */
-	public function find($name=null){
+	public function find(?string $name=null){
 		if(empty($name)){
 			return $this->arr;
 		}
@@ -41,11 +36,8 @@ class Json{
 	/**
 	 * 値を JSON 形式にして返す
 	 * @param mixed $val
-	 * @param bool $pretty_print
-	 * @param bool $unescaped_unicode
-	 * @return string
 	 */
-	public static function encode($val,$pretty_print=false,$unescaped_unicode=false){
+	public static function encode($val, bool $pretty_print=false, bool $unescaped_unicode=false): string{
 		$opt = 0;
 		if($pretty_print){
 			$opt = $opt | JSON_PRETTY_PRINT;
@@ -72,12 +64,12 @@ class Json{
 		}
 		return $val;
 	}
+
 	/**
 	 * JSON 文字列をデコードする
-	 * @param string $json
 	 * @return mixed
 	 */
-	public static function decode($json){
+	public static function decode(string $json){
 		if(is_null($json) || $json === ''){
 			return null;
 		}

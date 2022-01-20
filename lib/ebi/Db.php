@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * DBコントローラ
- * @author tokushima
- */
+
 class Db implements \Iterator{
 	static private $autocommit;
 	
@@ -15,7 +12,6 @@ class Db implements \Iterator{
 	private $connector;
 	
 	/**
-	 * コンストラクタ
 	 * @param string{} $def 接続情報 [type,host,name,port,user,password,sock,encode,timezone]
 	 */
 	public function __construct(array $def=[]){
@@ -44,7 +40,7 @@ class Db implements \Iterator{
 		
 		$r = new \ReflectionClass($type);
 		$this->dbname = $dbname;
-		$this->connector = $r->newInstanceArgs([$encode,$timezone]);
+		$this->connector = $r->newInstanceArgs([$encode, $timezone]);
 		
 		if(!($this->connector instanceof \ebi\DbConnector)){
 			throw new \ebi\exception\ConnectionException('must be an instance of \ebi\DbConnector');
@@ -64,18 +60,21 @@ class Db implements \Iterator{
 			$this->connection->beginTransaction();
 		}
 	}
+
 	/**
 	 * 接続DB名
 	 */
-	public function name(){
+	public function name(): string{
 		return $this->dbname;
 	}
+
 	/**
 	 * 接続モジュール
 	 */
-	public function connector(){
+	public function connector(): \ebi\DbConnector{
 		return $this->connector;
 	}
+
 	public function __destruct(){
 		if($this->connection !== null){
 			try{
@@ -83,48 +82,48 @@ class Db implements \Iterator{
 			}catch(\Exception $e){}
 		}
 	}
+
 	/**
 	 * コミットする
 	 */
-	public function commit(){
+	public function commit(): void{
 		if(!self::$autocommit){
 			$this->connection->commit();
 			$this->connection->beginTransaction();
 		}
 	}
+
 	/**
 	 * ロールバックする
 	 */
-	public function rollback(){
+	public function rollback(): void{
 		if(!self::$autocommit){
 			$this->connection->rollBack();
 			$this->connection->beginTransaction();
 		}
 	}
+
 	/**
 	 * 文を実行する準備を行う
-	 * @param string $sql
-	 * @return \PDOStatement
 	 */
-	public function prepare($sql){
+	public function prepare(string $sql): \PDOStatement{
 		return $this->connection->prepare($sql);
 	}
 	
 	/**
 	 * 直近の操作に関連する SQLSTATE を取得する
-	 * @return string
 	 */
-	public function error_code(){
+	public function error_code(): ?string{
 		if($this->statement === false){
 			return null;
 		}
 		return $this->statement->errorCode();
 	}
+
 	/**
 	 * SQL ステートメントを実行する
-	 * @param string $sql 実行するSQL
 	 */
-	public function query($sql){
+	public function query(string $sql): self{
 		$args = func_get_args();
 		$this->statement = $this->prepare($sql);
 		
@@ -141,14 +140,14 @@ class Db implements \Iterator{
 		}
 		return $this;
 	}
+
 	/**
 	 * 直前に実行したSQL ステートメントに値を変更して実行する
 	 */
-	public function re(){
+	public function re(...$args): self{
 		if(!isset($this->statement)){
 			throw new \ebi\exception\BadMethodCallException('undefined statement');
 		}
-		$args = func_get_args();
 		$this->statement->execute($args);
 		$errors = $this->statement->errorInfo();
 		
@@ -158,25 +157,24 @@ class Db implements \Iterator{
 		}
 		return $this;
 	}
+
 	/**
 	 * 結果セットから次の行を取得する
-	 * @param string $name 特定のカラム名
-	 * @return string/arrray
+	 * @return mixed
 	 */
-	public function next_result($name=null){
+	public function next_result(?string $target_property=null){
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);
 		
 		if($this->resultset !== false){
-			if($name === null){
+			if($target_property === null){
 				return $this->resultset;
 			}
-			return (isset($this->resultset[$name])) ? $this->resultset[$name] : null;
+			return (isset($this->resultset[$target_property])) ? $this->resultset[$target_property] : null;
 		}
 		return null;
 	}
-	/**
-	 * @see \Iterator
-	 */
+
+
 	public function rewind(): void{
 		$this->resultset_counter = 0;
 		$this->resultset = $this->statement->fetch(\PDO::FETCH_ASSOC);

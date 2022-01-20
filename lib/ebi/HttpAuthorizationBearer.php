@@ -1,18 +1,11 @@
 <?php
 namespace ebi;
-/**
- * Bearer token
- * @author tokushima
- *
- */
-class HttpAuthorizationBearer{
-	
-	
+
+class HttpAuthorizationBearer{	
 	/**
 	 * ヘッダからtokenの取得
-	 * @return string
 	 */
-	public static function get_token(){
+	public static function get_token(): ?string{
 		$m = [];
 		
 		if(isset($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/((?i)Bearer(?-i)(\s)+)(.*)/',$_SERVER['HTTP_AUTHORIZATION'],$m)){
@@ -23,24 +16,19 @@ class HttpAuthorizationBearer{
 	
 	/**
 	 * create token (token68)
-	 * @param int $length
-	 * @return string
 	 */
-	public static function create_token($length){
+	public static function create_token(int $length): string{
 		return \ebi\Code::rand('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~+/',$length);
 	}
 	
 	/**
-	 * エラーヘッダ
-	 * @param int $statuscode
-	 * @param string $realm
-	 * @param string $description
+	 * エラーヘッダを設定
 	 */
-	public static function send_error_header($statuscode,$realm=null,$description=null){
-		\ebi\HttpHeader::send_status(\ebi\HttpHeader::status_string($statuscode));
+	public static function send_error_header(int $status_code, ?string $realm=null, ?string $description=null): void{
+		\ebi\HttpHeader::send_status(\ebi\HttpHeader::status_string($status_code));
 		$error = [];
 		
-		switch($statuscode){
+		switch($status_code){
 			case 401:
 				$error[] = 'error="invalid_token"';
 				break;

@@ -8,10 +8,10 @@ namespace ebi;
 class ZipArchive
 {
 	private $zip;
-	private $writed = false;
+	private $wrote = false;
 	private $filename;
 
-	public function __construct($filename, $append = false)
+	public function __construct(string $filename, bool $append = false)
 	{
 		$this->filename = $filename;
 		$this->zip = new \ZipArchive();
@@ -27,8 +27,7 @@ class ZipArchive
 		}
 	}
 
-	private function dirs($dir, $basedir, $entryname)
-	{
+	private function dirs(string $dir, string $basedir, ?string $entry_name): array{
 		$list = [5 => [], 0 => []];
 
 		if ($h = opendir($dir)) {
@@ -37,13 +36,13 @@ class ZipArchive
 					$s = sprintf('%s/%s', $dir, $p);
 
 					if (is_dir($s)) {
-						$ln = str_replace($basedir, $entryname ?? '', $s);
+						$ln = str_replace($basedir, $entry_name ?? '', $s);
 						$list[5][$ln] = $s;
-						$r = $this->dirs($s, $basedir, $entryname);
+						$r = $this->dirs($s, $basedir, $entry_name);
 						$list[5] = array_merge($list[5], $r[5]);
 						$list[0] = array_merge($list[0], $r[0]);
 					} else {
-						$ln = str_replace($basedir, $entryname ?? '', $s);
+						$ln = str_replace($basedir, $entry_name ?? '', $s);
 						$list[0][$ln] = $s;
 					}
 				}
@@ -55,18 +54,15 @@ class ZipArchive
 
 	/**
 	 * 指定したパスからファイルを ZIP アーカイブに追加する
-	 * @var string $filename 追加するファイルへのパス
-	 * @var string $localname ZIP アーカイブ内部での名前
 	 */
-	public function add($filename, $entryname = null)
-	{
-		if ($this->writed && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
-			$this->writed = false;
+	public function add(string $filename, ?string $entry_name = null): void{
+		if ($this->wrote && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
+			$this->wrote = false;
 		}
 		if (is_dir($filename)) {
-			$entryname = \ebi\Util::path_slash($entryname, null, false);
+			$entry_name = \ebi\Util::path_slash($entry_name, null, false);
 			$dir = \ebi\Util::path_slash(realpath($filename), null, true);
-			$list = $this->dirs($dir, $dir, $entryname);
+			$list = $this->dirs($dir, $dir, $entry_name);
 
 			foreach (array_keys($list[5]) as $ln) {
 				$this->zip->addEmptyDir($ln);
@@ -76,10 +72,10 @@ class ZipArchive
 			}
 		} else {
 			if (is_file($filename)) {
-				if (empty($entryname)) {
-					$entryname = basename($filename);
+				if (empty($entry_name)) {
+					$entry_name = basename($filename);
 				}
-				$this->zip->addFile($filename, $entryname);
+				$this->zip->addFile($filename, $entry_name);
 			} else {
 				throw new \ebi\exception\UnknownFileException($filename);
 			}
@@ -88,33 +84,28 @@ class ZipArchive
 
 	/**
 	 * 内容を指定して、ファイルを ZIP アーカイブに追加する
-	 * @var string $contents 内容
-	 * @var string $entryname ZIP アーカイブ内部での名前
 	 */
-	public function add_from_string($contents, $entryname)
-	{
-		if ($this->writed && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
-			$this->writed = false;
+	public function add_from_string(string $contents, string $entry_name): void{
+		if ($this->wrote && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
+			$this->wrote = false;
 		}
-		$this->zip->addFromString($entryname, $contents);
+		$this->zip->addFromString($entry_name, $contents);
 	}
 
-	public function __destruct()
-	{
-		if (!$this->writed) {
+	public function __destruct(){
+		if (!$this->wrote) {
 			$this->zip->unchangeAll();
 		}
 	}
 
 	/**
 	 * 書き出す
-	 * @return string 書き出したZIPファイルパス
+	 * @return 書き出したZIPファイルパス
 	 */
-	public function write()
-	{
-		if (!$this->writed) {
+	public function write(): string{
+		if (!$this->wrote) {
 			\ebi\Util::mkdir(dirname($this->filename));
-			$this->writed = true;
+			$this->wrote = true;
 			$this->zip->close();
 
 			$this->filename = realpath($this->filename);
@@ -124,27 +115,23 @@ class ZipArchive
 
 	/**
 	 * アーカイブの内容を展開する
-	 * @param string $zipfile 展開するZIPファイル
-	 * @param string $outpath 展開先のファイルパス
-	 * @return string 展開先のファイルパス
 	 */
-	public static function extract($zipfile, $outpath = null)
-	{
+	public static function extract(string $filename, ?string $output_dir = null): string{
 		$zip = new \ZipArchive();
-		if ($zip->open($zipfile) !== true) {
+		if ($zip->open($filename) !== true) {
 			throw new \ebi\exception\AccessDeniedException('failed to open stream');
 		}
-		if (empty($outpath)) {
-			$outpath = \ebi\WorkingStorage::tmpdir();
+		if (empty($output_dir)) {
+			$output_dir = \ebi\WorkingStorage::tmpdir();
 		}
-		if (!is_dir($outpath)) {
-			\ebi\Util::mkdir($outpath);
+		if (!is_dir($output_dir)) {
+			\ebi\Util::mkdir($output_dir);
 		}
-		$outpath = \ebi\Util::path_slash($outpath, null, false);
+		$output_dir = \ebi\Util::path_slash($output_dir, null, false);
 
-		$zip->extractTo($outpath);
+		$zip->extractTo($output_dir);
 		$zip->close();
 
-		return $outpath;
+		return $output_dir;
 	}
 }

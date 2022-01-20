@@ -12,7 +12,7 @@ class SessionDao extends \ebi\Dao{
 	protected $data;
 	protected $expires;
 
-	protected function __before_save__(){
+	protected function __before_save__(): void{
 		$this->expires = time();
 	}
 	protected function __set_data__($value){

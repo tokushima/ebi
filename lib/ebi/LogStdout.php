@@ -1,16 +1,7 @@
 <?php
 namespace ebi;
-/**
- * ログを標準出力に送信する
- * 
- * @author tokushima
- *
- */
+
 class LogStdout{
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 */
 	public function log_output(\ebi\Log $log){
 		$msg = ((string)$log);
 		

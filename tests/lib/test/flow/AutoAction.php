@@ -10,6 +10,7 @@ class AutoAction{
 	public function index(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);		
 		$mail->to($address);
 		/**
 		 * indexで送信される
@@ -23,6 +24,7 @@ class AutoAction{
 	public function abc(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		/**
 		 * abcで送信される
@@ -38,6 +40,7 @@ class AutoAction{
 	public function def(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		/**
 		 * defで送信される
@@ -76,6 +79,7 @@ class AutoAction{
 			'ccc'=>new \test\db\AutoCodeNumberPrefix(),
 		];
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		
 		/**

@@ -37,69 +37,59 @@ class Browser{
 		$this->timeout = (int)$timeout;
 		$this->redirect_max = (int)$redirect_max;
 	}
+
 	/**
 	 * 最大リダイレクト回数を設定
-	 * @param int $redirect_max
 	 */
-	public function redirect_max($redirect_max){
+	public function redirect_max(int $redirect_max): self{
 		$this->redirect_max = (int)$redirect_max;
 		return $this;
 	}
+
 	/**
 	 * タイムアウト時間を設定
-	 * @param int $timeout
-	 * @return $this
 	 */
-	public function timeout($timeout){
-		$this->timeout = (int)$timeout;
+	public function timeout(int $timeout_sec): self{
+		$this->timeout = (int)$timeout_sec;
 		return $this;
 	}
+
 	/**
 	 * ユーザエージェントを設定
-	 * @param string $agent
-	 * @return $this
 	 */
-	public function agent($agent){
+	public function agent(string $agent): self{
 		$this->agent = $agent;
 		return $this;
 	}
+
 	/**
 	 * Basic認証
-	 * @param string $user ユーザ名
-	 * @param string $password パスワード
-	 * @return $this
 	 */
-	public function basic($user,$password){
+	public function basic(string $user, string $password): self{
 		$this->user = $user;
 		$this->password = $password;
 		return $this;
 	}
+
 	/**
 	 * Bearer token
-	 * @param string $token
-	 * @return $this
 	 */
-	public function bearer_token($token){
+	public function bearer_token(string $token): self{
 		$this->bearer_token = $token;
 		return $this;
 	}
 	/**
 	 * Proxy
-	 * @param string $url
-	 * @param string $port
-	 * @return $this
 	 */
-	public function proxy($url,$port=null){
-		$this->proxy = [$url,$port];
+	public function proxy(string $url, ?int $port=null): self{
+		$this->proxy = [$url, $port];
 		return $this;
 	}
 	
 	/**
 	 * SSL証明書を確認する
-	 * @param bool $bool
-	 * @return $this
 	 */
-	public function ssl_verify($bool){
+	public function ssl_verify(bool $bool): self{
 		$this->ssl_verify = $bool;
 		return $this;
 	}
@@ -107,23 +97,19 @@ class Browser{
 	public function __toString(){
 		return $this->body();
 	}
+
 	/**
 	 * ヘッダを設定
-	 * @param string $key
-	 * @param string $value
-	 * @return $this
 	 */
-	public function header($key,$value=null){
+	public function header(string $key, string $value): self{
 		$this->request_header[$key] = $value;
 		return $this;
 	}
+
 	/**
 	 * クエリを設定
-	 * @param string $key
-	 * @param string $value
-	 * @return $this
 	 */
-	public function vars($key,$value=null){
+	public function vars(string $key, string|array $value): self{
 		$this->request_vars[$key] = $value;
 		
 		if(isset($this->request_file_vars[$key])){
@@ -131,13 +117,11 @@ class Browser{
 		}
 		return $this;
 	}
+
 	/**
 	 * クエリにファイルを設定
-	 * @param string $key
-	 * @param string $filename
-	 * @return $this
 	 */
-	public function file_vars($key,$filename){
+	public function file_vars(string $key, string $filename): self{
 		$this->request_file_vars[$key] = $filename;
 		
 		if(isset($this->request_vars[$key])){
@@ -145,142 +129,135 @@ class Browser{
 		}
 		return $this;
 	}
+
 	/**
 	 * クエリが設定されているか
-	 * @param string $key
-	 * @return $this
 	 */
-	public function has_vars($key){
-		return (array_key_exists($key,$this->request_vars) || array_key_exists($key,$this->request_file_vars));
+	public function has_vars(string $key): bool{
+		return (
+			array_key_exists($key, $this->request_vars) || 
+			array_key_exists($key, $this->request_file_vars)
+		);
 	}
+
 	/**
 	 * cURL 転送用オプションを設定する
-	 * @param string $key
 	 * @param mixed $value
-	 * @return $this
 	 */
-	public function setopt($key,$value){
+	public function setopt(string $key, $value): self{
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
 		}
 		curl_setopt($this->resource,$key,$value);
 		return $this;
 	}
+
 	/**
 	 * 結果のヘッダを取得
-	 * @return string
 	 */
-	public function response_headers(){
+	public function response_headers(): string{
 		return $this->head;
 	}
+
 	/**
 	 * クッキーを取得
-	 * @return mixed{}
 	 */
-	public function cookies(){
+	public function cookies(): array{
 		return $this->cookie;
 	}
+
 	/**
 	 * 結果の本文を取得
-	 * @return string
 	 */
-	public function body(){
+	public function body(): string{
 		return ($this->body === null || is_bool($this->body)) ? '' : $this->body;
 	}
+
 	/**
 	 * 結果のURLを取得
-	 * @return string
 	 */
-	public function url(){
+	public function url(): string{
 		return $this->url;
 	}
+
 	/**
 	 * 結果のステータスを取得
-	 * @return int
 	 */
-	public function status(){
-		return empty($this->status) ? null : (int)$this->status;
+	public function status(): int{
+		return empty($this->status) ? 0 : (int)$this->status;
 	}
+
 	/**
 	 * HEADリクエスト
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_head($url){
-		return $this->request('HEAD',$url);
+	public function do_head(string $url): self{
+		return $this->request('HEAD', $url);
 	}
+
 	/**
 	 * PUTリクエスト
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_put($url){
-		return $this->request('PUT',$url);
+	public function do_put(string $url): self{
+		return $this->request('PUT', $url);
 	}
+
 	/**
 	 * DELETEリクエスト
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_delete($url){
-		return $this->request('DELETE',$url);
+	public function do_delete(string $url): self{
+		return $this->request('DELETE', $url);
 	}
+
 	/**
 	 * GETリクエスト
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_get($url){
-		return $this->request('GET',$url);
+	public function do_get(string $url): self{
+		return $this->request('GET', $url);
 	}
+
 	/**
 	 * POSTリクエスト
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_post($url){
-		return $this->request('POST',$url);
+	public function do_post(string $url): self{
+		return $this->request('POST', $url);
 	}
+
 	/**
 	 * POSTリクエスト(RAW)
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_raw($url,$value){
+	public function do_raw(string $url, string $value): self{
 		$this->raw = $value;
-		return $this->request('RAW',$url);
+		return $this->request('RAW', $url);
 	}
+
 	/**
 	 * POSTリクエスト(JSON)
-	 * @param string $url
-	 * @return $this
 	 */
-	public function do_json($url){
-		$this->header('Content-Type','application/json');
-		return $this->do_raw($url,json_encode($this->request_vars));
+	public function do_json(string $url): self{
+		$this->header('Content-Type', 'application/json');
+		return $this->do_raw($url, json_encode($this->request_vars));
 	}
+
 	/**
 	 * GETリクエストでダウンロードする
-	 * @param string $url
-	 * @param string $filename
 	 */
-	public function do_download($url,$filename){
-		return $this->request('GET',$url,$filename);
+	public function do_download(string $url, string $filename): self{
+		return $this->request('GET', $url, $filename);
 	}
+
 	/**
 	 * POSTリクエストでダウンロードする
-	 * @param string $url
-	 * @param string $filename
 	 */
-	public function do_post_download($url,$filename){
-		return $this->request('POST',$url,$filename);
+	public function do_post_download(string $url, string $filename): self{
+		return $this->request('POST', $url, $filename);
 	}
+
 	/**
 	 * ヘッダ情報をハッシュで取得する
-	 * @return string{}
 	 */
-	public function explode_head(){
+	public function explode_head(): array{
 		$result = $m = [];
+
 		foreach(explode("\n",$this->head) as $h){
 			if(preg_match("/^(.+?):(.+)$/",$h,$m)){
 				$result[trim($m[1])] = trim($m[2]);
@@ -288,72 +265,50 @@ class Browser{
 		}
 		return $result;
 	}
-	/**
-	 * ヘッダデータを書き込む処理
-	 * @param resource $resource
-	 * @param string $data
-	 * @return int
-	 */
-	private function callback_head($resource,$data){
-		$this->head .= $data;
-		return strlen($data);
-	}
-	/**
-	 * データを書き込む処理
-	 * @param resource $resource
-	 * @param string $data
-	 * @return int
-	 */
-	private function callback_body($resource,$data){
-		$this->body .= $data;
-		return strlen($data);
-	}
+
 	/**
 	 * 送信たリクエストの記録を開始する
-	 * @return string[]
 	 */
-	public static function start_record(){
+	public static function start_record(): void{
 		self::$recording_request = true;
-		
-		$requests = self::$record_request;
 		self::$record_request = [];
-		return $requests;
 	}
+
 	/**
 	 * 送信したリクエストの記録を終了する
-	 * @return string[]
 	 */
-	public static function stop_record(){
+	public static function stop_record(): array{
 		self::$recording_request = false;
 		return self::$record_request;
 	}
-	private function request($method,$url,$download_path=null){
+
+	private function request(string $method,string $url, ?string $download_path=null): self{
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
 		}
 		$url_info = parse_url($url);
-		$cookie_base_domain = (isset($url_info['host']) ? $url_info['host'] : '').(isset($url_info['path']) ? $url_info['path'] : '');
+		$cookie_base_domain = ($url_info['host'] ?? '').($url_info['path'] ?? '');
 		
 		switch($method){
 			case 'RAW':
-			case 'POST': curl_setopt($this->resource,CURLOPT_POST,true); break;
+			case 'POST': curl_setopt($this->resource, CURLOPT_POST,true); break;
 			case 'GET':
 				if(isset($url_info['query'])){
 					$vars = [];
-					parse_str($url_info['query'],$vars);
+					parse_str($url_info['query'], $vars);
 				
 					foreach($vars as $k => $v){
 						if(!isset($this->request_vars[$k])){
 							$this->request_vars[$k] = $v;
 						}
 					}
-					[$url] = explode('?',$url,2);
+					[$url] = explode('?', $url, 2);
 				}
 				curl_setopt($this->resource,CURLOPT_HTTPGET,true);
 				break;
-			case 'HEAD': curl_setopt($this->resource,CURLOPT_NOBODY,true); break;
-			case 'PUT': curl_setopt($this->resource,CURLOPT_PUT,true); break;
-			case 'DELETE': curl_setopt($this->resource,CURLOPT_CUSTOMREQUEST,'DELETE'); break;
+			case 'HEAD': curl_setopt($this->resource, CURLOPT_NOBODY, true); break;
+			case 'PUT': curl_setopt($this->resource, CURLOPT_PUT, true); break;
+			case 'DELETE': curl_setopt($this->resource, CURLOPT_CUSTOMREQUEST, 'DELETE'); break;
 		}
 		
 		$http_build_query = function($vars){
@@ -369,6 +324,7 @@ class Browser{
 			case 'POST':
 				if(!empty($this->request_file_vars)){
 					$vars = [];
+
 					if(!empty($this->request_vars)){
 						foreach(explode('&',$http_build_query($this->request_vars)) as $q){
 							$s = explode('=',$q,2);
@@ -413,6 +369,7 @@ class Browser{
 		if(self::$recording_request){
 			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
 		}
+		
 		/**
 		 * @param bool $ssl_verify SSL証明書を確認するかの真偽値
 		 */
@@ -470,17 +427,24 @@ class Browser{
 				$this->request_header
 			)
 		);
-		curl_setopt($this->resource,CURLOPT_HEADERFUNCTION,[$this,'callback_head']);
+
+		curl_setopt($this->resource,CURLOPT_HEADERFUNCTION, function($curl, $data){
+			$this->head .= $data;
+			return strlen($data);
+		});
 		
 		if(empty($download_path)){
-			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,[$this,'callback_body']);
+			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION, function($curl, $data){
+				$this->body .= $data;
+				return strlen($data);		
+			});
 		}else{
 			if(strpos($download_path,'://') === false && !is_dir(dirname($download_path))){
 				mkdir(dirname($download_path),0777,true);
 			}
 			$fp = fopen($download_path,'wb');
 			
-			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION,function($resource,$data) use(&$fp){
+			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION, function($curl,$data) use(&$fp){
 				if($fp){
 					fwrite($fp,$data);
 				}
@@ -567,36 +531,33 @@ class Browser{
 		$this->redirect_count = 1;
 		return $this;
 	}
+
 	public function __destruct(){
 		if(isset($this->resource)){
 			curl_close($this->resource);
 		}
 	}
+
 	/**
 	 * bodyをXMLとして解析しXMLオブジェクトとして返す
-	 * @return \ebi\Xml
 	 */
-	public function xml($name=null){
+	public function xml(?string $name=null): \ebi\Xml{
 		return \ebi\Xml::extract($this->body(),$name);
 	}
+
 	/**
 	 * bodyをJsonとして解析し配列として返す
-	 * @param string $name
-	 * @return mixed{}
+	 * @return mixed
 	 */
-	public function json($name=null){
+	public function json(?string $name=null){
 		$json = new \ebi\Json($this->body());
 		return $json->find($name);
 	}
 	
 	/**
 	 * FORMタグからform.action, form.method, varsを取得する
-	 * @param mixed $name form.name | form[index]
-	 * @param bool $set varsにセットする
-	 * @throws \ebi\exception\NotFoundException
-	 * @return array action, method, vars
 	 */
-	public function form($name=1,$set=true){
+	public function form(string|int $form_name_or_index=1): array{
 		$cnt = 0;
 		$vars = [];
 		
@@ -604,9 +565,9 @@ class Browser{
 			$cnt++;
 			
 			if(
-				(is_int($name) && $cnt == $name) || 
-				$form->in_attr('name') == $name || 
-				$form->in_attr('id') == $name
+				(is_int($form_name_or_index) && $cnt == $form_name_or_index) || 
+				$form->in_attr('name') == $form_name_or_index || 
+				$form->in_attr('id') == $form_name_or_index
 			){
 				$chkbx_vars = [];
 				foreach($form->find(['input','textarea','select']) as $input){
@@ -651,10 +612,8 @@ class Browser{
 						$vars = array_merge($vars,$chkbx_vars);
 					}
 				}
-				if($set){
-					foreach($vars as $k => $v){
-						$this->vars($k,$v);
-					}
+				foreach($vars as $k => $v){
+					$this->vars($k,$v);
 				}
 				return [
 					'action'=>\ebi\Util::path_absolute($this->url(),$form->in_attr('action')),
@@ -668,10 +627,8 @@ class Browser{
 	
 	/**
 	 * bodyをクエリ文字列として解析し配列として返す
-	 * @param string $name
-	 * @return mixed{}
 	 */
-	public function query_string($name=null){
+	public function query_string(?string $name=null): array{
 		$array = [];
 		parse_str($this->body(),$array);
 		

@@ -1,110 +1,78 @@
 <?php
 namespace ebi;
-/**
- *
- * @author tokushima
- *
- */
+
 class Calc{
 	/**
 	 * mm -> inch
-	 * @param float $mm
-	 * @return float
 	 */
-	public static function mm2in($mm){
+	public static function mm2in(float $mm): float{
 		return ($mm * 0.0393701);
 	}
 	
 	/**
 	 * inch -> mm
-	 * @param float $in
-	 * @return float
 	 */
-	public static function in2mm($in){
+	public static function in2mm(float $in): float{
 		return ($in * 25.4);
 	}
 	
 	/**
 	 * mm -> point
-	 * @param float $mm
-	 * @return float
 	 */
-	public static function mm2pt($mm){
+	public static function mm2pt(float $mm): float{
 		return ($mm * 2.83465);
 	}
 	
 	/**
 	 * point -> mm
-	 * @param float $pt
-	 * @return float
 	 */
-	public static function pt2mm($pt){
+	public static function pt2mm(float $pt): float{
 		return ($pt * 0.352778);
 	}
 	
 	/**
 	 * pixel -> mm
-	 * @param float $px
-	 * @param float $dpi
-	 * @return float
 	 */
-	public static function px2mm($px,$dpi=72){
+	public static function px2mm(float $px, float $dpi=72): float{
 		return ($px / $dpi * 25.4);
 	}
 	
 	/**
 	 * mm -> pixel
-	 * @param float $mm
-	 * @param float $dpi
-	 * @return float
 	 */
-	public static function mm2px($mm,$dpi=72){
+	public static function mm2px(float $mm, float $dpi=72): float{
 		$x = ($mm / 25.4 * $dpi);
 		return ceil($x);
 	}
 	
 	/**
 	 * pixel -> point
-	 * @param float $px
-	 * @param float $dpi
-	 * @return float
 	 */
-	public static function px2pt($px,$dpi=72){
+	public static function px2pt(float $px, float $dpi=72): float{
 		return ($px / $dpi * 72);
 	}
 	
 	/**
 	 * point -> pixel
-	 * @param float $pt
-	 * @param float $dpi
-	 * @return float
 	 */
-	public static function pt2px($pt,$dpi=72){
+	public static function pt2px(float $pt, float $dpi=72): float{
 		$x = ($pt / 72 * $dpi);
 		return ceil($x);
 	}
 	
 	/**
 	 * pixel -> dpi
-	 * @param int $px
-	 * @param float $mm
-	 * @param int $precision;
-	 * @return float
 	 */
-	public static function px2dpi($px,$mm,$precision=0){
+	public static function px2dpi(float $px, float $mm, float $precision=0): float{
 		$dpi = ($px / $mm * 25.4);
-		return (!empty($precision)) ? round($dpi,$precision) : $dpi;
+		return (!empty($precision)) ? round($dpi, $precision) : $dpi;
 	}
 	
 	/**
 	 * サイズ width, height (px)
-	 * @param string $type
-	 * @param int $dpi
-	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return float[]
 	 */
-	public static function get_size_px($type,$dpi=72){
-		[$w, $h] = self::get_size_mm($type);
+	public static function get_size_px(string $size_type, float $dpi=72): array{
+		[$w, $h] = self::get_size_mm($size_type);
 		
 		return [
 			self::mm2px($w,$dpi),
@@ -114,12 +82,9 @@ class Calc{
 	
 	/**
 	 * サイズ width, height (pt)
-	 * @param string $type
-	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return float[]
 	 */
-	public static function get_size_pt($type){
-		[$w, $h] = self::get_size_mm($type);
+	public static function get_size_pt(string $size_type): array{
+		[$w, $h] = self::get_size_mm($size_type);
 		
 		return [
 			self::mm2pt($w),
@@ -129,11 +94,8 @@ class Calc{
 	
 	/**
 	 * アスペクト比　width, height
-	 * @param float $width
-	 * @param float $height
-	 * @return float[]
 	 */
-	public static function get_aspect_ratio_pt($width,$height){
+	public static function get_aspect_ratio_pt(float $width, float $height): array{
 		$wpx = 	self::pt2px($width, 300);
 		$hpx = 	self::pt2px($height, 300);
 		$gcp = (gmp_strval(gmp_gcd((string)$wpx,(string)$hpx)));
@@ -143,12 +105,9 @@ class Calc{
 	
 	/**
 	 * サイズ width, height (mm)
-	 * @param string $type
-	 * @throws \ebi\exception\InvalidArgumentException
-	 * @return float[]
 	 */
-	public static function get_size_mm($type){
-		switch(strtoupper(str_replace([' ','-'],'',$type))){
+	public static function get_size_mm($size_type){
+		switch(strtoupper($size_type)){
 			case 'A0': return [841,1189];
 			case 'A1': return [594,841];
 			case 'A2': return [420,594];

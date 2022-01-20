@@ -1,14 +1,11 @@
 <?php
 namespace ebi;
-/**
- * 定義情報を格納するクラス
- * @author tokushima
- */
+
 class Conf{
 	private static $value = [self::class=>[]];
 	private static $plugins = [];
 	
-	private static function get_defined_class_key($key){
+	private static function get_defined_class_key(string $key): array{
 		if(strpos($key,'@') === false){
 			$trace = debug_backtrace(false);
 
@@ -18,14 +15,13 @@ class Conf{
 			return [$trace[2]['class'] ?? [], $key];
 		}
 		[$class_name, $key] = explode('@',$key,2);
-		return [$class_name,$key];
+		return [$class_name, $key];
 	}
 	
 	/**
 	 * 定義済みの定義名一覧
-	 * @return string[]
 	 */
-	public static function get_defined_keys(){
+	public static function get_defined_keys(): array{
 		$rtn = [];
 		foreach(self::$value as $c => $p){
 			$rtn[$c] = array_keys($p);
@@ -35,11 +31,9 @@ class Conf{
 	
 	/**
 	 * 定義情報をセットする
-	 * @param string $class_name 
-	 * @param string $key
 	 * @param mixed $value
 	 */
-	public static function set($class_name,$key=null,$value=null){
+	public static function set(string|array $class_name, ?string $key=null, $value=null): void{
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
 				foreach($v as $k => $value){
@@ -59,13 +53,11 @@ class Conf{
 			}
 		}
 	}
+
 	/**
-	 * 定義されているか
-	 * @param string $class_name
-	 * @param string $key
-	 * @return bool
+	 * 定義されている
 	 */
-	public static function exists($class_name,$key){
+	public static function exists(string $class_name, string $key): bool{
 		return (
 			array_key_exists($class_name,self::$value) &&
 			array_key_exists($key,self::$value[$class_name])
@@ -74,22 +66,18 @@ class Conf{
 
 	/**
 	 * 定義情報を取得する
-	 * @param string $key
 	 * @param mixed $default
 	 * @return mixed
 	 */
-	public static function get($key,$default=null){
+	public static function get(string $key, $default=null){
 		[$class_name, $key] = self::get_defined_class_key($key);
 		return self::exists($class_name,$key) ? self::$value[$class_name][$key] : $default;
 	}
 
 	/**
 	 * 定義情報を配列で取得する
-	 * @param string $key
-	 * @param mixed $default
-	 * @return array
 	 */	
-	public static function gets($key,$default=[],$return_vars=[]){
+	public static function gets(string $key, array $default=[], array $return_vars=[]): array{
 		[$class_name, $key] = self::get_defined_class_key($key);
 		$result = self::exists($class_name,$key) ? self::$value[$class_name][$key] : $default;
 		
@@ -106,12 +94,11 @@ class Conf{
 		}
 		return $result_vars;
 	}
+	
 	/**
 	 * Pluginに遅延セットする
-	 * @param string $class_name
-	 * @param string[] $plugin_class_names
 	 */
-	public static function set_class_plugin($class_name,$plugin_class_names=null){
+	public static function set_class_plugin(string|array $class_name, array $plugin_class_names=[]): void{
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
 				static::set_class_plugin($c,$v);
@@ -125,12 +112,11 @@ class Conf{
 			}
 		}
 	}
+
 	/**
 	 * Pluginに遅延セットされたオブジェクトを返す
-	 * @param string $class
-	 * @return array
 	 */
-	public static function get_class_plugin($class_name){
+	public static function get_class_plugin(string $class_name): array{
 		$rtn = [];
 	
 		if(isset(self::$plugins[$class_name])){
@@ -139,40 +125,45 @@ class Conf{
 		}
 		return $rtn;
 	}
-	private static function get_self_conf_get($key,$d=null){
+
+	/**
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	private static function get_self_conf_get(string $key, $default=null){
 		return array_key_exists($key,self::$value[self::class]) ? 
 			self::$value[self::class][$key] : 
-			$d;
+			$default;
 	}
-	
-	
 	
 	/**
 	 * アプリケーションの動作環境
-	 * @return string
 	 */
-	public static function appmode(){
-		return constant('APPMODE');
+	public static function appmode(): string{
+		if(defined('APPMODE')){
+			return (string)constant('APPMODE');
+		}
+		return '';
 	}
+
 	/**
 	 * 現在のアプリケーションモードがモードに所属しているか
-	 * @param string $mode アプリケーションモード、　グループを指定する場合は「@グループ名」
-	 * @return bool
+	 * アプリケーションモード、　グループを指定する場合は「@グループ名」
 	 */
-	public static function in_mode($mode){
+	public static function in_mode(string $mode): bool{
 		/**
 		 * [ グループ名 => [モード,モード] ]
 		 * 
 		 * @param string{} $group アプリケーションモードのグループ 
 		 */
 		$group = self::get_self_conf_get('appmode_group',[]);
-		$chkmode = is_array($mode) ? 
+
+		foreach((is_array($mode) ? 
 			$mode : 
-			((strpos($mode,',') === false) ? [$mode] : explode(',',$mode));
-		
-		foreach($chkmode as $m){
+			((strpos($mode, ',') === false) ? [$mode] : explode(',', $mode))
+		) as $m){
 			if(substr($m,0,1) == '@'){
-				$mode = substr($mode,1);
+				$mode = substr($mode, 1);
 				
 				if(array_key_exists($mode,$group) && in_array(\ebi\Conf::appmode(),$group[$mode])){
 					return true;
@@ -183,12 +174,11 @@ class Conf{
 		}
 		return false;
 	}
+
 	/**
 	 * 作業ディレクトリのパス
-	 * @param string $path
-	 * @return string
 	 */
-	public static function work_path($path=null){
+	public static function work_path(?string $path=null): string{
 		/**
 		 * @param string $val ワーキングディレクトリ
 		 */
@@ -203,10 +193,11 @@ class Conf{
 		}
 		return $dir.$path;
 	}
+
 	/**
-	 * @param string $path リソースファイルのディレクトリパス
+	 * リソースファイルのパス
 	 */
-	public static function resource_path($path=null){
+	public static function resource_path(?string $path=null): string{
 		/**
 		 * @param string $val リソースファイルのディレクトリ
 		 */
@@ -224,9 +215,8 @@ class Conf{
 	
 	/**
 	 * セッション・クッキーの定義
-	 * @return mixed{}
 	 */
-	public static function cookie_params(){
+	public static function cookie_params(): array{
 		/**
 		 * @param int $val ブラウザに送信するクッキーの有効期間(秒)
 		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
@@ -256,7 +246,6 @@ class Conf{
 		 * @param strig $val クロスサイトリクエスト設定 ( Strict, Lax, None )
 		 */
 		$cookie_samesite = self::get_self_conf_get('cookie_samesite','');
-		
 		
 		/**
 		 * デフォルトは、SID です
@@ -300,18 +289,18 @@ class Conf{
 			'cookie_samesite'=>$cookie_samesite,
 		];
 	}
+
 	/**
 	 * セッション名の定義
-	 * @return string
 	 */
-	public static function session_name(){
+	public static function session_name(): string{
 		return self::get_self_conf_get('session_name','SID');
 	}
+
 	/**
 	 * timestampの表現書式
-	 * @return string 
 	 */
-	public static function timestamp_format(){
+	public static function timestamp_format(): string{
 		/**
 		 * timestamp型の書式
 		 * @param string $val Y-m-d H:i:s
@@ -319,11 +308,11 @@ class Conf{
 		 */
 		return self::get_self_conf_get('timestamp_format','c');
 	}
+
 	/**
 	 * dateの表現書式
-	 * @return string
 	 */
-	public static function date_format(){
+	public static function date_format(): string{
 		/**
 		 * date型の書式
 		 * @param string $val Y-m-d
@@ -333,10 +322,9 @@ class Conf{
 	}
 		
 	/**
-	 * スクリプトが確保できる最大メモリを設定
-	 * @param int $mem memory size (MB)
+	 * スクリプトが確保できる最大メモリ(MB)を設定
 	 */
-	public static function memory_limit($mem){
-		ini_set('memory_limit',($mem > 0) ? $mem.'M' : -1);
+	public static function memory_limit(int $memory_limit_size): void{
+		ini_set('memory_limit',($memory_limit_size > 0) ? $memory_limit_size.'M' : -1);
 	}
 }

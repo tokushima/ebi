@@ -1,10 +1,6 @@
 <?php
 namespace ebi;
-/**
- * コード
- * @author tokushima
- *
- */
+
 class Code{
 	/**
 	 * コードから数値に変換する
@@ -23,6 +19,7 @@ class Code{
 		}
 		return $rtn + strpos($codebase,$code[$exp]);
 	}
+
 	/**
 	 * 数値からコードに変換する
 	 * @param string $codebase
@@ -45,6 +42,7 @@ class Code{
 		}
 		return $rtn.$codebase[$num];
 	}
+
 	/**
 	 * 指定桁で作成できる最大値
 	 * @param string $codebase
@@ -54,6 +52,7 @@ class Code{
 	public static function max($codebase,$length){
 		return pow(strlen($codebase),$length)-1;
 	}
+
 	/**
 	 * 指定桁を作成する場合の最小値
 	 * @param string $codebase
@@ -63,6 +62,7 @@ class Code{
 	public static function min($codebase,$length){
 		return pow(strlen($codebase),$length-1);
 	}
+	
 	/**
 	 * 指定桁でランダムに作成する
 	 * @param string $codebase
