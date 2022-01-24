@@ -2,17 +2,12 @@
 
 namespace ebi;
 
-/**
- * Zip で圧縮されたファイルアーカイブ
- */
-class ZipArchive
-{
+class ZipArchive{
 	private $zip;
 	private $wrote = false;
 	private $filename;
 
-	public function __construct(string $filename, bool $append = false)
-	{
+	public function __construct(string $filename, bool $append = false){
 		$this->filename = $filename;
 		$this->zip = new \ZipArchive();
 
@@ -56,10 +51,10 @@ class ZipArchive
 	 * 指定したパスからファイルを ZIP アーカイブに追加する
 	 */
 	public function add(string $filename, ?string $entry_name = null): void{
-		if ($this->wrote && $this->zip->open($this->filename, \ZipArchive::CREATE) === true) {
+		if($this->wrote && $this->zip->open($this->filename, \ZipArchive::CREATE) === true){
 			$this->wrote = false;
 		}
-		if (is_dir($filename)) {
+		if(is_dir($filename)){
 			$entry_name = \ebi\Util::path_slash($entry_name, null, false);
 			$dir = \ebi\Util::path_slash(realpath($filename), null, true);
 			$list = $this->dirs($dir, $dir, $entry_name);
@@ -70,13 +65,13 @@ class ZipArchive
 			foreach ($list[0] as $ln => $path) {
 				$this->zip->addFile($path, $ln);
 			}
-		} else {
-			if (is_file($filename)) {
-				if (empty($entry_name)) {
+		}else{
+			if(is_file($filename)){
+				if(empty($entry_name)){
 					$entry_name = basename($filename);
 				}
 				$this->zip->addFile($filename, $entry_name);
-			} else {
+			}else{
 				throw new \ebi\exception\UnknownFileException($filename);
 			}
 		}

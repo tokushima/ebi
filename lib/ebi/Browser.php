@@ -541,7 +541,7 @@ class Browser{
 	/**
 	 * bodyをXMLとして解析しXMLオブジェクトとして返す
 	 */
-	public function xml(?string $name=null): \ebi\Xml{
+	public function xml(string $name=''): \ebi\Xml{
 		return \ebi\Xml::extract($this->body(),$name);
 	}
 
@@ -549,7 +549,7 @@ class Browser{
 	 * bodyをJsonとして解析し配列として返す
 	 * @return mixed
 	 */
-	public function json(?string $name=null){
+	public function json(string $name=''){
 		$json = new \ebi\Json($this->body());
 		return $json->find($name);
 	}

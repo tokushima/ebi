@@ -1,10 +1,6 @@
 <?php
 namespace ebi;
-/**
- * JSON 文字列を操作する
- * @author tokushima
- *
- */
+
 class Json{
 	private $arr = [];
 	

@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * XMLを処理する
- * @author tokushima
- */
+
 class Xml implements \IteratorAggregate{
 	private $attr = [];
 	private $plain_attr = [];
@@ -25,52 +22,47 @@ class Xml implements \IteratorAggregate{
 			$this->value($value);
 		}
 	}
-	/**
-	 * (non-PHPdoc)
-	 * @see \IteratorAggregate::getIterator()
-	 */
+
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator($this->attr);
 	}
 	/**
 	 * 値が無い場合は閉じを省略する
-	 * @param bool
-	 * @return bool
 	 */
-	public function close_empty($bool){
-		$this->close_empty = (bool)$bool;
+	public function close_empty(bool $bool): self{
+		$this->close_empty = $bool;
 		return $this;
 	}
 	/**
 	 * エスケープするか
-	 * @param bool $bool
 	 */
-	public function escape($bool){
+	public function escape(bool $bool): self{
 		$this->esc = (bool)$bool;
 		return $this;
 	}
+
 	/**
 	 * setできた文字列
-	 * @return string
 	 */
-	public function plain(){
+	public function plain(): string{
 		return $this->plain;
 	}
+
 	/**
 	 * 子要素検索時のカーソル
-	 * @return int
 	 */
-	public function cur(){
+	public function cur(): int{
 		return $this->pos;
 	}
+
 	/**
 	 * 要素名
-	 * @return string
 	 */
 	public function name($name=null){
 		if(isset($name)) $this->name = $name;
 		return $this->name;
 	}
+
 	private function get_value($v){
 		if($v instanceof self){
 			$v = $v->get();
@@ -200,12 +192,9 @@ class Xml implements \IteratorAggregate{
 	public function __toString(){
 		return $this->get();
 	}
+
 	/**
 	 * 検索する
-	 * @param string $path
-	 * @param int $offset
-	 * @param int $length
-	 * @return \ebi\XmlIterator
 	 */
 	public function find($path=null,$offset=0,$length=0){
 		if(is_string($path) && strpos($path,'/') !== false){
