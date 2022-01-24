@@ -176,21 +176,7 @@ class Paginator implements \IteratorAggregate{
 		}
 		return $this->contents;
 	}
-	/**
-	 * 動的コンテンツのPaginator
-	 * @param int $paginate_by １ページの要素数
-	 * @param string $marker 基点となる値
-	 * @param string $key 対象とするキー
-	 * @return self
-	 */
-	public static function dynamic_contents($paginate_by=20,$marker=null,$key=null){
-		$self = new self($paginate_by);
-		$self->dynamic = true;
-		$self->tmp[3] = $key;
-		$self->current = $marker;
-		$self->total = $self->first = $self->last = null;
-		return $self;
-	}
+
 	/**
 	 * RequestのPaginator
 	 * @param \ebi\Request $req
@@ -247,7 +233,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function next(){
-		if($this->dynamic) return $this->tmp[0];
 		return $this->current + 1;
 	}
 	/**
@@ -255,10 +240,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function prev(){
-		if($this->dynamic){
-			if(!isset($this->tmp[1]) && sizeof($this->tmp[2]) > 0) $this->tmp[1] = array_shift($this->tmp[2]);
-			return $this->tmp[1];
-		}
 		return $this->current - 1;
 	}
 	/**
@@ -266,7 +247,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return bool
 	 */
 	public function is_next(){
-		if($this->dynamic) return isset($this->tmp[0]);
 		return ($this->last > $this->current);
 	}
 	/**
@@ -274,7 +254,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return bool
 	 */
 	public function is_prev(){
-		if($this->dynamic) return ($this->prev() !== null);
 		return ($this->current > 1);
 	}
 	/**
@@ -284,10 +263,7 @@ class Paginator implements \IteratorAggregate{
 	public function query_prev(){
 		$prev = $this->prev();
 		$vars = array_merge($this->vars,[
-			$this->query_name() => (($this->dynamic && isset($this->tmp[3])) ? 
-				(isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : 
-				$prev
-			)
+			$this->query_name() => $prev
 		]);
 		
 		if(isset($this->order)){
@@ -302,7 +278,7 @@ class Paginator implements \IteratorAggregate{
 	public function query_next(){
 		$vars = array_merge(
 			$this->vars,
-			[$this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())]
+			[$this->query_name()=>$this->next()]
 		);
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
@@ -353,7 +329,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function page_first(){
-		if($this->dynamic) return null;
 		return $this->offset + 1;
 	}
 	/**
@@ -361,8 +336,9 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function page_last(){
-		if($this->dynamic) return null;
-		return (($this->offset + $this->limit) < $this->total) ? ($this->offset + $this->limit) : $this->total;
+		return (($this->offset + $this->limit) < $this->total) ? 
+			($this->offset + $this->limit) : 
+			$this->total;
 	}
 	/**
 	 * ページの最初の位置を返す
@@ -370,8 +346,9 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function which_first($paginate=null){
-		if($this->dynamic) return null;
-		if($paginate === null) return $this->first;
+		if($paginate === null){
+			return $this->first;
+		}
 		$paginate = $paginate - 1;
 		$first = ($this->current > ($paginate/2)) ? @ceil($this->current - ($paginate/2)) : 1;
 		$last = ($this->last > ($first + $paginate)) ? ($first + $paginate) : $this->last;
@@ -383,7 +360,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return int
 	 */
 	public function which_last($paginate=null){
-		if($this->dynamic) return null;
 		if($paginate === null) return $this->last;
 		$paginate = $paginate - 1;
 		$first = ($this->current > ($paginate/2)) ? @ceil($this->current - ($paginate/2)) : 1;
@@ -395,9 +371,6 @@ class Paginator implements \IteratorAggregate{
 	 * @return int[]
 	 */
 	public function range($counter=10){
-		if($this->dynamic){
-			return [];
-		}
 		if($this->which_last($counter) > 0){
 			return range((int)$this->which_first($counter),(int)$this->which_last($counter));
 		}
@@ -408,7 +381,7 @@ class Paginator implements \IteratorAggregate{
 	 * @return bool
 	 */
 	public function has_range(){
-		return (!$this->dynamic && $this->last > 1);
+		return ($this->last > 1);
 	}	
 	public function before_template($src){
 		return \ebi\Xml::find_replace($src, 'rt:paginator',function($xml){
@@ -423,18 +396,17 @@ class Paginator implements \IteratorAggregate{
 			$func = '';
 			
 			if($lt == 'false'){
-				$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
+				$func .= sprintf('<?php if(%s->total() > %s->limit()){ ?>',$param,$param);
 			}
 			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">',$param);
 			if(isset($navi['prev'])){
 				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
 			}
 			if(isset($navi['first'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+				$func .= sprintf('<?php if(%s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
 			}
 			if(isset($navi['counter'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
-							.sprintf('<?php if(%s->total() == 0){ ?>',$param)
+				$func .= sprintf('<?php if(%s->total() == 0){ ?>',$param)
 								.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
 							.'<?php }else{ ?>'
 								.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
@@ -444,11 +416,10 @@ class Paginator implements \IteratorAggregate{
 										.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
 									.'<?php } ?>'
 								.'<?php } ?>'
-							.'<?php } ?>'
 						.'<?php } ?>';
 			}
 			if(isset($navi['last'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+				$func .= sprintf('<?php if(%s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
 			}
 			if(isset($navi['next'])){
 				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);

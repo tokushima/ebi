@@ -13,6 +13,7 @@ class Mail{
 	private $to = [];
 	private $cc = [];
 	private $bcc = [];
+	private $unsubscribe = '';
 	private $header = [];
 	
 	private $subject = '';
@@ -53,6 +54,16 @@ class Mail{
 	 */
 	public function bcc(string $address, ?string $name=''): void{
 		$this->bcc[$address] = $this->address($address,$name);
+	}
+	/**
+	 * Set List-Unsubscribe
+	 */
+	public function unsubscribe(string $url): void{
+		if(strpos($url, '://') !== false){
+			$this->unsubscribe = sprintf('<%s>', $url);
+		}else if(strpos($url, '@') !== false){
+			$this->unsubscribe = sprintf('<mailto:%s>', $url);
+		}
 	}
 	/**
 	 * Set return-path-Address
@@ -110,6 +121,9 @@ class Mail{
 		}
 		if(!empty($this->return_path)){
 			$rtn .= $this->line('Return-Path: '.$this->return_path);
+		}
+		if(!empty($this->unsubscribe)){
+			$rtn .= $this->line('List-Unsubscribe: '.$this->unsubscribe);
 		}
 		foreach($this->header as $n => $v){
 			$n = ucwords(str_replace('_','-',$n));
