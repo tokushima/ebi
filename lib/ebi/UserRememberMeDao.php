@@ -7,7 +7,6 @@ namespace ebi;
  * @var string $token @['auto_code_add'=>true,'max'=>80]
  * @var string $key @['auto_code_add'=>true,'max'=>45]
  * @var timestamp $expire_date
- * @author tokushima
  */
 class UserRememberMeDao extends \ebi\Dao{
 	protected $id;
@@ -16,21 +15,20 @@ class UserRememberMeDao extends \ebi\Dao{
 	protected $key;
 	protected $expire_date;
 	
-	private static function crypt($user_id){
+	private static function crypt(string $user_id): string{
 		/**
 		 * @param string $salt user_idのハッシュ用salt
 		 */
 		return sha1(\ebi\Conf::get('salt',__FILE__).$user_id);
 	}
-	private static function name(\ebi\flow\Request $req,$k){
+	private static function name(\ebi\flow\Request $req, string $k): string{
 		return '_'.md5($req->user_login_session_id().__FILE__.$k);
 	}
 	
 	/**
 	 * login_condition/remember_meで利用しtokenをセットする
-	 * @param \ebi\flow\Request $req
 	 */
-	public static function write_cookie(\ebi\flow\Request $req){
+	public static function write_cookie(\ebi\flow\Request $req): void{
 		if($req->user() instanceof \ebi\User){
 			try{
 				$self = static::find_get(Q::eq('user_id',$req->user()->id()));
@@ -66,11 +64,8 @@ class UserRememberMeDao extends \ebi\Dao{
 	}
 	/**
 	 * remember_meで利用しuser_idを取得する
-	 * @param \ebi\flow\Request $req
-	 * @throws \ebi\exception\NotFoundException
-	 * @return string
 	 */
-	public static function read_cookie(\ebi\flow\Request $req){
+	public static function read_cookie(\ebi\flow\Request $req): string{
 		$token = \ebi\Request::read_cookie(self::name($req,'token'));
 		
 		if(!empty($token)){
@@ -106,9 +101,8 @@ class UserRememberMeDao extends \ebi\Dao{
 	
 	/**
 	 * before_do_logoutで利用する
-	 * @param \ebi\flow\Request $req
 	 */
-	public static function delete_cookie(\ebi\flow\Request $req){
+	public static function delete_cookie(\ebi\flow\Request $req): void{
 		\ebi\Request::delete_cookie(self::name($req,'token'));
 		\ebi\Request::delete_cookie(self::name($req,'key'));
 	}
