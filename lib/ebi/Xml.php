@@ -407,12 +407,8 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * 整形する
-	 * @param string $src XML文字列
-	 * @param string $indent_str インデント文字
-	 * @param int $depth インデントの初期値
-	 * @return string
 	 */
-	public static function format($src,$indent_str="\t",$depth=0){
+	public static function format(string $src, string $indent_str="\t", int $depth=0): string{
 		$rtn = '';
 		$i = 0;
 		$c = md5(__FILE__);
@@ -458,12 +454,8 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * $srcから対象のXMLを置換した文字列を返す
-	 * @param string $src
-	 * @param string $name
-	 * @param callable $func
-	 * @return string
 	 */
-	public static function find_replace($src,$name,$func){
+	public static function find_replace(string $src, string $name, callable $func): string{
 		if(!is_callable($func)){
 			throw new \ebi\exception\InvalidArgumentException('invalid function');
 		}
@@ -477,12 +469,8 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * $srcから対象のXMLをすべて置換した文字列を返す
-	 * @param string $src
-	 * @param string $name
-	 * @param callable $func
-	 * @return string
 	 */
-	public static function find_replace_all($src,$name,$func){
+	public static function find_replace_all(string $src, string $name, callable $func): string{
 		try{
 			if(!is_callable($func)){
 				throw new \ebi\exception\InvalidArgumentException('invalid function');
@@ -490,7 +478,7 @@ class Xml implements \IteratorAggregate{
 			$i = 0;
 	
 			while(true){
-				$xml = \ebi\Xml::extract($src,$name);
+				$xml = self::extract($src,$name);
 				$replace = call_user_func_array($func,[$xml]);
 				
 				if(!is_null($replace)){
