@@ -1,14 +1,9 @@
 <?php
 namespace ebi;
-/**
- * ワーキングファイル
- * @author tokushima
- *
- */
+
 class WorkingStorage{
 	static private $work;
 	private $list = [];
-	
 	
 	public function __destruct(){
 		rsort($this->list);
@@ -24,10 +19,8 @@ class WorkingStorage{
 	
 	/**
 	 * ワーキングファイルパスの取得
-	 * @param string $path
-	 * @return string
 	 */
-	public static function path($path){
+	public static function path(string $path=''): string{
 		if(!isset(self::$work)){
 			self::$work = new self();
 		}
@@ -39,10 +32,8 @@ class WorkingStorage{
 	
 	/**
 	 * フォルダの作成
-	 * @param string $path
-	 * @reutrn string
 	 */
-	public static function mkdir($path){
+	public static function mkdir(string $path=''): string{
 		$p = self::path($path);
 		\ebi\Util::mkdir($p);
 		
@@ -51,32 +42,23 @@ class WorkingStorage{
 	
 	/**
 	 * ワーキングファイルに書き出し
-	 * @param string $path
-	 * @param string $src
-	 * @return string ファイルパス
 	 */
-	public static function set($path,$src=null){
+	public static function set(string $path, string $src=''): string{
 		$p = self::path($path);
 		\ebi\Util::file_write($p,$src);
 		return $p;
 	}
 	/**
 	 * ワーキングファイルから取得
-	 * @param string $path
-	 * @return string
 	 */
-	public static function get($path){
+	public static function get(string $path): string{
 		return \ebi\Util::file_read(\ebi\Conf::work_path($path));
 	}
 	
 	/**
 	 * テンポラリファイルとして作成する
-	 * @param string $src テンポラリファイルに書き込む文字列
-	 * @param string $postfix テンポラリファイル名の接尾文字列
-	 * @throws \ebi\exception\AccessDeniedException
-	 * @return string ファイルパス
 	 */
-	public static function tmpfile($src='',$postfix=''){
+	public static function tmpfile(string $src='', string $postfix=''): string{
 		for($i=0;$i<100;$i++){
 			$uniq = str_replace('.','_',microtime(true).uniqid('',true)).$postfix;
 			
@@ -88,10 +70,8 @@ class WorkingStorage{
 	}
 	/**
 	 * テンポラリディレクトリとして作成する
-	 * @throws \ebi\exception\AccessDeniedException
-	 * @return string ファイルパス
 	 */
-	public static function tmpdir(){
+	public static function tmpdir(): string{
 		for($i=0;$i<100;$i++){
 			$uniq = str_replace('.','_',microtime(true).uniqid('',true));
 			
