@@ -4,11 +4,8 @@ namespace ebi;
 class Code{
 	/**
 	 * コードから数値に変換する
-	 * @param string $codebase
-	 * @param string $code
-	 * @return int
 	 */
-	public static function decode($codebase,$code){
+	public static function decode(string $codebase, string $code): int{
 		$base = strlen($codebase);
 		$rtn = 0;
 		$exp = strlen($code) - 1;
@@ -22,11 +19,8 @@ class Code{
 
 	/**
 	 * 数値からコードに変換する
-	 * @param string $codebase
-	 * @param int $num
-	 * @return string
 	 */
-	public static function encode($codebase,$num){
+	public static function encode(string $codebase, int $num): string{
 		$base = strlen($codebase);
 		$rtn = '';
 		$exp = 1;
@@ -45,31 +39,22 @@ class Code{
 
 	/**
 	 * 指定桁で作成できる最大値
-	 * @param string $codebase
-	 * @param int $length
-	 * @return int
 	 */
-	public static function max($codebase,$length){
+	public static function max(string $codebase, int $length): int{
 		return pow(strlen($codebase),$length)-1;
 	}
 
 	/**
 	 * 指定桁を作成する場合の最小値
-	 * @param string $codebase
-	 * @param int $length
-	 * @return int
 	 */
-	public static function min($codebase,$length){
+	public static function min(string $codebase, int $length): int{
 		return pow(strlen($codebase),$length-1);
 	}
 	
 	/**
 	 * 指定桁でランダムに作成する
-	 * @param string $codebase
-	 * @param int $length
-	 * @return string
 	 */
-	public static function rand($codebase,$length=1){
+	public static function rand(string $codebase, int $length=1): string{
 		if(empty($codebase)){
 			throw new \ebi\exception\InvalidArgumentException('codebase is empty');
 		}
@@ -84,19 +69,15 @@ class Code{
 	
 	/**
 	 * コード文字列をトリムする
-	 * @param string $code
-	 * @return string
 	 */
-	public static function trim($code){
+	public static function trim(string $code): string{
 		return str_replace(['-','ー','−','―','‐'],'',trim(mb_convert_kana($code,'as')));
 	}
 	
 	/**
 	 * パスワードの生成
-	 * @param int $length
-	 * @return string
 	 */
-	public static function password($length=8){
+	public static function password(int $length=8): string{
 		if($length < 8){
 			$length = 8;
 		}

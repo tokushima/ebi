@@ -1,10 +1,6 @@
 <?php
 namespace ebi;
-/**
- * HTTP接続クラス
- * @author tokushima
- *
- */
+
 class Browser{
 	private $resource;
 	private $agent;
@@ -32,7 +28,7 @@ class Browser{
 	private static $recording_request = false;
 	private static $record_request = [];
 	
-	public function __construct($agent=null,$timeout=30,$redirect_max=20){
+	public function __construct(?string $agent=null, int $timeout=30, int $redirect_max=20){
 		$this->agent = $agent;
 		$this->timeout = (int)$timeout;
 		$this->redirect_max = (int)$redirect_max;

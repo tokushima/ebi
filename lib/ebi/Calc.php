@@ -1,6 +1,9 @@
 <?php
 namespace ebi;
 
+/**
+ * @deprecated
+ */
 class Calc{
 	/**
 	 * mm -> inch
