@@ -2,10 +2,10 @@
 namespace cmdman;
 
 class Std{
-    public static function println($value=null){}
-    public static function println_info($value=null){}
-    public static function println_warning($value=null){}
-    public static function println_success($value=null){}
-    public static function println_danger($value=null){}
+    public static function println(?string $value=null){}
+    public static function println_info(?string $value=null){}
+    public static function println_warning(?string $value=null){}
+    public static function println_success(?string $value=null){}
+    public static function println_danger(?string $value=null){}
     public static function backspace(){}
 }
