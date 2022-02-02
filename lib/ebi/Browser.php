@@ -104,8 +104,9 @@ class Browser{
 
 	/**
 	 * クエリを設定
+	 * @param mixed $value (string|array)
 	 */
-	public function vars(string $key, string|array $value): self{
+	public function vars(string $key, $value): self{
 		$this->request_vars[$key] = $value;
 		
 		if(isset($this->request_file_vars[$key])){
@@ -552,8 +553,9 @@ class Browser{
 	
 	/**
 	 * FORMタグからform.action, form.method, varsを取得する
+	 * @param mixed $form_name_or_index (string|int)
 	 */
-	public function form(string|int $form_name_or_index=1): array{
+	public function form($form_name_or_index=1): array{
 		$cnt = 0;
 		$vars = [];
 		

@@ -7,19 +7,19 @@ namespace ebi;
 class HttpFile{
 	/**
 	 * inlineで出力する
-	 * @param $file 出力するファイル、または[ファイル名,文字列]
+	 * @param mixed $filename (string|array) 出力するファイル、または[ファイル名,文字列]
 	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function inline(string|array $filename, bool $modified_status=true): void{
+	public static function inline($filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'inline',$modified_status);
 	}
 
 	/**
 	 * attachmentで出力する
-	 * @param $file 出力するファイル、または[ファイル名,文字列]
+	 * @param mixed $filename (string|array ) 出力するファイル、または[ファイル名,文字列]
 	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function attach(string|array $filename, bool $modified_status=true): void{
+	public static function attach($filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'attachment',$modified_status);
 	}
 	private static function output_file_content($filename,$disposition,$modified_status){

@@ -19,8 +19,9 @@ trait UserRole{
 	}
 	/**
 	 * 指定の権限があるか
+	 * @param mixed $role (int|string)
 	 */
-	public function has_role(int|string $role): bool{
+	public function has_role($role): bool{
 		return in_array($role, $this->get_role());
 	}
 }

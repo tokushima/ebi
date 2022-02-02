@@ -215,7 +215,10 @@ class Mail{
 		return $send;
 	}
 	
-	private function implode_address(string|array $list): string{
+	/**
+	 * @param mixed $list (string|array)
+	 */
+	private function implode_address($list): string{
 		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
 	}
 

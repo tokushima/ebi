@@ -36,8 +36,10 @@ class Args{
 
 	/**
 	 * オプション値の取得
+	 * @param mixed $default (string|bool)
+	 * @return mixed (string|bool)
 	 */
-	public static function opt(string $name, string|bool $default=false): string|bool{
+	public static function opt(string $name, $default=false){
 		self::init();
 		return array_key_exists($name, self::$opt) ? self::$opt[$name][0] : $default;
 	}

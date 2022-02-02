@@ -198,15 +198,15 @@ class Image{
 	 *  IMG_FILTER_COLORIZE: カラーバランス, arg1(R)=0〜255, arg2(G)=0〜255, arg3(B)=0〜255, arg4(Alpha)=0〜127 
 	 *  
 	 * @param $filter_type IMG_FILTER_*
-	 * @param $arg1 filter_typeの第一引数
-	 * @param $arg2 filter_typeの第一引数 IMG_FILTER_PIXELATE: bool, IMG_FILTER_COLORIZE: int
+	 * @param mixed $arg1 (int|bool) filter_typeの第一引数
+	 * @param mixed $arg2 (int|bool) filter_typeの第一引数 IMG_FILTER_PIXELATE: bool, IMG_FILTER_COLORIZE: int
 	 * @param int $arg3
 	 * @param int $arg4
 	 * @return \ebi\Image
 	 * 
 	 * @see http://php.net/manual/ja/function.imagefilter.php
 	 */
-	public function filter(int $filter_type, int|bool $arg1=0, int|bool $arg2=0, int $arg3=0, int $arg4=0): self{
+	public function filter(int $filter_type, $arg1=0, $arg2=0, int $arg3=0, int $arg4=0): self{
 		switch($filter_type){
 			case IMG_FILTER_BRIGHTNESS:
 			case IMG_FILTER_CONTRAST:

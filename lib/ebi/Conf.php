@@ -31,9 +31,10 @@ class Conf{
 	
 	/**
 	 * 定義情報をセットする
+	 * @param mixed $class_name (string|array)
 	 * @param mixed $value
 	 */
-	public static function set(string|array $class_name, ?string $key=null, $value=null): void{
+	public static function set($class_name, ?string $key=null, $value=null): void{
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
 				foreach($v as $k => $value){
@@ -97,8 +98,9 @@ class Conf{
 	
 	/**
 	 * Pluginに遅延セットする
+	 * @param mixed $class_name (string|array)
 	 */
-	public static function set_class_plugin(string|array $class_name, array $plugin_class_names=[]): void{
+	public static function set_class_plugin($class_name, array $plugin_class_names=[]): void{
 		if(is_array($class_name)){
 			foreach($class_name as $c => $v){
 				static::set_class_plugin($c,$v);

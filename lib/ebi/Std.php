@@ -58,11 +58,12 @@ class Std{
 
 	/**
 	 * 色装飾
+	 * @param mixed $ansi_color (bool|string)
 	 */
-	public static function color(string $value, bool|string $ansi_color=null): string{
+	public static function color(string $value, $ansi_color=''): string{
 		if(substr(PHP_OS,0,3) == 'WIN'){
 			$value = mb_convert_encoding($value,'UTF-8','SJIS');
-		}else if($ansi_color !== null){
+		}else if(!empty($ansi_color)){
 			$fmt = ($ansi_color === true) ? '1;34' : (($ansi_color === false) ? '1;31' : $ansi_color);
 			$value = "\033[".$fmt.'m'.$value."\033[0m";
 		}
@@ -76,15 +77,17 @@ class Std{
 	}
 	/**
 	 * プリント
+	 * @param mixed $ansi_color (bool|string)
 	 */
-	public static function p(string $msg, bool|string $ansi_color=null): void{
+	public static function p(string $msg, $ansi_color=null): void{
 		print(self::color($msg, $ansi_color));
 	}
 	
 	/**
 	 * 色付きでプリント
+	 * @param mixed $ansi_color (bool|string)
 	 */
-	public static function println(string $msg='', bool|string $ansi_color='0'): void{
+	public static function println(string $msg='', $ansi_color='0'): void{
 		print(self::color($msg,$ansi_color).PHP_EOL);
 	}
 	/**

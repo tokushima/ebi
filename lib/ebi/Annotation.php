@@ -4,8 +4,10 @@ namespace ebi;
 class Annotation{
 	/**
 	 * クラスのアノテーションを取得する
+	 * @param mixed $class (string|object)
+	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_class(string|object $class, string|array $anon_names, ?string $doc_name=null, ?string $parent_class=null): ?array{
+	public static function get_class($class, $anon_names, ?string $doc_name=null, ?string $parent_class=null): ?array{
 		$return = [];
 		$t = new \ReflectionClass($class);
 		$d = '';
@@ -35,8 +37,10 @@ class Annotation{
 
 	/**
 	 * メソッドのアノテーションを取得する
+	 * @param mixed $class (string|object)
+	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_method(string|object $class, string $method, string|array $anon_names, ?string $doc_name=null): ?array{
+	public static function get_method($class, string $method, $anon_names, ?string $doc_name=null): ?array{
 		$return = [];
 		$t = new \ReflectionMethod($class,$method);
 		$d = $t->getDocComment();
