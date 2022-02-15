@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * O/R Mapper
- * @author tokushima
- */
+
 abstract class Dao extends \ebi\Obj{
 	private static $_dao_ = [];
 	private static $_cnt_ = 0;
@@ -24,7 +21,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 接続情報一覧
 	 * @return \ebi\Db[]
 	 */
-	public static function connections(){
+	public static function connections(): array{
 		$connections = [];
 		foreach(self::$_connections_ as $n => $con){
 			$connections[$n] = $con;
@@ -33,10 +30,8 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * 接続情報
-	 * @param string $class
-	 * @return \ebi\Db
 	 */
-	public static function connection($class){
+	public static function connection(string $class): \ebi\Db{
 		if(!isset(self::$_co_anon_[$class][0]) || !isset(self::$_connections_[self::$_co_anon_[$class][0]])){
 			throw new \ebi\exception\ConnectionException('unable to connect to '.$class);
 		}
@@ -45,7 +40,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * すべての接続でロールバックする
 	 */
-	public static function rollback_all(){
+	public static function rollback_all(): void{
 		foreach(self::connections() as $con){
 			try{
 				$con->rollback();
@@ -56,7 +51,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * すべての接続でコミットする
 	 */
-	public static function commit_all(){
+	public static function commit_all(): void{
 		foreach(self::connections() as $con){
 			try{
 				$con->commit();
@@ -64,7 +59,7 @@ abstract class Dao extends \ebi\Obj{
 			}
 		}
 	}
-	private static function get_db_settings($database,$class){
+	private static function get_db_settings(string $database, string $class){
 		if(!isset(self::$_connections_[$database])){
 			if(isset(self::$_connection_settings_[$database]['con'])){
 				self::get_db_settings(self::$_connection_settings_[$database]['con'],$class);
@@ -376,7 +371,7 @@ abstract class Dao extends \ebi\Obj{
 	 * Columnの一覧を取得する
 	 * @return \ebi\Column[]
 	 */
-	public function columns($self_only=false){
+	public function columns(bool $self_only=false): array{
 		if($self_only){
 			return self::$_dao_[$this->_class_id_]->_self_columns_;
 		}
@@ -386,7 +381,7 @@ abstract class Dao extends \ebi\Obj{
 	 * primaryのColumnの一覧を取得する
 	 * @return \ebi\Column[]
 	 */
-	public function primary_columns(){
+	public function primary_columns(): array{
 		$result = [];
 		foreach(self::$_dao_[$this->_class_id_]->_self_columns_ as $column){
 			if($column->primary()){
@@ -399,7 +394,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 必須の条件を取得する
 	 * @return \ebi\Column[]
 	 */
-	public function conds(){
+	public function conds(): array{
 		return self::$_dao_[$this->_class_id_]->_conds_;
 	}
 	/**
@@ -411,14 +406,13 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * 結果配列から値を自身にセットする
-	 * @param $resultset array
-	 * @return int
 	 */
-	protected function cast_resultset($resultset){
+	protected function cast_resultset(array $resultset): void{
 		foreach($resultset as $alias => $value){
 			if(isset(self::$_dao_[$this->_class_id_]->_alias_[$alias])){
-				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1') $this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
-				
+				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1'){
+					$this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
+				}
 				if($this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has') === true){
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->cast_resultset([$alias=>$value]);
 				}else{
@@ -428,7 +422,9 @@ abstract class Dao extends \ebi\Obj{
 		}
 		if(!empty(self::$_dao_[$this->_class_id_]->_has_many_conds_)){
 			foreach(self::$_dao_[$this->_class_id_]->_has_many_conds_ as $name => $conds){
-				foreach($conds[0]::find(Q::eq($conds[1],$this->{$conds[2]}())) as $dao) $this->{$name}($dao);
+				foreach($conds[0]::find(Q::eq($conds[1],$this->{$conds[2]}())) as $dao){
+					$this->{$name}($dao);
+				}
 			}
 		}
 	}
@@ -436,9 +432,11 @@ abstract class Dao extends \ebi\Obj{
 	 * テーブル名を取得
 	 * @return string
 	 */
-	public function table(){
+	public function table(): string{
 		return self::$_co_anon_[get_class($this)][1];
 	}
+
+	// TODO 
 	protected function __find_conds__(){
 		return Q::b();
 	}
@@ -456,26 +454,22 @@ abstract class Dao extends \ebi\Obj{
 	
 	/**
 	 * 発行したSQLの記録を開始する
-	 * @return mixed[]
 	 */
-	public static function start_record(){
+	public static function start_record(): void{
 		self::$recording_query = true;
 		self::$record_query = [];
 	}
 	/**
 	 * 発行したSQLの記録を終了する
-	 * @return mixed[]
 	 */
-	public static function stop_record(){
+	public static function stop_record(): array{
 		self::$recording_query = false;
 		return self::$record_query;
 	}
 	/**
 	 * クエリを実行する
-	 * @param Daq $daq
-	 * @return \PDOStatement
 	 */
-	public function query(\ebi\Daq $daq){
+	public function query(\ebi\Daq $daq): \PDOStatement{
 		if(self::$recording_query){
 			self::$record_query[] = [$daq->sql(),$daq->ar_vars()];
 		}
@@ -497,12 +491,17 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return $statement;
 	}
-	private function update_query(\ebi\Daq $daq){
+
+	private function update_query(\ebi\Daq $daq): int{
 		$statement = $this->query($daq);
 		
 		return $statement->rowCount();
 	}
-	private function func_query(\ebi\Daq $daq,$is_list=false){
+
+	/**
+	 * @return mixed
+	 */
+	private function func_query(\ebi\Daq $daq,bool $is_list=false){
 		try{
 			$statement = $this->query($daq);
 		}catch(\PDOException $e){
@@ -516,7 +515,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 値の妥当性チェックを行う
 	 */
-	public function validate(){
+	public function validate(): void{
 		foreach($this->columns(true) as $name => $column){
 			if(!\ebi\Exceptions::has($name)){
 				$value = $this->{$name}();
@@ -561,164 +560,95 @@ abstract class Dao extends \ebi\Obj{
 		}
 		\ebi\Exceptions::throw_over();
 	}
-	private function call_aggregator($exe,array $args,$is_list=false){
-		$target_name = $gorup_name = [];
-		if(isset($args[0]) && is_string($args[0])){
-			$target_name = array_shift($args);
-			if(isset($args[0]) && is_string($args[0])) $gorup_name = array_shift($args);
-		}
-		$query = new \ebi\Q();
-		if(!empty($args)){
-			call_user_func_array([$query,'add'],$args);
-		}
-		$daq = self::$_con_[get_called_class()]->{$exe.'_sql'}($this,$target_name,$gorup_name,$query);
-		return $this->func_query($daq,$is_list);
-	}
-	private static function exec_aggregator_result_cast($dao,$target_name,$value,$cast){
+
+	/**
+	 * @return mixed
+	 */
+	private static function exec_aggregator_result_cast(self $dao, $target_name, string $value, ?string $cast){
 		switch($cast){
  			case 'float': return (float)$value;
  			case 'int': return (int)$value;
+			default:
+				$dao->{$target_name}($value);
+				return $dao->{$target_name}();	
 		}
-		$dao->{$target_name}($value);
-		return $dao->{$target_name}();
 	}
-	private static function exec_aggregator($exec,$target_name,$args,$cast=null){
+	public static function find_distinct($target_prop, ...$args): array{
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
-		$result = $dao->call_aggregator($exec,$args);
-		return static::exec_aggregator_result_cast($dao,$target_name,current($result),$cast);
+		$results = $dao->call_aggregator('distinct', $target_prop, null, $args);
+		return $results;
 	}
-	private static function exec_aggregator_by($exec,$target_name,$gorup_name,$args,$cast=null){
-		if(empty($target_name) || !is_string($target_name)){
-			throw new \ebi\exception\InvalidQueryException('undef target_name');
+	private function call_aggregator(string $exe, ?string $target_prop, ?string $group_prop, array $args, bool $is_list=false){
+		$query = new \ebi\Q();
+		if(!empty($args)){
+			call_user_func_array([$query,'add'], $args);
 		}
-		if(empty($gorup_name) || !is_string($gorup_name)){
-			throw new \ebi\exception\InvalidQueryException('undef group_name');
-		}
+		$daq = self::$_con_[get_called_class()]->{$exe.'_sql'}($this, $target_prop, $group_prop, $query);
+		return $this->func_query($daq,$is_list);
+	}
+
+	private static function exec_aggregator(string $exec, ?string $target_prop, array $args, ?string $cast=null){
+		$dao = new static();
+		$args[] = $dao->__find_conds__();
+		$result = $dao->call_aggregator($exec, $target_prop, null, $args);
+		return static::exec_aggregator_result_cast($dao, $target_prop, current($result), $cast);
+	}
+	public static function find_count(...$args): int{
+		$target_prop = (isset($args[0]) && is_string($args[0])) ? array_shift($args) : null;
+		return (int)static::exec_aggregator('count', $target_prop, $args, 'int');
+	}
+	public static function find_avg(string $target_prop, ...$args): float{
+		return static::exec_aggregator('avg', $target_prop, $args, 'float');
+	}
+	public static function find_sum(string $target_prop, ...$args): float{
+		return static::exec_aggregator('sum', $target_prop, $args);
+	}
+	/**
+	 * @return mixed
+	 */
+	public static function find_max(string $target_prop, ...$args){
+		return static::exec_aggregator('max', $target_prop, $args);
+	}
+	/**
+	 * @return mixed
+	 */
+	public static function find_min(string $target_prop, ...$args){
+		return static::exec_aggregator('min', $target_prop, $args);
+	}
+
+	private static function exec_aggregator_by(string $exec, string $target_prop, string $group_prop, array $args, $cast=null): array{
 		$dao = new static();
 		$args[] = $dao->__find_conds__();
 		$results = [];
 		
-		foreach($dao->call_aggregator($exec,$args,true) as $value){
-			$dao->{$gorup_name}($value['key_column']);
-			$results[$dao->{$gorup_name}()] = static::exec_aggregator_result_cast($dao,$target_name,$value['target_column'],$cast);
+		foreach($dao->call_aggregator($exec, $target_prop, $group_prop, $args, true) as $value){
+			$dao->{$group_prop}($value['key_column']);
+			$results[$dao->{$group_prop}()] = static::exec_aggregator_result_cast($dao, $target_prop, $value['target_column'], $cast);
 		}
 		ksort($results);
 		return $results;
 	}
-	/**
-	 * カウントを取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @return int
-	 */
-	public static function find_count($target_name=null){
-		$args = func_get_args();
-		return (int)static::exec_aggregator('count',$target_name,$args,'int');
+	public static function find_count_by(string $target_prop, string $group_props, ...$args): array{
+		return static::exec_aggregator_by('count', $target_prop, $group_props, $args, 'int');
 	}
-	/**
-	 * グルーピングしてカウントを取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return int{}
-	 */
-	public static function find_count_by($target_name,$gorup_name){
-		$args = func_get_args();
-		return static::exec_aggregator_by('count',$target_name,$gorup_name,$args);
+	public static function find_sum_by(string $target_prop, string $group_props, ...$args): array{
+		return static::exec_aggregator_by('sum', $target_prop, $group_props, $args);
 	}
-	/**
-	 * 合計を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @return float
-	 */
-	public static function find_sum($target_name){
-		$args = func_get_args();
-		return static::exec_aggregator('sum',$target_name,$args);
+	public static function find_max_by(string $target_prop, string $group_props, ...$args): array{
+		return static::exec_aggregator_by('max', $target_prop, $group_props, $args);
 	}
-	/**
-	 * グルーピングした合計を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return int{}
-	 */
-	public static function find_sum_by($target_name,$gorup_name){
-		$args = func_get_args();
-		return static::exec_aggregator_by('sum',$target_name,$gorup_name,$args);
+	public static function find_min_by(string $target_prop, string $group_props, ...$args): array{
+		return static::exec_aggregator_by('min', $target_prop, $group_props, $args);
 	}
-	/**
-	 * 最大値を取得する
-	 *
-	 * @param string $target_name 対象となるプロパティ
-	 * @return float
-	 */
-	public static function find_max($target_name){
-		$args = func_get_args();
-		return static::exec_aggregator('max',$target_name,$args);
+	public static function find_avg_by(string $target_prop, string $group_props, ...$args): array{
+		return static::exec_aggregator_by('avg', $target_prop, $group_props, $args,'float');
 	}
+
+
 	/**
-	 * グルーピングして最大値を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return float
-	 */
-	public static function find_max_by($target_name,$gorup_name){
-		$args = func_get_args();
-		return static::exec_aggregator_by('max',$target_name,$gorup_name,$args);
-	}
-	/**
-	 * 最小値を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return float
-	 */
-	public static function find_min($target_name){
-		$args = func_get_args();
-		return static::exec_aggregator('min',$target_name,$args);
-	}
-	/**
-	 * グルーピングして最小値を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return int{}
-	 */
-	public static function find_min_by($target_name,$gorup_name){
-		$args = func_get_args();
-		return static::exec_aggregator_by('min',$target_name,$gorup_name,$args);
-	}
-	/**
-	 * 平均を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @return float
-	 */
-	public static function find_avg($target_name){
-		$args = func_get_args();
-		return static::exec_aggregator('avg',$target_name,$args,'float');
-	}
-	/**
-	 * グルーピングして平均を取得する
-	 * @param string $target_name 対象となるプロパティ
-	 * @param string $gorup_name グルーピングするプロパティ名
-	 * @return float{}
-	 */
-	public static function find_avg_by($target_name,$gorup_name){
-		$args = func_get_args();
-		return static::exec_aggregator_by('avg',$target_name,$gorup_name,$args,'float');
-	}
-	/**
-	 * distinctした一覧を取得する
-	 *
-	 * @param string $target_name 対象となるプロパティ
-	 * @return mixed[]
-	 */
-	public static function find_distinct($target_name){
-		$args = func_get_args();
-		$dao = new static();
-		$args[] = $dao->__find_conds__();
-		$results = $dao->call_aggregator('distinct',$args);
-		return $results;
-	}
-	/**
-	 * 検索結果をひとつ取得する
-	 * @return $this
+	 * １件取得する
+	 * @return static
 	 */
 	public static function find_get(){
 		$args = func_get_args();
@@ -735,12 +665,11 @@ abstract class Dao extends \ebi\Obj{
 		}
 		throw new \ebi\exception\NotFoundException('not found');
 	}
+
 	/**
 	 * サブクエリを取得する
-	 * @param string $name 対象のプロパティ
-	 * @return Daq
 	 */
-	public static function find_sub($name){
+	public static function find_sub($target_prop): \ebi\Daq{
 		$args = func_get_args();
 		array_shift($args);
 		$dao = new static();
@@ -751,7 +680,7 @@ abstract class Dao extends \ebi\Obj{
 			call_user_func_array([$query,'add'],$args);
 		}
 		if(!$query->is_order_by()){
-			$query->order($name);
+			$query->order($target_prop);
 		}
 		$paginator = $query->paginator();
 		
@@ -770,9 +699,10 @@ abstract class Dao extends \ebi\Obj{
 				return [];
 			}
 		}
-		return self::$_con_[get_called_class()]->select_sql($dao,$query,$paginator,$name);
+		return self::$_con_[get_called_class()]->select_sql($dao,$query,$paginator,$target_prop);
 	}
-	private static function get_statement_iterator($dao,$query){
+
+	private static function get_statement_iterator(self $dao, \ebi\Q $query): \Generator{
 		if(!$query->is_order_by()){
 			foreach($dao->primary_columns() as $column){
 				$query->order($column->name());
@@ -796,11 +726,11 @@ abstract class Dao extends \ebi\Obj{
 			throw new \ebi\exception\InvalidQueryException($e);
 		}
 	}
+
 	/**
 	 * 検索を実行する
-	 * @return self
 	 */
-	public static function find(){
+	public static function find(): \Generator{
 		$args = func_get_args();
 		$dao = new static();
 		$query = new \ebi\Q();
@@ -828,11 +758,11 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return static::get_statement_iterator($dao,$query);
 	}
+
 	/**
 	 * 検索結果をすべて取得する
-	 * @return self[]
 	 */
-	public static function find_all(){
+	public static function find_all(): array{
 		$args = func_get_args();
 		$result = [];
 		foreach(call_user_func_array([get_called_class(),'find'],$args) as $p){
@@ -840,16 +770,18 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return $result;
 	}
+
 	/**
 	 * コミットする
 	 */
-	public static function commit(){
+	public static function commit(): void{
 		self::connection(get_called_class())->commit();
 	}
+
 	/**
 	 * ロールバックする
 	 */
-	public static function rollback(){
+	public static function rollback(): void{
 		self::connection(get_called_class())->rollback();
 	}
 	
@@ -857,7 +789,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 複数レコードを一括登録する
 	 * before/after/verifyは実行されない
 	 */
-	public static function insert_multiple(array $data_objects){
+	public static function insert_multiple(array $data_objects): int{
 		foreach($data_objects as $obj){
 			if(!($obj instanceof static)){
 				throw new \ebi\exception\InvalidArgumentException('must be an '.get_class($obj));
@@ -871,9 +803,10 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * 条件により更新する
 	 * before/after/verifyは実行されない
-	 * @return int 実行した件数
+	 * @param static $obj
+	 * @return 実行した件数
 	 */
-	public static function find_update(self $obj){
+	public static function find_update($obj): int{
 		if(!($obj instanceof static)){
 			throw new \ebi\exception\InvalidArgumentException('must be an '.get_class($obj));
 		}
@@ -895,16 +828,16 @@ abstract class Dao extends \ebi\Obj{
 		if(empty($target)){
 			throw new \ebi\exception\InvalidArgumentException('target column required');
 		}
-		$daq = self::$_con_[get_called_class()]->find_update_sql($obj,$query,$target);
+		$daq = static::$_con_[get_called_class()]->find_update_sql($obj,$query,$target);
 		return $obj->update_query($daq);
 	}
 	
 	/**
 	 * 条件により削除する
 	 * before/after/verifyは実行されない
-	 * @return int 実行した件数
+	 * @return 実行した件数
 	 */
-	public static function find_delete(){
+	public static function find_delete(): int{
 		$args = func_get_args();
 		$dao = new static();
 		if(self::$_co_anon_[get_class($dao)][2]){
@@ -917,10 +850,11 @@ abstract class Dao extends \ebi\Obj{
 		$daq = self::$_con_[get_called_class()]->find_delete_sql($dao,$query);
 		return $dao->update_query($daq);
 	}
+
 	/**
 	 * DBから削除する
 	 */
-	public function delete(){
+	public function delete(): void{
 		if(self::$_co_anon_[get_class($this)][2]){
 			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
 		}
@@ -931,15 +865,12 @@ abstract class Dao extends \ebi\Obj{
 		}
 		$this->__after_delete__();
 	}
+
 	/**
 	 * 指定のプロパティにユニークコードをセットする
 	 * auto_code_addアノテーションで呼ばれる
-	 * 
-	 * @param string $prop_name
-	 * @param int $size
-	 * @return string 生成されたユニークコード
 	 */
-	public function set_unique_code($prop_name,$size=null){
+	public function set_unique_code(string $prop_name, ?int $size=null): void{
 		/**
 		 * ユニークコードで利用する文字
 		 * 
@@ -983,7 +914,7 @@ abstract class Dao extends \ebi\Obj{
 		$code = '';
 		$challenge = 0;
 		$challenge_max = 10;
-		$vefify_func = method_exists($this,'__verify_'.$prop_name.'__');
+		$verify_func = method_exists($this,'__verify_'.$prop_name.'__');
 		$prefix = '';
 		$length = (!empty($size)) ? $size : $this->prop_anon($prop_name,'length');
 		
@@ -999,7 +930,7 @@ abstract class Dao extends \ebi\Obj{
 				$code = $prefix.\ebi\Code::rand($base,$length);
 				call_user_func_array([$this,$prop_name],[$code]);
 				
-				if((!$vefify_func || call_user_func([$this,'__verify_'.$prop_name.'__']) !== false) && 
+				if((!$verify_func || call_user_func([$this,'__verify_'.$prop_name.'__']) !== false) && 
 					static::find_count(Q::eq($prop_name,$code)) === 0
 				){
 					break 2;
@@ -1011,10 +942,11 @@ abstract class Dao extends \ebi\Obj{
 			usleep(1000);
 			$code = '';
 		}
-		return $code;
 	}
+
 	/**
 	 * DBへ保存する
+	 * @return static
 	 */
 	public function save(){
 		if($this->_saving_[0]){
@@ -1139,14 +1071,17 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return $this;
 	}
+
 	/**
 	 * DBの値と同じにする
-	 * @return $this
+	 * @return static
 	 */
 	public function sync(){
 		$query = new \ebi\Q();
 		$query->add(new \ebi\Paginator(1,1));
-		foreach($this->primary_columns() as $column) $query->add(Q::eq($column->name(),$this->{$column->name()}()));
+		foreach($this->primary_columns() as $column){
+			$query->add(Q::eq($column->name(),$this->{$column->name()}()));
+		}
 		foreach(self::get_statement_iterator($this,$query) as $dao){
 			foreach(get_object_vars($dao) as $k => $v){
 				if($k[0] != '_'){
@@ -1159,10 +1094,9 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * 配列からプロパティに値をセットする
-	 * @param mixed{} $arg
-	 * @return $this
+	 * @return static
 	 */
-	public function set_props($arg){
+	public function set_props(array $arg){
 		if(isset($arg) && (is_array($arg) || (is_object($arg) && ($arg instanceof \Traversable)))){
 			$vars = get_object_vars($this);
 			foreach($arg as $name => $value){
@@ -1179,9 +1113,8 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * テーブルの作成
-	 * @return bool
 	 */
-	public static function create_table(){
+	public static function create_table(): bool{
 		$dao = new static();
 		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
 		
@@ -1202,7 +1135,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * テーブルの削除
 	 */
-	public static function drop_table(){
+	public static function drop_table(): bool{
 		$dao = new static();
 		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
 		

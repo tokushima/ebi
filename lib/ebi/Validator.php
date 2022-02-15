@@ -58,6 +58,7 @@ class Validator{
 								throw new \ebi\exception\InvalidArgumentException();
 							}
 							return (bool)$v;
+						case 'datetime':
 						case 'timestamp':
 						case 'date':
 							if(ctype_digit((string)$v) || (substr($v,0,1) == '-' && ctype_digit(substr($v,1)))){
