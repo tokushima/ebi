@@ -7,10 +7,10 @@ trait Plugin{
 	
 	/**
 	 * クラスにプラグインをセットする
-	 * @param object $o string / object / callable
-	 * @param string $n callableの場合のみplugin名
+	 * @param mixed $o string / object / callable
+	 * @param $n callableの場合のみplugin名
 	 */
-	public static function set_class_plugin($o,$n=null){
+	public static function set_class_plugin($o,?string $n=null): void{
 		if(is_array($o)){
 			foreach($o as $c => $plugins){
 				$r = new \ReflectionClass($c);
@@ -37,10 +37,9 @@ trait Plugin{
 	}
 	/**
 	 * オブジェクトにプラグインをセットする
-	 * @param object $o
-	 * @param string $n
+	 * @param mixed $o
 	 */
-	public function set_object_plugin($o,$n=null){
+	public function set_object_plugin($o, ?string $n=null): void{
 		if(is_string($o) && class_exists($o)){
 			$o = new $o();	
 		}
@@ -54,10 +53,8 @@ trait Plugin{
 	}
 	/**
 	 * クラスにプラグインがセットされているか
-	 * @param string $n
-	 * @return bool
 	 */
-	protected static function has_class_plugin($n){
+	protected static function has_class_plugin(string $n): bool{
 		$g = get_called_class();
 		foreach(\ebi\Conf::get_class_plugin($g) as $o){
 			static::set_class_plugin($o);
@@ -75,10 +72,8 @@ trait Plugin{
 	}
 	/**
 	 * オブジェクトにプラグインがセットされているか
-	 * @param string $n
-	 * @return bool
 	 */
-	protected function has_object_plugin($n){
+	protected function has_object_plugin(string $n): bool{
 		if(static::has_class_plugin($n)) return true;
 		foreach($this->_obj_plug_funcs as $o){
 			if(is_array($o)){
@@ -91,10 +86,8 @@ trait Plugin{
 	}
 	/**
 	 * クラスのプラグインを取得
-	 * @param string $n
-	 * @return array
 	 */
-	protected static function get_class_plugin_funcs($n){
+	protected static function get_class_plugin_funcs(string $n): array{
 		$rtn = [];
 		$g = get_called_class();
 		foreach(\ebi\Conf::get_class_plugin($g) as $o){
@@ -113,10 +106,8 @@ trait Plugin{
 	}
 	/**
 	 * オブジェクトのプラグインを取得
-	 * @param string $n
-	 * @return array
 	 */
-	protected function get_object_plugin_funcs($n){
+	protected function get_object_plugin_funcs(string $n): array{
 		$rtn = static::get_class_plugin_funcs($n);
 		foreach($this->_obj_plug_funcs as $o){
 			if(is_array($o)){
@@ -129,74 +120,56 @@ trait Plugin{
 	}
 	/**
 	 * クラスのプラグインをすべて実行する
-	 * @param string $n
 	 * @return mixed
 	 */
-	protected static function call_class_plugin_funcs($n){
+	protected static function call_class_plugin_funcs(string $n, ...$args){
 		$r = null;
-		$a = func_get_args();
-		array_shift($a);
 		
 		foreach(static::get_class_plugin_funcs($n) as $o){
-			$r = call_user_func_array($o,$a);
+			$r = call_user_func_array($o, $args);
 		}
 		return $r;
 	}
 	/**
 	 * クラスのプラグインを実行する
-	 * @param string $n
 	 * @return mixed
 	 */
-	protected static function call_class_plugin_func($n){
+	protected static function call_class_plugin_func(string $n, ...$args){
 		$plugins = static::get_class_plugin_funcs($n);
 		
 		if(!empty($plugins)){
-			$a = func_get_args();
-			array_shift($a);
-			
-			return call_user_func_array(array_pop($plugins), $a);
+			return call_user_func_array(array_pop($plugins), $args);
 		}
 		return null;
 	}
 	/**
 	 * オブジェクトのプラグインをすべて実行する
-	 * @param string $n
 	 * @return mixed
 	 */
-	protected function call_object_plugin_funcs($n){
+	protected function call_object_plugin_funcs(string $n, ...$args){
 		$r = null;
-		$a = func_get_args();
-		array_shift($a);
-		
 		foreach($this->get_object_plugin_funcs($n) as $o){
-			$r = call_user_func_array($o,$a);
+			$r = call_user_func_array($o, $args);
 		}
 		return $r;
 	}
 	/**
 	 * オブジェクトのプラグインを実行する
-	 * @param string $n
+	 * @return mixed
 	 */
-	protected function call_object_plugin_func($n){
+	protected function call_object_plugin_func(string $n, ...$args){
 		$plugins = $this->get_object_plugin_funcs($n);
 		
 		if(!empty($plugins)){
-			$a = func_get_args();
-			array_shift($a);
-			
-			return call_user_func_array(array_pop($plugins), $a);
+			return call_user_func_array(array_pop($plugins), $args);
 		}
 		return null;
 	}
 	/**
 	 * 関数を指定して実行する
-	 * @param callable $o
 	 * @return mixed
 	 */
-	protected static function call_func($o){
-		if(!is_callable($o)) return;
-		$a = func_get_args();
-		array_shift($a);
-		return call_user_func_array($o,$a);
+	protected static function call_func(callable $callable, ...$args){
+		return call_user_func_array($callable, $args);
 	}
 }

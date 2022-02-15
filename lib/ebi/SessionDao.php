@@ -1,8 +1,6 @@
 <?php
 namespace ebi;
 /**
- * Daoでセッションを扱うモジュール
- * @author tokushima
  * @var string $id @['primary'=>true,'max'=>256]
  * @var text $data
  * @var int $expires
@@ -32,12 +30,12 @@ class SessionDao extends \ebi\Dao{
 		return '';
 	}
 	/**
-	 * @param mixed $sess_data
+	 * @param mixed $data
 	 */
-	public function session_write(string $id, $sess_data): bool{
+	public function session_write(string $id, $data): bool{
 		$obj = new self();
 		$obj->id($id);
-		$obj->data($sess_data);
+		$obj->data($data);
 		$obj->save();
 
 		return true;

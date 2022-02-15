@@ -1,8 +1,6 @@
 <?php
 namespace ebi;
-/**
- * DB接続クラス(SQlite)
- */
+
 class SqliteConnector extends \ebi\DbConnector{
 	protected $order_random_str = 'random()';
 	private $timezone_offset = 0;

@@ -1,9 +1,7 @@
 <?php
 namespace ebi;
 /**
- * セッションを操作する
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
- * @author tokushima
  */
 class Session{
 	use \ebi\Plugin;

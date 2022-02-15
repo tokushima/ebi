@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * Where query
- * @author tokushima
- */
+
 class Q{
 	const EQ = 1;
 	const NEQ = 2;
@@ -40,7 +37,7 @@ class Q{
 	private $date_format = [];
 	private $for_update = false;
 
-	public function __construct($type=self::AND_BLOCK,$arg1=null,$arg2=null,$param=null){
+	public function __construct(int $type=self::AND_BLOCK, $arg1=null, $arg2=null, ?string $param=null){
 		if($type === self::AND_BLOCK){
 			$this->and_block = $arg1;
 		}else if($type === self::OR_BLOCK){

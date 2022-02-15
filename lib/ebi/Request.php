@@ -90,9 +90,8 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * REQUEST_METHOD
-	 * @return string
 	 */
-	public static function method(){
+	public static function method(): ?string{
 		if(array_key_exists('REQUEST_METHOD',$_SERVER)){
 			$method = $_SERVER['REQUEST_METHOD'];
 			
@@ -105,21 +104,15 @@ class Request implements \IteratorAggregate{
 		}
 		return null;
 	}
-	/**
-	 * varsを返す
-	 * @see \IteratorAggregate::getIterator()
-	 */
+
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator($this->vars);
 	}
 	
 	/**
 	 * 現在のURLを返す
-	 * @param int $port_https
-	 * @param int $port_http
-	 * @return string
 	 */
-	public static function current_url($port_https=443,$port_http=80){
+	public static function current_url(int $port_https=443, int $port_http=80): ?string{
 		$server = self::host($port_https,$port_http);
 		
 		if(empty($server)){
@@ -132,11 +125,8 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 現在のホスト
-	 * @param int $port_https
-	 * @param int $port_http
-	 * @return string
 	 */
-	public static function host($port_https=443,$port_http=80){
+	public static function host(int $port_https=443, int $port_http=80): ?string{
 		$port = $port_http;
 		if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'){
 			$port = $port_https;
@@ -159,69 +149,43 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 現在のリクエストクエリを返す
-	 * @param bool $sep 先頭に?をつけるか
-	 * @return string
+	 * @param $sep 先頭に?をつけるか
 	 */
-	public static function request_string($sep=false){
+	public static function request_string(bool $sep=false): string{
 		$query = ((isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'] : '');
 		return (($sep && !empty($query)) ? '?' : '').$query;
 	}
-	/**
-	 * GET
-	 * @return bool
-	 */
-	public function is_get(){
+
+	public function is_get(): bool{
 		return ($this->_method == 'GET');
 	}
-	/**
-	 * POST
-	 * @return bool
-	 */
-	public function is_post(){
+	public function is_post(): bool{
 		return ($this->_method == 'POST');
 	}
-	/**
-	 * PUT
-	 * @return bool
-	 */
-	public function is_put(){
+	public function is_put(): bool{
 		return ($this->_method == 'PUT');
 	}
-	/**
-	 * DELETE
-	 * @return bool
-	 */
-	public function is_delete(){
+	public function is_delete(): bool{
 		return ($this->_method == 'DELETE');
 	}
-	/**
-	 * CLIで実行されたか
-	 * @return bool
-	 */
-	public function is_cli(){
+	public function is_cli(): bool{
 		return (php_sapi_name() == 'cli' || !isset($_SERVER['REQUEST_METHOD']));
 	}
-	/**
-	 * ユーザエージェント
-	 * @return string
-	 */
-	public static function user_agent(){
+	public static function user_agent(): ?string{
 		return isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : null;
 	}
 	/**
 	 * クッキーへの書き出し
-	 * @param string $name 書き込む変数名
 	 * @param mixed $value
-	 * @param int $expire 有効期限(秒)
 	 */
-	public static function write_cookie($name,$value,$expire=null){
+	public static function write_cookie(string $name, $value, ?int $expire_sec=null): void{
 		$cookie_params = \ebi\Conf::cookie_params();
 		
-		if(empty($expire)){
-			$expire = time() + $cookie_params['cookie_lifetime'];
+		if(empty($expire_sec)){
+			$expire_sec = time() + $cookie_params['cookie_lifetime'];
 		}
 		$opt = [
-			'expires'=>$expire,
+			'expires'=>$expire_sec,
 			'path'=>$cookie_params['cookie_path'],
 			'domain'=>$cookie_params['cookie_domain'],
 			'secure'=>$cookie_params['cookie_secure'],
@@ -233,11 +197,10 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * クッキーから取得
-	 * @param string $name
 	 * @param mixed $default
 	 * @return mixed
 	 */
-	public static function read_cookie($name,$default=null){
+	public static function read_cookie(string $name, $default=null){
 		return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
 	}
 	/**
@@ -245,7 +208,7 @@ class Request implements \IteratorAggregate{
 	 * 登録時と同条件のものが削除される
 	 * @param string $name クッキー名
 	 */
-	public static function delete_cookie($name){
+	public static function delete_cookie(string $name): void{
 		$cookie_params = \ebi\Conf::cookie_params();
 		$opt = [
 			'expires'=>(time() - 1209600),
@@ -260,25 +223,22 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * pathinfo または argv
-	 * @return string
 	 */
-	public function args(){
+	public function args(): ?string{
 		return $this->args;
 	}
 	/**
 	 * 変数をセットする
-	 * @param string $key
 	 * @param mixed $value
 	 */
-	public function vars($key,$value){
+	public function vars(string $key, $value): void{
 		$this->vars[$key] = $value;
 	}
 	/**
 	 * ファイルをセットする
-	 * @param string $key
 	 * @param mixed $file
 	 */
-	public function file_vars($key,$file){
+	public function file_vars(string $key, $file): void{
 		if(is_array($file)){
 			$this->files[$key] = $file;
 		}else if(is_file($file)){
@@ -292,11 +252,9 @@ class Request implements \IteratorAggregate{
 	
 	/**
 	 * 変数の取得
-	 * @param string $n
-	 * @param mixed $d 未定義の場合の値
 	 * @return mixed
 	 */
-	public function in_vars($n,$d=null){
+	public function in_vars(string $n, $d=null){
 		if(array_key_exists($n,$this->vars)){
 			return $this->vars[$n];
 		}
@@ -308,34 +266,30 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * キーが存在するか
-	 * @param string $n
-	 * @return bool
 	 */
-	public function is_vars($n){
+	public function is_vars(string $n): bool{
 		return array_key_exists($n,$this->vars);
 	}
 	/**
 	 * 変数の削除
 	 */
-	public function rm_vars(){
-		if(func_num_args() === 0){
+	public function rm_vars(...$args): void{
+		if(empty($args) === 0){
 			$this->vars = [];
 		}else{
-			foreach(func_get_args() as $n){
+			foreach($args as $n){
 				unset($this->vars[$n]);
 			}
 		}
 	}
 	/**
 	 * 変数の一覧を返す
-	 * @param mixed{}
-	 * @return array
 	 */
-	public function ar_vars(){
-		if(func_num_args() > 0){
+	public function ar_vars(...$args): array{
+		if(!empty($args)){
 			$result = $this->vars;
 			
-			foreach(func_get_args() as $arg){
+			foreach($args as $arg){
 				if(!empty($arg) && is_array($arg)){
 					$result = array_merge($result,$arg);
 				}else if($arg instanceof \ebi\Paginator){
@@ -348,17 +302,14 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 変数の一覧を返す
-	 * @return array
 	 */
-	public function ar_files(){
+	public function ar_files(): array{
 		return $this->files;
 	}
 	/**
 	 * 添付ファイル情報の取得
-	 * @param string $n
-	 * @return array
 	 */
-	public function in_files($n){
+	public function in_files(string $n): ?array{
 		if(($err = error_get_last()) !== null &&
 			$err['file'] == 'Unknown' &&
 			$err['line'] == 0 &&
@@ -402,10 +353,9 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 添付されたファイルがあるか
-	 * @param array $file_info
-	 * @return bool
+	 * @param mixed $file_info string|array
 	 */
-	public function has_file($file_info){
+	public function has_file($file_info): bool{
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
 		}
@@ -413,10 +363,9 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 添付ファイルのオリジナルファイル名の取得
-	 * @param array $file_info
-	 * @return string
+	 * @param mixed $file_info string|array
 	 */
-	public function file_original_name($file_info){
+	public function file_original_name($file_info): ?string{
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
 		}
@@ -424,10 +373,9 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 添付ファイルのファイルパスの取得
-	 * @param array $file_info
-	 * @return string
+	 * @param mixed $file_info string|array
 	 */
-	public function file_path($file_info){
+	public function file_path($file_info): ?string{
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
 		}
@@ -438,10 +386,10 @@ class Request implements \IteratorAggregate{
 	}
 	/**
 	 * 添付ファイルを移動します
-	 * @param array $file_info
+	 * @param mixed $file_info string|array
 	 * @param string $newname
 	 */
-	public function move_file($file_info,$newname){
+	public function move_file($file_info, string $newname){
 		if(is_string($file_info)){
 			$file_info = $this->in_files($file_info);
 		}
