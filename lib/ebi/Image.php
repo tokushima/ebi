@@ -1,9 +1,7 @@
 <?php
 namespace ebi;
 /**
- * 
- * @author tokushima
- *
+ * @deprecated
  */
 class Image{
 	const ORIENTATION_PORTRAIT = 1;
@@ -232,7 +230,7 @@ class Image{
 	 */
 	public function write(?string $filename=null): string{
 		if(empty($filename)){
-			$filename = \ebi\WorkingStorage::tmpfile(null,'.jpg');
+			$filename = \ebi\WorkingStorage::tmpfile('', '.jpg');
 		}
 		\ebi\Util::mkdir(dirname($filename));
 		

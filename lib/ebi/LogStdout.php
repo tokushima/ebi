@@ -2,7 +2,7 @@
 namespace ebi;
 
 class LogStdout{
-	public function log_output(\ebi\Log $log){
+	public function log_output(\ebi\Log $log): void{
 		$msg = ((string)$log);
 		
 		/**

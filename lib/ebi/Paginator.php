@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * ページを管理するモデル
- * @author tokushima
- */
+
 class Paginator implements \IteratorAggregate{
 	private $query_name = 'page';
 	private $vars = [];
@@ -29,10 +26,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * pageを表すクエリの名前
-	 * @param string $name
-	 * @return string
 	 */
-	public function query_name($name=null){
+	public function query_name(?string $name=null): string{
 		if(isset($name)){
 			$this->query_name = $name;
 		}
@@ -40,10 +35,9 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * query文字列とする値をセットする
-	 * @param string $key
-	 * @param string $value
+	 * @param mixed $value
 	 */
-	public function vars($key,$value){
+	public function vars(string $key, $value): void{
 		$this->vars[$key] = $value;
 	}
 	/**

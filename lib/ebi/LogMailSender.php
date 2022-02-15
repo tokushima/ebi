@@ -2,7 +2,7 @@
 namespace ebi;
 
 class LogMailSender{
-	public function log_output(\ebi\Log $log){
+	public function log_output(\ebi\Log $log): void{
 		$mail = new \ebi\Mail();
 		
 		/**

@@ -1,8 +1,6 @@
 <?php
 namespace ebi;
-/**
- * 環境変数
- */
+
 class Env{
 	private $vars = [];
 	
@@ -12,6 +10,8 @@ class Env{
 	
 	/**
 	 * 値があれば返す
+	 * @param mixed $default
+	 * @return mixed
 	 */
 	public function get(string $name, $default=null){
 		if(array_key_exists($name,$this->vars)){

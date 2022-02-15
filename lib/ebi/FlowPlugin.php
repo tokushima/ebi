@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * Flowの機能拡張
- * @author tokushima
- */
+
 trait FlowPlugin{
 	private $_selected_pattern = [];
 	private $_template = null;
@@ -12,111 +9,100 @@ trait FlowPlugin{
 	
 	/**
 	 * Flowが利用
-	 * @param array $selected_pattern
 	 */
-	final public function set_pattern(array $selected_pattern){
+	final public function set_pattern(array $selected_pattern): void{
 		$this->_selected_pattern = $selected_pattern;
 	}
 	/**
 	 * Flowにpluginをさす
-	 * @return string[]
 	 */
-	public function get_flow_plugins(){
+	public function get_flow_plugins(): array{
 		return [];
 	}
 	
 	/**
 	 * action実行後にリダイレクトするURL
-	 * @param string $url
 	 */
-	public function set_after_redirect($url){
+	public function set_after_redirect(string $url): void{
 		$this->_after_redirect = $url;
 	}
 	/**
 	 * Flowが利用
 	 */
-	final public function get_after_redirect(){
+	final public function get_after_redirect(): ?string{
 		return $this->_after_redirect;
 	}
 	/**
 	 * action実行前にリダイレクトするURL
-	 * @param string $url
 	 */
-	public function set_before_redirect($url){
+	public function set_before_redirect(string $url): void{
 		$this->_before_redirect = $url;
 	}
 	/**
 	 * Flowが利用
 	 */
-	final public function get_before_redirect(){
+	final public function get_before_redirect(): ?string{
 		return $this->_before_redirect;
 	}	
 	
 	/**
 	 * マッチしたパターンを取得
-	 * @return mixed{}
 	 */
-	public function get_selected_pattern(){
+	public function get_selected_pattern(): array{
 		return $this->_selected_pattern;
 	}
 	/**
 	 * 結果に値を追加する
-	 * @return mixed{}
 	 */
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		return [];
 	}
 
 	/**
 	 * Flowが利用
 	 */
-	final public function get_template(){
+	final public function get_template(): ?string{
 		return $this->_template;
 	}
 	/**
 	 * テンプレートを上書きする
-	 * @param string $template
 	 */
-	public function set_template($template){
+	public function set_template(string $template): void{
 		$this->_template = $template;
 	}
 	/**
 	 * mapに渡されたargsを取得する
-	 * @param string $name
-	 * @param string $default
-	 * @return string
+	 * @param mixed $default
+	 * @return mixed
 	 */
-	public function map_arg($name,$default=null){
+	public function map_arg(string $name, ?string $default=null){
 		return (isset($this->_selected_pattern['args'][$name])) ? $this->_selected_pattern['args'][$name] : $default;
 	}
 	/**
 	 * action実行前に実行される
 	 */
-	public function before(){
+	public function before(): void{
 		$this->request_validation();
 	}
 	/**
 	 * action実行後に実行される
 	 */
-	public function after(){
+	public function after(): void{
 	}
 	
 	/**
 	 * リクエストのバリデーション
-	 * @param string[] $doc_names
-	 * @throws \ebi\exception\BadMethodCallException
-	 * @return array
 	 */
-	protected function request_validation(array $doc_names=[]){
+	protected function request_validation(array $doc_names=[]): array{
 		$doc_names = empty($doc_names) ? ['http_method','request'] : array_merge(['http_method','request'],$doc_names);
 		[,$method] = explode('::',$this->get_selected_pattern()['action']);
-		$annon = \ebi\Annotation::get_method(get_class($this), $method,$doc_names);
+		$ann = \ebi\Annotation::get_method(get_class($this), $method,$doc_names);
 		
-		if(isset($annon['http_method']['value']) && strtoupper($annon['http_method']['value']) != \ebi\Request::method()){
+		if(isset($ann['http_method']['value']) && strtoupper($ann['http_method']['value']) != \ebi\Request::method()){
 			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
 		}
-		if(isset($annon['request'])){
-			foreach($annon['request'] as $k => $an){
+		if(isset($ann['request'])){
+			foreach($ann['request'] as $k => $an){
 				if(isset($an['type'])){
 					if($an['type'] == 'file'){
 						if(isset($an['require']) && $an['require'] === true){
@@ -145,6 +131,6 @@ trait FlowPlugin{
 		}
 		\ebi\Exceptions::throw_over();
 		
-		return $annon;
+		return $ann;
 	}
 }

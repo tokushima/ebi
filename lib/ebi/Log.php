@@ -14,7 +14,7 @@ class Log{
 	private $line;
 	private $message;
 		
-	private static function cur_level(){
+	private static function cur_level(): int{
 		if(self::$current_level === null){
 			/**
 			 * @param string $level エラーレベル emergency/alert/critical/error/warning/notice/info/debug

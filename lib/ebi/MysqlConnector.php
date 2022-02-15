@@ -1,8 +1,6 @@
 <?php
 namespace ebi;
-/**
- * DB接続クラス(MySQL)
- */
+
 class MysqlConnector extends \ebi\DbConnector{
 	protected $order_random_str = 'rand()';
 	
@@ -87,9 +85,6 @@ class MysqlConnector extends \ebi\DbConnector{
 		}
 	}
 
-	/**
-	 * create table
-	 */
 	public function create_table_sql(\ebi\Dao $dao): string{
 		$column_def = $primary = [];
 		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;

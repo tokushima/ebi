@@ -1,22 +1,19 @@
 <?php
 namespace ebi;
-/**
- * 基底クラス
- * @author tokushima
- */
+
 class Obj implements \IteratorAggregate{
 	private static $_m = [];
 	protected $_;
 
 	/**
 	 * プロパティのアノテーションを取得する
-	 * @param string $p プロパティ名
-	 * @param string $n アノテーション名
+	 * @param $p プロパティ名
+	 * @param $n アノテーション名
 	 * @param mixed $d デフォルト値
-	 * @param bool $f 値をデフォルト値で上書きするか
+	 * @param $f 値をデフォルト値で上書きするか
 	 * @return mixed
 	 */
-	public function prop_anon($p,$n=null,$d=null,$f=false){
+	public function prop_anon(string $p, ?string $n=null, $d=null, bool $f=false){
 		if($f){
 			self::$_m[get_class($this)][$p][$n] = $d;
 		}
@@ -51,7 +48,7 @@ class Obj implements \IteratorAggregate{
 			self::$_m[$c] = \ebi\Annotation::get_class($c,'var',null,__CLASS__);
 		}
 	}
-	public function __call($n,$args){
+	public function __call($n, $args){
 		if($n[0] != '_'){
 			$m = [];
 			[$c, $p] = (in_array($n,array_keys(get_object_vars($this)))) ? 
@@ -70,10 +67,8 @@ class Obj implements \IteratorAggregate{
 	}
 	/**
 	 * アクセス可能なプロパティを取得する
-	 * @param bool $format
-	 * @return array
 	 */
-	public function props($format=false){
+	public function props(bool $format=false): array{
 		$r = [];
 		foreach(array_keys(get_object_vars($this)) as $n){
 			if($n[0] != '_'){

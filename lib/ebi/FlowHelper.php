@@ -1,53 +1,40 @@
 <?php
 namespace ebi;
-/**
- * テンプレートで利用するヘルパ
- * @author tokushima
- */
+
 class FlowHelper{
 	private $name;
 	private $req;
 	
-	public function __construct($name=null,$obj=null){
+	public function __construct(?string $name=null, ?\ebi\flow\Request $obj=null){
 		$this->name = $name;
-		
-		if($obj instanceof \ebi\flow\Request){
-			$this->req = $obj;
-		}
+		$this->req = $obj;
 	}
+
 	/**
 	 * handlerのマップ名を呼び出しているURLを生成する
-	 * 引数を与える事も可能
-	 * @param string $name マップ名
-	 * @return string
 	 */
-	public function map_url($name){
-		$args = func_get_args();
-		array_shift($args);
-	
-		if(!isset(\ebi\Flow::url_pattern()[$name])){
-			if(isset(\ebi\Flow::url_pattern()[$name.'/index'])){
-				$name = $name.'/index';
+	public function map_url(string $map_name, ...$args): string{
+		if(!isset(\ebi\Flow::url_pattern()[$map_name])){
+			if(isset(\ebi\Flow::url_pattern()[$map_name.'/index'])){
+				$map_name = $map_name.'/index';
 			}
 		}
-		if(isset(\ebi\Flow::url_pattern()[$name][sizeof($args)])){
-			return vsprintf(\ebi\Flow::url_pattern()[$name][sizeof($args)],$args);
+		if(isset(\ebi\Flow::url_pattern()[$map_name][sizeof($args)])){
+			return vsprintf(\ebi\Flow::url_pattern()[$map_name][sizeof($args)],$args);
 		}
 	}
-	/**
-	 * POSTされたか
-	 * @return bool
-	 */
-	public function is_post(){
+
+	public function is_post(): bool{
 		return (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST');
 	}
+
 	/**
 	 * ログイン済みか
-	 * @return bool
 	 */
-	public function is_user_logged_in(){
+	public function is_user_logged_in(): bool{
 		return (isset($this->req)) ? $this->req->is_user_logged_in() : false;
 	}
+
 	/**
 	 * ログインユーザを返す
 	 * @return mixed
@@ -58,59 +45,48 @@ class FlowHelper{
 	
 	/**
 	 * リクエストに含まれているか
-	 * @param string $name
-	 * @return bool
 	 */
-	public function is_vars($name){
+	public function is_vars(string $name): bool{
 		return (isset($this->req)) ? $this->req->is_vars($name) : false;
 	}
 	
 	/**
 	 * handlerでpackageを呼び出してる場合にメソッド名でURLを生成する
-	 * 引数を与える事も可能
-	 * @param string $name メソッド名
-	 * @return string
 	 */
-	public function package_method_url($name){
-		$args = func_get_args();
-		array_shift($args);
-		
+	public function package_method_url(string $name, ...$args): string{
 		if(isset(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)])){
 			return vsprintf(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)]['format'],$args);
 		}
 	}
 	/**
 	 * handlerでpackageを呼び出してる場合にメソッド名が実行されている場合に$trueを、違うなら$falseを返す
-	 * @param string $name 対象のメソッド名
-	 * @param string $true 一致した場合に返す文字列
-	 * @param string $false 一致しなかった場合に返す文字列
+	 * @param $name 対象のメソッド名
+	 * @param $true 一致した場合に返す文字列
+	 * @param $false 一致しなかった場合に返す文字列
 	 */
-	public function match_package_method_switch($name,$true='on',$false=''){
+	public function match_package_method_switch(string $name, string $true='on', string $false=''): string{
 		$method = explode('/',$this->name(),2);
 		return ($name == (isset($method[1]) ? $method[1] : $method[0])) ? $true : $false;
-	}	
+	}
 	/**
 	 * 現在のURLを返す
-	 * @return string
 	 */
-	public function current_url(){
+	public function current_url(): string{
 		return \ebi\Request::current_url();
 	}	
 	/**
 	 * マッチしたパターン（名）を返す
-	 * @return string
 	 */
-	public function name(){
+	public function name(): ?string{
 		return $this->name;
 	}
 	/**
 	 * マッチしたパターンと$patternが同じなら$trueを、違うなら$falseを返す
-	 * @param string $pattern 比較する文字列
-	 * @param string $true 一致した場合に返す文字列
-	 * @param string $false 一致しなかった場合に返す文字列
-	 * @return string
+	 * @param $pattern 比較する文字列
+	 * @param $true 一致した場合に返す文字列
+	 * @param $false 一致しなかった場合に返す文字列
 	 */
-	public function match_pattern_switch($pattern,$true='on',$false=''){
+	public function match_pattern_switch(string $pattern, string $true='on', string $false=''): string{
 		return ($this->name() == $pattern) ? $true : $false;
 	}
 	/**

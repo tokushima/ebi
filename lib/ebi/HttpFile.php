@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * 添付ファイルの操作
- *
- */
+
 class HttpFile{
 	/**
 	 * inlineで出力する

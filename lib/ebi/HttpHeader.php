@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * HTTPヘッダを制御する
- * @author tokushima
- */
+
 class HttpHeader{
 	private static $header = [];
 	private static $send_status;
