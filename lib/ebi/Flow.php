@@ -61,7 +61,8 @@ class Flow{
 		return self::$map;
 	}
 	/**
-	 * TODO 
+	 * @param mixed $ins
+	 * @param mixed $template_dir string|array
 	 */
 	private static function template(array $vars, array $selected_pattern, $ins, string $path, ?string $media, $template_dir): void{
 		self::$template->set_object_plugin(new \ebi\FlowInvalid());

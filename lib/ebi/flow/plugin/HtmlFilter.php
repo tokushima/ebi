@@ -1,9 +1,6 @@
 <?php
 namespace ebi\flow\plugin;
-/**
- * htmlのフィルタ
- *  - 自動エスケープ処理
- */
+
 class HtmlFilter{
 	/**
 	 * @plugin \ebi\Template

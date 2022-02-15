@@ -2,7 +2,6 @@
 namespace ebi\flow\plugin;
 /**
  * do_login以外の場合にログインしていなければ例外
- * @author tokushima
  */
 class UnauthorizedThrow{
 	/**

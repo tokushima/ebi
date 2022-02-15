@@ -2,8 +2,6 @@
 namespace ebi\flow\plugin;
 /**
  * CORS (Cross-Origin Resource Sharing)
- * @author tokushima
- *
  */
 class Cors{
 	/**

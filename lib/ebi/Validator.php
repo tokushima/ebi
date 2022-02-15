@@ -1,17 +1,12 @@
 <?php
 namespace ebi;
-/**
- * 値の検証クラス
- * @author tokushima
- *
- */
+
 class Validator{
 	/**
-	 * @param string $t type
 	 * @param mixed $v value
-	 * @param mixed{} $p annotation values
+	 * @return mixed
 	 */
-	public static function type($name,$v,$p=[]){
+	public static function type(string $name, $v, array $p=[]){
 		if($v === null){
 			return null;
 		}
@@ -132,13 +127,7 @@ class Validator{
 		}
 	}
 	
-	/**
-	 * 
-	 * @param string $name 
-	 * @param mixed $v
-	 * @param mixed{} $anon
-	 */
-	public static function value($name,$v,$anon){
+	public static function value(string $name, $v, array $anon){
 		$get = function($an) use($anon){
 			return isset($anon[$an]) ? $anon[$an] : null;
 		};

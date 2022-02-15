@@ -1,14 +1,8 @@
 <?php
 namespace ebi;
-/**
- * テンプレートを処理する
- * @author tokushima
- * @var mixed{} $vars バインドされる変数
- * @var bool $secure http://をhttps://に置換するか
- * @var string $media_url メディアファイルへのURLの基点
- */
+
 class Template{
-	use \ebi\Plugin,\ebi\TemplateVariable;
+	use \ebi\Plugin, \ebi\TemplateVariable;
 	
 	private $secure = false;
 	private $vars = [];
@@ -18,51 +12,43 @@ class Template{
 	
 	/**
 	 * メディアURLをhttpsにする
-	 * @param bool $bool
-	 * @return \ebi\Template
 	 */
-	public function secure($bool){
-		$this->secure = (bool)$bool;
+	public function secure(bool $bool): self{
+		$this->secure = $bool;
 		return $this;
 	}
 	/**
 	 * 変数をバインドする
-	 * @param string $k
 	 * @param mixed $v
-	 * @return \ebi\Template
 	 */
-	public function vars($k,$v){
+	public function vars(string $k, $v): self{
 		$this->vars[$k] = $v;
 		return $this;
 	}
 	
 	/**
 	 * メディアURLを設定する
-	 * @param string $v
-	 * @return \ebi\Template
 	 */
-	public function media_url($v){
-		$this->media_url = \ebi\Util::path_slash($v,null,true);
+	public function media_url(string $v): self{
+		$this->media_url = \ebi\Util::path_slash($v, null, true);
 		return $this;
 	}
 	
 	/**
 	 * ファイルを読み込んで結果を返す
-	 * @param string $file
-	 * @return string
+	 * @param mixed $base_dir string|array
 	 */
-	public function read($filename,$base_dir=null){
+	public function read(string $filename, $base_dir=null): string{
 		$this->base_dir = $base_dir ?? dirname(realpath($filename));
 		$src = $this->read_src($filename);
 		
-		return $this->get($src,$base_dir);
+		return $this->get($src, $base_dir);
 	}
 	/**
 	 * 文字列から結果を返す
-	 * @param string $src
-	 * @return string
+	 * @param mixed $base_dir string|array
 	 */
-	public function get($src,$base_dir=null){
+	public function get(string $src, $base_dir=null): string{
 		$this->base_dir = $base_dir ?? getcwd();
 		
 		$src = $this->replace($src);
@@ -84,14 +70,14 @@ class Template{
 	}
 	/**
 	 * 出力する
-	 * @param string $file
+	 * @param mixed $base_dir string|array
 	 */
-	public function output($file,$base_dir=null){
+	public function output(string $file, $base_dir=null): void{
 		print($this->read($file,$base_dir));
 		exit;
 	}
 	
-	private function replace($src){
+	private function replace(string $src): string{
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
 		$src = str_replace(["\\\\","\\\"","\\'"],['__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'],$src);
 		$src = $this->replace_xtag($src);
@@ -140,7 +126,7 @@ class Template{
 		$src = str_replace(['__ESC_DQ__','__ESC_SQ__','__ESC_DESC__'],["\\\"","\\'","\\\\"],$src);
 		return $src;
 	}
-	private function exec($_src_){
+	private function exec(string $_src_): string{
 		/**
 		 * 実行直前処理
 		 * @param string $src
@@ -166,7 +152,7 @@ class Template{
 		}
 		return $_eval_src_;
 	}
-	private function replace_xtag($src){
+	private function replace_xtag(string $src): string{
 		$m = [];
 		if(preg_match_all("/<\?(?!php[\s\n])[\w]+ .*?\?>/s",$src,$m)){
 			foreach($m[0] as $value){
@@ -175,7 +161,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function parse_url($src,$media){
+	private function parse_url(string $src, ?string $media): string{
 		if(!empty($media) && substr($media,-1) !== '/'){
 			$media = $media.'/';
 		}
@@ -204,13 +190,13 @@ class Template{
 		}
 		return $src;
 	}
-	private function replace_parse_url($src,$base,$dep,$rep){
+	private function replace_parse_url(string $src, ?string $base, string $dep, string $rep): string{
 		if(!preg_match("/(^\/\/)|(^[\w]+:\/\/)|(^__PHP_TAG_START)|(^\w+:)|(^[#\?])/",$rep)){
 			$src = str_replace($dep,str_replace($rep,\ebi\Util::path_absolute($base,$rep),$dep),$src);
 		}
 		return $src;
 	}
-	private function read_src($filename){
+	private function read_src(string $filename): string{
  		if(preg_match('/^http[s]*\:\/\//',$filename)){
 			return $this->parse_url(file_get_contents($filename),dirname($filename));
 		}
@@ -221,7 +207,7 @@ class Template{
 		}
 		throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 	}
-	private function rtinclude($src){
+	private function rtinclude(string $src): string{
 		try{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:include');
@@ -231,7 +217,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function rtblock($src){
+	private function rtblock(string $src): string{
 		if(strpos($src,'rt:block') !== false || strpos($src,'rt:extends') !== false){
 			$blocks = [];
 			
@@ -269,7 +255,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function rtcomment($src){
+	private function rtcomment(string $src): string{
 		try{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:comment');
@@ -279,7 +265,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function rtloop($src){
+	private function rtloop(string $src): string{
 		try{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:loop');
@@ -331,7 +317,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function rtif($src){
+	private function rtif(string $src): string{
 		try{
 			while(true){
 				$tag = \ebi\Xml::extract($src,'rt:if');
@@ -360,7 +346,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function html_script_search($src,&$keys,&$tags){
+	private function html_script_search(string $src, array &$keys, array &$tags): string{
 		$keys = $tags = [];
 		$uniq = uniqid('uniq');
 		$i = 0;
@@ -373,7 +359,7 @@ class Template{
 		}
 		return ($i > 0);
 	}
-	private function html_form($src){
+	private function html_form(string $src): string{
 		foreach(\ebi\Xml::anonymous($src)->find('form') as $obj){
 			if($obj->in_attr('rt:aref') === 'true'){
 				$obj->rm_attr('rt:aref');
@@ -435,7 +421,7 @@ class Template{
 		return $this->html_input($src);
 	}
 	
-	private function html_input($src){
+	private function html_input(string $src): string{
 		foreach(\ebi\Xml::anonymous($src)->find('input|textarea|select') as $obj){
 			if('' != ($originalName = $obj->in_attr('name',$obj->in_attr('id','')))){
 				$obj->escape(false);
@@ -538,7 +524,7 @@ class Template{
 		return $src;
 
 	}
-	private function check_selected($name,$value,$selected){
+	private function check_selected(string $name, string $value, string $selected): string{
 		return sprintf('<?php if('
 					.((strpos($name,'->') === false) ? 'isset('.$name.') && ' : '')
 					.'(%s === %s '
@@ -554,7 +540,7 @@ class Template{
 					,$selected,$selected
 				);
 	}
-	private function html_list($src){
+	private function html_list(string $src): string{
 		$tags = $m = [];
 		
 		if(preg_match_all('/<(table|ul|ol)\s[^>]*rt\:/i',$src,$m,PREG_OFFSET_CAPTURE)){
@@ -595,7 +581,7 @@ class Template{
 		}
 		return $src;
 	}
-	private function rtpaginator($src){
+	private function rtpaginator(string $src): string{
 		return \ebi\Xml::find_replace($src,'rt:paginator',function($xml){
 			$param = $this->variable_string($this->parse_plain_variable($xml->in_attr('param','paginator')));
 			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('nav','prev,next,first,last,counter'))));
@@ -646,18 +632,18 @@ class Template{
 		});
 	}
 	
-	private function form_variable_name($name){
+	private function form_variable_name(string $name): string{
 		$m = [];
 		return (strpos($name,'[') && preg_match("/^(.+)\[([^\"\']+)\]$/",$name,$m)) ?
 			'{$'.$m[1].'["'.$m[2].'"]'.'}' : 
 			'{$'.$name.'}';
 	}
-	private function is_reference($tag){
+	private function is_reference(\ebi\Xml $tag): bool{
 		$bool = ($tag->in_attr('rt:ref') === 'true');
 		$tag->rm_attr('rt:ref');
 		return $bool;
 	}
-	private function no_exception_str($value){
+	private function no_exception_str(string $value): string{
 		return '<?php $_nes_=1; ?>'.$value.'<?php $_nes_=null; ?>';
 	}
 }

@@ -1,10 +1,6 @@
 <?php
 namespace ebi\flow\plugin;
-/**
- * 
- * @author tokushima
- *
- */
+
 class HtmlMinifier{
 	/**
 	 * @plugin \ebi\Template
