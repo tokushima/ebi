@@ -2,21 +2,11 @@
 namespace ebi;
 /**
  * DB接続クラス(MySQL)
- * @author tokushima
  */
 class MysqlConnector extends \ebi\DbConnector{
 	protected $order_random_str = 'rand()';
 	
-	/**
-	 * @param string $name
-	 * @param string $host
-	 * @param int $port
-	 * @param string $user
-	 * @param string $password
-	 * @param string $sock
-	 * @param bool $autocommit
-	 */
-	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
+	public function connect(?string $name, ?string $host, ?int $port, ?string $user, ?string $password, ?string $sock, bool $autocommit): \PDO{
 		if(!extension_loaded('pdo_mysql')){
 			throw new \ebi\exception\ConnectionException('pdo_mysql not supported');
 		}
@@ -54,7 +44,8 @@ class MysqlConnector extends \ebi\DbConnector{
 		}
 		return $con;
 	}
-	protected function prepare_execute($con,$sql){
+
+	protected function prepare_execute(\PDO $con, string $sql): void{
 		$st = $con->prepare($sql);
 		$st->execute();
 		
@@ -63,11 +54,12 @@ class MysqlConnector extends \ebi\DbConnector{
 			throw new \ebi\exception\InvalidArgumentException('['.$errors[1].'] '.(isset($errors[2]) ? $errors[2] : '').PHP_EOL.'( '.$sql.' )');
 		}
 	}
-	public function last_insert_id_sql(){
+
+	public function last_insert_id_sql(): \ebi\Daq{
 		return new \ebi\Daq('select last_insert_id() as last_insert_id');
 	}
-	
-	private function to_column_type($dao,$type,$name){
+
+	private function to_column_type(\ebi\Dao $dao, ?string $type, string $name): string{
 		switch($type){
 			case '':
 			case 'mixed':
@@ -82,6 +74,7 @@ class MysqlConnector extends \ebi\DbConnector{
 			case 'serial': return $this->quotation($name).' SERIAL';
 			case 'bool':
 			case 'boolean': return $this->quotation($name).' INT(1)';
+			case 'datetime':			
 			case 'timestamp': return $this->quotation($name).' DATETIME';
 			case 'date': return $this->quotation($name).' DATE';
 			case 'time': return $this->quotation($name).' INT';
@@ -93,35 +86,38 @@ class MysqlConnector extends \ebi\DbConnector{
 				throw new \ebi\exception\InvalidArgumentException('undefined type `'.$type.'`');
 		}
 	}
+
 	/**
 	 * create table
 	 */
-	public function create_table_sql(\ebi\Dao $dao){
-		$columndef = $primary = [];
+	public function create_table_sql(\ebi\Dao $dao): string{
+		$column_def = $primary = [];
 		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
 
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
-				$columndef[] = $column_str;
+				$column_def[] = $column_str;
 				
 				if($dao->prop_anon($prop_name,'primary') === true || $dao->prop_anon($prop_name,'type') == 'serial'){
 					$primary[] = $this->quotation($column->column());
 				}
 			}
 		}
-		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
+		$sql .= implode(','.PHP_EOL,$column_def).PHP_EOL;
 		if(!empty($primary)){
 			$sql .= ' ,PRIMARY KEY ( '.implode(',',$primary).' ) '.PHP_EOL;
 		}
 		$sql .= ' ) ROW_FORMAT=DYNAMIC ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'.PHP_EOL;
 		return $sql;
 	}
-	public function exists_table_sql(\ebi\Dao $dao){
+
+	public function exists_table_sql(\ebi\Dao $dao): string{
 		$dbc = \ebi\Dao::connection(get_class($dao));
 		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->table(),$dbc->name());
 	}
-	protected function date_format($column_map,$dao,$column,$require){
+
+	protected function date_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, string $require): string{
 		$fmt = [];
 		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%i','s'=>'%s'];
 		
@@ -131,11 +127,12 @@ class MysqlConnector extends \ebi\DbConnector{
 		$f = $fmt[0].'-'.$fmt[1].'-'.$fmt[2].'T'.$fmt[3].':'.$fmt[4].':'.$fmt[5];
 		return 'DATE_FORMAT('.$column_map.',\''.$f.'\')';
 	}
+
 	/**
 	 * SQLエラーを解析し適切なExceptionをthrowする
-	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
+	 * 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
 	 */
-	public function error_info(array $error_info){
+	public function error_info(array $error_info): void{
 		if($error_info[0] == 23000){
 			if($error_info[1] == 1062){
 				throw new \ebi\exception\UniqueException('Duplicate entry');

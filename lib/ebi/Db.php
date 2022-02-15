@@ -21,15 +21,15 @@ class Db implements \Iterator{
 			 */
 			$def = \ebi\Conf::gets('connection');
 		}
-		$type = isset($def['type']) ? $def['type'] : null;
-		$host = isset($def['host']) ? $def['host'] : null;
-		$dbname = isset($def['name']) ? $def['name'] : null;
-		$port = isset($def['port']) ? $def['port'] : null;
-		$user = isset($def['user']) ? $def['user'] : null;
-		$password = isset($def['password']) ? $def['password'] : null;
-		$sock = isset($def['sock']) ? $def['sock'] : null;
-		$encode = isset($def['encode']) ? $def['encode'] : null;
-		$timezone = isset($def['timezone']) ? $def['timezone'] : null;
+		$type = $def['type'] ?? null;
+		$host = $def['host'] ?? null;
+		$dbname = $def['name'] ?? null;
+		$port = $def['port'] ?? null;
+		$user = $def['user'] ?? null;
+		$password = $def['password'] ?? null;
+		$sock = $def['sock'] ?? null;
+		$encode = $def['encode'] ?? null;
+		$timezone = $def['timezone'] ?? null;
 		
 		if(empty($type)){
 			$type = \ebi\SqliteConnector::type();
@@ -51,7 +51,7 @@ class Db implements \Iterator{
 			 */
 			self::$autocommit = \ebi\Conf::get('autocommit',false);
 		}
-		$this->connection = $this->connector->connect($this->dbname,$host,$port,$user,$password,$sock,self::$autocommit);
+		$this->connection = $this->connector->connect($this->dbname, $host, $port, $user, $password, $sock, self::$autocommit);
 		
 		if(empty($this->connection)){
 			throw new \ebi\exception\ConnectionException('connection fail '.$this->dbname);

@@ -1,49 +1,39 @@
 <?php
 namespace ebi;
-/**
- * DB接続IF
- * @author tokushima
- *
- */
+
 abstract class DbConnector{
 	protected $encode;
 	protected $timezone;
 	protected $quotation = '`';
 	protected $order_random_str;
 	
-	public function __construct($encode=null,$timezone=null){
+	public function __construct(?string $encode=null, ?string $timezone=null){
 		$this->encode = $encode;
 		$this->timezone = $timezone;
 	}
 	
-	public static function type(){
+	public static function type(): string{
 		return get_called_class();
 	}
-	/**
-	 * @param string $name
-	 * @param string $host
-	 * @param int $port
-	 * @param string $user
-	 * @param string $password
-	 * @param string $sock
-	 * @param bool $autocommit
-	 */
-	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
+
+	public function connect(?string $name, ?string $host, ?int $port, ?string $user, ?string $password, ?string $sock, bool $autocommit): \PDO{
+		throw new \ebi\exception\ConnectionException();
 	}
-	public function last_insert_id_sql(){
+
+	public function last_insert_id_sql(): \ebi\Daq{
+		throw new \ebi\exception\NotImplementedException();
 	}
+
 	/**
 	 * insert文を生成する
-	 * @param Dao $dao
-	 * @return Daq
 	 */
-	public function create_sql(\ebi\Dao $dao){
+	public function create_sql(\ebi\Dao $dao): \ebi\Daq{
 		$insert = $vars = [];
-		$autoid = null;
+		$auto_id = null;
 		
 		foreach($dao->columns(true) as $column){
 			if($column->auto()){
-				$autoid = $column->name();
+				$auto_id = $column->name();
 			}
 			$insert[] = $this->quotation($column->column());
 			$vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
@@ -51,16 +41,14 @@ abstract class DbConnector{
 		return new \ebi\Daq(
 			'insert into '.$this->quotation($column->table()).' ('.implode(',',$insert).') values ('.implode(',',array_fill(0,sizeof($insert),'?')).');'
 			,$vars
-			,$autoid
+			,$auto_id
 		);
 	}
 	
 	/**
 	 * insert文(複数行)を生成する
-	 * @param \ebi\Dao $dao
-	 * @return \ebi\Daq
 	 */
-	public function insert_multiple_sql(\ebi\Dao $dao,array $data_objects){
+	public function insert_multiple_sql(\ebi\Dao $dao,array $data_objects): \ebi\Daq{
 		$insert = $values = $vars = $column_names = [];
 		
 		foreach($dao->columns(true) as $column){
@@ -81,35 +69,32 @@ abstract class DbConnector{
 			,$vars
 		);
 	}
+
 	/**
 	 * update文を生成する
-	 * @param \ebi\Dao $dao
-	 * @param \ebi\Q $query
-	 * @param string[] $target
-	 * @return Daq
 	 */
-	public function update_sql(\ebi\Dao $dao,\ebi\Q $query,$target){
-		$where = $update = $wherevars = $updatevars = $from = [];
+	public function update_sql(\ebi\Dao $dao, \ebi\Q $query, array $target_props): \ebi\Daq{
+		$where = $update = $where_vars = $update_vars = $from = [];
 		
 		foreach($dao->primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
-			$wherevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
+			$where_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 		}
 		if(empty($where)){
 			throw new \ebi\exception\InvalidQueryException('primary not found');
 		}
 		
-		$target_all = empty($target);
+		$target_all = empty($target_props);
 		foreach($dao->columns(true) as $column){
-			if(!$column->primary() && ($target_all || in_array($column->name(),$target))){
+			if(!$column->primary() && ($target_all || in_array($column->name(), $target_props))){
 				$update[] = $this->quotation($column->column()).' = ?';
-				$updatevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
+				$update_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
-		if(empty($update) || (!$target_all && sizeof($target) != sizeof($update))){
+		if(empty($update) || (!$target_all && sizeof($target_props) != sizeof($update))){
 			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
-		$vars = array_merge($updatevars,$wherevars);
+		$vars = array_merge($update_vars, $where_vars);
 		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		
 		return new \ebi\Daq(
@@ -122,22 +107,18 @@ abstract class DbConnector{
 	
 	/**
 	 * 条件式update文を生成する
-	 * @param \ebi\Dao $dao
-	 * @param \ebi\Q $query
-	 * @param string[] $target
-	 * @return Daq
 	 */
-	public function find_update_sql(\ebi\Dao $dao,\ebi\Q $query,$target){
-		$update = $updatevars = $from = [];
+	public function find_update_sql(\ebi\Dao $dao, \ebi\Q $query, array $target_props): \ebi\Daq{
+		$update = $update_vars = $from = [];
 		
-		$target_all = empty($target);
+		$target_all = empty($target_props);
 		foreach($dao->columns(true) as $column){
-			if(!$column->primary() && ($target_all || in_array($column->name(),$target))){
+			if(!$column->primary() && ($target_all || in_array($column->name(),$target_props))){
 				$update[] = $this->quotation($column->column()).' = ?';
-				$updatevars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
+				$update_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 			}
 		}
-		if(empty($update) || (!$target_all && sizeof($target) != sizeof($update))){
+		if(empty($update) || (!$target_all && sizeof($target_props) != sizeof($update))){
 			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
 		[$where_sql, $where_vars] = $this->where_sql(
@@ -153,16 +134,14 @@ abstract class DbConnector{
 			'update '.$this->quotation($column->table()).' set '.
 			implode(',',$update).' where '.
 			$where_sql,
-			array_merge($updatevars,$where_vars)
+			array_merge($update_vars,$where_vars)
 		);
 	}
 	
 	/**
 	 * delete文を生成する
-	 * @param Dao $dao
-	 * @return Daq
 	 */
-	public function delete_sql(\ebi\Dao $dao){
+	public function delete_sql(\ebi\Dao $dao): \ebi\Daq{
 		$where = $vars = [];
 		
 		foreach($dao->primary_columns() as $column){
@@ -177,13 +156,11 @@ abstract class DbConnector{
 			,$vars
 		);
 	}
+
 	/**
 	 * 条件式delete文を生成する
-	 * @param Dao $dao
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function find_delete_sql(\ebi\Dao $dao,\ebi\Q $query){
+	public function find_delete_sql(\ebi\Dao $dao, \ebi\Q $query): \ebi\Daq{
 		$from = [];
 		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
 		return new \ebi\Daq(
@@ -191,21 +168,17 @@ abstract class DbConnector{
 			,$where_vars
 		);
 	}
+
 	/**
 	 * select文を生成する
-	 * @param Dao $dao
-	 * @param Q $query
-	 * @param Paginator $paginator
-	 * @param string $name columnを指定する場合に対象の変数名
-	 * @return Daq
 	 */
-	public function select_sql(\ebi\Dao $dao,\ebi\Q $query,$paginator,$name=null){
+	public function select_sql(\ebi\Dao $dao, \ebi\Q $query, ?\ebi\Paginator $paginator, ?string $target_prop=null): \ebi\Daq{
 		$select = $from = [];
 		$break = false;
 		$date_format = $query->ar_date_format();
 		
 		foreach($dao->columns() as $column){
-			if($name === null || ($break = ($column->name() == $name))){
+			if($target_prop === null || ($break = ($column->name() == $target_prop))){
 				$column_map = $column->table_alias().'.'.$this->quotation($column->column());
 				$column_map = $this->select_column_format($column_map,$dao,$column,['date_format'=>$date_format]);
 
@@ -228,7 +201,8 @@ abstract class DbConnector{
 			.$this->for_update($query->is_for_update())
 		),$where_vars);
 	}
-	protected function select_order($query,array $self_columns){
+
+	protected function select_order(\ebi\Q $query, array $self_columns): array{
 		$order = [];
 		if($query->is_order_by_rand()){
 			$order[] = $this->order_random_str;
@@ -241,79 +215,53 @@ abstract class DbConnector{
 		}
 		return $order;
 	}
-	protected function select_option_sql($paginator,$order){
+
+	protected function select_option_sql(?\ebi\Paginator $paginator, array $order): string{
 		return ' '
 		.(empty($order) ? '' : ' order by '.implode(',',$order))
 		.(($paginator instanceof \ebi\Paginator) ? sprintf(' limit %d,%d ',$paginator->offset(),$paginator->limit()) : '')
 		;
 	}
+
 	/**
 	 * count文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function count_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('count',$dao,$target_column,$gorup_column,$query);
+	public function count_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('count', $dao, $target_column, $group_column, $query);
 	}
+
 	/**
 	 * sum文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function sum_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('sum',$dao,$target_column,$gorup_column,$query);
+	public function sum_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('sum', $dao, $target_column, $group_column, $query);
 	}
 	/**
 	 * max文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function max_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('max',$dao,$target_column,$gorup_column,$query);
+	public function max_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('max', $dao, $target_column, $group_column, $query);
 	}
 	/**
 	 * min文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function min_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('min',$dao,$target_column,$gorup_column,$query);
+	public function min_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('min',$dao,$target_column,$group_column,$query);
 	}
 	/**
 	 * avg文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
 	 */
-	public function avg_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('avg',$dao,$target_column,$gorup_column,$query);
+	public function avg_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('avg',$dao,$target_column,$group_column,$query);
 	}
 	/**
 	 * distinct文を生成する
-	 * @param Dao $dao
-	 * @param string $target_column
-	 * @param string $gorup_column
-	 * @param Q $query
-	 * @return Daq
-	 */
-	public function distinct_sql(\ebi\Dao $dao,$target_column,$gorup_column,\ebi\Q $query){
-		return $this->which_aggregator_sql('distinct',$dao,$target_column,$gorup_column,$query,true);
+s	 */
+	public function distinct_sql(\ebi\Dao $dao, ?string $target_column, ?string $group_column, \ebi\Q $query): \ebi\Daq{
+		return $this->which_aggregator_sql('distinct',$dao,$target_column,$group_column,$query,true);
 	}
-	protected function which_aggregator_sql($exe,\ebi\Dao $dao,$target_name,$gorup_name,\ebi\Q $query,$sort=false){
+
+	protected function which_aggregator_sql(string $exe, \ebi\Dao $dao, ?string $target_name, ?string $group_name, \ebi\Q $query, bool $sort=false): \ebi\Daq{
 		$select = $from = [];
 		$target_column = $group_column = null;
 		
@@ -339,8 +287,8 @@ abstract class DbConnector{
 		if(isset($date_format[$target_column->name()])){
 			$exec_map = $this->date_format($exec_map,$dao,$target_column,$date_format[$target_column->name()]);
 		}
-		if(!empty($gorup_name)){
-			$group_column = $this->get_column($gorup_name,$dao->columns());
+		if(!empty($group_name)){
+			$group_column = $this->get_column($group_name,$dao->columns());
 			$column_map = $group_column->table_alias().'.'.$this->quotation($group_column->column());
 			
 			if(isset($date_format[$group_column->name()])){
@@ -363,10 +311,12 @@ abstract class DbConnector{
 			,$where_vars
 		);
 	}
-	protected function for_update($bool){
+
+	protected function for_update(bool $bool): string{
 		return ($bool ? ' FOR UPDATE ' : '');
 	}
-	protected function where_cond_columns(array $cond_columns,array &$from){
+
+	protected function where_cond_columns(array $cond_columns, array &$from): string{
 		$conds = [];
 		foreach($cond_columns as $columns){
 			$conds[] = $columns[0]->table_alias().'.'.$this->quotation($columns[0]->column())
@@ -377,7 +327,8 @@ abstract class DbConnector{
 		}
 		return (empty($conds)) ? '' : implode(' and ',$conds);
 	}
-	protected function where_sql(\ebi\Dao $dao,&$from,\ebi\Q $q,array $self_columns,$require_where=null,$alias=true){
+
+	protected function where_sql(\ebi\Dao $dao, array &$from, \ebi\Q $q, array $self_columns, ?string $require_where=null, bool $alias=true){
 		if($q->is_block()){
 			$vars = [];
 			$where_sql = '';
@@ -449,6 +400,7 @@ abstract class DbConnector{
 						case 'serial': 
 						case 'integer':
 						case 'int':
+						case 'datetime':							
 						case 'timestamp':
 						case 'date':
 						case 'time':
@@ -565,7 +517,12 @@ abstract class DbConnector{
 		}
 		return [implode(' and ',$and),$vars];
 	}
-	protected function column_value(\ebi\Dao $dao,$name,$value){
+
+	/**
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	protected function column_value(\ebi\Dao $dao, string $name, $value){
 		if($value === null){
 			return null;
 		}
@@ -589,29 +546,36 @@ abstract class DbConnector{
 		}
 		return $value;
 	}
-	protected function get_column($column_str,array $self_columns){
+
+	protected function get_column(string $column_str, array $self_columns): \ebi\Column{
 		if(isset($self_columns[$column_str])){
 			return $self_columns[$column_str];
 		}
 		foreach($self_columns as $c){
-			if($c->name() == $column_str) return $c;
+			if($c->name() == $column_str){
+				return $c;
+			}
 		}
 		throw new \ebi\exception\InvalidArgumentException('undef '.$column_str);
 	}
-	protected function column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
+
+	protected function column_alias_sql(\ebi\Column $column, \ebi\Q $q, bool $alias=true): string{
 		$column_str = ($alias) ? $column->table_alias().'.'.$this->quotation($column->column()) : $this->quotation($column->column());
 		if($q->ignore_case()){
 			return 'upper('.$column_str.')';
 		}
 		return $column_str;
 	}
-	protected function format_column_alias_sql(Column $column,\ebi\Q $q,$alias=true){
+
+	protected function format_column_alias_sql(Column $column,\ebi\Q $q,$alias=true): string{
 		return $this->column_alias_sql($column,$q,$alias);
 	}
-	protected function quotation($name){
+
+	protected function quotation(string $name): string{
 		return $this->quotation.$name.$this->quotation;
 	}
-	private function to_column_type($dao,$type,$name){
+
+	private function to_column_type(\ebi\Dao $dao, ?string $type, string $name): string{
 		switch($type){
 			case '':
 			case 'mixed':
@@ -626,6 +590,7 @@ abstract class DbConnector{
 				return $this->quotation($name).' INTEGER PRIMARY KEY AUTOINCREMENT';
 			case 'bool':
 			case 'boolean':
+			case 'datetime':
 			case 'timestamp':
 			case 'date':
 			case 'time':
@@ -640,49 +605,54 @@ abstract class DbConnector{
 		}
 	}
 	
-	public function create_table_sql(\ebi\Dao $dao){
-		$columndef = [];
+	public function create_table_sql(\ebi\Dao $dao): string{
+		$column_def = [];
 		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
 		
 		foreach($dao->columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
-				$columndef[] = $column_str;
+				$column_def[] = $column_str;
 			}
 		}
-		$sql .= implode(','.PHP_EOL,$columndef).PHP_EOL;
+		$sql .= implode(','.PHP_EOL,$column_def).PHP_EOL;
 		$sql .= ' );'.PHP_EOL;
 
 		return $sql;
 	}
-	public function exists_table_sql(\ebi\Dao $dao){
+
+	public function exists_table_sql(\ebi\Dao $dao): string{
 		return sprintf('select count(*) from sqlite_master where type=\'table\' and name=\'%s\'',$dao->table());
 	}
-	protected function create_table_prop_cond(\ebi\Dao $dao,$prop_name){
+
+	protected function create_table_prop_cond(\ebi\Dao $dao, string $prop_name): string{
 		return ($dao->prop_anon($prop_name,'extra') !== true && $dao->prop_anon($prop_name,'cond') === null);
 	}
-	public function drop_table_sql(\ebi\Dao $dao){
+
+	public function drop_table_sql(\ebi\Dao $dao): string{
 		$quote = function($name){
 			return '`'.$name.'`';
 		};
 		$sql = 'drop table '.$quote($dao->table());
 		return $sql;
 	}
-	protected function select_column_format($column_map,$dao,$column,$info){
+
+	protected function select_column_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, array $info): string{
 		if(isset($info['date_format'][$column->name()])){
 			return $this->date_format($column_map,$dao,$column,$info['date_format'][$column->name()]);
 		}
 		return $column_map;
 	}
-	protected function date_format($column_map,$dao,$column,$require){
+
+	protected function date_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, string $require): string{
 		return $column_map;
 	}
 	
 	/**
 	 * SQLエラーを解析し適切なExceptionをthrowする
-	 * @param mixed[] $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
+	 * $error_info 0: SQLSTATE エラーコード, 1:ドライバ固有のエラーコード, 2:ドライバ固有のエラーメッセージ
 	 */
-	public function error_info(array $error_info){
+	public function error_info(array $error_info): void{
 		if($error_info[0] == 23000){
 			if(strpos($error_info[2] ?? '','UNIQUE') !== false){
 				throw new \ebi\exception\DuplicateKeyException();

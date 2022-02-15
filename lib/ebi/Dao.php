@@ -203,10 +203,10 @@ abstract class Dao extends \ebi\Obj{
 				if($name == 'id'){
 					$this->prop_anon($name,'type','serial',true);
 				}else if($name == 'created_at' || $name == 'create_date' || $name == 'created'){
-					$this->prop_anon($name,'type','timestamp',true);
+					$this->prop_anon($name,'type','datetime',true);
 					$this->prop_anon($name,'auto_now_add',true,true);
 				}else if($name == 'updated_at' || $name == 'update_date' || $name == 'modified'){
-					$this->prop_anon($name,'type','timestamp',true);
+					$this->prop_anon($name,'type','datetime',true);
 					$this->prop_anon($name,'auto_now',true,true);
 				}else if($name == 'code'){
 					$this->prop_anon($name,'type','string',true);
@@ -974,6 +974,7 @@ abstract class Dao extends \ebi\Obj{
 				$auto_update_prop[] = $column->name();
 				
 				switch($this->prop_anon($column->name(),'type')){
+					case 'datetime':
 					case 'timestamp':
 					case 'date':
 						$this->{$column->name()}(time());
@@ -987,6 +988,7 @@ abstract class Dao extends \ebi\Obj{
 					$this->set_unique_code($column->name());
 				}else if($this->prop_anon($column->name(),'auto_now_add') === true){
 					switch($this->prop_anon($column->name(),'type')){
+						case 'datetime':
 						case 'timestamp':
 						case 'date':
 							$this->{$column->name()}(time()); 
