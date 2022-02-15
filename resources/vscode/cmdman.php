@@ -9,3 +9,8 @@ class Std{
     public static function println_danger(?string $value=null){}
     public static function backspace(){}
 }
+class Args{
+    public static function value(): string{
+        return '';
+    }
+}
