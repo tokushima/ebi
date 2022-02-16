@@ -129,7 +129,7 @@ class Man{
 					$properties[$name]->summary(
 						self::find_merge_deprecate(
 							$properties[$name],
-							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
+							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : ''),
 							$info,
 							true
 						)
@@ -641,7 +641,8 @@ class Man{
 		return '';
 	}
 	public static function trim_doc($doc){
-		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
+		$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
+		return (string)$doc;
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){
 		$list = [];

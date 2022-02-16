@@ -13,7 +13,7 @@ class DocParam extends \ebi\Obj{
 	protected $summary;
 	private $opt = [];
 	
-	public function __construct($name,$type,$summary='',$opt=[]){
+	public function __construct($name, $type, $summary='', $opt=[]){
 		$this->name = trim($name);
 		$this->type = trim($type);
 		$this->summary = trim($summary);
