@@ -8,14 +8,14 @@ class AutomapLoginRequest extends \ebi\flow\Request{
 	/**
 	 * @automap
 	 */
-	public function do_login(){
+	public function do_login(): array{
 		return parent::do_login();
 	}
 
 	/**
 	 * @automap
 	 */
-	public function do_logout(){
+	public function do_logout(): void{
 		parent::do_logout();
 	}
 }

@@ -1,10 +1,6 @@
 <?php
 namespace ebi\flow;
-/**
- * リクエストやセッションを処理する
- * @author tokushima
- *
- */
+
 class Request extends \ebi\Request{
 	use \ebi\Plugin, \ebi\FlowPlugin;
 	
@@ -24,41 +20,36 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * セッションにセットする
-	 * @param string $key
 	 * @param mixed $val
 	 */
-	public function sessions($key,$val){
+	public function sessions(string $key, $val): void{
 		$this->sess->vars($key,$val);
 	}
 	/**
 	 * セッションから取得する
-	 * @param string $n 取得する定義名
 	 * @param mixed $d セッションが存在しない場合の代理値
 	 * @return mixed
 	 */
-	public function in_sessions($n,$d=null){
+	public function in_sessions(string $n, $d=null){
 		return $this->sess->in_vars($n,$d);
 	}
 	/**
 	 * セッションから削除する
-	 * @param string $n 削除する定義名
 	 */
-	public function rm_sessions($n){
-		call_user_func_array([$this->sess,'rm_vars'],func_get_args());
+	public function rm_sessions(...$args){
+		call_user_func_array([$this->sess,'rm_vars'], $args);
 	}
 	/**
 	 * 指定のキーが存在するか
-	 * @param string $n
-	 * @return bool
 	 */
-	public function is_sessions($n){
+	public function is_sessions(string $n): bool{
 		return $this->sess->is_vars($n);
 	}
 	/**
 	 * 前処理、入力値のバリデーションやログイン処理を行う
 	 * __before__メソッドを定義することで拡張する
 	 */
-	public function before(){
+	public function before(): void{
 		$annon = $this->request_validation(['user_role']);
 		
 		if(!$this->is_user_logged_in()){
@@ -132,9 +123,8 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * ログイン後、ログイン済みの場合にリダイレクトするURLを設定する
-	 * @param string $url
 	 */
-	public function set_logged_in_redirect_to($url){
+	public function set_logged_in_redirect_to(string $url): void{
 		$this->sessions('logged_in_redirect_to',$url);
 	}
 	
@@ -142,7 +132,7 @@ class Request extends \ebi\Request{
 	 * 後処理
 	 * __after__メソッドを定義することで拡張する
 	 */
-	public function after(){
+	public function after(): void{
 		if(method_exists($this,'__after__')){
 			call_user_func([$this, '__after__']);
 		}
@@ -170,9 +160,8 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * Flowの結果に返却値を追加する
-	 * @return mixed{}
 	 */
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		return $this->after_vars;
 	}
 	
@@ -187,7 +176,7 @@ class Request extends \ebi\Request{
 			if(isset($this->login_anon['type']) && !($user instanceof $this->login_anon['type'])){
 				throw new \ebi\exception\IllegalDataTypeException();
 			}
-			$this->sessions($this->login_id.'USER',$user);
+			$this->sessions($this->login_id.'USER', $user);
 		}
 		return $this->in_sessions($this->login_id.'USER');
 	}
@@ -196,37 +185,35 @@ class Request extends \ebi\Request{
 	 * ログイン状態にする
 	 * @param mixed $user
 	 */
-	protected function force_user_login($user){
+	protected function force_user_login($user): void{
 		$this->user($user);
 		$this->after_user_login();
 	}
 	
 	/**
 	 * ログインセッション識別子
-	 * @return string
 	 */
-	public function user_login_session_id(){
+	public function user_login_session_id(): string{
 		return $this->login_id;
 	}
 	/**
 	 * ログイン済みか
-	 * @return bool
 	 */
-	public function is_user_logged_in(){
+	public function is_user_logged_in(): bool{
 		return ($this->in_sessions($this->login_id) !== null);
 	}
 	
 	/**
 	 * ログイン完了処理
 	 */
-	private function after_user_login(){
+	private function after_user_login(): void{
 		$this->sessions($this->login_id,$this->login_id);
 		session_regenerate_id(true);
 	}
 	/**
 	 * ログイン処理
 	 */
-	public function do_login(){
+	public function do_login(): array{
 		if($this->sess->is_vars(__CLASS__.'_login_vars')){
 			$data = $this->sess->in_vars(__CLASS__.'_login_vars');
 			if(($data[0] + 5) > time()){
@@ -307,7 +294,7 @@ class Request extends \ebi\Request{
 	/**
 	 * ログアウト
 	 */
-	public function do_logout(){
+	public function do_logout(): void{
 		/**
 		 * ログアウトの前処理
 		 * @param \ebi\flow\Request $arg1
@@ -321,7 +308,7 @@ class Request extends \ebi\Request{
 	/**
 	 * 何も処理をせずに、varsを返す
 	 */
-	public function noop(){
+	public function noop(): array{
 		return $this->ar_vars();
 	}
 }

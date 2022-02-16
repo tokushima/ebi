@@ -3,7 +3,7 @@ namespace test\flow;
 use \ebi\Q;
 
 class Main extends \ebi\flow\Request{
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		return [
 			'helper'=>new \test\flow\Helper(),
 		];

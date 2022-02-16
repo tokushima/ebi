@@ -7,7 +7,7 @@ class Cors{
 	/**
 	 * @plugin \ebi\Flow
 	 */
-	public function before_flow_action(){
+	public function before_flow_action(): void{
 		$env = new \ebi\Env();
 		$request_origin = $env->get('HTTP_ORIGIN');
 		$request_method = $env->get('HTTP_ACCESS_CONTROL_REQUEST_METHOD');

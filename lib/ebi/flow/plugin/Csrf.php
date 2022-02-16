@@ -2,7 +2,6 @@
 namespace ebi\flow\plugin;
 /**
  * CSRFトークン
- * @author tokushima
  */
 class Csrf{
 	private $token;
@@ -11,7 +10,7 @@ class Csrf{
 	 * @plugin \ebi\flow\Request
 	 * @param \ebi\flow\Request $req
 	 */
-	public function before_flow_action_request(\ebi\flow\Request $req){
+	public function before_flow_action_request(\ebi\flow\Request $req): void{
 		/**
 		 * @param string $secret_key シークレットキー
 		 */
@@ -33,10 +32,8 @@ class Csrf{
 	
 	/**
 	 * @plugin \ebi\Template
-	 * @param string $src
-	 * @return string
 	 */
-	public function after_template($src){
+	public function after_template(string $src): string{
 		if(empty($this->token)){
 			return $src;
 		}
