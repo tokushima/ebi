@@ -29,7 +29,7 @@ class HttpHeader{
 	/**
 	 * headerを送信する
 	 */
-	public static function send(string $key, string $value): void{
+	public static function send(string $key, ?string $value): void{
 		if(!isset(self::$header[$key])){
 			header($key.': '.$value);
 			self::$header[$key] = $value;

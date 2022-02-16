@@ -706,9 +706,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * サブクエリを取得する
 	 */
-	public static function find_sub($target_prop): \ebi\Daq{
-		$args = func_get_args();
-		array_shift($args);
+	public static function find_sub($target_prop, ...$args): \ebi\Daq{
 		$dao = new static();
 		$query = new \ebi\Q();
 		$query->add($dao->__find_conds__());
@@ -719,24 +717,18 @@ abstract class Dao extends \ebi\Obj{
 		if(!$query->is_order_by()){
 			$query->order($target_prop);
 		}
-		$paginator = $query->paginator();
-		
-		if($paginator instanceof \ebi\Paginator){
+		if($query->paginator() instanceof \ebi\Paginator){
 			if($query->is_order_by()){
-				$paginator->order(
+				$query->paginator()->order(
 					$query->in_order_by(0)->ar_arg1(),
 					$query->in_order_by(0)->type() == Q::ORDER_ASC
 				);
-			}else if($paginator->has_order()){
-				$query->add(Q::order($paginator->order()));
+			}else if($query->paginator()->has_order()){
+				$query->add(Q::order($query->paginator()->order()));
 			}
-			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
-			
-			if($paginator->total() == 0){
-				return [];
-			}
+			$query->paginator()->total(call_user_func_array([get_called_class(),'find_count'], $args));
 		}
-		return self::$_con_[get_called_class()]->select_sql($dao,$query,$paginator,$target_prop);
+		return self::$_con_[get_called_class()]->select_sql($dao, $query, $query->paginator(), $target_prop);
 	}
 
 	private static function get_statement_iterator(self $dao, \ebi\Q $query): \Generator{
@@ -776,22 +768,16 @@ abstract class Dao extends \ebi\Obj{
 		if(!empty($args)){
 			call_user_func_array([$query,'add'],$args);
 		}
-		$paginator = $query->paginator();
-		
-		if($paginator instanceof \ebi\Paginator){
+		if($query->paginator() instanceof \ebi\Paginator){
 			if($query->is_order_by()){
-				$paginator->order(
+				$query->paginator()->order(
 					$query->in_order_by(0)->ar_arg1(),
 					$query->in_order_by(0)->type() == Q::ORDER_ASC
 				);
-			}else if($paginator->has_order()){
-				$query->add(Q::order($paginator->order()));
+			}else if($query->paginator()->has_order()){
+				$query->add(Q::order($query->paginator()->order()));
 			}
-			$paginator->total(call_user_func_array([get_called_class(),'find_count'],$args));
-			
-			if($paginator->total() == 0){
-				return [];
-			}
+			$query->paginator()->total(call_user_func_array([get_called_class(),'find_count'],$args));
 		}
 		return static::get_statement_iterator($dao,$query);
 	}
