@@ -160,8 +160,10 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * Flowの結果に返却値を追加する
+	 * @return array 
+	 * @compatibility
 	 */
-	public function get_after_vars(): array{
+	public function get_after_vars(){
 		return $this->after_vars;
 	}
 	

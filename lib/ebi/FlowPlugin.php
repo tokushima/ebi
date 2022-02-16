@@ -53,8 +53,10 @@ trait FlowPlugin{
 	}
 	/**
 	 * 結果に値を追加する
+	 * @return array
+	 * @compatibility
 	 */
-	public function get_after_vars(): array{
+	public function get_after_vars(){
 		return [];
 	}
 
