@@ -37,6 +37,10 @@ class Q{
 	private $date_format = [];
 	private $for_update = false;
 
+	/**
+	 * @param mixed $arg1 
+	 * @param mixed $arg2 
+	 */
 	public function __construct(int $type=self::AND_BLOCK, $arg1=null, $arg2=null, ?string $param=null){
 		if($type === self::AND_BLOCK){
 			$this->and_block = $arg1;
@@ -63,10 +67,14 @@ class Q{
 			$this->param = decbin($param);
 		}
 	}
-	private function ar_value($v){
+
+	/**
+	 * @param mixed $v
+	 */
+	private function ar_value($v): array{
 		return is_array($v) ? $v : (($v === null) ? [] : [$v]);
 	}
-	public function ar_arg1(){
+	public function ar_arg1(): array{
 		if(empty($this->arg1)){
 			return [];
 		}
@@ -83,45 +91,44 @@ class Q{
 		}
 		throw new \ebi\exception\InvalidArgumentException('invalid arg1');
 	}
-	public function ar_arg2(){
+	public function ar_arg2(): array{
 		return isset($this->arg2) ? $this->ar_value($this->arg2) : [null];
 	}
-	public function type(){
+	public function type(): int{
 		return $this->type;
 	}
-	public function param(){
+	public function param(): ?string{
 		return $this->param;
 	}
-	public function ar_and_block(){
+	public function ar_and_block(): array{
 		return $this->ar_value($this->and_block);
 	}
 	
-	public function ar_or_block(){
+	public function ar_or_block(): array{
 		return $this->ar_value($this->or_block);
 	}
-	public function is_order_by(){
+	public function is_order_by(): bool{
 		return !empty($this->order_by);
 	}
-	public function in_order_by($key){
-		return isset($this->order_by[$key]) ? $this->order_by[$key] : null;
+	public function in_order_by(int $index): ?self{
+		return $this->order_by[$index] ?? null;
 	}
-	public function ar_order_by(){
+	public function ar_order_by(): array{
 		return $this->ar_value($this->order_by);
 	}
-	public function paginator(){
+	public function paginator(): ?\ebi\Paginator{
 		return $this->paginator;
 	}
-	public function ar_date_format(){
+	public function ar_date_format(): array{
 		return $this->ar_value($this->date_format);
 	}
-	public function is_for_update(){
+	public function is_for_update(): bool{
 		return $this->for_update;
 	}
 	/**
 	 * ソート順がランダムか
-	 * @return bool
 	 */
-	public function is_order_by_rand(){
+	public function is_order_by_rand(): bool{
 		if(empty($this->order_by)){
 			return false;
 		}
@@ -134,11 +141,8 @@ class Q{
 	}
 	/**
 	 * クエリを追加する
-	 * @return \ebi\Q
 	 */
-	public function add(){
-		$args = func_get_args();
-		
+	public function add(...$args): self{
 		foreach($args as $arg){
 			if(!empty($arg)){
 				if($arg instanceof \ebi\Q){
@@ -179,144 +183,110 @@ class Q{
 	}
 	/**
 	 * 条件が存在しない
-	 * @return bool
 	 */
-	public function none(){
+	public function none(): bool{
 		return (empty($this->and_block) && empty($this->or_block));
 	}
 	/**
 	 * 条件ブロックか
-	 * @return bool
 	 */
-	public function is_block(){
+	public function is_block(): bool{
 		return ($this->type == self::AND_BLOCK || $this->type == self::OR_BLOCK);
 	}
 	/**
 	 * 大文字小文字を区別しない
 	 * decbin(IGNORE)
-	 * @return bool
 	 */
-	public function ignore_case(){
+	public function ignore_case(): bool{
 		return (!empty($this->param) && strlen($this->param) > 1 && substr($this->param,-2,1) === '1');
 	}
 	/**
 	 * 否定式である
 	 * decbin(NOT)
-	 * @return bool
 	 */
-	public function not(){
+	public function not(): bool{
 		return (!empty($this->param) && strlen($this->param) > 2 && substr($this->param,-3,1) === '1');
 	}
 	/**
 	 * column_str == value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function eq($column_str,$value,$param=null){
-		return new self(self::EQ,$column_str,$value,$param);
+	public static function eq(string $column_str, $value, ?string $param=null): self{
+		return new self(self::EQ, $column_str, $value, $param);
 	}
 	/**
 	 * column_str != value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function neq($column_str,$value,$param=null){
-		return new self(self::NEQ,$column_str,$value,$param);
+	public static function neq(string $column_str, $value, ?string $param=null): self{
+		return new self(self::NEQ,$column_str, $value, $param);
 	}
 	/**
 	 * column_str > value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function gt($column_str,$value,$param=null){
-		return new self(self::GT,$column_str,$value,$param);
+	public static function gt(string $column_str, $value, ?string $param=null): self{
+		return new self(self::GT, $column_str, $value, $param);
 	}
 	/**
 	 * column_str < value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function lt($column_str,$value,$param=null){
-		return new self(self::LT,$column_str,$value,$param);
+	public static function lt(string $column_str, $value, ?string $param=null): self{
+		return new self(self::LT, $column_str, $value, $param);
 	}
 	/**
 	 * column_str >= value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function gte($column_str,$value,$param=null){
-		return new self(self::GTE,$column_str,$value,$param);
+	public static function gte(string $column_str, $value, ?string $param=null): self{
+		return new self(self::GTE, $column_str, $value, $param);
 	}
 	/**
 	 * column_str <= value
-	 * @param string $column_str
-	 * @param string $value
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $value
 	 */
-	public static function lte($column_str,$value,$param=null){
-		return new self(self::LTE,$column_str,$value,$param);
+	public static function lte(string $column_str, $value, ?string $param=null): self{
+		return new self(self::LTE, $column_str, $value, $param);
 	}
 	/**
 	 * 前方一致
-	 * @param string $column_str
-	 * @param string $words
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $words string|array
 	 */
-	public static function startswith($column_str,$words,$param=null){
+	public static function startswith(string $column_str, $words, ?string $param=null): self{
 		try{
-			return new self(self::START_WITH,$column_str,self::words_array($words),$param);
+			return new self(self::START_WITH, $column_str, self::words_array($words), $param);
 		}catch(\ebi\exception\EmptyException $e){
 			return new self();
 		}
 	}
 	/**
 	 * 後方一致
-	 * @param string $column_str
-	 * @param string $words
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $words string|array
 	 */
-	public static function endswith($column_str,$words,$param=null){
+	public static function endswith(string $column_str, $words, ?string $param=null): self{
 		try{
-			return new self(self::END_WITH,$column_str,self::words_array($words),$param);
+			return new self(self::END_WITH, $column_str, self::words_array($words), $param);
 		}catch(\ebi\exception\EmptyException $e){
 			return new self();
 		}
 	}
 	/**
 	 * 部分一致
-	 * @param string $column_str
-	 * @param string $words
-	 * @param int $param
-	 * @return \ebi\Q
+	 * @param mixed $words string|array
 	 */
-	public static function contains($column_str,$words,$param=null){
+	public static function contains(string $column_str, $words, ?string $param=null): self{
 		try{
-			return new self(self::CONTAINS,$column_str,self::words_array($words),$param);
+			return new self(self::CONTAINS, $column_str, self::words_array($words), $param);
 		}catch(\ebi\exception\EmptyException $e){
 			return new self();
 		}
 	}
 	/**
 	 * in
-	 * @param string $column_str 指定のプロパティ名
-	 * @param string[] $words 絞り込み文字列
-	 * @param int $param 
-	 * @return \ebi\Q
+	 * @param mixed $words array|\ebi\Daq
 	 */
-	public static function in($column_str,$words,$param=null){
+	public static function in(string $column_str, $words, ?string $param=null): self{
 		try{
 			return new self(self::IN,$column_str,($words instanceof \ebi\Daq) ? $words : [self::words_array($words)],$param);
 		}catch(\ebi\exception\EmptyException $e){
@@ -359,84 +329,71 @@ class Q{
 	}
 	/**
 	 * ソート順を指定する
-	 * @param string $column_str 指定のプロパティ名
-	 * @return \ebi\Q
 	 */
-	public static function order($column_str){
-		return new self(self::ORDER,$column_str);
+	public static function order(string $column_str): self{
+		return new self(self::ORDER, $column_str);
 	}
 	/**
 	 * ソート順をランダムにする
-	 * @return \ebi\Q
 	 */
-	public static function random_order(){
+	public static function random_order(): self{
 		return new self(self::ORDER_RAND);
 	}
 	/**
 	 * FOR UPDATE
-	 * @return \ebi\Q
 	 */
-	public static function for_update(){
+	public static function for_update(): self{
 		return new self(self::FOR_UPDATE);
 	}
 
 	/**
 	 * 検索文字列による検索条件
-	 * @param string $val 検索文字列 スペース区切り
-	 * @param string[] $param 対象のカラム
-	 * @return \ebi\Q
+	 * @param mixed $columns array|string
 	 */
-	public static function match($val,$columns=[]){
+	public static function match(string $val, $columns=[]): self{
 		if(!empty($columns) && !is_array($columns)){
 			$columns = explode(',',$columns);
 		}
-		$values = trim(str_replace(['　',' '],' ',$val));
+		$values = trim(str_replace(['　',' '], ' ', $val));
 		
 		if(!empty($values)){
-			$values = array_unique(explode(' ',$values));
+			$values = array_unique(explode(' ', $values));
 		}
 		if(empty($values)){
 			return new self();
 		}
 		if(sizeof($columns) == 1){
-			return self::contains(implode('',$columns),$values);
+			return self::contains(implode('',$columns), $values);
 		}
-		return new self(self::MATCH,implode(',',$values),$columns);
+		return new self(self::MATCH,implode(',',$values), $columns);
 	}
 	/**
 	 * OR条件ブロック
-	 * @return \ebi\Q
 	 */
-	public static function ob(){
-		$args = func_get_args();
-		return new self(self::OR_BLOCK,$args);
+	public static function ob(...$args): self{
+		return new self(self::OR_BLOCK, $args);
 	}
 	/**
 	 * 条件ブロック
-	 * @return \ebi\Q
 	 */
-	public static function b(){
-		$args = func_get_args();
-		return new self(self::AND_BLOCK,$args);
+	public static function b(...$args): self{
+		return new self(self::AND_BLOCK, $args);
 	}
 	
 	/**
 	 * 日付型で有効とするフォーマットを指定する
-	 * 
-	 * @param string $column_str
-	 * @param string $require YmdHis
-	 * @return \ebi\Q
+	 * require_format: YmdHis
+	 * 「2000-01-01 00:00:00」にrequire_formatで指定した値を埋める
 	 */	
-	public static function date_format($column_str,$require){
-		return new self(self::DATE_FORMAT,$column_str,$require);
+	public static function date_format(string $column_str, string $require_format): self{
+		return new self(self::DATE_FORMAT, $column_str, $require_format);
 	}
 	/**
 	 * 範囲
-	 * @param string $column
-	 * @param mixed $from
+	 * @param mixed $from 
 	 * @param mixed $to
 	 */
-	public static function between($column,$from,$to){
+	public static function between(string $column_str,$from,$to): self{
 		$m = [];
 		if(preg_match('/^\d{4}([\/\-\.])\d{2}/',$from,$m)){
 			$exp = explode(' ',$from,2);
@@ -469,8 +426,8 @@ class Q{
 		}
 		
 		$q = new self();
-		$q->add(self::gte($column,$from));
-		$q->add(self::lte($column,$to));
+		$q->add(self::gte($column_str, $from));
+		$q->add(self::lte($column_str, $to));
 		return $q;
 	}
 }
