@@ -436,20 +436,57 @@ abstract class Dao extends \ebi\Obj{
 		return self::$_co_anon_[get_class($this)][1];
 	}
 
-	// TODO 
+	/**
+	 * @compatibility
+	 * @return \ebi\Q
+	 */
 	protected function __find_conds__(){
 		return Q::b();
 	}
+
+	/**
+	 * @compatibility
+	 * @return void
+	 */
 	protected function __before_create__(){}
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __after_create__(){}
 	
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __before_update__(){}
+
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __after_update__(){}
 	
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __after_delete__(){}
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __before_delete__(){}
 
+	/**
+	 * @compatibility
+	 * @return void
+	 */
 	protected function __before_save__(){}
+	/**
+	 * @compatibility
+	 * @return void
+	 */	
 	protected function __after_save__(){}
 	
 	/**
