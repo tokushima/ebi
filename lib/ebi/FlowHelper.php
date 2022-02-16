@@ -82,143 +82,102 @@ class FlowHelper{
 	}
 	/**
 	 * マッチしたパターンと$patternが同じなら$trueを、違うなら$falseを返す
-	 * @param $pattern 比較する文字列
-	 * @param $true 一致した場合に返す文字列
-	 * @param $false 一致しなかった場合に返す文字列
 	 */
 	public function match_pattern_switch(string $pattern, string $true='on', string $false=''): string{
 		return ($this->name() == $pattern) ? $true : $false;
 	}
 	/**
 	 * マッチしたパターンが$patternで前方一致なら$trueを、違うなら$falseを返す
-	 * @param string $pattern 比較する文字列
-	 * @param string $true 一致した場合に返す文字列
-	 * @param string $false 一致しなかった場合に返す文字列
-	 * @return string
 	 */
-	public function startswith_pattern_switch($pattern,$true='on',$false=''){
+	public function startswith_pattern_switch(string $pattern, string $true='on', string $false=''): string{
 		return (strpos($this->name(),$pattern) === 0) ? $true : $false;
 	}
 	/**
 	 * マッチしたパターンが$patternで後方一致なら$trueを、違うなら$falseを返す
-	 * @param string $pattern 比較する文字列
-	 * @param string $true 一致した場合に返す文字列
-	 * @param string $false 一致しなかった場合に返す文字列
-	 * @return string
 	 */
-	public function endswith_pattern_switch($pattern,$true='on',$false=''){
+	public function endswith_pattern_switch(string $pattern, string $true='on', string $false=''): string{
 		return (strrpos($this->name(),$pattern) === (strlen($this->name())-strlen($pattern))) ? $true : $false;
 	}
 	/**
 	 * マッチしたパターンが$patternで部分一致なら$trueを、違うなら$falseを返す
-	 * @param string $pattern 比較する文字列
-	 * @param string $true 一致した場合に返す文字列
-	 * @param string $false 一致しなかった場合に返す文字列
-	 * @return string
 	 */
-	public function contains_pattern_switch($pattern,$true='on',$false=''){
+	public function contains_pattern_switch(string $pattern, string $true='on', string $false=''): string{
 		return (strrpos($this->name(),$pattern) !== false) ? $true : $false;
 	}	
 	
 	/**
 	 * 真偽値により$trueまたは$falseを返す
-	 * @param bool $cond 真偽値
-	 * @param string $true 真の場合に返す文字列
-	 * @param string $false 偽の場合に返す文字列
-	 * @return string
+	 * @param mixed $cond
 	 */
-	public function cond_switch($cond,$true='on',$false=''){
+	public function cond_switch($cond, string $true='on', string $false=''): string{
 		return ($cond !== false && !empty($cond)) ? $true : $false;
 	}
 	/**
 	 * $a == $bが真なら$true偽なら$falseを返す
-	 * @param bool $cond 真偽値
-	 * @param string $true 真の場合に返す文字列
-	 * @param string $false 偽の場合に返す文字列
-	 * @return string
+	 * @param mixed $a
+	 * @param mixed $b
 	 */
-	public function cond_eq_switch($a,$b,$true='on',$false=''){
+	public function cond_eq_switch($a, $b, string $true='on', string $false=''): string{
 		return ($a == $b) ? $true : $false;
 	}
 	/**
 	 * アプリケーションのメディアのURLを返す
-	 * @param string $url ベースのURLに続く相対パス
-	 * @return string
 	 */
-	public function media($url=null){
-		return \ebi\Util::path_absolute(\ebi\Flow::media_url(),$url);
+	public function media(?string $path=null): string{
+		return \ebi\Util::path_absolute(\ebi\Flow::media_url(), $path);
 	}
 	/**
 	 * アプリケーションのURLを返す
-	 * @param string $url ベースのURLに続く相対パス
-	 * @retunr string
 	 */
-	public function app_url($url=null){
-		return \ebi\Util::path_absolute(\ebi\Flow::app_url(),$url);
+	public function app_url(?string $path=null): string{
+		return \ebi\Util::path_absolute(\ebi\Flow::app_url(), $path);
 	}
 	/**
 	 * ゼロを桁数分前に埋める
-	 * @param int $int 対象の値
-	 * @param int $dig 0埋めする桁数
-	 * @return string
 	 */
-	public function zerofill($int,$dig=0){
-		return sprintf('%0'.$dig.'d',$int);
+	public function zerofill(int $int, int $dig=0): string{
+		return sprintf('%0'.$dig.'d', $int);
 	}
 	/**
 	 * 数字を千位毎にグループ化してフォーマットする
-	 * @param float $number 対象の値
-	 * @param int $dec 小数点以下の桁数
-	 * @return string
 	 */
-	public function number_format($number,$dec=0){
-		return number_format($number,$dec,'.',',');
+	public function number_format(float $number, int $dec=0): string{
+		return number_format($number, $dec, '.', ',');
 	}
 	/**
 	 * フォーマットした日付を返す
-	 * @param int $value 時間
-	 * @param string $format フォーマット文字列 ( http://jp2.php.net/manual/ja/function.date.php )
-	 * @return string
+	 * @see http://jp2.php.net/manual/ja/function.date.php
 	 */
-	public function date_format($format=null,$value=null){
+	public function date_format(?string $format=null, ?int $time=null): string{
 		if(empty($format)){
 			$format = \ebi\Conf::timestamp_format();
 		}
-		if(empty($value)){
-			$value = time();
-		}
-		return date($format,$value);
-	}
-	/**
-	 * タイムスタンプを返す
-	 * @param int $add 加算する秒数
-	 * @return int
-	 */
-	public function time($add=0,$time=null){
 		if(empty($time)){
 			$time = time();
 		}
-		return ($time + $add);
+		return date($format, $time);
+	}
+	/**
+	 * タイムスタンプを返す
+	 */
+	public function time(int $add_sec=0, ?int $time=null){
+		if(empty($time)){
+			$time = time();
+		}
+		return ($time + $add_sec);
 	}
 	/**
 	 * 改行を削除(置換)する
-	 *
-	 * @param string $value 対象の文字列
-	 * @param string $glue 置換後の文字列
-	 * @return string
 	 */
-	public function one_liner($value,$glue=" "){
-		return str_replace(["\r\n","\r","\n","<br>","<br />"],$glue,$value);
+	public function one_liner(string $value, $replace=" "){
+		return str_replace(["\r\n","\r","\n","<br>","<br />"], $replace, $value);
 	}
 	/**
 	 * 文字列を丸める
-	 * @param string $str 対象の文字列
-	 * @param int $width 指定の幅
-	 * @param string $postfix 文字列がまるめられた場合に末尾に接続される文字列
-	 * @return string
+	 * @deprecated
 	 */
-	public function trim_width($str,$width,$postfix=''){
-		return \ebi\Util::trim_width($str,$width,$postfix);
+	public function trim_width(string $str, int $width, string $postfix=''){
+		return \ebi\Util::trim_width($str, $width, $postfix);
 	}
 	/**
 	 * 何もしない
@@ -230,14 +189,8 @@ class FlowHelper{
 	}
 	/**
 	 * HTMLエスケープされた文字列を返す
-	 * @param string $value 対象の文字列
-	 * @param int $length 取得する文字列の最大長
-	 * @param int $lines 取得する文字列の最大行数
-	 * @param string $postfix 文字列が最大長または最大行数を超えた場合に末尾に接続される文字列
-	 * @param bool $nl2br 改行コードを<br />にするか
-	 * @return string
 	 */
-	public function html($value,$length=0,$lines=0,$postfix=null,$nl2br=true){
+	public function html(string $value, int $length=0, int $lines=0, ?string $postfix=null, bool $nl2br=true): string{
 		$value = str_replace(["\r\n","\r","\n"],PHP_EOL,$value);
 		if($length > 0){
 			$det = mb_detect_encoding($value);
@@ -257,44 +210,33 @@ class FlowHelper{
 	}
 	/**
 	 * 特殊文字を HTML エンティティに変換する
-	 * @param string $val
-	 * @return string
 	 */
-	public function htmlspecialchars($val){
+	public function htmlspecialchars(string $val): string{
 		return htmlspecialchars($val);
 	}
 	/**
 	 * 改行文字の前に HTML の改行タグを挿入する
-	 * @param string $value
-	 * @return string
 	 */
-	public function nl2br($value){
+	public function nl2br(string $value): string{
 		return nl2br($value,true);
 	}
 	/**
 	 * 全てのタグを削除した文字列を返す
-	 * @param string $value 対象の文字列
-	 * @param int $length 取得する文字列の最大長
-	 * @param int $lines 取得する文字列の最大行数
-	 * @param string $postfix 文字列が最大長または最大行数を超えた場合に末尾に接続される文字列
-	 * @return string
 	 */
-	public function text($value,$length=0,$lines=0,$postfix=null){
+	public function text(string $value, int $length=0, int $lines=0, ?string $postfix=null): string{
 		return self::html(preg_replace("/<.+?>/","",$value),$length,$lines,$postfix);
 	}
 	/**
 	 * Json文字列にして返す
 	 * @param mixed $value
-	 * @return string
 	 */
-	public function json($value){
+	public function json($value): string{
 		return json_encode($value);
 	}
 	/**
 	 * クエリ文字列を生成する
-	 * @return string
 	 */
-	public function build_url(){
+	public function build_url(): string{
 		$args = func_get_args();
 		$list = [];
 		$url = array_shift($args);
@@ -317,28 +259,24 @@ class FlowHelper{
 	
 	/**
 	 * URL エンコードを行う
-	 * @param string $str
-	 * @return string
 	 */
-	public function urlencode($str){
+	public function urlencode(string $str): string{
 		return rawurlencode($str);
 	}
 	
 	/**
 	 * !
 	 * @param mixed $a
-	 * @return bool
 	 */
-	public function not($a){
+	public function not($a): bool{
 		return !($a);
 	}
 	/**
 	 * ==
 	 * @param mixed $a
 	 * @param mixed $b
-	 * @return bool
 	 */
-	public function eq($a,$b){
+	public function eq($a,$b): bool{
 		$bool = ($a == $b);
 		
 		if($bool && ($a === '' || $b === '')){
@@ -350,73 +288,54 @@ class FlowHelper{
 	 * !=
 	 * @param mixed $a
 	 * @param mixed $b
-	 * @return bool
 	 */
-	public function neq($a,$b){
+	public function neq($a,$b): bool{
 		return !($this->eq($a,$b));
 	}
 	/**
 	 * aがbより小さい
-	 * @param int $a
-	 * @param int $b
-	 * @return bool
 	 */
-	public function lt($a,$b){
+	public function lt(float $a, float $b): bool{
 		return ($a < $b);
 	}
 	/**
 	 * aがbより小さいか等しい
-	 * @param int $a
-	 * @param int $b
-	 * @return bool
 	 */
-	public function lte($a,$b){
+	public function lte(float $a, float $b): bool{
 		return ($a <= $b);
 	}
 	/**
 	 * aがbより大きい
-	 * @param int $a
-	 * @param int $b
-	 * @return bool
 	 */
-	public function gt($a,$b){
+	public function gt(float $a, float $b): bool{
 		return ($a > $b);
 	}
 	/**
 	 * aがbより大きいか等しい
-	 * @param int $a
-	 * @param int $b
-	 * @return bool
 	 */
-	public function gte($a,$b){
+	public function gte(float $a, float $b): bool{
 		return ($a >= $b);
 	}
 	/**
 	 * 剰余
-	 * @param float $a
-	 * @param float $b
-	 * @return float
 	 */
-	public function remainder($a,$b){
+	public function remainder(float $a, float $b): float{
 		return ($a % $b);
 	}
 	/**
 	 * ある範囲の整数を有する配列を作成します。
 	 * @param mixed  $start
 	 * @param mixed  $end
-	 * @param int $step
 	 * @return mixed
 	 */
-	public function range($start,$end,$step=1){
+	public function range($start, $end, float $step=1){
 		$array = range($start,$end,$step);
 		return array_combine($array,$array);
 	}
 	/**
 	 * 配列を逆順にして返す
-	 * @param mixed $array
-	 * @return array
 	 */
-	public function reverse($array){
+	public function reverse(array $array): array{
 		if(is_object($array) && ($array instanceof \Traversable)){
 			$list = [];
 			foreach($array as $v) $list[] = $v;
@@ -430,19 +349,16 @@ class FlowHelper{
 	}
 	/**
 	 * FLowで例外が発生しているか
-	 * @param string $group
-	 * @return bool
 	 */
-	public function has_invalid($group=null){
+	public function has_invalid(?string $group=null): bool{
 		return \ebi\FlowInvalid::has($group);
 	}
 	/**
 	 * 引数が空ではないか
 	 * 一つまたは複数の値で一つでも空でなければtrue
 	 * @param mixed $arg
-	 * @return bool
 	 */
-	public function has($arg){
+	public function has($arg): bool{
 		foreach(func_get_args() as $arg){
 			if(!empty($arg)){
 				return true;
@@ -454,9 +370,8 @@ class FlowHelper{
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
 	 * @param  mixed $bool
-	 * @return bool
 	 */
-	public function is_true($bool){
+	public function is_true($bool): bool{
 		return call_user_func_array([\ebi\Util::class,'is_true'],func_get_args());
 	}
 		
@@ -464,9 +379,8 @@ class FlowHelper{
 	 * varがarg1,arg2,arg3,,,に含まれるか
 	 * @param mixed $var
 	 * @param mixed $arg1
-	 * @return bool
 	 */
-	public function in($var,$arg1){
+	public function in($var, $arg1): bool{
 		$args = func_get_args();
 		array_shift($args);
 
@@ -484,10 +398,8 @@ class FlowHelper{
 	
 	/**
 	 * オブジェクトのクラス名を返す
-	 * @param object $obj
-	 * @return string
 	 */
-	public function get_class($obj){
+	public function get_class(object $obj): string{
 		if(is_object($obj)){
 			return get_class($obj);
 		}
@@ -497,19 +409,15 @@ class FlowHelper{
 	/**
 	 * size
 	 * @param mixed $var
-	 * @return int
 	 */
-	public function sizeof($var){
+	public function sizeof($var): int{
 		return is_array($var) ? sizeof($var) : 1;
 	}
 	
 	/**
 	 * 加算
-	 * @param float $a
-	 * @param float $b
-	 * @return float
 	 */
-	public function sum($a,$b){
+	public function sum(float $a, float $b): float{
 		return $a + $b;
 	}
 }
