@@ -31,7 +31,7 @@ abstract class DbConnector{
 		$insert = $vars = [];
 		$auto_id = null;
 		
-		foreach($dao->columns(true) as $column){
+		foreach($dao->dao_columns(true) as $column){
 			if($column->auto()){
 				$auto_id = $column->name();
 			}
@@ -51,7 +51,7 @@ abstract class DbConnector{
 	public function insert_multiple_sql(\ebi\Dao $dao,array $data_objects): \ebi\Daq{
 		$insert = $values = $vars = $column_names = [];
 		
-		foreach($dao->columns(true) as $column){
+		foreach($dao->dao_columns(true) as $column){
 			$insert[] = $this->quotation($column->column());
 			$column_names[] = $column->name();
 		}
@@ -76,7 +76,7 @@ abstract class DbConnector{
 	public function update_sql(\ebi\Dao $dao, \ebi\Q $query, array $target_props): \ebi\Daq{
 		$where = $update = $where_vars = $update_vars = $from = [];
 		
-		foreach($dao->primary_columns() as $column){
+		foreach($dao->dao_primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$where_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
 		}
@@ -85,7 +85,7 @@ abstract class DbConnector{
 		}
 		
 		$target_all = empty($target_props);
-		foreach($dao->columns(true) as $column){
+		foreach($dao->dao_columns(true) as $column){
 			if(!$column->primary() && ($target_all || in_array($column->name(), $target_props))){
 				$update[] = $this->quotation($column->column()).' = ?';
 				$update_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
@@ -95,7 +95,7 @@ abstract class DbConnector{
 			throw new \ebi\exception\InvalidQueryException('no update column');
 		}
 		$vars = array_merge($update_vars, $where_vars);
-		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->dao_columns(true),null,false);
 		
 		return new \ebi\Daq(
 			'update '.$this->quotation($column->table()).' set '.
@@ -112,7 +112,7 @@ abstract class DbConnector{
 		$update = $update_vars = $from = [];
 		
 		$target_all = empty($target_props);
-		foreach($dao->columns(true) as $column){
+		foreach($dao->dao_columns(true) as $column){
 			if(!$column->primary() && ($target_all || in_array($column->name(),$target_props))){
 				$update[] = $this->quotation($column->column()).' = ?';
 				$update_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
@@ -125,7 +125,7 @@ abstract class DbConnector{
 			$dao,
 			$from,
 			$query,
-			$dao->columns(true),
+			$dao->dao_columns(true),
 			null,
 			false
 		);
@@ -144,7 +144,7 @@ abstract class DbConnector{
 	public function delete_sql(\ebi\Dao $dao): \ebi\Daq{
 		$where = $vars = [];
 		
-		foreach($dao->primary_columns() as $column){
+		foreach($dao->dao_primary_columns() as $column){
 			$where[] = $this->quotation($column->column()).' = ?';
 			$vars[] = $dao->{$column->name()}();
 		}
@@ -162,9 +162,9 @@ abstract class DbConnector{
 	 */
 	public function find_delete_sql(\ebi\Dao $dao, \ebi\Q $query): \ebi\Daq{
 		$from = [];
-		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(true),null,false);
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->dao_columns(true),null,false);
 		return new \ebi\Daq(
-			'delete from '.$this->quotation($dao->table()).(empty($where_sql) ? '' : ' where '.$where_sql)
+			'delete from '.$this->quotation($dao->dao_table()).(empty($where_sql) ? '' : ' where '.$where_sql)
 			,$where_vars
 		);
 	}
@@ -177,7 +177,7 @@ abstract class DbConnector{
 		$break = false;
 		$date_format = $query->ar_date_format();
 		
-		foreach($dao->columns() as $column){
+		foreach($dao->dao_columns() as $column){
 			if($target_prop === null || ($break = ($column->name() == $target_prop))){
 				$column_map = $column->table_alias().'.'.$this->quotation($column->column());
 				$column_map = $this->select_column_format($column_map,$dao,$column,['date_format'=>$date_format]);
@@ -193,11 +193,11 @@ abstract class DbConnector{
 		if(empty($select)){
 			throw new \ebi\exception\BadMethodCallException('select invalid');
 		}
-		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->dao_columns(),$this->where_cond_columns($dao->dao_conds(),$from));
 		return new \ebi\Daq((
 			'select '.implode(',',$select).' from '.implode(',',$from)
 			.(empty($where_sql) ? '' : ' where '.$where_sql)
-			.$this->select_option_sql($paginator,$this->select_order($query,$dao->columns()))
+			.$this->select_option_sql($paginator,$this->select_order($query,$dao->dao_columns()))
 			.$this->for_update($query->is_for_update())
 		),$where_vars);
 	}
@@ -266,8 +266,8 @@ s	 */
 		$target_column = $group_column = null;
 		
 		if(empty($target_name)){
-			$self_columns = $dao->columns(true);
-			$primary_columns = $dao->primary_columns();
+			$self_columns = $dao->dao_columns(true);
+			$primary_columns = $dao->dao_primary_columns();
 			
 			if(!empty($primary_columns)){
 				$target_column = current($primary_columns);
@@ -276,7 +276,7 @@ s	 */
 				$target_column = current($self_columns);
 			}
 		}else{
-			$target_column = $this->get_column($target_name,$dao->columns());
+			$target_column = $this->get_column($target_name,$dao->dao_columns());
 		}
 		if(empty($target_column)){
 			throw new \ebi\exception\BadMethodCallException('undef primary');
@@ -288,7 +288,7 @@ s	 */
 			$exec_map = $this->date_format($exec_map,$dao,$target_column,$date_format[$target_column->name()]);
 		}
 		if(!empty($group_name)){
-			$group_column = $this->get_column($group_name,$dao->columns());
+			$group_column = $this->get_column($group_name,$dao->dao_columns());
 			$column_map = $group_column->table_alias().'.'.$this->quotation($group_column->column());
 			
 			if(isset($date_format[$group_column->name()])){
@@ -296,10 +296,10 @@ s	 */
 			}
 			$select[] = $column_map.' key_column';
 		}
-		foreach($dao->columns() as $column){
+		foreach($dao->dao_columns() as $column){
 			$from[$column->table_alias()] = $this->quotation($column->table()).' '.$column->table_alias();
 		}
-		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->columns(),$this->where_cond_columns($dao->conds(),$from));
+		[$where_sql, $where_vars] = $this->where_sql($dao,$from,$query,$dao->dao_columns(),$this->where_cond_columns($dao->dao_conds(),$from));
 		
 		return new \ebi\Daq(('select '.$exe.'('.$exec_map.') target_column'
 				.(empty($select) ? '' : ','.implode(',',$select))
@@ -490,7 +490,7 @@ s	 */
 					$is_add_value = false;
 					$vars = array_merge($vars,$value->ar_vars());
 				}
-				$add_join_conds = $dao->join_conds($column->name());
+				$add_join_conds = $dao->dao_join_conds($column->name());
 				if(!empty($add_join_conds)){
 					$column_alias .= ' and '.$this->where_cond_columns($add_join_conds,$from);
 				}
@@ -528,6 +528,7 @@ s	 */
 		}
 		try{
 			switch($dao->prop_anon($name,'type')){
+				case 'datetime':
 				case 'timestamp':
 					if(!ctype_digit($value)){
 						$value = strtotime($value);
@@ -607,9 +608,9 @@ s	 */
 	
 	public function create_table_sql(\ebi\Dao $dao): string{
 		$column_def = [];
-		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
+		$sql = 'CREATE TABLE '.$this->quotation($dao->dao_table()).'('.PHP_EOL;
 		
-		foreach($dao->columns(true) as $prop_name => $column){
+		foreach($dao->dao_columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
 				$column_def[] = $column_str;
@@ -622,7 +623,7 @@ s	 */
 	}
 
 	public function exists_table_sql(\ebi\Dao $dao): string{
-		return sprintf('select count(*) from sqlite_master where type=\'table\' and name=\'%s\'',$dao->table());
+		return sprintf('select count(*) from sqlite_master where type=\'table\' and name=\'%s\'',$dao->dao_table());
 	}
 
 	protected function create_table_prop_cond(\ebi\Dao $dao, string $prop_name): string{
@@ -633,7 +634,7 @@ s	 */
 		$quote = function($name){
 			return '`'.$name.'`';
 		};
-		$sql = 'drop table '.$quote($dao->table());
+		$sql = 'drop table '.$quote($dao->dao_table());
 		return $sql;
 	}
 

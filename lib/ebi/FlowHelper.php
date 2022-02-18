@@ -65,8 +65,9 @@ class FlowHelper{
 	 * @param $false 一致しなかった場合に返す文字列
 	 */
 	public function match_package_method_switch(string $name, string $true='on', string $false=''): string{
-		$method = explode('/',$this->name(),2);
-		return ($name == (isset($method[1]) ? $method[1] : $method[0])) ? $true : $false;
+		$exp = explode('/',$this->name());
+		$method = array_pop($exp);
+		return ($name == $method) ? $true : $false;
 	}
 	/**
 	 * 現在のURLを返す

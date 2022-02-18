@@ -144,39 +144,37 @@ class Q{
 	 */
 	public function add(...$args): self{
 		foreach($args as $arg){
-			if(!empty($arg)){
-				if($arg instanceof \ebi\Q){
-					if($arg->type() == self::ORDER_ASC || $arg->type() == self::ORDER_DESC || $arg->type() == self::ORDER_RAND){
-						$this->order_by[] = $arg;
-					}else if($arg->type() == self::ORDER){
-						foreach($arg->ar_arg1() as $column){
-							if($column[0] === '-'){
-								$this->add(new self(self::ORDER_DESC,substr($column,1)));
-							}else{
-								$this->add(new self(self::ORDER_ASC,$column));
-							}
+			if($arg instanceof \ebi\Q){
+				if($arg->type() == self::ORDER_ASC || $arg->type() == self::ORDER_DESC || $arg->type() == self::ORDER_RAND){
+					$this->order_by[] = $arg;
+				}else if($arg->type() == self::ORDER){
+					foreach($arg->ar_arg1() as $column){
+						if($column[0] === '-'){
+							$this->add(new self(self::ORDER_DESC,substr($column,1)));
+						}else{
+							$this->add(new self(self::ORDER_ASC,$column));
 						}
-					}else if($arg->type() == self::DATE_FORMAT){
-						$this->date_format[$arg->arg1] = $arg->arg2;
-					}else if($arg->type() == self::FOR_UPDATE){
-						$this->for_update = true;
-					}else if($arg->type() == self::AND_BLOCK){
-						call_user_func_array([$this,'add'],$arg->ar_and_block());
-						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
-					}else if($arg->type() == self::OR_BLOCK){
-						$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
-					}else{
-						$this->and_block[] = $arg;
 					}
-				}else if($arg instanceof \ebi\Paginator){
-					$this->paginator = $arg;
-				}else if($arg instanceof \ebi\Request){
-					if($arg->is_vars('query')){
-						$this->add(self::match($arg->in_vars('query')));
-					}
+				}else if($arg->type() == self::DATE_FORMAT){
+					$this->date_format[$arg->arg1] = $arg->arg2;
+				}else if($arg->type() == self::FOR_UPDATE){
+					$this->for_update = true;
+				}else if($arg->type() == self::AND_BLOCK){
+					call_user_func_array([$this,'add'],$arg->ar_and_block());
+					$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
+				}else if($arg->type() == self::OR_BLOCK){
+					$this->or_block = array_merge($this->or_block,$arg->ar_or_block());
 				}else{
-					throw new \ebi\exception\BadMethodCallException('`'.(string)$arg.'` not supported');
+					$this->and_block[] = $arg;
 				}
+			}else if($arg instanceof \ebi\Paginator){
+				$this->paginator = $arg;
+			}else if($arg instanceof \ebi\Request){
+				if($arg->is_vars('query')){
+					$this->add(self::match($arg->in_vars('query')));
+				}
+			}else{
+				throw new \ebi\exception\BadMethodCallException('`'.(string)$arg.'` not supported');
 			}
 		}
 		return $this;

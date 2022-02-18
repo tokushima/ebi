@@ -226,7 +226,7 @@ abstract class Dao extends \ebi\Obj{
 				if(ctype_upper($column_type[0]) && class_exists($column_type) && is_subclass_of($column_type,__CLASS__)){
 					throw new \ebi\exception\InvalidQueryException('undef '.$name.' annotation `cond`');
 				}
-				$column->table($this->table());
+				$column->table($this->dao_table());
 				$column->table_alias($root_table_alias);
 				$column->primary($this->prop_anon($name,'primary',false) || $column_type === 'serial');
 				$column->auto($column_type === 'serial');
@@ -248,7 +248,7 @@ abstract class Dao extends \ebi\Obj{
 							$tcc = explode('.',$cond,3);
 							switch(sizeof($tcc)){
 								case 1:
-									$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->table(),$root_table_alias);
+									$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias);
 									break;
 								case 2:
 									[$t, $c1] = $tcc;
@@ -305,7 +305,7 @@ abstract class Dao extends \ebi\Obj{
 								array_unshift($conds,$cond_column);
 							}else{
 								array_unshift($conds,
-									\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->table(),$root_table_alias)
+									\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias)
 								);
 							}
 							$column->table($ref_table);
@@ -367,11 +367,11 @@ abstract class Dao extends \ebi\Obj{
 			'_has_many_conds_'=>$_has_many_conds_
 		];
 	}
+
 	/**
 	 * Columnの一覧を取得する
-	 * @return \ebi\Column[]
 	 */
-	public function columns(bool $self_only=false): array{
+	public function dao_columns(bool $self_only=false): array{
 		if($self_only){
 			return self::$_dao_[$this->_class_id_]->_self_columns_;
 		}
@@ -379,9 +379,8 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * primaryのColumnの一覧を取得する
-	 * @return \ebi\Column[]
 	 */
-	public function primary_columns(): array{
+	public function dao_primary_columns(): array{
 		$result = [];
 		foreach(self::$_dao_[$this->_class_id_]->_self_columns_ as $column){
 			if($column->primary()){
@@ -392,29 +391,27 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * 必須の条件を取得する
-	 * @return \ebi\Column[]
 	 */
-	public function conds(): array{
+	public function dao_conds(): array{
 		return self::$_dao_[$this->_class_id_]->_conds_;
 	}
 	/**
 	 * join時の条件を取得する
-	 * @return \ebi\Column[]
 	 */
-	public function join_conds($name){
+	public function dao_join_conds($name): array{
 		return (isset(self::$_dao_[$this->_class_id_]->_join_conds_[$name])) ? self::$_dao_[$this->_class_id_]->_join_conds_[$name] : [];
 	}
 	/**
 	 * 結果配列から値を自身にセットする
 	 */
-	protected function cast_resultset(array $resultset): void{
+	protected function dao_cast_resultset(array $resultset): void{
 		foreach($resultset as $alias => $value){
 			if(isset(self::$_dao_[$this->_class_id_]->_alias_[$alias])){
 				if(self::$_dao_[$this->_class_id_]->_alias_[$alias] == 'ref1'){
 					$this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has',true);
 				}
 				if($this->prop_anon(self::$_dao_[$this->_class_id_]->_alias_[$alias],'has') === true){
-					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->cast_resultset([$alias=>$value]);
+					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->dao_cast_resultset([$alias=>$value]);
 				}else{
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}($value);
 				}
@@ -430,9 +427,8 @@ abstract class Dao extends \ebi\Obj{
 	}
 	/**
 	 * テーブル名を取得
-	 * @return string
 	 */
-	public function table(): string{
+	public function dao_table(): string{
 		return self::$_co_anon_[get_class($this)][1];
 	}
 
@@ -553,7 +549,7 @@ abstract class Dao extends \ebi\Obj{
 	 * 値の妥当性チェックを行う
 	 */
 	public function validate(): void{
-		foreach($this->columns(true) as $name => $column){
+		foreach($this->dao_columns(true) as $name => $column){
 			if(!\ebi\Exceptions::has($name)){
 				$value = $this->{$name}();
 				
@@ -573,7 +569,7 @@ abstract class Dao extends \ebi\Obj{
 							$q[] = Q::eq($c,$this->{$c}());
 						}
 					}
-					foreach($this->primary_columns() as $primary){
+					foreach($this->dao_primary_columns() as $primary){
 						if(null !== $this->{$primary->name()}) $q[] = Q::neq($primary->name(),$this->{$primary->name()});
 					}
 					if(0 < call_user_func_array([get_class($this),'find_count'],$q)){
@@ -733,7 +729,7 @@ abstract class Dao extends \ebi\Obj{
 
 	private static function get_statement_iterator(self $dao, \ebi\Q $query): \Generator{
 		if(!$query->is_order_by()){
-			foreach($dao->primary_columns() as $column){
+			foreach($dao->dao_primary_columns() as $column){
 				$query->order($column->name());
 			}
 		}
@@ -747,7 +743,7 @@ abstract class Dao extends \ebi\Obj{
 					break;
 				}
 				$obj = clone($dao);
-				$obj->cast_resultset($resultset);
+				$obj->dao_cast_resultset($resultset);
 				
 				yield $obj;
 			}
@@ -978,7 +974,7 @@ abstract class Dao extends \ebi\Obj{
 		$primary_q = new \ebi\Q();
 		$new = false;
 		
-		foreach($this->primary_columns() as $column){
+		foreach($this->dao_primary_columns() as $column){
 			$value = $this->{$column->name()}();
 			
 			if($this->prop_anon($column->name(),'type') === 'serial' && empty($value)){
@@ -992,7 +988,7 @@ abstract class Dao extends \ebi\Obj{
 		}
 		
 		$auto_update_prop = [];
-		foreach($this->columns(true) as $column){
+		foreach($this->dao_columns(true) as $column){
 			if($this->prop_anon($column->name(),'auto_now') === true){
 				$auto_update_prop[] = $column->name();
 				
@@ -1104,7 +1100,7 @@ abstract class Dao extends \ebi\Obj{
 	public function sync(){
 		$query = new \ebi\Q();
 		$query->add(new \ebi\Paginator(1,1));
-		foreach($this->primary_columns() as $column){
+		foreach($this->dao_primary_columns() as $column){
 			$query->add(Q::eq($column->name(),$this->{$column->name()}()));
 		}
 		foreach(self::get_statement_iterator($this,$query) as $dao){

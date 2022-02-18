@@ -87,9 +87,9 @@ class MysqlConnector extends \ebi\DbConnector{
 
 	public function create_table_sql(\ebi\Dao $dao): string{
 		$column_def = $primary = [];
-		$sql = 'CREATE TABLE '.$this->quotation($dao->table()).'('.PHP_EOL;
+		$sql = 'CREATE TABLE '.$this->quotation($dao->dao_table()).'('.PHP_EOL;
 
-		foreach($dao->columns(true) as $prop_name => $column){
+		foreach($dao->dao_columns(true) as $prop_name => $column){
 			if($this->create_table_prop_cond($dao,$prop_name)){
 				$column_str = '  '.$this->to_column_type($dao,$dao->prop_anon($prop_name,'type'),$column->column()).' NULL ';
 				$column_def[] = $column_str;
@@ -109,7 +109,7 @@ class MysqlConnector extends \ebi\DbConnector{
 
 	public function exists_table_sql(\ebi\Dao $dao): string{
 		$dbc = \ebi\Dao::connection(get_class($dao));
-		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->table(),$dbc->name());
+		return sprintf('select count(*) from information_schema.tables where table_name=\'%s\' and table_schema=\'%s\'',$dao->dao_table(),$dbc->name());
 	}
 
 	protected function date_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, string $require): string{
