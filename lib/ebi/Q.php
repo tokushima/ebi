@@ -348,7 +348,7 @@ class Q{
 	 * 検索文字列による検索条件
 	 * @param mixed $columns array|string
 	 */
-	public static function match(string $val, $columns=[]): self{
+	public static function match(?string $val, $columns=[]): self{
 		if(!empty($columns) && !is_array($columns)){
 			$columns = explode(',',$columns);
 		}
