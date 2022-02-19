@@ -22,6 +22,7 @@ class FlowHelper{
 		if(isset(\ebi\Flow::url_pattern()[$map_name][sizeof($args)])){
 			return vsprintf(\ebi\Flow::url_pattern()[$map_name][sizeof($args)],$args);
 		}
+		return '';
 	}
 
 	public function is_post(): bool{
@@ -57,6 +58,7 @@ class FlowHelper{
 		if(isset(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)])){
 			return vsprintf(\ebi\Flow::selected_class_pattern()[$name][sizeof($args)]['format'],$args);
 		}
+		return '';
 	}
 	/**
 	 * handlerでpackageを呼び出してる場合にメソッド名が実行されている場合に$trueを、違うなら$falseを返す
