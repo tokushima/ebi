@@ -1,17 +1,13 @@
 <?php
 namespace ebi;
-/**
- * DBへのクエリモデル
- * @author tokushima
- * @var mixed[] $vars
- */
+
 class Daq{
 	private static $count = 0;
 	private $sql;
 	private $vars = [];
 	private $id;
 
-	public function __construct($sql=null,array $vars=[],$id_name=null){
+	public function __construct($sql=null, array $vars=[], $id_name=null){
 		$this->sql = $sql;
 		$this->id = $id_name;
 		
@@ -19,22 +15,23 @@ class Daq{
 			$this->vars[$k] = is_bool($v) ? (($v === true) ? 1 : 0) : $v;
 		}		
 	}
-	public function id(){
+
+	public function id(): string{
 		return $this->id;
 	}
-	public function sql(){
+	public function sql(): string{
 		return $this->sql;
 	}
-	public function ar_vars(){
+	public function ar_vars(): array{
 		return (empty($this->vars) ? [] : $this->vars);
 	}
-	public function is_id(){
+	public function is_id(): bool{
 		return !empty($this->id);
 	}
-	public function is_vars(){
+	public function is_vars(): bool{
 		return !empty($this->vars);
 	}
-	public function unique_sql(){
+	public function unique_sql(): string{
 		$rep = $match = [];
 		$sql = $this->sql();
 

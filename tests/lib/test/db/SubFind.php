@@ -3,7 +3,7 @@ namespace test\db;
 /**
  * @var serial $id
  * @var string $value
- * @var integer $order;
+ * @var int $order;
  */
 class SubFind extends \ebi\Dao{
 	protected $id;

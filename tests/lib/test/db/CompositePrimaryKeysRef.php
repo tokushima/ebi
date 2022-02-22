@@ -2,8 +2,8 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var integer $ref_id
- * @var integer $type_id
+ * @var int $ref_id
+ * @var int $type_id
  */
 class CompositePrimaryKeysRef extends \ebi\Dao{	
 	protected $id;

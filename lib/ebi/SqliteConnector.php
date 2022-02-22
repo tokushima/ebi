@@ -1,23 +1,11 @@
 <?php
 namespace ebi;
-/**
- * DB接続クラス(SQlite)
- * @author tokushima
- */
+
 class SqliteConnector extends \ebi\DbConnector{
 	protected $order_random_str = 'random()';
 	private $timezone_offset = 0;
 	
-	/**
-	 * @param string $name
-	 * @param string $host
-	 * @param number $port
-	 * @param string $user
-	 * @param string $password
-	 * @param string $sock
-	 * @param boolean $autocommit
-	 */
-	public function connect($name,$host,$port,$user,$password,$sock,$autocommit){
+	public function connect(?string $name, ?string $host, ?int $port, ?string $user, ?string $password, ?string $sock, bool $autocommit): \PDO{
 		unset($port,$user,$password,$sock);
 	
 		if(!extension_loaded('pdo_sqlite')){
@@ -52,15 +40,22 @@ class SqliteConnector extends \ebi\DbConnector{
 		}
 		return $con;
 	}
-	public function last_insert_id_sql(){
+
+	public function last_insert_id_sql(): \ebi\Daq{
 		return new \ebi\Daq('select last_insert_rowid() as last_insert_id;');
 	}
-	protected function column_value(\ebi\Dao $dao,$name,$value){
+
+	/**
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	protected function column_value(\ebi\Dao $dao, string $name, $value){
 		if($value === null){
 			return null;
 		}
 		try{		
 			switch($dao->prop_anon($name,'type')){
+				case 'datetime':
 				case 'timestamp':
 					if(!ctype_digit((string)$value)){
 						$value = strtotime($value);
@@ -72,6 +67,7 @@ class SqliteConnector extends \ebi\DbConnector{
 						$value = strtotime($value);
 					}
 					return date('Y-m-d',$value);
+				case 'bool':
 				case 'boolean':
 					return (int)$value;
 			}
@@ -79,7 +75,8 @@ class SqliteConnector extends \ebi\DbConnector{
 		}
 		return $value;
 	}
-	protected function select_column_format($column_map,$dao,$column,$info){
+
+	protected function select_column_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, array $info): string{
 		if(isset($info['date_format'][$column->name()])){
 			return $this->date_format($column_map,$dao,$column,$info['date_format'][$column->name()]);
 		}
@@ -88,7 +85,8 @@ class SqliteConnector extends \ebi\DbConnector{
 		}
 		return $column_map;
 	}
-	protected function date_format($column_map,$dao,$column,$require){
+
+	protected function date_format(string $column_map, \ebi\Dao $dao, \ebi\Column $column, string $require): string{
 		$fmt = [];
 		$sql = ['Y'=>'%Y','m'=>'%m','d'=>'%d','H'=>'%H','i'=>'%M','s'=>'%S'];
 	
@@ -102,8 +100,9 @@ class SqliteConnector extends \ebi\DbConnector{
 		}
 		return 'strftime(\''.$f.'\','.$column_map.')';
 	}
-	protected function for_update($bool){
-		// 使えないので無視する
+
+	protected function for_update(bool $bool): string{
+		return ''; // 使えないので無視する
 	}
 }
 

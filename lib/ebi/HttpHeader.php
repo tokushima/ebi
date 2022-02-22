@@ -1,31 +1,25 @@
 <?php
 namespace ebi;
-/**
- * HTTPヘッダを制御する
- * @author tokushima
- */
+
 class HttpHeader{
 	private static $header = [];
 	private static $send_status;
 
 	/**
 	 * statusを出力する
-	 * @param integer $code
-	 * @return integer
 	 */
-	public static function send_status($code){
+	public static function send_status(int $code): void{
 		if(!isset(self::$send_status)){
 			self::$send_status = $code;
 			header('HTTP/1.1 '.self::status_string($code));
 		}
-		return self::$send_status;
 	}
 	
 	/**
 	 * キャッシュを指示する
-	 * @param integer $expires キャッシュさせる秒数
+	 * @param $expires キャッシュさせる秒数
 	 */
-	public static function send_cache($expires){
+	public static function send_cache(int $expires): void{
 		self::send('Last-Modified',gmdate('D, d M Y H:i:s T',time() - $expires));
 		self::send('Expires',gmdate('D, d M Y H:i:s T',time() + $expires));
 		self::send('Cache-Control','private, max-age='.$expires);
@@ -34,27 +28,26 @@ class HttpHeader{
 	
 	/**
 	 * headerを送信する
-	 * @param string $value 
 	 */
-	public static function send($key,$value){
+	public static function send(string $key, ?string $value): void{
 		if(!isset(self::$header[$key])){
 			header($key.': '.$value);
 			self::$header[$key] = $value;
 		}
 	}
+
 	/**
 	 * 送信済みヘッダ
-	 * @return array
 	 */
-	public static function sended(){
+	public static function sended(): array{
 		return self::$header;
 	}
+
 	/**
 	 * HTTPステータスを返す
-	 * @param integer $statuscode 出力したいステータスコード
 	 */
-	public static function status_string($statuscode){
-		switch($statuscode){
+	public static function status_string(int $status_code): string{
+		switch($status_code){
 			case 100: return '100 Continue';
 			case 101: return '101 Switching Protocols';
 			case 200: return '200 OK';
@@ -94,15 +87,15 @@ class HttpHeader{
 			case 503: return '503 Service Unavailable';
 			case 504: return '504 Gateway Timeout';
 			case 505: return '505 Http Version Not Supported';
-			default: return '403 Forbidden ('.$statuscode.')';
+			default: return '403 Forbidden ('.$status_code.')';
 		}
+		return '';
 	}
+
 	/**
 	 * リダイレクトする
-	 * @param string $url リダイレクトするURL
-	 * @param mixed{} $vars query文字列として渡す変数
 	 */
-	public static function redirect($url,array $vars=[]){
+	public static function redirect(string $url, array $vars=[]): void{
 		if(!empty($vars)){
 			$requestString = http_build_query($vars);
 			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);
@@ -112,25 +105,27 @@ class HttpHeader{
 		self::send('Location',$url);
 		exit;
 	}
+
 	/**
 	 * リファラを取得する
-	 *
-	 * @return string
 	 */
-	public static function referer(){
-		return (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'],'://') !== false) ? $_SERVER['HTTP_REFERER'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : null);
+	public static function referer(): string{
+		return (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'],'://') !== false) ? 
+			$_SERVER['HTTP_REFERER'] : 
+			$_SERVER['HTTP_HOST'] ?? '';
 	}
+	
 	/**
 	 * リファラにリダイレクトする
 	 */
-	public static function redirect_referer(){
+	public static function redirect_referer(): void{
 		self::redirect(self::referer());
 	}
+
 	/**
-	 * rawdataを取得する
-	 * @return string
+	 * raw dataを取得する
 	 */
-	public static function rawdata(){
+	public static function rawdata(): ?string{
 		return file_get_contents('php://input');
 	}
 }

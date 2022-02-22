@@ -1,9 +1,9 @@
 <?php
 namespace test;
 /**
- * @var integer $abc @['hash'=>false]
+ * @var int $abc @['hash'=>false]
  * @var string $def
- * @var integer $ghi
+ * @var int $ghi
  * @author tokushima
  *
  */

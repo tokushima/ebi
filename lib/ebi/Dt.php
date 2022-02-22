@@ -75,7 +75,7 @@ class Dt{
 				}
 			}
 			if(isset($m['action']) && is_string($m['action'])){
-				list($m['class'],$m['method']) = explode('::',$m['action']);
+				[$m['class'], $m['method']] = explode('::',$m['action']);
 			}
 			if(!isset($m['class']) || $class_name($m['class']) != $self_class){
 				try{
@@ -89,7 +89,7 @@ class Dt{
 							$m['version'] = $info->version();
 						}
 						if(empty($m['summary'])){
-							list($summary) = explode(PHP_EOL,$info->document());
+							[$summary] = explode(PHP_EOL,$info->document());
 							$m['summary'] = empty($summary) ? null : $summary;
 						}
 						if($m['deprecated'] || $info->opt('deprecated')){
@@ -150,8 +150,8 @@ class Dt{
 					if($m['action'] instanceof \Closure){
 						$info = \ebi\Dt\Man::closure_info($m['action']);
 					}else{
-						list($m['class'],$m['method']) = explode('::',$m['action']);
-						list(,$user_model) = $this->get_login_annotation($m['class'],$m['method']);
+						[$m['class'], $m['method']] = explode('::',$m['action']);
+						[,$user_model] = $this->get_login_annotation($m['class'],$m['method']);
 						
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method'],true,true);
 						$info->set_opt('user_model',$user_model);
@@ -406,7 +406,7 @@ class Dt{
 							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
 						}
 						$info->set_opt('short_name',$short_name);
-						$info->set_opt('has_mail',(boolean)preg_match('/Dt::find_mail/',$src));
+						$info->set_opt('has_mail',(bool)preg_match('/Dt::find_mail/',$src));
 						
 						$test_list[$info->name()] = $info;
 					}
@@ -467,7 +467,7 @@ class Dt{
 	/**
 	 * Mail Templates
 	 * @context \ebi\Dt\DocInfo[] $template_list
-	 * @context boolean $is_test
+	 * @context bool $is_test
 	 * @automap
 	 */
 	public function mail_list(){

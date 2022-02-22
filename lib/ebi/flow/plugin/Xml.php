@@ -1,14 +1,11 @@
 <?php
 namespace ebi\flow\plugin;
-/**
- * Xmlで出力するFlowプラグイン
- * @author tokushima
- */
+
 class Xml{
 	/*
 	 * @plugin \ebi\Flow
 	 */
-	public function flow_output($array){
+	public function flow_output(array $array): void{
 		if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') !== false){
 			\ebi\HttpHeader::send('Content-Type','application/json');
 			print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($array)]));
@@ -28,7 +25,7 @@ class Xml{
 	 * @plugin \ebi\Flow
 	 * @param \Exception $exception
 	 */
-	public function flow_exception(\Exception $exception){
+	public function flow_exception(\Exception $exception): void{
 		if(!($exception instanceof \ebi\Exceptions)){
 			$exception = [''=>$exception];
 		}

@@ -1,14 +1,14 @@
 <?php
 $b = new \ebi\Browser();
-$b->vars('abc',123);
-$b->vars('def',456);
+$b->vars('abc','123');
+$b->vars('def','456');
 $b->do_json(\testman\Util::url('index::http_method_vars').'?xyz=789');
-eq('{"abc":123,"def":456}',\ebi\Json::decode($b->body())['result']['raw']);
+eq('{"abc":"123","def":"456"}',\ebi\Json::decode($b->body())['result']['raw']);
 
 
 $b = new \ebi\Browser();
-$b->vars('abc',123);
-$b->vars('def',456);
+$b->vars('abc','123');
+$b->vars('def','456');
 $b->do_post(\testman\Util::url('index::http_method_vars').'?xyz=789');
 eq(123,$b->json('result/post/abc'));
 eq(456,$b->json('result/post/def'));
@@ -40,14 +40,3 @@ $b->do_get($form_info['action']);
 $record = \ebi\Browser::stop_record();
 meq('ID2&hdn1=AAA&hdn2=BBB',array_shift($record));
 
-
-
-// set=falseならセットされない
-$b = new \ebi\Browser();
-$b->do_get(\testman\Util::url('index::browser_form'));
-$form_info = $b->form('frm1',false);
-
-\ebi\Browser::start_record();
-$b->do_get($form_info['action']);
-$record = \ebi\Browser::stop_record();
-mneq('ID2&hdn1=AAA&hdn2=BBB',array_shift($record));

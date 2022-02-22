@@ -1,17 +1,12 @@
 <?php
 namespace ebi;
-/**
- * 値の検証クラス
- * @author tokushima
- *
- */
+
 class Validator{
 	/**
-	 * @param string $t type
 	 * @param mixed $v value
-	 * @param mixed{} $p annotation values
+	 * @return mixed
 	 */
-	public static function type($name,$v,$p=[]){
+	public static function type(string $name, $v, array $p=[]){
 		if($v === null){
 			return null;
 		}
@@ -33,6 +28,7 @@ class Validator{
 						return null;
 					}
 					switch($t){
+						case 'float':
 						case 'number':
 							if(!is_numeric($v)){
 								throw new \ebi\exception\InvalidArgumentException();
@@ -41,10 +37,12 @@ class Validator{
 							return (float)(isset($dp) ? (floor($v * pow(10,$dp)) / pow(10,$dp)) : $v);
 						case 'serial':
 						case 'integer':
+						case 'int':
 							if(!is_numeric($v) || (int)$v != $v){
 								throw new \ebi\exception\InvalidArgumentException();
 							}
 							return (int)$v;
+						case 'bool':
 						case 'boolean':
 							if(is_string($v)){
 								$v = (strtolower($v) === 'true' || $v === '1') ? true : ((strtolower($v) === 'false' || $v === '0') ? false : $v);
@@ -54,7 +52,8 @@ class Validator{
 							if(!is_bool($v)){
 								throw new \ebi\exception\InvalidArgumentException();
 							}
-							return (boolean)$v;
+							return (bool)$v;
+						case 'datetime':
 						case 'timestamp':
 						case 'date':
 							if(ctype_digit((string)$v) || (substr($v,0,1) == '-' && ctype_digit(substr($v,1)))){
@@ -78,7 +77,7 @@ class Validator{
 							if($d[0] === ''){
 								array_shift($d);
 							}
-							list($s,$m,$h) = [(isset($d[0]) ? (float)$d[0] : 0),(isset($d[1]) ? (float)$d[1] : 0),(isset($d[2]) ? (float)$d[2] : 0)];
+							[$s, $m, $h] = [(isset($d[0]) ? (float)$d[0] : 0),(isset($d[1]) ? (float)$d[1] : 0),(isset($d[2]) ? (float)$d[2] : 0)];
 							if(sizeof($d) > 3 || $m > 59 || $s > 59 || strpos($h,'.') !== false || strpos($m,'.') !== false){
 								throw new \ebi\exception\InvalidArgumentException();
 							}
@@ -86,13 +85,13 @@ class Validator{
 						case 'intdate':
 							if(preg_match("/^\d\d\d\d\d+$/",$v)){
 								$v = sprintf('%08d',$v);
-								list($y,$m,$d) = [(int)substr($v,0,-4),(int)substr($v,-4,2),(int)substr($v,-2,2)];
+								[$y, $m, $d] = [(int)substr($v,0,-4),(int)substr($v,-4,2),(int)substr($v,-2,2)];
 							}else{
 								$x = preg_split("/[^\d]+/",mb_convert_kana($v,'n'));
 								if(sizeof($x) < 3){
 									throw new \ebi\exception\InvalidArgumentException();
 								}
-								list($y,$m,$d) = [(int)$x[0],(int)$x[1],(int)$x[2]];
+								[$y, $m, $d] = [(int)$x[0],(int)$x[1],(int)$x[2]];
 							}
 							if($m < 1 || $m > 12 || $d < 1 || $d > 31 || (in_array($m,[4,6,9,11]) && $d > 30) || (in_array($m,[1,3,5,7,8,10,12]) && $d > 31)
 									|| ($m == 2 && ($d > 29 || (!(($y % 4 == 0) && (($y % 100 != 0) || ($y % 400 == 0)) ) && $d > 28)))
@@ -128,13 +127,7 @@ class Validator{
 		}
 	}
 	
-	/**
-	 * 
-	 * @param string $name 
-	 * @param mixed $v
-	 * @param mixed{} $anon
-	 */
-	public static function value($name,$v,$anon){
+	public static function value(string $name, $v, array $anon){
 		$get = function($an) use($anon){
 			return isset($anon[$an]) ? $anon[$an] : null;
 		};
@@ -143,6 +136,8 @@ class Validator{
 		}else if($v !== null){
 			switch($get('type')){
 				case 'number':
+				case 'float':
+				case 'int':
 				case 'integer':
 					if($get('min') !== null && (float)$get('min') > $v){
 						\ebi\Exceptions::add(new \ebi\exception\LengthException($name.' less than minimum'),$name);

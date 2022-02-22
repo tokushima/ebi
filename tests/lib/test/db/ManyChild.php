@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var integer $parent_id
+ * @var int $parent_id
  * @var string $value
  */
 class ManyChild extends \ebi\Dao{

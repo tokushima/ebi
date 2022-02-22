@@ -1,17 +1,11 @@
 <?php
 namespace ebi;
-/**
- * 
- * @author tokushima
- *
- */
+
 trait TemplateVariable{
 	/**
 	 * HTMLエンコード
-	 * @param string $v
-	 * @return string
 	 */
-	public function htmlencode($v){
+	public function htmlencode(string $v): string{
 		if(!empty($v) && is_string($v)){
 			$v = mb_convert_encoding($v,'UTF-8',mb_detect_encoding($v));
 			return htmlentities($v,ENT_QUOTES,'UTF-8');
@@ -21,15 +15,15 @@ trait TemplateVariable{
 	
 	/**
 	 * print
-	 * @param string $v
+	 * @param mixed $v string|object
 	 */
-	public function print_variable($v){
+	public function print_variable($v): void{
 		print($v);
 	}
-	protected function default_vars(){
+	protected function default_vars(): array{
 		return ['_t_'=>new self()];
 	}
-	protected function parse_print_variable($src){
+	protected function parse_print_variable(string $src): string{
 		foreach($this->match_variable($src) as $variable){
 			$name = $this->parse_plain_variable($variable);
 			$value = $this->php_exception_catch('<?php $_t_->print_variable('.$name.'); ?>');
@@ -38,8 +32,7 @@ trait TemplateVariable{
 		}
 		return $src;
 	}
-	protected function parse_plain_variable($src){
-		
+	protected function parse_plain_variable(string $src): string{
 		while(true){
 			$array = $this->match_variable($src);
 			
@@ -61,18 +54,18 @@ trait TemplateVariable{
 		}
 		return str_replace('[]','',str_replace('__PERIOD__','.',$src));
 	}
-	protected function variable_string($src){
+	protected function variable_string(string $src): string{
 		return (empty($src) || isset($src[0]) && $src[0] == '$') ? $src : '$'.$src;
 	}
-	protected function php_exception_catch($tag){
+	protected function php_exception_catch(string $tag): string{
 		return '<?php try{ ?>'
 		.$tag
 		.'<?php }catch(\Exception $e){} ?>';
 	}
-	protected function match_variable($src){
+	protected function match_variable(string $src): array{
 		$hash = $vars = [];
 		while(preg_match("/({(\\$[\$\w][^\t]*)})/s",$src,$vars,PREG_OFFSET_CAPTURE)){
-			list($value,$pos) = $vars[1];
+			[$value, $pos] = $vars[1];
 			if($value == '') break;
 			if(substr_count($value,'}') > 1){
 				for($i=0,$start=0,$end=0;$i<strlen($value);$i++){

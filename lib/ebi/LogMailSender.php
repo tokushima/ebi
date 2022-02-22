@@ -1,20 +1,8 @@
 <?php
 namespace ebi;
-/**
- * ログをメール送信する
- *
- * 以下パスにテンプレートファイルがあれば送信
- *
- * @author tokushima
- *
- */
+
 class LogMailSender{
-	/**
-	 * @param \ebi\Log $log
-	 * @plugin \ebi\Log
-	 * @version 3.1.0
-	 */
-	public function log_output(\ebi\Log $log){
+	public function log_output(\ebi\Log $log): void{
 		$mail = new \ebi\Mail();
 		
 		/**

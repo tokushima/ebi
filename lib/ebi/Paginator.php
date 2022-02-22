@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * ページを管理するモデル
- * @author tokushima
- */
+
 class Paginator implements \IteratorAggregate{
 	private $query_name = 'page';
 	private $vars = [];
@@ -29,10 +26,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * pageを表すクエリの名前
-	 * @param string $name
-	 * @return string
 	 */
-	public function query_name($name=null){
+	public function query_name(?string $name=null): string{
 		if(isset($name)){
 			$this->query_name = $name;
 		}
@@ -40,18 +35,16 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * query文字列とする値をセットする
-	 * @param string $key
-	 * @param string $value
+	 * @param mixed $value
 	 */
-	public function vars($key,$value){
+	public function vars(string $key, $value): void{
 		$this->vars[$key] = $value;
 	}
 	/**
 	 * 現在位置
-	 * @param integer $value
 	 * @return mixed
 	 */
-	public function current($value=null){
+	public function current(?int $value=null){
 		if(isset($value) && !$this->dynamic){
 			$value = intval($value);
 			$this->current = ($value === 0) ? 1 : $value;
@@ -61,29 +54,23 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * 終了位置
-	 * @param integer $value
-	 * @return integer
 	 */
-	public function limit($value=null){
+	public function limit(?int $value=null): int{
 		if(isset($value)) $this->limit = intval($value);
 		return $this->limit;
 	}
 	/**
 	 * 開始位置
-	 * @param integer $value
-	 * @return integer
 	 */
-	public function offset($value=null){
+	public function offset(?int $value=null): int{
 		if(isset($value)) $this->offset = $value;
 		return $this->offset;
 	}
 	/**
 	 * 最後のソートキー
-	 * @param string $value
-	 * @param boolean $asc
-	 * return string
+	 * @param mixed $value string|array
 	 */
-	public function order($value=null,$asc=true){
+	public function order($value=null, bool $asc=true): ?string{
 		if(isset($value)){
 			$this->order = ($asc ? '' :'-').(string)(is_array($value) ? array_shift($value) : $value);
 		}
@@ -91,17 +78,14 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * ソートキーが設定されているか
-	 * @return boolean
 	 */
-	public function has_order(){
+	public function has_order(): bool{
 		return !empty($this->order);
 	}
 	/**
 	 * 合計
-	 * @param integer $value
-	 * @return integer
 	 */
-	public function total($value=null){
+	public function total(?int $value=null): int{
 		if(isset($value) && !$this->dynamic){
 			$this->total = intval($value);
 			$this->first = 1;
@@ -111,47 +95,42 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * 最初のページ番号
-	 * @return integer
 	 */
-	public function first(){
+	public function first(): int{
 		return $this->first;
 	}
 	/**
 	 * 最後のページ番号
-	 * @return integer
 	 */
-	public function last(){
+	public function last(): int{
 		return $this->last;
 	}
 	/**
 	 * 指定のページ番号が最初のページか
-	 * @param integer $page
-	 * @return boolean
 	 */
-	public function is_first($page){
+	public function is_first(int $page): bool{
 		return ((int)$this->which_first($page) !== (int)$this->first);
 	}
 	/**
 	 * 指定のページ番号が最後のページか
-	 * @param integer $page
-	 * @return boolean
 	 */
-	public function is_last($page){
+	public function is_last(int $page): bool{
 		return ($this->which_last($page) !== $this->last());
 	}
 	/**
-	 * 動的コンテンツのPaginaterか
-	 * @return boolean
+	 * 動的コンテンツのPaginatorか
+	 * @return bool
+	 * @deprecated
 	 */
-	public function is_dynamic(){
+	public function is_dynamic(): bool{
 		return $this->dynamic;
 	}
 	/**
 	 * コンテンツ
 	 * @param mixed $mixed
-	 * @return array
+	 * @deprecated
 	 */
-	public function contents($mixed=null){
+	public function contents($mixed=null): array{
 		if(isset($mixed)){
 			if($this->dynamic){
 				if(!$this->tmp[4] && $this->current == (isset($this->tmp[3]) ? (isset($mixed[$this->tmp[3]]) ? $mixed[$this->tmp[3]] : null) : $mixed)) $this->tmp[4] = true;
@@ -176,29 +155,11 @@ class Paginator implements \IteratorAggregate{
 		}
 		return $this->contents;
 	}
-	/**
-	 * 動的コンテンツのPaginater
-	 * @param integer $paginate_by １ページの要素数
-	 * @param string $marker 基点となる値
-	 * @param string $key 対象とするキー
-	 * @return self
-	 */
-	public static function dynamic_contents($paginate_by=20,$marker=null,$key=null){
-		$self = new self($paginate_by);
-		$self->dynamic = true;
-		$self->tmp[3] = $key;
-		$self->current = $marker;
-		$self->total = $self->first = $self->last = null;
-		return $self;
-	}
+
 	/**
 	 * RequestのPaginator
-	 * @param \ebi\Request $req
-	 * @param integer $default_paginate_by
-	 * @param integer $max_paginate_by
-	 * @return \ebi\Paginator
 	 */
-	public static function request(\ebi\Request $req,$default_paginate_by=20,$max_paginate_by=100){
+	public static function request(\ebi\Request $req, int $default_paginate_by=20, int $max_paginate_by=100): self{
 		$paginate_by = $req->in_vars('paginate_by',$default_paginate_by);
 	
 		if($paginate_by > $max_paginate_by){
@@ -225,7 +186,7 @@ class Paginator implements \IteratorAggregate{
 		return $self;
 	}
 	
-	public function __construct($paginate_by=20,$current=1,$total=0){
+	public function __construct(int $paginate_by=20, int $current=1, int $total=0){
 		$this->limit($paginate_by);
 		$this->total($total);
 		$this->current($current);
@@ -233,10 +194,8 @@ class Paginator implements \IteratorAggregate{
 	/**
 	 * 
 	 * 配列をvarsにセットする
-	 * @param string[] $array
-	 * @return self $this
 	 */
-	public function cp(array $array){
+	public function cp(array $array): self{
 		foreach($array as $name => $value){
 			if(ctype_alpha($name[0]) && !is_array($value)) $this->vars[$name] = (string)$value;
 		}
@@ -244,50 +203,36 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * 次のページ番号
-	 * @return integer
 	 */
-	public function next(){
-		if($this->dynamic) return $this->tmp[0];
+	public function next(): int{
 		return $this->current + 1;
 	}
 	/**
 	 * 前のページ番号
-	 * @return integer
 	 */
-	public function prev(){
-		if($this->dynamic){
-			if(!isset($this->tmp[1]) && sizeof($this->tmp[2]) > 0) $this->tmp[1] = array_shift($this->tmp[2]);
-			return $this->tmp[1];
-		}
+	public function prev(): int{
 		return $this->current - 1;
 	}
 	/**
 	 * 次のページがあるか
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_next(){
-		if($this->dynamic) return isset($this->tmp[0]);
 		return ($this->last > $this->current);
 	}
 	/**
 	 * 前のページがあるか
-	 * @return boolean
 	 */
-	public function is_prev(){
-		if($this->dynamic) return ($this->prev() !== null);
+	public function is_prev(): bool{
 		return ($this->current > 1);
 	}
 	/**
 	 * 前のページを表すクエリ
-	 * @return string
 	 */
-	public function query_prev(){
+	public function query_prev(): string{
 		$prev = $this->prev();
 		$vars = array_merge($this->vars,[
-			$this->query_name() => (($this->dynamic && isset($this->tmp[3])) ? 
-				(isset($prev[$this->tmp[3]]) ? $prev[$this->tmp[3]] : null) : 
-				$prev
-			)
+			$this->query_name() => $prev
 		]);
 		
 		if(isset($this->order)){
@@ -297,12 +242,11 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * 次のページを表すクエリ
-	 * @return string
 	 */
-	public function query_next(){
+	public function query_next(): string{
 		$vars = array_merge(
 			$this->vars,
-			[$this->query_name()=>(($this->dynamic) ? $this->tmp[0] : $this->next())]
+			[$this->query_name()=>$this->next()]
 		);
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
@@ -311,11 +255,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * orderを変更するクエリ
-	 * @param string $order
-	 * @param string $pre_order
-	 * @return string
 	 */
-	public function query_order($order){
+	public function query_order(string $order): string{
 		if(isset($this->vars['order'])){
 			$this->order = $this->vars['order'];
 			unset($this->vars['order']);
@@ -328,10 +269,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * 指定のページを表すクエリ
-	 * @param integer $current 現在のページ番号
-	 * @return string
 	 */
-	public function query($current){
+	public function query(int $current): string{
 		$vars = array_merge($this->vars,[$this->query_name()=>$current]);
 		if(isset($this->order)){
 			$vars['order'] = $this->order;
@@ -342,36 +281,33 @@ class Paginator implements \IteratorAggregate{
 	/**
 	 * コンテンツを追加する
 	 * @param mixed $mixed
-	 * @return boolean
+	 * @deprecated
 	 */
-	public function add($mixed){
+	public function add($mixed): bool{
 		$this->contents($mixed);
 		return (sizeof($this->contents) <= $this->limit);
 	}
 	/**
 	 * 現在のページの最初の位置
-	 * @return integer
 	 */
-	public function page_first(){
-		if($this->dynamic) return null;
+	public function page_first(): int{
 		return $this->offset + 1;
 	}
 	/**
 	 * 現在のページの最後の位置
-	 * @return integer
 	 */
-	public function page_last(){
-		if($this->dynamic) return null;
-		return (($this->offset + $this->limit) < $this->total) ? ($this->offset + $this->limit) : $this->total;
+	public function page_last(): int{
+		return (($this->offset + $this->limit) < $this->total) ? 
+			($this->offset + $this->limit) : 
+			$this->total;
 	}
 	/**
 	 * ページの最初の位置を返す
-	 * @param integer $paginate
-	 * @return integer
 	 */
-	public function which_first($paginate=null){
-		if($this->dynamic) return null;
-		if($paginate === null) return $this->first;
+	public function which_first(?int $paginate=null): int{
+		if($paginate === null){
+			return $this->first;
+		}
 		$paginate = $paginate - 1;
 		$first = ($this->current > ($paginate/2)) ? @ceil($this->current - ($paginate/2)) : 1;
 		$last = ($this->last > ($first + $paginate)) ? ($first + $paginate) : $this->last;
@@ -379,11 +315,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * ページの最後の位置を返す
-	 * @param integer $paginate
-	 * @return integer
 	 */
-	public function which_last($paginate=null){
-		if($this->dynamic) return null;
+	public function which_last(?int $paginate=null): int{
 		if($paginate === null) return $this->last;
 		$paginate = $paginate - 1;
 		$first = ($this->current > ($paginate/2)) ? @ceil($this->current - ($paginate/2)) : 1;
@@ -391,13 +324,8 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * ページとして有効な範囲のページ番号を有する配列を作成する
-	 * @param integer $counter ページ数
-	 * @return integer[]
 	 */
-	public function range($counter=10){
-		if($this->dynamic){
-			return [];
-		}
+	public function range(int $counter=10): array{
 		if($this->which_last($counter) > 0){
 			return range((int)$this->which_first($counter),(int)$this->which_last($counter));
 		}
@@ -405,12 +333,12 @@ class Paginator implements \IteratorAggregate{
 	}
 	/**
 	 * rangeが存在するか
-	 * @return boolean
 	 */
-	public function has_range(){
-		return (!$this->dynamic && $this->last > 1);
-	}	
-	public function before_template($src){
+	public function has_range(): bool{
+		return ($this->last > 1);
+	}
+
+	public function before_template(string $src): string{
 		return \ebi\Xml::find_replace($src, 'rt:paginator',function($xml){
 			$param = '$'.$xml->in_attr('param','paginator');
 			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('navi','prev,next,first,last,counter'))));
@@ -423,18 +351,17 @@ class Paginator implements \IteratorAggregate{
 			$func = '';
 			
 			if($lt == 'false'){
-				$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
+				$func .= sprintf('<?php if(%s->total() > %s->limit()){ ?>',$param,$param);
 			}
 			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">',$param);
 			if(isset($navi['prev'])){
 				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
 			}
 			if(isset($navi['first'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+				$func .= sprintf('<?php if(%s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
 			}
 			if(isset($navi['counter'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
-							.sprintf('<?php if(%s->total() == 0){ ?>',$param)
+				$func .= sprintf('<?php if(%s->total() == 0){ ?>',$param)
 								.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
 							.'<?php }else{ ?>'
 								.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
@@ -444,11 +371,10 @@ class Paginator implements \IteratorAggregate{
 										.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
 									.'<?php } ?>'
 								.'<?php } ?>'
-							.'<?php } ?>'
 						.'<?php } ?>';
 			}
 			if(isset($navi['last'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
+				$func .= sprintf('<?php if(%s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
 			}
 			if(isset($navi['next'])){
 				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);

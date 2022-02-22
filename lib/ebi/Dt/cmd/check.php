@@ -40,7 +40,7 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 		foreach($map['patterns'] as $p){
 			if(array_key_exists('action',$p) && is_string($p['action'])){
 				try{
-					list($c,$m) = explode('::',$p['action']);
+					[$c, $m] = explode('::',$p['action']);
 					$c = \ebi\Util::get_class_name($c);
 					
 					new \ReflectionMethod($c,$m);

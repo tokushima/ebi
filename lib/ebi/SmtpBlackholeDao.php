@@ -2,7 +2,7 @@
 namespace ebi;
 /**
  * 送信するメールをDBに保存して実際にメールを送信しない
- * @author tokushima
+ * 
  * @var serial $id
  * @var text $from
  * @var text $to
@@ -27,9 +27,8 @@ class SmtpBlackholeDao extends \ebi\Dao{
 	
 	/**
 	 * メールの内容をDBに保存する
-	 * @param \ebi\Mail $mail
 	 */
-	public function send_mail(\ebi\Mail $mail){
+	public function send_mail(\ebi\Mail $mail): void{
 		$data = $mail->get();
 		
 		$header = $data['header'];

@@ -1,31 +1,25 @@
 <?php
 namespace ebi;
-/**
- * アノテーション
- * @author tokushima
- *
- */
+
 class Annotation{
 	/**
 	 * クラスのアノテーションを取得する
-	 * @param string $class 対象のクラス名
-	 * @param string[] $names デコード対象のアノテーション名
-	 * @param string $doc_name 説明を取得する場合の添字
-	 * @param string $parent 遡る最上のクラス名
+	 * @param mixed $class (string|object)
+	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_class($class,$names,$doc_name=null,$parent=null){
+	public static function get_class($class, $anon_names, ?string $doc_name=null, ?string $parent_class=null): ?array{
 		$return = [];
 		$t = new \ReflectionClass($class);
 		$d = '';
 		
-		if(empty($parent)){
-			$parent = 'stdClass';
+		if(empty($parent_class)){
+			$parent_class = 'stdClass';
 		}
-		while($t->getName() != $parent){
+		while($t->getName() != $parent_class){
 			$d = $t->getDocComment().$d;
 			
-			foreach($t->getTraits() as $trats){
-				$d = $trats->getDocComment().$d;
+			foreach($t->getTraits() as $trait){
+				$d = $trait->getDocComment().$d;
 			}
 			$t = $t->getParentClass();
 			if($t === false){
@@ -35,32 +29,30 @@ class Annotation{
 
 		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
 		
-		foreach(is_array($names) ? $names : [$names] as $name){
+		foreach(is_array($anon_names) ? $anon_names : [$anon_names] as $name){
 			$return[$name] = self::decode($d, $name, $doc_name);
 		}
-		return is_array($names) ? $return : $return[$names];
+		return is_array($anon_names) ? $return : $return[$anon_names];
 	}
 
 	/**
 	 * メソッドのアノテーションを取得する
-	 * @param string $class 対象のクラス名
-	 * @param string $method 対象のメソッド名
-	 * @param string[] $names デコード対象のアノテーション名
-	 * @param string $doc_name 説明を取得する場合の添字
+	 * @param mixed $class (string|object)
+	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_method($class,$method,$names,$doc_name=null){
+	public static function get_method($class, string $method, $anon_names, ?string $doc_name=null): ?array{
 		$return = [];
 		$t = new \ReflectionMethod($class,$method);
 		$d = $t->getDocComment();
 		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
 		
-		foreach(is_array($names) ? $names : [$names] as $name){
+		foreach(is_array($anon_names) ? $anon_names : [$anon_names] as $name){
 			$return[$name] = self::decode($d, $name, $doc_name);
 		}
-		return is_array($names) ? $return : $return[$names];
+		return is_array($anon_names) ? $return : $return[$anon_names];
 	}
 	
-	private static function decode($d,$name,$doc_name=null){
+	private static function decode(string $d, string $name,$doc_name=null): ?array{
 		$result = null;
 		$mtc = $m = [];
 		
@@ -74,7 +66,7 @@ class Annotation{
 					if($at === false && strpos($mc,'$') === false){
 						$result['value'] = trim($mc);
 					}else{
-						$as = (false !== $at) ? substr($mc,$at+1,strrpos($mc,']')-$at) : null;
+						$as = (false !== $at) ? substr($mc,$at+1,strrpos($mc,']')-$at) : '';
 						
 						try{
 							$decode = self::activation($as);
@@ -84,9 +76,10 @@ class Annotation{
 						if(preg_match("/([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$mc,$m)){
 							$n = $m[2];
 							$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;
-							list($result[$n]['type'],$result[$n]['attr']) = (false != ($h = strpos($m[1],'{}')) || false !== strpos($m[1],'[]')) ? 
-																				[substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : 
-																				[$m[1],null];
+							[$result[$n]['type'], $result[$n]['attr']] = (
+								false != ($h = strpos($m[1],'{}')) || 
+								false !== strpos($m[1],'[]')
+							) ? [substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : [$m[1], null];
 	
 							if(!empty($doc_name)){
 								$doc = trim(($at === false) ? $m[3] : substr($m[3],0,strpos($m[3],'@[')));
@@ -110,13 +103,11 @@ class Annotation{
 		}
 		return $result;
 	}
+
 	/**
 	 * アノテーション文字列の有効化
-	 * @param  string $s アノテーション文字列
-	 * @throws \ebi\exception\InvalidArgumentException 有効化に失敗した
-	 * @return mixed{} アノテーションの連想配列
 	 */
-	public static function activation($s){
+	public static function activation(string $s): array{
 		if(empty($s)){
 			return [];
 		}

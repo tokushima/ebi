@@ -2,14 +2,12 @@
 namespace ebi\flow\plugin;
 /**
  * CORS (Cross-Origin Resource Sharing)
- * @author tokushima
- *
  */
 class Cors{
 	/**
 	 * @plugin \ebi\Flow
 	 */
-	public function before_flow_action(){
+	public function before_flow_action(): void{
 		$env = new \ebi\Env();
 		$request_origin = $env->get('HTTP_ORIGIN');
 		$request_method = $env->get('HTTP_ACCESS_CONTROL_REQUEST_METHOD');
@@ -21,12 +19,12 @@ class Cors{
 		$origin = \ebi\Conf::get('origin');
 		
 		/**
-		 * @param integer $max_age プリフライトの応答をキャッシュする秒数
+		 * @param int $max_age プリフライトの応答をキャッシュする秒数
 		 */
 		$max_age = (int)\ebi\Conf::get('max_age',0);
 		
 		/**
-		 * @param boolean $debug ORIGINを常に許可する
+		 * @param bool $debug ORIGINを常に許可する
 		 */
 		if(empty($origin) && \ebi\Conf::get('debug',false) === true){
 			$origin = [$request_origin];

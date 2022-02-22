@@ -3,7 +3,7 @@ namespace test\db;
 /**
  * @var serial $id
  * @var timestamp $create_date
- * $var integer $num
+ * @var int $num
  * @var string $val1
  * @var string $val2
  * @author tokushima

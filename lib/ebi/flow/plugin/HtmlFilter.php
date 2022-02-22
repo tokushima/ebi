@@ -1,17 +1,11 @@
 <?php
 namespace ebi\flow\plugin;
-/**
- * htmlのフィルタ
- *  - 自動エスケープ処理
- * @author tokushima
- */
+
 class HtmlFilter{
 	/**
 	 * @plugin \ebi\Template
-	 * @param string $src
-	 * @return string|mixed
 	 */	
-	public function before_exec_template($src){
+	public function before_exec_template(?string $src): ?string{
 		$match = [];
 		
 		if(preg_match_all('/\$_t_->print_variable\((.+?)\);/ms',$src,$match)){

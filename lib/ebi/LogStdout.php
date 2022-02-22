@@ -1,21 +1,12 @@
 <?php
 namespace ebi;
-/**
- * ログを標準出力に送信する
- * 
- * @author tokushima
- *
- */
+
 class LogStdout{
-	/**
-	 * @plugin \ebi\Log
-	 * @param \ebi\Log $log
-	 */
-	public function log_output(\ebi\Log $log){
+	public function log_output(\ebi\Log $log): void{
 		$msg = ((string)$log);
 		
 		/**
-		 * @param boolean $color 出力にカラーコードを適用する
+		 * @param bool $color 出力にカラーコードを適用する
 		 */
 		if(\ebi\Conf::get('color',true) === true){
 			

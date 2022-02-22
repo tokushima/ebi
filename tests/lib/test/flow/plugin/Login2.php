@@ -7,7 +7,7 @@ class Login2{
 	 * @request string $password パスワード2
 	 * @http_method post
 	 * @param \ebi\flow\Request $req
-	 * @return boolean
+	 * @return bool
 	 */
 	public function login_condition(\ebi\flow\Request $req){
 		if($req->is_post() && $req->in_vars('user') == 'tokushima' && $req->in_vars('password') == 'hogehoge'){

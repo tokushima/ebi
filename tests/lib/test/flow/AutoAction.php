@@ -10,10 +10,11 @@ class AutoAction{
 	public function index(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);		
 		$mail->to($address);
 		/**
 		 * indexで送信される
-		 * @param integer $aaa 数値の変数B
+		 * @param int $aaa 数値の変数B
 		 */
 		$mail->send_template('auto_action/index.xml',['aaa'=>1]);
 		
@@ -23,10 +24,11 @@ class AutoAction{
 	public function abc(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		/**
 		 * abcで送信される
-		 * @param integer $bbb 数値の変数B
+		 * @param int $bbb 数値の変数B
 		 */
 		$mail->send_template('auto_action/abc.xml',['bbb'=>1]);
 		
@@ -38,10 +40,11 @@ class AutoAction{
 	public function def(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		/**
 		 * defで送信される
-		 * @param integer $ccc 数値の変数B
+		 * @param int $ccc 数値の変数B
 		 */
 		$mail->send_template('auto_action/def.xml',['ccc'=>1]);
 		
@@ -52,10 +55,10 @@ class AutoAction{
 	 * @automap
 	 * @param string $ghi AAAA
 	 * @request string $abc 入力１ @['require'=>true]
-	 * @request integer $def 入力２
+	 * @request int $def 入力２
 	 * @context \test\db\AutoCodeNumberPrefix $prefix DBモデル
 	 * @context string $aaaa アイウエオ
-	 * @context integer $bbbb 1234
+	 * @context int $bbbb 1234
 	 * @context string $dep もう利用しないで欲しい @deprecated 2016/12/15
 	 * @throws \ebi\exception\GenerateUniqueCodeRetryLimitOverException ユニークコードエクセプション
 	 */
@@ -76,6 +79,7 @@ class AutoAction{
 			'ccc'=>new \test\db\AutoCodeNumberPrefix(),
 		];
 		$mail = new \ebi\Mail();
+		$mail->from($address);
 		$mail->to($address);
 		
 		/**

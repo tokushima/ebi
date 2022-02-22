@@ -1,10 +1,6 @@
 <?php
 namespace ebi\flow;
-/**
- * ファイルダウンロード
- * @author tokushima
- *
- */
+
 class File{
 	protected $root;
 
@@ -18,9 +14,8 @@ class File{
 
 	/**
 	 * ダウンロード
-	 * @param string $path
 	 */
-	public function download($path){
+	public function download(string $path): void{
 		$path = \ebi\Util::path_slash($this->root,null,true).\ebi\Util::path_slash($path,false);
 		
 		if(!is_file($path)){

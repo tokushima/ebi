@@ -1,15 +1,16 @@
 <?php
 namespace ebi;
+
+use Iterator;
+
 /**
  * ユーティリティ群
  */
 class Util{
 	/**
 	 * ファイルから取得する
-	 * @param string $filename ファイルパス
-	 * @return string
 	 */
-	public static function file_read($filename){
+	public static function file_read(string $filename): string{
 		if(!is_readable($filename) || !is_file($filename)){
 			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
@@ -17,11 +18,8 @@ class Util{
 	}
 	/**
 	 * CSVファイルから１行ずつ配列で取得する
-	 * @param string $filename
-	 * @param string $delimiter 区切り文字
-	 * @return array
 	 */
-	public static function file_read_csv($filename,$delimiter=','){
+	public static function file_read_csv(string $filename, string $delimiter=','): \Generator{
 		try{
 			$file = new \SplFileObject($filename);
 			$file->setCsvControl($delimiter);
@@ -36,19 +34,16 @@ class Util{
 	}
 	/**
 	 * JSONファイルを読み込む
-	 * @param string $filename
 	 * @return mixed
 	 */
-	public static function file_read_json($filename){
+	public static function file_read_json(string $filename){
 		return \ebi\Json::decode(self::file_read($filename));
 	}
 	/**
 	 * CSVファイルとして配列を書き出す
-	 * @param \SplFileObject $file
-	 * @param array $arr
-	 * @return \SplFileObject 
+	 * @param mixed $file \SplFileObject|string
 	 */
-	public static function file_append_csv($file,array $arr=[]){
+	public static function file_append_csv($file, array $arr=[]): \SplFileObject{
 		if(is_string($file)){
 			if(!is_file($file)){
 				self::file_write($file);
@@ -65,19 +60,14 @@ class Util{
 	}
 	/**
 	 * JSONを書き出す
-	 * @param string $filename
-	 * @param mixed $vars
-	 * @param boolean $format JSONを整形するか
 	 */
-	public static function file_write_json($filename,$vars,$format=false){
+	public static function file_write_json(string $filename, array $vars, bool $format=false): void{
 		self::file_write($filename,\ebi\Json::encode($vars,$format));
 	}
 	/**
 	 * ファイルに書き出す
-	 * @param string $filename ファイルパス
-	 * @param string $src 内容
 	 */
-	public static function file_write($filename,$src=null,$lock=true){
+	public static function file_write(string $filename, string $src='', bool $lock=true){
 		if(empty($filename)){
 			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
@@ -93,11 +83,8 @@ class Util{
 	}	
 	/**
 	 * ファイルに追記する
-	 * @param string $filename ファイルパス
-	 * @param string $src 追加する内容
-	 * @param integer $dir_permission モード　8進数(0644)
 	 */
-	public static function file_append($filename,$src=null,$lock=true){
+	public static function file_append(string $filename, string $src='', bool $lock=true){
 		self::mkdir(dirname($filename));
 		
 		if(false === file_put_contents($filename,(string)$src,FILE_APPEND|(($lock) ? LOCK_EX : 0))){
@@ -106,14 +93,13 @@ class Util{
 	}
 	/**
 	 * フォルダを作成する
-	 * @param string $source 作成するフォルダパス
-	 * @param integer $permission
+	 * @param mixed $permission oct
 	 */
-	public static function mkdir($source,$permission=0775){
+	public static function mkdir(string $dir_path, $permission=0775): bool{
 		$bool = true;
-		if(!is_dir($source)){
+		if(!is_dir($dir_path)){
 			try{
-				$list = explode('/',str_replace('\\','/',$source));
+				$list = explode('/',str_replace('\\','/',$dir_path));
 				$dir = '';
 				foreach($list as $d){
 					$dir = $dir.$d.'/';
@@ -124,17 +110,15 @@ class Util{
 					}
 				}
 			}catch(\ErrorException $e){
-				throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$source));
+				throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$dir_path));
 			}
 		}
 		return $bool;
 	}
 	/**
 	 * 移動
-	 * @param string $source 移動もとのファイルパス
-	 * @param string $dest 移動後のファイルパス
 	 */
-	public static function mv($source,$dest){
+	public static function mv(string $source, string $dest){
 		if(is_file($source) || is_dir($source)){
 			self::mkdir(dirname($dest));
 			return rename($source,$dest);
@@ -144,10 +128,8 @@ class Util{
 	/**
 	 * 削除
 	 * $sourceがフォルダで$inc_selfがfalseの場合は$sourceフォルダ以下のみ削除
-	 * @param string $source 削除するパス
-	 * @param boolean $inc_self $sourceも削除するか
 	 */
-	public static function rm($source,$inc_self=true){
+	public static function rm(string $source, bool $inc_self=true): void{
 		if(is_dir($source)){
 			$source = realpath($source);
 			$dir = [];
@@ -169,18 +151,15 @@ class Util{
 			foreach(array_keys($dir) as $d){
 				rmdir($d);
 			}
-			return;
-		}else if(is_file($source) && unlink($source)){
-			return;
+		}else if(is_file($source)){
+			unlink($source);
 		}
 	}
 	/**
 	 * コピー
 	 * $sourceがフォルダの場合はそれ以下もコピーする
-	 * @param string $source コピー元のファイルパス
-	 * @param string $dest コピー先のファイルパス
 	 */
-	public static function copy($source,$dest){
+	public static function copy(string $source, string $dest): void{
 		if(is_dir($source)){
 			$source = realpath($source);
 			$len = strlen($source);
@@ -203,10 +182,8 @@ class Util{
 	}
 	/**
 	 * ディレクトリ名の一覧
-	 * @param string $directory 検索対象のディレクトリパス
-	 * @return string[]
 	 */
-	public static function ls_directory($directory){
+	public static function ls_directory(string $directory): \Generator{
 		if(is_dir($directory)){
 			foreach(scandir($directory) as $f){
 				if(is_dir($directory.'/'.$f) && $f != '.' && $f != '..'){
@@ -217,12 +194,11 @@ class Util{
 	}
 	/**
 	 * ディレクトリ内のイテレータ
-	 * @param string $directory  検索対象のファイルパス
-	 * @param boolean $recursive 階層を潜って取得するか
-	 * @param string $pattern 検索するパターンを表す文字列
-	 * @return \RecursiveDirectoryIterator
+	 * @param $directory  検索対象のファイルパス
+	 * @param $recursive 階層を潜って取得するか
+	 * @param $pattern 検索するパターンを表す文字列
 	 */
-	public static function ls($directory,$recursive=false,$pattern=null){
+	public static function ls(string $directory, bool $recursive=false, string $pattern=null): Iterator{
 		$directory = self::parse_filename($directory);
 		
 		if(is_file($directory)){
@@ -247,11 +223,8 @@ class Util{
 	
 	/**
 	 * 絶対パスを返す
-	 * @param string $a
-	 * @param string $b
-	 * @return string
 	 */
-	public static function path_absolute($a,$b){
+	public static function path_absolute(?string $a, ?string $b): ?string{
 		if($b === '' || $b === null){
 			return $a;
 		}
@@ -280,7 +253,7 @@ class Util{
 		$b = preg_replace($p[2],$p[3],str_replace($p[0],$p[1],$b));
 		$d = $t = $r = '';
 		if(strpos($a,'#R#')){
-			list($r) = explode('/',$a,2);
+			[$r] = explode('/',$a,2);
 			$a = substr($a,strlen($r));
 			$b = str_replace('#T#','',$b);
 		}
@@ -299,12 +272,8 @@ class Util{
 	}
 	/**
 	 * パスの前後にスラッシュを追加／削除を行う
-	 * @param string $path ファイルパス
-	 * @param boolean $prefix 先頭にスラッシュを存在させるか
-	 * @param boolean $postfix 末尾にスラッシュを存在させるか
-	 * @return string
 	 */
-	public static function path_slash($path,$prefix,$postfix=null){
+	public static function path_slash(?string $path, ?bool $prefix, ?bool $postfix=null): ?string{
 		if($path == '/'){
 			return ($postfix === true) ? '/' : '';
 		}
@@ -326,9 +295,9 @@ class Util{
 	 * ヒアドキュメントのようなテキストを生成する
 	 * １行目のインデントに合わせてインデントが消去される
 	 * @param string $text 対象の文字列
-	 * @return string
+	 * @deprecated
 	 */
-	public static function plain_text($text){
+	public static function plain_text(string $text): string{
 		if(!empty($text)){
 			$text = str_replace(["\r\n","\r","\n"],"\n",$text);
 			
@@ -351,23 +320,19 @@ class Util{
 	}
 	/**
 	 * フォーマット文字列 $str に基づき生成された文字列を返します。
-	 *
-	 * @param string $str 対象の文字列
-	 * @param mixed[] $params フォーマット中に現れた置換文字列{1},{2}...を置換する値
-	 * @return string
+	 * フォーマット中に現れた置換文字列{1},{2}...を置換する
+	 * @deprecated
 	 */
-	public static function fstring($str,$params){
+	public static function fstring(string $str, ...$args): string{
 		$match = [];
 		
 		if(preg_match_all("/\{([\d]+)\}/",$str,$match)){
-			$params = func_get_args();
-			array_shift($params);
-			if(is_array($params[0])){
-				$params = $params[0];
+			if(is_array($args[0])){
+				$args = $args[0];
 			}
 			foreach($match[1] as $key => $value){
 				$i = ((int)$value) - 1;
-				$str = str_replace($match[0][$key],isset($params[$i]) ? $params[$i] : '',$str);
+				$str = str_replace($match[0][$key], ($args[$i] ?? ''), $str);
 			}
 		}
 		return $str;
@@ -375,13 +340,11 @@ class Util{
 	/**
 	 * 日付に加減する
 	 * 
-	 * @param string $time +2 month, -7 day, yesterday, today, tomorrow, first, last
+	 * @param $datetime +2 month, -7 day, yesterday, today, tomorrow, first, last
 	 * @param mixed $date
-	 * @return number
 	 * @see http://jp2.php.net/manual/ja/datetime.formats.relative.php
-	 * @throws \ebi\exception\InvalidArgumentException 日付フォーマットが異常
 	 */
-	public static function add_date($time,$date=null){
+	public static function add_date(string $datetime, $date=null): int{
 		if(!isset($date)){
 			$t = time();
 		}else if(ctype_digit((string)$date) || (substr($date,0,1) == '-' && ctype_digit(substr($date,1)))){
@@ -389,24 +352,25 @@ class Util{
 		}else{
 			$t = strtotime($date);
 		}
-		if($time == 'first'){
-			$time = 'first day of 00:00:00';
-		}else if($time == 'last'){
-			$time = 'last day of 23:59:59';
+		if($datetime == 'first'){
+			$datetime = 'first day of 00:00:00';
+		}else if($datetime == 'last'){
+			$datetime = 'last day of 23:59:59';
 		}
 		
-		$rtn = strtotime($time,$t);
+		$rtn = strtotime($datetime,$t);
 		if($rtn === false){
-			throw new \ebi\exception\InvalidArgumentException(sprintf('invalid date and time formats `%s`',$time));
+			throw new \ebi\exception\InvalidArgumentException(sprintf('invalid date and time formats `%s`',$datetime));
 		}
 		return $rtn;
 	}
 
 	/**
-	 * 次回の営業日
-	 * @return integer 次回の営業日のタイムスタンプ
+	 * 次回の営業日のタイムスタンプ
+	 * holidays: 休日の日付文字列(YYYY-MM-DD)の配列
+	 * regular_holiday: 休日の曜日番号
 	 */
-	public static function next_business_day($base, $days, $holidays=[], $regular_holiday=[0,6]){
+	public static function next_business_day(int $base, int $days, array $holidays=[], $regular_holiday=[0,6]): int{
 		$d = $base;
 
 		for($i=0;$i<$days;){
@@ -421,12 +385,9 @@ class Util{
 	
 	/**
 	 * 文字列を丸める
-	 * @param string $str 対象の文字列
-	 * @param integer $width 指定の幅
-	 * @param string $postfix 文字列がまるめられた場合に末尾に接続される文字列
-	 * @return string
+	 * @deprecated
 	 */
-	public static function trim_width($str,$width,$postfix=''){
+	public static function trim_width(string $str, int $width, string $postfix=''): string{
 		$rtn = "";
 		$cnt = 0;
 		$len = mb_strlen($str);
@@ -441,10 +402,9 @@ class Util{
 	}
 	/**
 	 * クラス名
-	 * @param string $class_name
-	 * @return string
+	 * @deprecated
 	 */
-	public static function get_class_name($class_name){
+	public static function get_class_name(string $class_name): string{
 		if(class_exists($class_name)){
 			$r = new \ReflectionClass($class_name);
 			return $r->getName();
@@ -455,9 +415,8 @@ class Util{
 	/**
 	 * 対象がtrue / 1 / 'true' ならtrue
 	 * @param  mixed $bool
-	 * @return boolean
 	 */
-	public static function is_true($bool){
+	public static function is_true($bool): bool{
 		foreach(func_get_args() as $arg){
 			if(!($arg === true || $arg === 1 || (is_string($arg) && strtolower($arg) === 'true'))){
 				return false;
@@ -470,6 +429,7 @@ class Util{
 	 * 値をプリミティブ型で返す
 	 * @param mixed $value
 	 * @return mixed
+	 * @deprecated
 	 */
 	public static function to_primitive($value){
 		switch(gettype($value)){
@@ -491,10 +451,8 @@ class Util{
 	}
 	/**
 	 * 与えられたクラスのtraitを全て返します
-	 * @param string $class
-	 * @return array
 	 */
-	public static function get_class_traits($class){
+	public static function get_class_traits(string $class): array{
 		$ref = new \ReflectionClass($class);
 		$traits = [];
 		
@@ -510,12 +468,9 @@ class Util{
 	
 	/**
 	 * 指定のクラスと同階層にあるクラスの一覧
-	 * @param string $base_class 基点となるクラス名
-	 * @param string $parent_class_name 指定したサブクラスに属するクラスに絞り込む
-	 * @param boolean $recursive 階層を潜って取得するか
-	 * @return string[]
+	 * @deprecated
 	 */
-	public static function ls_classes($base_class,$parent_class_name=null,$recursive=false){
+	public static function ls_classes(string $base_class, ?string $parent_class_name=null, bool $recursive=false): array{
 		$result = [];
 		$ref = new \ReflectionClass($base_class);
 		$dir = dirname($ref->getFileName());
@@ -541,11 +496,8 @@ class Util{
 	
 	/**
 	 * クラスリソースのパス
-	 * @param string $class
-	 * @param string $path
-	 * @return string
 	 */
-	public static function get_class_resources($class,$path=null){
+	public static function get_class_resources(string $class, string $path=''): string{
 		$ref = new \ReflectionClass($class);
 		$dir = dirname($ref->getFileName()).'/'.$ref->getShortName();
 		
@@ -554,11 +506,8 @@ class Util{
 	
 	/**
 	 * camelcaseをsnakecaseへ変換する
-	 * namespace部は無視される
-	 * @param string $str
-	 * @return string
 	 */
-	public static function camel2snake($str){
+	public static function camel2snake(string $str): string{
 		if(empty($str)){
 			return '';
 		}
@@ -576,10 +525,9 @@ class Util{
 	 * 配列のキー順でkeyが範囲内の値を返す
 	 * 最小より小さければ最小を、最大より大きければ最大を返す
 	 * @param mixed $key
-	 * @param array $array
 	 * @return mixed
 	 */
-	public static function array_range_search($key,array $array){
+	public static function array_range_search($key, array $array){
 		krsort($array);
 		
 		foreach($array as $k => $v){
@@ -592,11 +540,10 @@ class Util{
 	
 	/**
 	 * 文字列を処理し数値配列を返す
-	 * @param string $str
-	 * @throws \ebi\exception\IllegalDataTypeException
-	 * @return number[]
+	 * @param mixed $str
+	 * @deprecated
 	 */
-	public static function parse_numbers($str){
+	public static function parse_numbers($str): array{
 		$list = [];
 		
 		foreach((is_array($str) ? $str : explode(',',$str)) as $p){
@@ -606,7 +553,7 @@ class Util{
 				if(is_numeric($p)){
 					$list[$p] = $p;
 				}else if(strpos($p,'..') !== false){
-					list($start,$end) = explode('..',$p,2);
+					[$start, $end] = explode('..',$p,2);
 					
 					if(!is_numeric($start) || !is_numeric($end)){
 						throw new \ebi\exception\IllegalDataTypeException('value must be a number');
@@ -624,21 +571,17 @@ class Util{
 	}
 	/**
 	 * 文字列を圧縮する
-	 * @param string $string
-	 * @param boolean $base64
-	 * @return string
+	 * @deprecated
 	 */
-	public static function compress($string,$base64=false){
+	public static function compress(string $string, bool $base64=false): string{
 		return ($base64) ? base64_encode(gzdeflate($string)) : gzdeflate($string);
 	}
 	
 	/**
 	 * 文字列を展開する
-	 * @param string $string
-	 * @param boolean $base64
-	 * @return string
+	 * @deprecated
 	 */
-	public static function uncompress($string,$base64=false){
+	public static function uncompress(string $string, bool $base64=false): string{
 		return ($base64) ? gzinflate(base64_decode($string)) : gzinflate($string);
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 $vars = ['abc'=>'ABC'];
 $mail = new \ebi\Mail();
+$mail->from("test@email.address");
 $mail->to("test@email.address");
 $mail->send_template('send.xml',$vars);
 $xml = \ebi\Dt::find_mail('test@email.address');
@@ -19,6 +20,7 @@ eq('テストサブジェクト',$xml->subject());
 
 $vars = ['abc'=>'ABC'];
 $mail = new \ebi\Mail();
+$mail->from("test@email.address");
 $mail->to("test@email.address");
 $mail->send_template('send_html.xml',$vars);
 $xml = \ebi\Dt::find_mail('test@email.address');

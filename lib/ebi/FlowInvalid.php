@@ -1,10 +1,6 @@
 <?php
 namespace ebi;
-/**
- * Flowのエラー時処理
- * @author tokushima
- *
- */
+
 class FlowInvalid implements \Iterator{
 	private static $self;
 	private $messages = [];
@@ -42,9 +38,8 @@ class FlowInvalid implements \Iterator{
 	
 	/**
 	 * Exceptionをセットする
-	 * @param \Exception $exception
 	 */
-	public static function set(\Exception $exception){
+	public static function set(\Exception $exception): void{
 		self::$self = new self();
 		if($exception instanceof \ebi\Exceptions){
 			foreach($exception as $group => $e){
@@ -57,11 +52,8 @@ class FlowInvalid implements \Iterator{
 	
 	/**
 	 * セットされたExceptionからException配列を取得
-	 * @param string $group グループ名
-	 * @param string $type 例外クラス名
-	 * @return Exception[]
 	 */
-	public static function get($group=null,$type=null){
+	public static function get(?string $group=null, ?string $type=null): self{
 		if(self::$self === null) return [];
 		self::$self->group = $group;
 		self::$self->type = $type;
@@ -71,7 +63,7 @@ class FlowInvalid implements \Iterator{
 	/**
 	 * セットされたExceptionのクリア
 	 */
-	public static function clear(){
+	public static function clear(): void{
 		if(isset(self::$self)){
 			self::$self->messages = [];
 		}
@@ -79,11 +71,11 @@ class FlowInvalid implements \Iterator{
 	
 	/**
 	 * Exceptionが追加されているか
-	 * @param string $group グループ名
-	 * @return boolean
 	 */
-	public static function has($group=null,$type=null){
-		if(self::$self === null) return false;
+	public static function has(?string $group=null, ?string $type=null): bool{
+		if(self::$self === null){
+			return false;
+		}
 		self::$self->group = $group;
 		self::$self->type = $type;
 		
@@ -99,12 +91,8 @@ class FlowInvalid implements \Iterator{
 	 *  <rt:loop param="{$exceptions}" var="e">{$e.getMessage()}</rt:loop>
 	 * </rt:invalid>
 	 * ```
-	 * 
-	 * @param string $src
-	 * @return string
-	 * @plugin \ebi\Template
 	 */
-	public function before_template($src){
+	public function before_template(string $src): string{
 		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
 			$group = $xml->in_attr('group');
 			$type = $xml->in_attr('type');

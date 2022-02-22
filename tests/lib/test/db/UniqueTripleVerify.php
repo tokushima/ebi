@@ -2,9 +2,9 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var integer $u1 @['unique_together'=>['u2','u3']]
- * @var integer $u2
- * @var integer $u3
+ * @var int $u1 @['unique_together'=>['u2','u3']]
+ * @var int $u2
+ * @var int $u3
  */
 class UniqueTripleVerify extends \ebi\Dao{
 	protected $id;

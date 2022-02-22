@@ -1,17 +1,13 @@
 <?php
 namespace ebi;
-/**
- * ユーザモデル
- * @author tokushima
- *
- */
+
 class User{
 	private $id;
 	
 	public function __construct($id){
 		$this->id = $id;
 	}
-	public function id(){
+	public function id(): string{
 		return $this->id;
 	}
 }

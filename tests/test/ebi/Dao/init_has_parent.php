@@ -4,7 +4,7 @@
 
 
 $obj = new \test\db\InitHasParent();
-$columns = $obj->columns();
+$columns = $obj->dao_columns();
 eq(2,sizeof($columns));
 foreach($columns as $column){
 	eq(true,($column instanceof \ebi\Column));

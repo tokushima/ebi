@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * 例外の集合
- * @author tokushima
- */
+
 class Exceptions extends \ebi\Exception implements \Iterator{
 	private static $self;
 	private $messages = [];
@@ -23,6 +20,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 	public function key(){
 		return $this->messages[$this->pos]['group'];
 	}
+
 	public function valid(): bool{
 		while($this->pos < sizeof($this->messages)){
 			if(empty($this->group) || $this->messages[$this->pos]['group'] == $this->group){
@@ -32,15 +30,12 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 		}
 		return false;
 	}
+
 	public function next(): void{
 		$this->pos++;
 	}
-	/**
-	 * Exceptionを追加する
-	 * @param Exception $exception 例外
-	 * @param string $group グループ名
-	 */
-	public static function add(\Exception $exception,$group=''){
+
+	public static function add(\Exception $exception, string $group_name=''): self{
 		if(!isset(self::$self)){
 			self::$self = new self();
 		}
@@ -50,41 +45,39 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 				self::$self->message .= $exception->getMessage().PHP_EOL;
 			}
 		}else{
-			self::$self->messages[] = ['exception'=>$exception,'group'=>$group];
+			self::$self->messages[] = ['exception'=>$exception,'group'=>$group_name];
 			self::$self->message .= $exception->getMessage().PHP_EOL;
 		}
 		return self::$self;
 	}
+
 	/**
 	 * Exceptionが追加されていればthrowする
 	 */
-	public static function throw_over(){
+	public static function throw_over(): void{
 		if(isset(self::$self) && !empty(self::$self->messages)){
 			$self = self::$self;
 			self::$self = null;
 			throw $self;
 		}
 	}
-	/**
-	 * Exceptionが追加されているか
-	 * @param string $group
-	 * @return boolean
-	 */
-	public static function has($group=null){
+
+	public static function has(string $group_name=null): bool{
 		if(!isset(self::$self)){
 			return false;
 		}
-		if(empty($group)){
+		if(empty($group_name)){
 			return !empty(self::$self->messages);
 		}
 		foreach(self::$self->messages as $e){
-			if($e['group'] == $group){
+			if($e['group'] == $group_name){
 				return true;
 			}
 		}
 		return false;
 	}
-	public static function clear(){
+
+	public static function clear(): void{
 		self::$self = null;
 	}
 }

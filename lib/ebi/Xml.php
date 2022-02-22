@@ -1,9 +1,6 @@
 <?php
 namespace ebi;
-/**
- * XMLを処理する
- * @author tokushima
- */
+
 class Xml implements \IteratorAggregate{
 	private $attr = [];
 	private $plain_attr = [];
@@ -15,7 +12,11 @@ class Xml implements \IteratorAggregate{
 	private $pos;
 	private $esc = true;
 
-	public function __construct($name=null,$value=null){
+	/**
+	 * @param mixed $name string|object
+	 * @param mixed $value string|array
+	 */
+	public function __construct($name=null, $value=null){
 		if($value === null && is_object($name)){
 			$n = explode('\\',get_class($name));
 			$this->name = array_pop($n);
@@ -25,53 +26,53 @@ class Xml implements \IteratorAggregate{
 			$this->value($value);
 		}
 	}
-	/**
-	 * (non-PHPdoc)
-	 * @see \IteratorAggregate::getIterator()
-	 */
+
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator($this->attr);
 	}
 	/**
 	 * 値が無い場合は閉じを省略する
-	 * @param boolean
-	 * @return boolean
 	 */
-	public function close_empty($bool){
-		$this->close_empty = (boolean)$bool;
+	public function close_empty(bool $bool): self{
+		$this->close_empty = $bool;
 		return $this;
 	}
 	/**
 	 * エスケープするか
-	 * @param boolean $bool
 	 */
-	public function escape($bool){
-		$this->esc = (boolean)$bool;
+	public function escape(bool $bool): self{
+		$this->esc = (bool)$bool;
 		return $this;
 	}
+
 	/**
 	 * setできた文字列
-	 * @return string
 	 */
-	public function plain(){
+	public function plain(): string{
 		return $this->plain;
 	}
+
 	/**
 	 * 子要素検索時のカーソル
-	 * @return integer
 	 */
-	public function cur(){
+	public function cur(): int{
 		return $this->pos;
 	}
+
 	/**
 	 * 要素名
-	 * @return string
 	 */
-	public function name($name=null){
-		if(isset($name)) $this->name = $name;
+	public function name(?string $name=null): ?string{
+		if(isset($name)){
+			$this->name = $name;
+		}
 		return $this->name;
 	}
-	private function get_value($v){
+
+	/**
+	 * @param mixed $v
+	 */
+	private function get_value($v): ?string{
 		if($v instanceof self){
 			$v = $v->get();
 		}else if(is_bool($v)){
@@ -103,13 +104,10 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * 値を設定、取得する
-	 * @param mixed
-	 * @param boolean
-	 * @return string
 	 */
-	public function value(){
-		if(func_num_args() > 0){
-			$this->value = $this->get_value(func_get_arg(0));
+	public function value(...$args): ?string{
+		if(sizeof($args) > 0){
+			$this->value = $this->get_value($args[0]);
 		}
 		if(!empty($this->value) && strpos($this->value,'<![CDATA[') !== false){
 			return preg_replace('/<!\[CDATA\[(.+)\]\]>/s','\\1',$this->value);
@@ -119,11 +117,10 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * 値を追加する
 	 * ２つ目のパラメータがあるとアトリビュートの追加となる
-	 * @param mixed $arg
 	 */
-	public function add($arg){
-		if(func_num_args() == 2){
-			$this->attr(func_get_arg(0),func_get_arg(1));
+	public function add(...$args): self{
+		if(sizeof($args) === 2){
+			$this->attr($args[0], $args[1]);
 		}else{
 			$this->value .= $this->get_value(func_get_arg(0));
 		}
@@ -131,54 +128,47 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * アトリビュートを取得する
-	 * @param string $n 取得するアトリビュート名
-	 * @param string $d アトリビュートが存在しない場合の代替値
-	 * @return string
 	 */
-	public function in_attr($n,$d=null){
-		return isset($this->attr[strtolower($n)]) ? $this->attr[strtolower($n)] : (isset($d) ? (string)$d : null);
+	public function in_attr(string $name, ?string $default=null): ?string{
+		return $this->attr[strtolower($name)] ?? $default;
 	}
 	/**
 	 * アトリビュートから削除する
 	 * パラメータが一つも無ければ全件削除
 	 */
-	public function rm_attr(){
-		if(func_num_args() === 0){
+	public function rm_attr(...$args): void{
+		if(sizeof($args) === 0){
 			$this->attr = [];
 		}else{
-			foreach(func_get_args() as $n) unset($this->attr[$n]);
+			foreach($args as $n){
+				unset($this->attr[$n]);
+			}
 		}
 	}
 	/**
 	 * アトリビュートがあるか
-	 * @param string $name
-	 * @return boolean
 	 */
-	public function is_attr($name){
-		return array_key_exists($name,$this->attr);
+	public function is_attr(string $name): bool{
+		return array_key_exists($name, $this->attr);
 	}
 	/**
 	 * アトリビュートを設定
-	 * @return self $this
+	 * @param mixed $value
 	 */
-	public function attr($key,$value){
-		$this->attr[strtolower($key)] = is_bool($value) ? (($value) ? 'true' : 'false') : $value;
+	public function attr(string $name, $value): self{
+		$this->attr[strtolower($name)] = is_bool($value) ? (($value) ? 'true' : 'false') : $value;
 		return $this;
 	}
 	/**
 	 * 値の無いアトリビュートを設定
-	 * @param string $v
 	 */
-	public function plain_attr($v){
+	public function plain_attr(string $v): void{
 		$this->plain_attr[] = $v;
 	}
 	/**
 	 * XML文字列を返す
-	 * @param string $encoding
-	 * @param boolean $format
-	 * @param string $indent_str
 	 */
-	public function get($encoding=null,$format=false,$indent_str="\t"){
+	public function get(?string $encoding=null, bool $format=false, string $indent_str="\t"): string{
 		if($this->name === null){
 			throw new \ebi\exception\NotFoundException('undef name');
 		}
@@ -197,21 +187,20 @@ class Xml implements \IteratorAggregate{
 				.((!$this->close_empty || isset($value)) ? sprintf('</%s>',$this->name) : '')
 				.($format ? "\n" : '');
 	}
+
 	public function __toString(){
 		return $this->get();
 	}
+
 	/**
 	 * 検索する
-	 * @param string $path
-	 * @param integer $offset
-	 * @param integer $length
-	 * @return \ebi\XmlIterator
+	 * @param mixed string|array
 	 */
-	public function find($path=null,$offset=0,$length=0){
+	public function find($path=null, int $offset=0, int $length=0): \ebi\XmlIterator{
 		if(is_string($path) && strpos($path,'/') !== false){
-			list($name,$path) = explode('/',$path,2);
+			[$name, $path] = explode('/',$path,2);
 			
-			foreach(new \ebi\XmlIterator($name,$this->value(),0,0) as $t){
+			foreach(new \ebi\XmlIterator($name, $this->value(), 0, 0) as $t){
 				try{
 					$it = $t->find($path,$offset,$length);
 					if($it->valid()){
@@ -220,20 +209,18 @@ class Xml implements \IteratorAggregate{
 						}
 						return $it;
 					}
-				}catch(\ebi\exception\NotFoundException $e){}
+				}catch(\ebi\exception\NotFoundException $e){
+				}
 			}
 			throw new \ebi\exception\NotFoundException();
 		}
-		return new \ebi\XmlIterator($path,$this->value(),$offset,$length);
+		return new \ebi\XmlIterator($path, $this->value(), $offset, $length);
 	}
+
 	/**
 	 * 対象の件数
-	 * @param string $name
-	 * @param integer $offset
-	 * @param integer $length
-	 * @return number
 	 */
-	public function find_count($name,$offset=0,$length=0){
+	public function find_count(string $name, int $offset=0, int $length=0): int{
 		$cnt = 0;
 		
 		while($this->find($name,$offset,$length)){
@@ -243,23 +230,18 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * １件取得する
-	 * @param string $path
-	 * @param integer $offset
-	 * @return $this
 	 */
-	public function find_get($path,$offset=0){
+	public function find_get(string $path, int $offset=0): self{
 		foreach($this->find($path,$offset,1) as $x){
 			return $x;
 		}
 		throw new \ebi\exception\NotFoundException($path.' not found');
 	}
+
 	/**
 	 * 置換して新規のインスタンスを返す
-	 * @param string $path
-	 * @param string $value
-	 * @return self
 	 */
-	public function replace($path,$value){
+	public function replace(string $path, string $value): self{
 		$list = [];
 		$x = clone($this);
 		foreach(explode('/',$path) as $p){
@@ -285,7 +267,7 @@ class Xml implements \IteratorAggregate{
 	
 	/**
 	 * 子要素を展開する
-	 * @return mixed{}
+	 * @return mixed string|array
 	 */
 	public function children(){
 		$children = $arr = [];
@@ -321,10 +303,8 @@ class Xml implements \IteratorAggregate{
 	
 	/**
 	 * 匿名タグとしてインスタンス生成
-	 * @param string $value
-	 * @return self
 	 */
-	public static function anonymous($value){
+	public static function anonymous(string $value): self{
 		$xml = new self('XML'.uniqid());
 		$xml->escape(false);
 		$xml->value($value);
@@ -333,11 +313,8 @@ class Xml implements \IteratorAggregate{
 	}
 	/**
 	 * タグの検出
-	 * @param string $plain
-	 * @param string $name
-	 * @return self
 	 */
-	public static function extract($plain,$name=null){
+	public static function extract(?string $plain=null, ?string $name=null): self{
 		if(!empty($name)){
 			$names = explode('/',$name,2);
 			$name = $names[0];
@@ -356,7 +333,9 @@ class Xml implements \IteratorAggregate{
 		}
 		throw new \ebi\exception\NotFoundException($name.' not found');
 	}
-	private static function find_extract(&$x,$plain,$name=null,$vtag=null){
+
+	
+	private static function find_extract(&$x, $plain, $name=null, $v_xml=null): bool{
 		$plain = (string)$plain;
 		$name = (string)$name;
 		$m = [];
@@ -364,9 +343,9 @@ class Xml implements \IteratorAggregate{
 		if(empty($name) && preg_match("/<([\w\:\-]+)[\s][^>]*?>|<([\w\:\-]+)>/is",$plain,$m)){
 			$name = str_replace(["\r\n","\r","\n"],'',(empty($m[1]) ? $m[2] : $m[1]));
 		}
-		$qname = preg_quote($name,'/');
+		$q_name = preg_quote($name,'/');
 		$parse = $matches = [];
-		if(!preg_match("/<(".$qname.")([\s][^>]*?)>|<(".$qname.")>|<(".$qname.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
+		if(!preg_match("/<(".$q_name.")([\s][^>]*?)>|<(".$q_name.")>|<(".$q_name.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
 			return false;
 		}
 		$x = new self();
@@ -376,14 +355,14 @@ class Xml implements \IteratorAggregate{
 
 		if(substr($parse[0][0],-2) == '/>'){
 			$x->name = $parse[1][0];
-			$x->plain = empty($vtag) ? $parse[0][0] : preg_replace('/'.preg_quote(substr($vtag,0,-1).' />','/').'/',$vtag,$parse[0][0],1);
+			$x->plain = empty($v_xml) ? $parse[0][0] : preg_replace('/'.preg_quote(substr($v_xml,0,-1).' />','/').'/',$v_xml,$parse[0][0],1);
 			$attrs = $parse[2][0];
-		}else if(preg_match_all("/<[\/]{0,1}".$qname."[\s][^>]*[^\/]>|<[\/]{0,1}".$qname."[\s]*>/is",$plain,$matches,PREG_OFFSET_CAPTURE,$x->pos)){
+		}else if(preg_match_all("/<[\/]{0,1}".$q_name."[\s][^>]*[^\/]>|<[\/]{0,1}".$q_name."[\s]*>/is",$plain,$matches,PREG_OFFSET_CAPTURE,$x->pos)){
 			foreach($matches[0] as $arg){
 				$balance += (($arg[0][1] == '/') ? -1 : 1);
 				
 				if($balance <= 0 &&
-					preg_match("/^(<(".$qname.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
+					preg_match("/^(<(".$q_name.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
 						substr($plain,$x->pos,($arg[1] + strlen($arg[0]) - $x->pos)),
 						$m
 					)
@@ -416,14 +395,11 @@ class Xml implements \IteratorAggregate{
 		}
 		return true;
 	}
+
 	/**
 	 * 整形する
-	 * @param string $src XML文字列
-	 * @param string $indent_str インデント文字
-	 * @param integer $depth インデントの初期値
-	 * @return string
 	 */
-	public static function format($src,$indent_str="\t",$depth=0){
+	public static function format(string $src, string $indent_str="\t", int $depth=0): string{
 		$rtn = '';
 		$i = 0;
 		$c = md5(__FILE__);
@@ -467,14 +443,11 @@ class Xml implements \IteratorAggregate{
 		}
 		return $rtn;
 	}
+
 	/**
 	 * $srcから対象のXMLを置換した文字列を返す
-	 * @param string $src
-	 * @param string $name
-	 * @param callable $func
-	 * @return string
 	 */
-	public static function find_replace($src,$name,$func){
+	public static function find_replace(string $src, string $name, callable $func): string{
 		if(!is_callable($func)){
 			throw new \ebi\exception\InvalidArgumentException('invalid function');
 		}
@@ -486,14 +459,11 @@ class Xml implements \IteratorAggregate{
 		}
 		return $src;
 	}
+	
 	/**
 	 * $srcから対象のXMLをすべて置換した文字列を返す
-	 * @param string $src
-	 * @param string $name
-	 * @param callable $func
-	 * @return string
 	 */
-	public static function find_replace_all($src,$name,$func){
+	public static function find_replace_all(string $src, string $name, callable $func): string{
 		try{
 			if(!is_callable($func)){
 				throw new \ebi\exception\InvalidArgumentException('invalid function');
@@ -501,7 +471,7 @@ class Xml implements \IteratorAggregate{
 			$i = 0;
 	
 			while(true){
-				$xml = \ebi\Xml::extract($src,$name);
+				$xml = self::extract($src,$name);
 				$replace = call_user_func_array($func,[$xml]);
 				
 				if(!is_null($replace)){

@@ -3,7 +3,7 @@ namespace test\db;
 /**
  * @var serial $id
  * @var timestamp $ts
- * @var integer $num
+ * @var int $num
  */
 class DateFormat extends \ebi\Dao{
 	protected $id;

@@ -13,7 +13,7 @@ class DocParam extends \ebi\Obj{
 	protected $summary;
 	private $opt = [];
 	
-	public function __construct($name,$type,$summary='',$opt=[]){
+	public function __construct($name, $type, $summary='', $opt=[]){
 		$this->name = trim($name);
 		$this->type = trim($type);
 		$this->summary = trim($summary);
@@ -28,7 +28,7 @@ class DocParam extends \ebi\Obj{
 	}
 	
 	public function is_type_class(){
-		return (boolean)preg_match('/[A-Z]/',$this->type);
+		return (bool)preg_match('/[A-Z]/',$this->type);
 	}
 	public function fm_type(){
 		if(preg_match('/[A-Z]/',$this->type)){
@@ -56,7 +56,7 @@ class DocParam extends \ebi\Obj{
 				$opt = [];
 				
 				if(strpos($summary,'@[') !== false){
-					list($summary,$anon) = explode('@[',$summary,2);
+					[$summary, $anon] = explode('@[',$summary,2);
 					
 					try{
 						$opt = \ebi\Annotation::activation('@['.$anon);

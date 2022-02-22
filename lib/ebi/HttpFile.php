@@ -1,30 +1,27 @@
 <?php
 namespace ebi;
-/**
- * 添付ファイルの操作
- * @author tokushima
- *
- */
+
 class HttpFile{
 	/**
 	 * inlineで出力する
-	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param boolean $modified_status Last-Modifiedを見るか
+	 * @param mixed $filename (string|array) 出力するファイル、または[ファイル名,文字列]
+	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function inline($filename,$modified_status=true){
+	public static function inline($filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'inline',$modified_status);
 	}
+
 	/**
 	 * attachmentで出力する
-	 * @param mixed $file 出力するファイル、または[ファイル名,文字列]
-	 * @param boolean $modified_status Last-Modifiedを見るか
+	 * @param mixed $filename (string|array ) 出力するファイル、または[ファイル名,文字列]
+	 * @param $modified_status Last-Modifiedを見るか
 	 */
-	public static function attach($filename,$modified_status=true){
+	public static function attach($filename, bool $modified_status=true): void{
 		self::output_file_content($filename,'attachment',$modified_status);
 	}
 	private static function output_file_content($filename,$disposition,$modified_status){
 		if(is_array($filename)){
-			list($filename,$src) = $filename;
+			[$filename, $src] = $filename;
 
 			\ebi\HttpHeader::send('Content-Type',self::mime($filename).'; name='.basename($filename));
 			\ebi\HttpHeader::send('Content-Disposition',$disposition.'; filename='.basename($filename));
@@ -46,7 +43,7 @@ class HttpFile{
 
 			$range = [];
 			if(isset($_SERVER['HTTP_RANGE']) && preg_match("/^bytes=(\d+)\-(\d+)$/",$_SERVER['HTTP_RANGE'],$range)){
-				list(,$offset,$end) = $range;
+				[,$offset,$end] = $range;
 				$length = $end - $offset + 1;
 				
 				\ebi\HttpHeader::send_status(206);
@@ -54,7 +51,7 @@ class HttpFile{
 				\ebi\HttpHeader::send('Content-length',sprintf('%u',$length));
 				\ebi\HttpHeader::send('Content-Range',sprintf('bytes %u-%u/%u',$offset,$end,filesize($filename)));
 
-				print(file_get_contents($filename,null,null,$offset,$length));
+				print(file_get_contents($filename, false, null, $offset, $length));
 				exit;
 			}else{
 				\ebi\HttpHeader::send('Content-length',sprintf('%u',filesize($filename)));
@@ -71,7 +68,8 @@ class HttpFile{
 		\ebi\HttpHeader::send_status(404);
 		exit;
 	}
-	private static function mime($filename){
+
+	private static function mime(string $filename): string{
 		$ext = (false !== ($p = strrpos($filename,'.'))) ? strtolower(substr($filename,$p+1)) : null;
 		switch($ext){
 			case 'jpg':

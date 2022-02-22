@@ -14,7 +14,7 @@ class Login4{
 	/**
 	 * remeber meに記録
 	 * @param \ebi\flow\Request $req
-	 * @return boolean
+	 * @return bool
 	 */
 	public function remember_me(\ebi\flow\Request $req){
 		try{

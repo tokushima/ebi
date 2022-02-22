@@ -17,6 +17,7 @@ class ActionA extends \ebi\flow\Request{
 	}
 	
 	/**
+	 * エラーになる
 	 * @automap
 	 */
 	public function ghi(){

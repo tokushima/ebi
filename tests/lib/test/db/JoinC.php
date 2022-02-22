@@ -2,8 +2,8 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var integer $a_id
- * @var integer $b_id
+ * @var int $a_id
+ * @var int $b_id
  */
 class JoinC extends \ebi\Dao{
 	protected $id;

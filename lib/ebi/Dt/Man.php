@@ -83,7 +83,7 @@ class Man{
 						}
 						$method_document = self::find_merge_deprecate($method_info,$method_document);
 						
-						list($summary) = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
+						[$summary] = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
 						
 						$method_info->document($summary);
 						
@@ -129,7 +129,7 @@ class Man{
 					$properties[$name]->summary(
 						self::find_merge_deprecate(
 							$properties[$name],
-							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : null),
+							(isset($anon[$name]['summary']) ? $anon[$name]['summary'] : ''),
 							$info,
 							true
 						)
@@ -399,7 +399,7 @@ class Man{
 				if(strpos($v,'://') !== false){
 					$see[$v] = ['type'=>'url','url'=>$v];
 				}else if(strpos($v,'::') !== false){
-					list($see_class,$see_method) = explode('::',$v,2);
+					[$see_class, $see_method] = explode('::',$v,2);
 					$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
 				}else if(substr($v,-1) != ':'){
 					$see[$v] = ['type'=>'class','class'=>$v];
@@ -521,7 +521,7 @@ class Man{
 				$mail_template_list = self::mail_template_list();
 				
 				foreach($use_method_list as $class_method){
-					list($uclass,$umethod) = explode('::',$class_method);
+					[$uclass, $umethod] = explode('::',$class_method);
 					
 					try{
 						$ref = new \ReflectionMethod($uclass,$umethod);
@@ -641,7 +641,8 @@ class Man{
 		return '';
 	}
 	public static function trim_doc($doc){
-		return trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
+		$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
+		return (string)$doc;
 	}
 	private static function use_method_list($class,$method,&$loaded_method_src=[]){
 		$list = [];
@@ -663,7 +664,7 @@ class Man{
 				
 				foreach($ref->getParameters() as $param){
 					if($param->hasType()){
-						$type_class = ($param->getType() instanceof \ReflectionNamedType) ? $param->getType()->getName() : null;
+						($param->getType() instanceof \ReflectionNamedType) ? $param->getType()->getName() : null;
 						
 						if(!empty($type_class) && class_exists($type_class)){
 							$vars['$'.$param->getName()] = $type_class;
@@ -708,7 +709,7 @@ class Man{
 					}
 				}
 				foreach(array_keys($list) as $mcm){
-					list($c,$m) = explode('::',$mcm);
+					[$c, $m] = explode('::',$mcm);
 					$c = str_replace('\\\\','\\',($c[0] !== '\\') ? '\\'.$c : $c);
 					
 					if(!isset($loaded_method_src[$c.'::'.$m])){
