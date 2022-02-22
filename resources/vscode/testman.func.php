@@ -8,4 +8,7 @@ function fail(?string $msg=null){}
 function b(): \testman\Browser{
     return new \testman\Browser();
 }
+function url(string $map_name): string{
+    return '';
+}
 
