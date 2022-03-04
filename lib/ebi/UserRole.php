@@ -10,13 +10,14 @@ trait UserRole{
 	public function set_role(array $roles): void{
 		$this->user_role = $roles;
 	}
+
 	/**
 	 * 権限値を取得する
-	 * @return array
 	 */
 	public function get_role(): array{
 		return $this->user_role;
 	}
+	
 	/**
 	 * 指定の権限があるか
 	 * @param mixed $role (int|string)
