@@ -373,7 +373,7 @@ class Util{
 	public static function next_business_day(int $base, int $days, array $holidays=[], $regular_holiday=[0,6]): int{
 		$d = $base;
 
-		for($i=0;$i<$days;){
+		for($i=0;$i<$days;$i++){
 			$d += 86400;
 
 			if(!in_array(date('w'), $regular_holiday) && !in_array(date('y-m-d', $d), $holidays)){

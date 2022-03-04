@@ -127,6 +127,7 @@ class Obj implements \IteratorAggregate{
 		$p = $this->_;
 		$v = (method_exists($this,$m=('__get_'.$p.'__'))) ? call_user_func([$this,$m]) : $this->___get___();
 		switch($this->prop_anon($p,'type')){
+			case 'datetime':
 			case 'timestamp':
 				return ($v === null) ? null : (date((empty($f) ? \ebi\Conf::timestamp_format() : $f),(int)$v));
 			case 'date':
