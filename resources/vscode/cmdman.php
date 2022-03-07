@@ -20,3 +20,6 @@ class Args{
         return '';
     }
 }
+class Util{
+    public static function exit_wait(): void{}
+}
