@@ -65,7 +65,6 @@ class Flow{
 	 * @param mixed $template_dir string|array
 	 */
 	private static function template(array $vars, array $selected_pattern, $ins, string $path, ?string $media, $template_dir): void{
-		self::$template->set_object_plugin(new \ebi\FlowInvalid());
 		self::$template->media_url(empty($media) ? self::$media_url : $media);
 		
 		if(is_array($vars) || is_object($vars)){
@@ -353,9 +352,6 @@ class Flow{
 							}
 						}
 						$funcs = [$ins,$method];
-					}
-					foreach($plugins as $o){
-						self::$template->set_object_plugin($o);
 					}
 					if(self::has_class_plugin('before_flow_action')){
 						/**
