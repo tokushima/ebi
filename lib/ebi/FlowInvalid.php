@@ -82,45 +82,4 @@ class FlowInvalid implements \Iterator{
 		self::$self->rewind();
 		return self::$self->valid();
 	}
-	
-	/**
-	 * Template plugin
-	 * 
-	 * ```
-	 * <rt:invalid type="Exception" group="email" var="exceptions">
-	 *  <rt:loop param="{$exceptions}" var="e">{$e.getMessage()}</rt:loop>
-	 * </rt:invalid>
-	 * ```
-	 */
-	public function before_template(string $src): string{
-		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
-			$group = $xml->in_attr('group');
-			$type = $xml->in_attr('type');
-			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));
-			if(!isset($group[0]) || $group[0] !== '$'){
-				$group = '"'.$group.'"';
-			}
-			if(!isset($type[0]) || $type[0] !== '$'){
-				$type = '"'.$type.'"';
-			}
-			$value = $xml->value();
-				
-			if(empty($value)){
-				$varnm = 'rtinvalid_varnm'.uniqid('');
-				$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
-					.'<li><rt:if param="{$t.has($%s.getMessage())}">{$%s.getMessage()}<rt:else />{$t.get_class($%s)}</rt:if></li>'
-					.'</rt:loop></ul></div>'
-					,$xml->in_attr('class','alert alert-danger'),$var,$varnm,
-					$varnm,$varnm,$varnm
-				);
-			}
-			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
-				."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
-				.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
-				."<?php } ?>"
-				,$group,$type
-				,$var,$group,$type
-			);
-		});
-	}
 }

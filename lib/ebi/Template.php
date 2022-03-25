@@ -58,14 +58,6 @@ class Template{
 			$src = str_replace(['#PS#','#PE#'],['<?','?>'],$this->html_form($src));
 			$src = $this->exec($this->parse_print_variable($this->html_input($src)));
 		}
-		/**
-		 * 実行後処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('after_exec_template') as $o){
-			$src = static::call_func($o,$src);
-		}
 		return $src;
 	}
 	/**
@@ -81,32 +73,13 @@ class Template{
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
 		$src = str_replace(["\\\\","\\\"","\\'"],['__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'],$src);
 		$src = $this->replace_xtag($src);
-		/**
-		 * 初期処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('init_template') as $o){
-			$src = static::call_func($o,$src);
-		}
 		$src = $this->rtcomment($this->rtinclude($this->rtblock($src)));
-		/**
-		 * 前処理
-		 * @param string $src
-		 * @return string $src
-		 */		
-		foreach($this->get_object_plugin_funcs('before_template') as $o){
-			$src = static::call_func($o,$src);
-		}
-		$src = $this->rtpaginator($this->rtif($this->rtloop($this->html_form($this->html_list($src)))));
-		/**
-		 * 後処理
-		 * @param string $src
-		 * @return string $src
-		 */		
-		foreach($this->get_object_plugin_funcs('after_template') as $o){
-			$src = static::call_func($o,$src);
-		}
+		$src = $this->rtinvalid($src);
+		$src = $this->html_list($src);
+		$src = $this->html_form($src);
+		$src = $this->rtloop($src);
+		$src = $this->rtif($src);
+		$src = $this->rtpaginator($src);
 		$src = str_replace('__PHP_ARROW__','->',$src);
 		$src = $this->parse_print_variable($src);
 		$php = [' ?>','<?php ','->'];
@@ -127,14 +100,6 @@ class Template{
 		return $src;
 	}
 	private function exec(string $_src_): string{
-		/**
-		 * 実行直前処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('before_exec_template') as $o){
-			$_src_ = static::call_func($o,$_src_);
-		}
 		foreach($this->default_vars() as $k => $v){
 			$this->vars($k,$v);
 		}
@@ -631,6 +596,38 @@ class Template{
 			return $func;
 		});
 	}
+	private function rtinvalid(string $src): string{
+		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
+			$group = $xml->in_attr('group');
+			$type = $xml->in_attr('type');
+			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));
+			if(!isset($group[0]) || $group[0] !== '$'){
+				$group = '"'.$group.'"';
+			}
+			if(!isset($type[0]) || $type[0] !== '$'){
+				$type = '"'.$type.'"';
+			}
+			$value = $xml->value();
+				
+			if(empty($value)){
+				$varnm = 'rtinvalid_varnm'.uniqid('');
+				$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
+					.'<li><rt:if param="{$t.has($%s.getMessage())}">{$%s.getMessage()}<rt:else />{$t.get_class($%s)}</rt:if></li>'
+					.'</rt:loop></ul></div>'
+					,$xml->in_attr('class','alert alert-danger'),$var,$varnm,
+					$varnm,$varnm,$varnm
+				);
+			}
+			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
+				."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
+				.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
+				."<?php } ?>"
+				,$group,$type
+				,$var,$group,$type
+			);
+		});
+	}
+
 	
 	private function form_variable_name(string $name): string{
 		$m = [];
