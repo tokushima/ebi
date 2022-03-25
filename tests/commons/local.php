@@ -1,4 +1,5 @@
 <?php
+
 \ebi\Conf::set([
 	'ebi\Conf'=>[
 		'appmode_group'=>[
@@ -56,4 +57,7 @@
 	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
 ]);
 
+
+
+include(__DIR__.'/local_sub.php');
 
