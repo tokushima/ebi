@@ -4,10 +4,7 @@ namespace ebi\flow\plugin;
  * CORS (Cross-Origin Resource Sharing)
  */
 class Cors{
-	/**
-	 * @plugin \ebi\Flow
-	 */
-	public function before_flow_action(): void{
+	public function before_flow_action_request(\ebi\Request $req): void{
 		$env = new \ebi\Env();
 		$request_origin = $env->get('HTTP_ORIGIN');
 		$request_method = $env->get('HTTP_ACCESS_CONTROL_REQUEST_METHOD');

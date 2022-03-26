@@ -353,12 +353,6 @@ class Flow{
 						}
 						$funcs = [$ins,$method];
 					}
-					if(self::has_class_plugin('before_flow_action')){
-						/**
-						 * 前処理
-						 */
-						self::call_class_plugin_funcs('before_flow_action');
-					}
 					if($has_flow_plugin){
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();

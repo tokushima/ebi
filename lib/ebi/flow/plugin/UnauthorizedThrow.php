@@ -1,12 +1,9 @@
 <?php
 namespace ebi\flow\plugin;
-/**
- * do_login以外の場合にログインしていなければ例外
- */
+
 class UnauthorizedThrow{
 	/**
 	 * @plugin \ebi\flow\Request
-	 * @param \ebi\flow\Request $req
 	 */
 	public function before_login_redirect(\ebi\flow\Request $req): void{
 		if(!$req->is_user_logged_in()){
