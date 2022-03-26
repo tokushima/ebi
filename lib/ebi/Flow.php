@@ -390,14 +390,7 @@ class Flow{
 						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
-					}
-					if(self::has_class_plugin('after_flow_action')){
-						/**
-						 * 後処理
-						 */
-						self::call_class_plugin_funcs('after_flow_action');
-					}
-					
+					}					
 					if(isset($exception)){
 						throw $exception;
 					}

@@ -302,13 +302,7 @@ class Mail{
 		if($message !== null){
 			$this->message($message);
 		}
-		if($this->has_object_plugin('send_mail')){
-			/**
-			 * メール送信する
-			 * @param \ebi\Mail $this 
-			 */
-			$this->call_object_plugin_funcs('send_mail',$this);
-		}else if(self::has_class_plugin('send_mail')){
+		if(self::has_class_plugin('send_mail')){
 			/**
 			 * メール送信する
 			 * @param \ebi\Mail $this
