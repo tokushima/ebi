@@ -41,7 +41,7 @@ include_once('bootstrap.php');
 			'bbb'=>['name'=>'group_bbb_xml','action'=>'test\flow\Action::abc'],
 			'eee'=>['name'=>'group_eee_xml','action'=>'test\flow\Action::raise'],
 		],
-		'plugins'=>['ebi\flow\plugin\Xml'],
+		'output'=>'xml',
 	],
 	
 	'after'=>['name'=>'after','action'=>'test\flow\Sample::after_redirect','after'=>'after_to'],

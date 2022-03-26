@@ -17,6 +17,7 @@
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
+		'exception_callback'=>\test\flow\plugin\ErrorLog::class,
 	],
 	'ebi\flow\plugin\No'=>[ // x
 		'abc'=>1,
@@ -54,7 +55,6 @@
 // 	'ebi\Log'=>['ebi\LogMailSender'],
 	'ebi\Log'=>['ebi\LogMailSender'],
 	'test\flow\RequestFlow'=>['test\plugin\RequestPlugin'],
-	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
 ]);
 
 

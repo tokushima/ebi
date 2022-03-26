@@ -287,6 +287,7 @@ class Flow{
 				$exception = null;
 				$has_flow_plugin = false;
 				$result_vars = $plugins = [];
+				$map_output = $self_map['output'] ?? 'json';
 				$accept_debug = (
 					/**
 					 * @param bool $val Accept: application/debug を有効にする
@@ -315,6 +316,9 @@ class Flow{
 							[,$mm] = explode('::',$m['action']);
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
+					}
+					if(array_key_exists('output',$pattern)){
+						$map_output = $pattern['output'];
 					}
 					if(array_key_exists('vars',$self_map) && is_array($self_map['vars'])){
 						$result_vars = $self_map['vars'];
@@ -437,14 +441,16 @@ class Flow{
 								}
 							}
 						}
-						if(self::has_class_plugin('flow_output')){
-							/**
-							 * 結果を出力する
-							 * @param mixed{} $result_vars actionで返却された変数
-							 */
-							self::call_class_plugin_funcs('flow_output',$result_vars);
-							self::terminate();
-							return;
+						if($map_output === 'xml'){
+							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') === false){
+								$xml = new \ebi\Xml('result');
+								$xml->add($result_vars);
+								
+								\ebi\HttpHeader::send('Content-Type','application/xml');
+								print($xml->get(\ebi\Conf::get('encoding')));
+								self::terminate();
+								return;	
+							}					
 						}
 					}
 					
@@ -452,19 +458,19 @@ class Flow{
 					print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
 					self::terminate();
 					return;
-				}catch(\Exception $e){
-					\ebi\FlowInvalid::set($e);
+				}catch(\Exception $exception){
+					\ebi\FlowInvalid::set($exception);
 					\ebi\Dao::rollback_all();
 					
-					if(self::has_class_plugin('flow_exception_log')){
-						/**
-						 * 例外発生時のログ
-						 * @param string $pathinfo PATH_INFO
-						 * @param mixed{} $pattern マッチしたパターン
-						 * @param mixed $ins 実行されたActionのインスタンス
-						 * @param \Exception $e 発生した例外
-						 */
-						self::call_class_plugin_funcs('flow_exception_log',$pathinfo,$pattern,$ins,$e);
+					/**
+					 * 例外発生時にコールバックするクラス(implement \ebi\FlowExceptionCallback)
+					 */
+					$exception_callback = \ebi\Conf::get('exception_callback');
+					if(!empty($exception_callback) && is_subclass_of($exception_callback, '\ebi\FlowExceptionCallback')){
+						if(!is_object($exception_callback)){
+							$exception_callback = (new \ReflectionClass($exception_callback))->newInstance();
+						}
+						$exception_callback->flow_exception_occurred($pathinfo, $pattern, $ins, $exception);
 					}
 
 					if(isset($pattern['error_status'])){
@@ -504,35 +510,34 @@ class Flow{
 						if(array_key_exists('error_template',$self_map)){
 							self::template($result_vars,$pattern,$ins,$self_map['error_template'],null,null);
 						}
-						if(self::has_class_plugin('flow_exception')){
-							/**
-							 * 例外発生時の処理・出力
-							 * @param \Exception $e 発生した例外
-							 */
-							self::call_class_plugin_funcs('flow_exception',$e);
-							self::terminate();
-							return;
-						}else if(self::has_class_plugin('flow_output')){
-							self::call_class_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
-							self::terminate();
-							return;
+
+						if($map_output === 'xml'){
+							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') === false){
+								$xml = new \ebi\Xml('error');
+								
+								foreach(\ebi\FlowInvalid::get() as $g => $e){
+									$message = new \ebi\Xml('message',$e->getMessage());
+									$type = basename(str_replace("\\",'/',get_class($e)));
+									
+									if(!empty($g)){
+										$message->add('group',$g);
+									}
+									$message->add('type',$type);
+									$xml->add($message);
+								}
+								\ebi\HttpHeader::send('Content-Type','application/xml');
+								print($xml->get(\ebi\Conf::get('encoding')));
+								self::terminate();
+								return;
+							}
 						}
 					}
-					
-					/**
-					 *  @param bool $val Error Json出力時にException traceも出力するフラグ
-					 */
-					$trace = \ebi\Conf::get('exception_trace',false);
-					$message = [];
-					
+					$message = [];					
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
 						$em = [
 							'message'=>$e->getMessage(),
 							'type'=>basename(str_replace("\\",'/',get_class($e)))
 						];
-						if($trace){
-							$em['trace'] = $e->getTraceAsString();
-						}
 						if(!empty($g)){
 							$em['group'] = $g;
 						}
