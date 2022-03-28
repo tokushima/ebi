@@ -1,7 +1,7 @@
 <?php
 namespace test\flow\plugin;
 
-class ErrorLog implements \ebi\FlowExceptionCallback{
+class ErrorLog implements \ebi\FlowHandler{
 	public function flow_exception_occurred(string $pathinfo, array $pattern, ?object $ins, \Exception $e): void{
 		if(!($e instanceof \ebi\exception\UnauthorizedException)){
 			$info = [

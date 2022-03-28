@@ -42,7 +42,7 @@ class Session{
 				session_set_cookie_params($opt);
 			}
 			
-			if(!empty(\ebi\Conf::get('handler'))){
+			if(\ebi\Conf::defined_handler()){
 				session_set_save_handler(
 					[$this,'open'],
 					[$this,'close'],
@@ -117,7 +117,7 @@ class Session{
 	 * @param $name セッション名
 	 */
 	public function open(string $path, string $name): bool{
-		$bool = \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_open', $path, $name);
+		$bool = \ebi\Conf::call('session_open', $path, $name);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -125,7 +125,7 @@ class Session{
 	 * (session_set_save_handler) writeが実行された後で実行される
 	 */
 	public function close(): bool{
-		$bool = \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_close');
+		$bool = \ebi\Conf::call('session_close');
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -134,14 +134,14 @@ class Session{
 	 * @return mixed
 	 */
 	public function read(string $id){
-		return \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_read', $id);
+		return \ebi\Conf::call('session_read', $id);
 	}
 	
 	/**
 	 * (session_set_save_handler) データを書き込む
 	 */
 	public function write(string $id, $sess_data): bool{
-		$bool = \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_write', $id, $sess_data);
+		$bool = \ebi\Conf::call('session_write', $id, $sess_data);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -149,7 +149,7 @@ class Session{
 	 * (session_set_save_handler) 破棄
 	 */
 	public function destroy(string $id): bool{
-		$bool = \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_destroy', $id);
+		$bool = \ebi\Conf::call('session_destroy', $id);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -158,7 +158,7 @@ class Session{
 	 * @param $maxlifetime session.gc_maxlifetime
 	 */
 	public function gc(int $maxlifetime): bool{
-		$bool = \ebi\Conf::call('handler', '\ebi\SessionHandler', 'session_gc', $maxlifetime);
+		$bool = \ebi\Conf::call('session_gc', $maxlifetime);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 }

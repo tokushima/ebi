@@ -300,8 +300,8 @@ class Mail{
 		if($message !== null){
 			$this->message($message);
 		}
-		if(\ebi\Conf::defined('handler')){
-			\ebi\Conf::call('handler', \ebi\MailHandler::class, 'send_mail', $this);
+		if(\ebi\Conf::defined_handler()){
+			\ebi\Conf::call('send_mail', $this);
 		}else{
 			if(empty($this->to)){
 				throw new \ebi\exception\RequiredException('undefine to');

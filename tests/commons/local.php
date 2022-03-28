@@ -1,5 +1,12 @@
 <?php
 
+\ebi\Conf::set_handler([
+	'ebi\Log'=>\ebi\LogMailSender::class,
+	'ebi\Session'=>\ebi\SessionDao::class,
+	'ebi\Mail'=>\ebi\SmtpBlackholeDao::class,
+	'ebi\Flow'=>\test\flow\plugin\ErrorLog::class,
+]);
+
 \ebi\Conf::set([
 	'ebi\Conf'=>[
 		'appmode_group'=>[
@@ -11,20 +18,12 @@
 	'ebi\Log'=>[
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
-		'handler'=>\ebi\LogMailSender::class,
 	],
-	'ebi\Session'=>[
-		'handler'=>\ebi\SessionDao::class,
-	],
-	'ebi\Mail'=>[
-		'handler'=>\ebi\SmtpBlackholeDao::class,
-	],	
 	'ebi\Flow'=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
-		'exception_callback'=>\test\flow\plugin\ErrorLog::class,
 	],
 	'ebi\flow\plugin\No'=>[ // x
 		'abc'=>1,

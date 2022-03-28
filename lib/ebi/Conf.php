@@ -336,9 +336,22 @@ class Conf{
 		ini_set('memory_limit',($memory_limit_size > 0) ? $memory_limit_size.'M' : -1);
 	}
 
-
-	public static function call(string $key, ?string $interface, string $method, ...$args){
-		[$name, $key] = self::get_defined_class_key($key);		
+	public static function defined_handler(): bool{
+		$key = 'handler';
+		[$class_name, $key] = self::get_defined_class_key($key);
+		return self::exists($class_name,$key);
+	}
+	public static function set_handler(array $set_handler): void{
+		foreach($set_handler as $class_name => $handler){
+			self::$value[$class_name]['handler'] = $handler;
+		}
+	}
+	/**
+	 * handlerが登録されていたら実行する
+	 */
+	public static function call(string $method, ...$args){
+		$key = 'handler';
+		[$name, $key] = self::get_defined_class_key($key);
 		$class = self::exists($name, $key) ? self::$value[$name][$key] : '';
 
 		if(!isset(self::$call_obj[$name][1][$key])){
@@ -348,8 +361,9 @@ class Conf{
 				if(!isset(self::$call_obj[$name][0][$class])){
 					self::$call_obj[$name][0][$class] = (new \ReflectionClass($class))->newInstance();
 				}
-				if(!empty($interface) && !is_subclass_of(self::$call_obj[$name][0][$class], $interface)){
-					throw new \ebi\exception\NotImplementedException('does not implement');
+				$interface = $name.'Handler';
+				if(!is_subclass_of(self::$call_obj[$name][0][$class], $interface)){
+					throw new \ebi\exception\NotImplementedException('does not implement: '.$interface);
 				}
 				self::$call_obj[$name][1][$key] = true;
 			}

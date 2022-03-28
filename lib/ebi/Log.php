@@ -72,7 +72,7 @@ class Log{
 				FILE_APPEND
 			);
 		}
-		\ebi\Conf::call('handler', \ebi\LogHandler::class, 'output', $this);
+		\ebi\Conf::call('output', $this);
 	}
 
 	public function fm_message(): string{

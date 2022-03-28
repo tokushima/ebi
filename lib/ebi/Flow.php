@@ -334,9 +334,7 @@ class Flow{
 						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
 						(array_key_exists('plugins',$self_map) ? (is_array($self_map['plugins']) ? $self_map['plugins'] : [$self_map['plugins']]) : [])
 					) as $m){
-						$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
-						self::set_class_plugin($o);
-						$plugins[] = $o;
+						$plugins[] = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();;
 					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
@@ -344,11 +342,6 @@ class Flow{
 						if($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class)){
 							$has_flow_plugin = true;
 
-							foreach($ins->get_flow_plugins() as $m){
-								$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
-								$plugins[] = $o;
-								self::set_class_plugin($o);
-							}
 							$selected_pattern = array_merge($self_map, $pattern);
 							unset($selected_pattern['patterns'], $selected_pattern['plugins']);
 							$ins->set_pattern($selected_pattern);
@@ -464,8 +457,6 @@ class Flow{
 					\ebi\FlowInvalid::set($exception);
 					\ebi\Dao::rollback_all();
 					\ebi\Conf::call(
-						'exception_callback',
-						\ebi\FlowExceptionCallback::class, 
 						'flow_exception_occurred', 
 						$pathinfo, 
 						$pattern, 

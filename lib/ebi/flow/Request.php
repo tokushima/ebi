@@ -29,12 +29,6 @@ class Request extends \ebi\Request{
 	final public function set_pattern(array $selected_pattern): void{
 		$this->_selected_pattern = $selected_pattern;
 	}
-	/**
-	 * Flowにpluginをさす
-	 */
-	public function get_flow_plugins(): array{
-		return [];
-	}
 	
 	/**
 	 * action実行後にリダイレクトするURL
@@ -231,12 +225,6 @@ class Request extends \ebi\Request{
 		}
 
 		$this->cors();
-
-// TODO
-// if($req->is_vars('callback')){
-// 	$this->callback = $req->in_vars('callback');
-// }
-
 	}
 	
 	/**

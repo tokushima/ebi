@@ -1,7 +1,7 @@
 <?php
 namespace ebi;
 
-interface FlowExceptionCallback{
+interface FlowHandler{
     /**
      * @$pattern マッチしたパターン
      * $ins 実行されたActionのインスタンス
