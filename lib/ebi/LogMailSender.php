@@ -1,8 +1,8 @@
 <?php
 namespace ebi;
 
-class LogMailSender{
-	public function log_output(\ebi\Log $log): void{
+class LogMailSender implements \ebi\LogHandler{
+	public function output(\ebi\Log $log): void{
 		$mail = new \ebi\Mail();
 		
 		/**

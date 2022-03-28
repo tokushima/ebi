@@ -5,9 +5,7 @@ namespace ebi;
  * @author tokushima
  *
  */
-class Dt{
-	use \ebi\FlowPlugin;
-	
+class Dt extends \ebi\flow\Request{
 	private $entry;
 	private $entry_name;
 	
@@ -28,11 +26,7 @@ class Dt{
 			$this->entry = $entryfile;
 			$this->entry_name = basename($this->entry,'.php');
 		}
-	}
-	public function get_flow_plugins(){
-		return [
-			\ebi\flow\plugin\HtmlMinifier::class,
-		];
+		parent::__construct();
 	}
 	public function get_after_vars(){
 		$vars = [

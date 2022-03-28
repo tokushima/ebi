@@ -146,15 +146,6 @@ include_once('bootstrap.php');
 	'flow/request/vars/callback'=>[
 		'name'=>'requestflow_vars_callback',
 		'action'=>'test\flow\RequestFlow::get_vars',
-		'plugins'=>[
-			'test\flow\plugin\Callback',
-			\test\flow\plugin\Callback2::class,
-		],
-	],
-	'flow/request/vars/callback_addvars'=>[
-		'name'=>'requestflow_vars_callback_addvars',
-		'action'=>'test\flow\RequestFlow::get_vars',
-		'plugins'=>['test\flow\plugin\Callback','test\flow\plugin\AddVars'],
 	],
 	'flow/request/mail'=>[
 		'name'=>'requestflow_mail',

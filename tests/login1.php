@@ -4,7 +4,6 @@ include_once('bootstrap.php');
 \ebi\Flow::app([
 	'plugins'=>[
 		'test\flow\plugin\Login1',
-		'ebi\flow\plugin\Cors'
 	],
 	'patterns'=>[
 		'login_url'=>[

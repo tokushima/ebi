@@ -4,9 +4,9 @@ include_once('bootstrap.php');
  * remember_me plugin
  */
 \ebi\Flow::app([
+	'unauthorized_redirect'=>false,
 	'plugins'=>[
 		\test\flow\plugin\Login4::class,
-		\ebi\flow\plugin\UnauthorizedThrow::class,
 	],
 	'patterns'=>[
 		'login_url'=>[

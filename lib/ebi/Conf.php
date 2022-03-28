@@ -4,6 +4,7 @@ namespace ebi;
 class Conf{
 	private static $value = [self::class=>[]];
 	private static $plugins = [];
+	private static $call_obj = [];
 	
 	private static function get_defined_class_key(string $key): array{
 		if(strpos($key,'@') === false){
@@ -55,14 +56,19 @@ class Conf{
 		}
 	}
 
-	/**
-	 * 定義されている
-	 */
-	public static function exists(string $class_name, string $key): bool{
+	private static function exists(string $class_name, string $key): bool{
 		return (
 			array_key_exists($class_name,self::$value) &&
 			array_key_exists($key,self::$value[$class_name])
 		);
+	}
+
+	/**
+	 * 定義されている
+	 */
+	public static function defined(string $key): bool{
+		[$class_name, $key] = self::get_defined_class_key($key);
+		return self::exists($class_name,$key);
 	}
 
 	/**
@@ -328,5 +334,30 @@ class Conf{
 	 */
 	public static function memory_limit(int $memory_limit_size): void{
 		ini_set('memory_limit',($memory_limit_size > 0) ? $memory_limit_size.'M' : -1);
+	}
+
+
+	public static function call(string $key, ?string $interface, string $method, ...$args){
+		[$name, $key] = self::get_defined_class_key($key);		
+		$class = self::exists($name, $key) ? self::$value[$name][$key] : '';
+
+		if(!isset(self::$call_obj[$name][1][$key])){
+			self::$call_obj[$name][1][$key] = false;
+			
+			if(!empty($class)){
+				if(!isset(self::$call_obj[$name][0][$class])){
+					self::$call_obj[$name][0][$class] = (new \ReflectionClass($class))->newInstance();
+				}
+				if(!empty($interface) && !is_subclass_of(self::$call_obj[$name][0][$class], $interface)){
+					throw new \ebi\exception\NotImplementedException('does not implement');
+				}
+				self::$call_obj[$name][1][$key] = true;
+			}
+		}
+
+		if(!isset(self::$call_obj[$name][1][$key])){
+			return;
+		}
+		return call_user_func_array([self::$call_obj[$name][0][$class], $method], $args);
 	}
 }

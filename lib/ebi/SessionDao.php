@@ -5,7 +5,7 @@ namespace ebi;
  * @var text $data
  * @var int $expires
  */
-class SessionDao extends \ebi\Dao{
+class SessionDao extends \ebi\Dao implements \ebi\SessionHandler{
 	protected $id;
 	protected $data;
 	protected $expires;
@@ -59,4 +59,20 @@ class SessionDao extends \ebi\Dao{
 		}
 		return false;
 	}
+	/**
+	 * 初期処理
+	 * @param $path セッションを格納/取得するパス。
+	 * @param $name セッション名
+	 */
+	public function session_open(string $path, string $name): bool{
+		return true;
+	}
+
+	/**
+	 * writeが実行された後で実行される
+	 */
+	public function session_close(): bool{
+		return true;
+	}
+
 }

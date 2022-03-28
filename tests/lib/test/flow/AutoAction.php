@@ -2,8 +2,6 @@
 namespace test\flow;
 
 class AutoAction{
-	use \ebi\Plugin;
-	
 	/**
 	 * @automap
 	 */

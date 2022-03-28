@@ -2,8 +2,13 @@
 namespace ebi\flow;
 
 class Request extends \ebi\Request{
-	use \ebi\Plugin, \ebi\FlowPlugin;
-	
+	use \ebi\Plugin;
+
+	private $_selected_pattern = [];
+	private $_template = null;
+	private $_before_redirect;
+	private $_after_redirect;
+
 	private $sess;
 	private $login_id;
 	private $login_anon;
@@ -16,8 +21,120 @@ class Request extends \ebi\Request{
 		$this->sess = new \ebi\Session($sess_name);
 		$this->login_id = $sess_name.'_LOGIN_';
 		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
+	}	
+
+	/**
+	 * Flowが利用
+	 */
+	final public function set_pattern(array $selected_pattern): void{
+		$this->_selected_pattern = $selected_pattern;
+	}
+	/**
+	 * Flowにpluginをさす
+	 */
+	public function get_flow_plugins(): array{
+		return [];
 	}
 	
+	/**
+	 * action実行後にリダイレクトするURL
+	 */
+	public function set_after_redirect(string $url): void{
+		$this->_after_redirect = $url;
+	}
+	/**
+	 * Flowが利用
+	 */
+	final public function get_after_redirect(): ?string{
+		return $this->_after_redirect;
+	}
+	/**
+	 * action実行前にリダイレクトするURL
+	 */
+	public function set_before_redirect(string $url): void{
+		$this->_before_redirect = $url;
+	}
+	/**
+	 * Flowが利用
+	 */
+	final public function get_before_redirect(): ?string{
+		return $this->_before_redirect;
+	}	
+	
+	/**
+	 * マッチしたパターンを取得
+	 */
+	public function get_selected_pattern(): array{
+		return $this->_selected_pattern;
+	}
+
+	/**
+	 * Flowが利用
+	 */
+	final public function get_template(): ?string{
+		return $this->_template;
+	}
+	/**
+	 * テンプレートを上書きする
+	 */
+	public function set_template(string $template): void{
+		$this->_template = $template;
+	}
+	/**
+	 * mapに渡されたargsを取得する
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public function map_arg(string $name, ?string $default=null){
+		return (isset($this->_selected_pattern['args'][$name])) ? $this->_selected_pattern['args'][$name] : $default;
+	}
+
+	/**
+	 * リクエストのバリデーション
+	 */
+	protected function request_validation(array $doc_names=[]): array{
+		$doc_names = empty($doc_names) ? ['http_method','request'] : array_merge(['http_method','request'],$doc_names);
+		[,$method] = explode('::',$this->get_selected_pattern()['action']);
+		$ann = \ebi\Annotation::get_method(get_class($this), $method,$doc_names);
+		
+		if(isset($ann['http_method']['value']) && strtoupper($ann['http_method']['value']) != \ebi\Request::method()){
+			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
+		}
+		if(isset($ann['request'])){
+			foreach($ann['request'] as $k => $an){
+				if(isset($an['type'])){
+					if($an['type'] == 'file'){
+						if(isset($an['require']) && $an['require'] === true){
+							if(!$this->has_file($k)){
+								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'),$k);
+							}else{
+								if(isset($an['max'])){
+									$filesize = is_file($this->file_path($k)) ? filesize($this->file_path($k)) : 0;
+									
+									if($filesize <= 0 || ($filesize/1024/1024) > $an['max']){
+										\ebi\Exceptions::add(new \ebi\exception\MaxSizeExceededException($k.' exceeds maximum'),$k);
+									}
+								}
+							}
+						}
+					}else{
+						try{
+							\ebi\Validator::type($k,$this->in_vars($k),$an);
+						}catch(\ebi\exception\InvalidArgumentException $e){
+							\ebi\Exceptions::add($e,$k);
+						}
+						\ebi\Validator::value($k, $this->in_vars($k), $an);
+					}
+				}
+			}
+		}
+		\ebi\Exceptions::throw_over();
+		
+		return $ann;
+	}
+
+
+
 	/**
 	 * セッションにセットする
 	 * @param mixed $val
@@ -36,7 +153,7 @@ class Request extends \ebi\Request{
 	/**
 	 * セッションから削除する
 	 */
-	public function rm_sessions(...$args){
+	public function rm_sessions(...$args): void{
 		call_user_func_array([$this->sess,'rm_vars'], $args);
 	}
 	/**
@@ -68,13 +185,13 @@ class Request extends \ebi\Request{
 				$selected_pattern = $this->get_selected_pattern();
 				
 				if(array_key_exists('action',$selected_pattern) && strpos($selected_pattern['action'],'::do_login') === false){
-					if($this->has_object_plugin('before_login_redirect')){
-						/**
-						 * ログイン機能へのリダイレクト前処理
-						 * @param \ebi\flow\Request $arg1
-						 */
-						$this->call_object_plugin_funcs('before_login_redirect',$this);
+					if(!$this->is_user_logged_in()){
+						if(!($selected_pattern['unauthorized_redirect'] ?? true)){
+							\ebi\HttpHeader::send_status(401);
+							throw new \ebi\exception\UnauthorizedException('Unauthorized');
+						}
 					}
+
 					if(
 						strpos($selected_pattern['action'],'::do_login') === false &&
 						strpos($selected_pattern['action'],'::do_logout') === false
@@ -112,13 +229,14 @@ class Request extends \ebi\Request{
 		if(method_exists($this,'__before__')){
 			call_user_func([$this, '__before__']);
 		}
-		if($this->has_object_plugin('before_flow_action_request')){
-			/**
-			 * アクション前処理
-			 * @param \ebi\flow\Request $arg1
-			 */
-			$this->call_object_plugin_funcs('before_flow_action_request',$this);
-		}
+
+		$this->cors();
+
+// TODO
+// if($req->is_vars('callback')){
+// 	$this->callback = $req->in_vars('callback');
+// }
+
 	}
 	
 	/**
@@ -136,25 +254,9 @@ class Request extends \ebi\Request{
 		if(method_exists($this,'__after__')){
 			call_user_func([$this, '__after__']);
 		}
-		if($this->has_object_plugin('after_flow_action_request')){
-			/**
-			 * アクション後処理
-			 * @param \ebi\flow\Request $arg1
-			 */
-			$this->call_object_plugin_funcs('after_flow_action_request',$this);
-		}
-		if($this->has_object_plugin('get_after_vars_request')){
-			/**
-			 * アクションに連想配列を追加する
-			 * @return mixed{} 
-			 */
-			foreach($this->get_object_plugin_funcs('get_after_vars_request') as $o){
-				$rtn = self::call_func($o);
-				
-				if(is_array($rtn)){
-					$this->after_vars = array_merge($this->after_vars,$rtn);
-				}
-			}
+
+		if($this->is_vars('callback')){
+			$this->after_vars['callback'] = $this->in_vars('callback');
 		}
 	}
 	
@@ -228,7 +330,7 @@ class Request extends \ebi\Request{
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
 		}
 		$pattern = $this->get_selected_pattern();
-		
+
 		if(!$this->is_user_logged_in()){
 			/**
 			 * ログイン条件処理
@@ -273,17 +375,19 @@ class Request extends \ebi\Request{
 			}
 			if(empty($this->get_after_redirect())){
 				\ebi\HttpHeader::send_status(401);
-				
-				$rtp = '/resources/templates/';
-				$html = preg_replace('/^.+::/','',$pattern['action']).'.html';
+
+				$html = isset($pattern['action']) ? 
+					'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html' : '';
 				
 				if(!(
 					isset($pattern['template']) || 
 					(
 						isset($pattern['@']) && 
 						(
-							is_file($pattern['@'].$rtp.$html) ||
-							(isset($pattern['&']) && is_file(dirname($pattern['@'],$pattern['&']).$rtp.$html))
+							!empty($html) && (
+								is_file($pattern['@'].$html) ||
+								(isset($pattern['&']) && is_file(dirname($pattern['@'],$pattern['&']).$html))
+							)
 						)
 					)
 				)){
@@ -312,5 +416,51 @@ class Request extends \ebi\Request{
 	 */
 	public function noop(): array{
 		return $this->ar_vars();
+	}
+
+	private function cors(): void{
+		$request_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+		
+		if(!empty($request_origin)){
+			/**
+			 * @param string[] $cors_origin 許可するURL
+			 */
+			$origin = \ebi\Conf::get('cors_origin');
+			
+			/**
+			 * @param bool $cors_debug ORIGINを常に許可する
+			 */
+			if(empty($origin) && \ebi\Conf::get('cors_debug',false) === true){
+				$origin = [$request_origin];
+			}
+			if(!is_array($origin)){
+				$origin = [$origin];
+			}
+			if(in_array($request_origin, $origin)){
+				\ebi\HttpHeader::send('Access-Control-Allow-Origin', $request_origin);
+				\ebi\HttpHeader::send('Access-Control-Allow-Credentials','true');
+				
+				if(\ebi\Request::method() == 'OPTIONS' && $request_origin != '*'){
+					$request_method = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? '';
+					$request_header = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? '';
+			
+					/**
+					 * @param int $cors_max_age プリフライトの応答をキャッシュする秒数
+					 */
+					$max_age = (int)\ebi\Conf::get('cors_max_age',0);
+
+					if(!empty($request_method)){
+						\ebi\HttpHeader::send('Access-Control-Allow-Methods', $request_method);
+					}
+					if(!empty($request_header)){
+						\ebi\HttpHeader::send('Access-Control-Allow-Headers', $request_header);
+					}
+					if($max_age > 0){
+						\ebi\HttpHeader::send('Access-Control-Max-Age', $max_age);
+					}
+					exit;
+				}
+			}
+		}
 	}
 }

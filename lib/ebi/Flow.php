@@ -340,17 +340,19 @@ class Flow{
 					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
-						$traits = \ebi\Util::get_class_traits(get_class($ins));
-						
-						if($has_flow_plugin = in_array('ebi\\FlowPlugin',$traits)){
+
+						if($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class)){
+							$has_flow_plugin = true;
+
 							foreach($ins->get_flow_plugins() as $m){
 								$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
 								$plugins[] = $o;
 								self::set_class_plugin($o);
 							}
-							$ins->set_pattern($pattern);
-						}
-						if(in_array('ebi\\Plugin',$traits)){
+							$selected_pattern = array_merge($self_map, $pattern);
+							unset($selected_pattern['patterns'], $selected_pattern['plugins']);
+							$ins->set_pattern($selected_pattern);
+
 							foreach($plugins as $o){
 								$ins->set_object_plugin($o);
 							}
@@ -461,17 +463,15 @@ class Flow{
 				}catch(\Exception $exception){
 					\ebi\FlowInvalid::set($exception);
 					\ebi\Dao::rollback_all();
-					
-					/**
-					 * 例外発生時にコールバックするクラス(implement \ebi\FlowExceptionCallback)
-					 */
-					$exception_callback = \ebi\Conf::get('exception_callback');
-					if(!empty($exception_callback) && is_subclass_of($exception_callback, '\ebi\FlowExceptionCallback')){
-						if(!is_object($exception_callback)){
-							$exception_callback = (new \ReflectionClass($exception_callback))->newInstance();
-						}
-						$exception_callback->flow_exception_occurred($pathinfo, $pattern, $ins, $exception);
-					}
+					\ebi\Conf::call(
+						'exception_callback',
+						\ebi\FlowExceptionCallback::class, 
+						'flow_exception_occurred', 
+						$pathinfo, 
+						$pattern, 
+						$ins,
+						$exception
+					);
 
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
