@@ -334,7 +334,7 @@ class Flow{
 						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
 						(array_key_exists('plugins',$self_map) ? (is_array($self_map['plugins']) ? $self_map['plugins'] : [$self_map['plugins']]) : [])
 					) as $m){
-						$plugins[] = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();;
+						$plugins[] = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
 					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
