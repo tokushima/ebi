@@ -5,7 +5,6 @@ class Request extends \ebi\Request{
 	use \ebi\Plugin;
 
 	private $_selected_pattern = [];
-	private $_template = null;
 	private $_before_redirect;
 	private $_after_redirect;
 
@@ -61,28 +60,7 @@ class Request extends \ebi\Request{
 	public function get_selected_pattern(): array{
 		return $this->_selected_pattern;
 	}
-
-	/**
-	 * Flowが利用
-	 */
-	final public function get_template(): ?string{
-		return $this->_template;
-	}
-	/**
-	 * テンプレートを上書きする
-	 */
-	public function set_template(string $template): void{
-		$this->_template = $template;
-	}
-	/**
-	 * mapに渡されたargsを取得する
-	 * @param mixed $default
-	 * @return mixed
-	 */
-	public function map_arg(string $name, ?string $default=null){
-		return (isset($this->_selected_pattern['args'][$name])) ? $this->_selected_pattern['args'][$name] : $default;
-	}
-
+	
 	/**
 	 * リクエストのバリデーション
 	 */
@@ -158,7 +136,6 @@ class Request extends \ebi\Request{
 	}
 	/**
 	 * 前処理、入力値のバリデーションやログイン処理を行う
-	 * __before__メソッドを定義することで拡張する
 	 */
 	public function before(): void{
 		$annon = $this->request_validation(['user_role']);
@@ -220,10 +197,6 @@ class Request extends \ebi\Request{
 				}
 			}
 		}
-		if(method_exists($this,'__before__')){
-			call_user_func([$this, '__before__']);
-		}
-
 		$this->cors();
 	}
 	
@@ -236,13 +209,8 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * 後処理
-	 * __after__メソッドを定義することで拡張する
 	 */
 	public function after(): void{
-		if(method_exists($this,'__after__')){
-			call_user_func([$this, '__after__']);
-		}
-
 		if($this->is_vars('callback')){
 			$this->after_vars['callback'] = $this->in_vars('callback');
 		}

@@ -285,7 +285,7 @@ class Flow{
 				
 				$funcs = $class = $method = $template = $ins = null;
 				$exception = null;
-				$has_flow_plugin = false;
+				$is_flow_request = false;
 				$result_vars = $plugins = [];
 				$map_output = $self_map['output'] ?? 'json';
 				$accept_debug = (
@@ -338,10 +338,9 @@ class Flow{
 					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
+						$is_flow_request = ($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class));
 
-						if($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class)){
-							$has_flow_plugin = true;
-
+						if($is_flow_request){
 							$selected_pattern = array_merge($self_map, $pattern);
 							unset($selected_pattern['patterns'], $selected_pattern['plugins']);
 							$ins->set_pattern($selected_pattern);
@@ -350,9 +349,9 @@ class Flow{
 								$ins->set_object_plugin($o);
 							}
 						}
-						$funcs = [$ins,$method];
+						$funcs = [$ins, $method];
 					}
-					if($has_flow_plugin){
+					if($is_flow_request){
 						$ins->before();
 						$before_redirect = $ins->get_before_redirect();
 						
@@ -370,14 +369,10 @@ class Flow{
 						}catch(\Exception $exception){
 						}
 					}
-					if($has_flow_plugin){
+					if($is_flow_request){
 						$ins->after();
 						
-						$template = $ins->get_template();
-						if(!empty($template)){
-							$pattern['template'] = $template;
-						}
-						$result_vars = array_merge($result_vars,$ins->get_after_vars());
+						$result_vars = array_merge($result_vars, $ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
 						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
