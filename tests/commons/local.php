@@ -52,8 +52,3 @@
 	],
 ]);
 
-\ebi\Conf::set_class_plugin([
-	'test\flow\RequestFlow'=>['test\plugin\RequestPlugin'],
-]);
-
-
