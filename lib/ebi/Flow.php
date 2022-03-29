@@ -375,7 +375,7 @@ class Flow{
 						$result_vars = array_merge($result_vars, $ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
-						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
+						if(isset($after_redirect) && !array_key_exists('after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
 					}					
@@ -386,22 +386,8 @@ class Flow{
 					
 					if(!$accept_debug){
 						if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
-							if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
-								foreach($pattern['post_cond_after'] as $cak => $cav){
-									if(isset($result_vars[$cak])){
-										self::map_redirect($cav,$result_vars,$pattern);
-									}
-								}
-							}
 							if(array_key_exists('post_after',$pattern)){
 								self::map_redirect($pattern['post_after'],$result_vars,$pattern);
-							}
-						}
-						if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
-							foreach($pattern['cond_after'] as $cak => $cav){
-								if(isset($result_vars[$cak])){
-									self::map_redirect($cav,$result_vars,$pattern);
-								}
 							}
 						}
 						if(array_key_exists('after',$pattern)){

@@ -131,4 +131,21 @@ class AutoAction{
 	public function nosecure(){
 		
 	}
+
+	/**
+	 * @automap @['after'=>'after_a', 'post_after'=>'after_b']
+	 */
+	public function after(){
+	}
+
+	/**
+	 * @automap
+	 */
+	public function after_a(){
+	}
+	/**
+	 * @automap
+	 */
+	public function after_b(){
+	}
 }
