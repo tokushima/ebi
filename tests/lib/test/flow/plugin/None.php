@@ -3,7 +3,7 @@ namespace test\flow\plugin;
 /**
  * @author tokushima
  */
-class None{
+class NoneA{
 	/*
 	 * @plugin \ebi\Flow
 	 */

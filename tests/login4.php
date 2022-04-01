@@ -5,9 +5,7 @@ include_once('bootstrap.php');
  */
 \ebi\Flow::app([
 	'unauthorized_redirect'=>false,
-	'plugins'=>[
-		\test\flow\plugin\Login4::class,
-	],
+	'auth'=>\test\flow\plugin\Login4::class,
 	'patterns'=>[
 		'login_url'=>[
 			'name'=>'login',

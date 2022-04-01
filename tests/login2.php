@@ -4,7 +4,7 @@ include_once('bootstrap.php');
  * automapの場合はdo_loginにリダイレクトされる
  */
 \ebi\Flow::app([
-	'plugins'=>'test\flow\plugin\Login2',
+	'auth'=>\test\flow\plugin\Login2::class,
 	'patterns'=>[
 		'automap'=>[
 			'name'=>'automap_action',

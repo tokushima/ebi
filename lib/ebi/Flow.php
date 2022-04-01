@@ -2,8 +2,6 @@
 namespace ebi;
 
 class Flow{
-	use \ebi\Plugin;
-
 	private static $app_url;
 	private static $media_url;
 	private static $template_dir;
@@ -286,7 +284,7 @@ class Flow{
 				$funcs = $class = $method = $template = $ins = null;
 				$exception = null;
 				$is_flow_request = false;
-				$result_vars = $plugins = [];
+				$result_vars = [];
 				$map_output = $self_map['output'] ?? 'json';
 				$accept_debug = (
 					/**
@@ -330,34 +328,22 @@ class Flow{
 						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
 					
-					foreach(array_merge(
-						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
-						(array_key_exists('plugins',$self_map) ? (is_array($self_map['plugins']) ? $self_map['plugins'] : [$self_map['plugins']]) : [])
-					) as $m){
-						$plugins[] = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
-					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
 						$is_flow_request = ($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class));
 
 						if($is_flow_request){
-							$selected_pattern = array_merge($self_map, $pattern);
-							unset($selected_pattern['patterns'], $selected_pattern['plugins']);
+							$selected_pattern = array_merge($pattern, $self_map);
+							unset($selected_pattern['patterns']);
 							$ins->set_pattern($selected_pattern);
-
-							foreach($plugins as $o){
-								$ins->set_object_plugin($o);
-							}
+							$ins->before();
+							$before_redirect = $ins->get_before_redirect();
+							
+							if(isset($before_redirect)){
+								self::map_redirect($before_redirect,$result_vars,$pattern);
+							}							
 						}
 						$funcs = [$ins, $method];
-					}
-					if($is_flow_request){
-						$ins->before();
-						$before_redirect = $ins->get_before_redirect();
-						
-						if(isset($before_redirect)){
-							self::map_redirect($before_redirect,$result_vars,$pattern);
-						}
 					}
 					if(isset($funcs)){
 						try{
@@ -542,7 +528,7 @@ class Flow{
 	
 	private static function expand_patterns(string $pk, array $patterns, array $extends, int &$automap_idx): array{
 		$result = [];
-		$ext_arr = ['plugins'=>[],'vars'=>[]];
+		$ext_arr = ['vars'=>[]];
 		
 		foreach($ext_arr as $k =>$v){
 			if(array_key_exists($k,$extends)){

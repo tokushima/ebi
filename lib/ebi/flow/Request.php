@@ -2,11 +2,10 @@
 namespace ebi\flow;
 
 class Request extends \ebi\Request{
-	use \ebi\Plugin;
-
 	private $_selected_pattern = [];
 	private $_before_redirect;
 	private $_after_redirect;
+	private $_auth;
 
 	private $sess;
 	private $login_id;
@@ -134,45 +133,46 @@ class Request extends \ebi\Request{
 	public function is_sessions(string $n): bool{
 		return $this->sess->is_vars($n);
 	}
+
 	/**
 	 * 前処理、入力値のバリデーションやログイン処理を行う
 	 */
 	public function before(): void{
 		$annon = $this->request_validation(['user_role']);
-		
-		if(!$this->is_user_logged_in()){
-			if($this->has_object_plugin('remember_me')){
-				/**
-				 * remember meの条件処理
-				 * @param \ebi\flow\Request $arg1
-				 * @return bool ログイン成功時にはtrueを返す
-				 */
-				if($this->call_object_plugin_funcs('remember_me',$this) === true){
-					$this->after_user_login();
-				}
+
+		if(isset($this->_selected_pattern['auth'])){
+			$auth_ref = new \ReflectionClass($this->_selected_pattern['auth']);
+			$this->_auth = $auth_ref->newInstance();
+
+			if(!($this->_auth instanceof \ebi\flow\AuthenticationHandler)){
+				throw new \ebi\exception\NotImplementedException();
 			}
-			
-			if(!$this->is_user_logged_in() && (isset($this->login_anon) || $this->has_object_plugin('login_condition'))){
-				$selected_pattern = $this->get_selected_pattern();
-				
-				if(array_key_exists('action',$selected_pattern) && strpos($selected_pattern['action'],'::do_login') === false){
+		}
+
+		if(!$this->is_user_logged_in()){
+			if(isset($this->_auth) && $this->_auth->remember_me($this) === true){
+				$this->after_user_login();
+			}
+			if(!$this->is_user_logged_in() && (isset($this->login_anon) || isset($this->_auth))){
+				if(
+					isset($this->_selected_pattern['action']) && 
+					strpos($this->_selected_pattern['action'],'::do_login') === false
+				){
 					if(!$this->is_user_logged_in()){
-						if(!($selected_pattern['unauthorized_redirect'] ?? true)){
+						if(!($this->_selected_pattern['unauthorized_redirect'] ?? true)){
 							\ebi\HttpHeader::send_status(401);
 							throw new \ebi\exception\UnauthorizedException('Unauthorized');
 						}
 					}
-
 					if(
-						strpos($selected_pattern['action'],'::do_login') === false &&
-						strpos($selected_pattern['action'],'::do_logout') === false
+						strpos($this->_selected_pattern['action'],'::do_login') === false &&
+						strpos($this->_selected_pattern['action'],'::do_logout') === false
 					){
 						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					}
-					$req = new \ebi\Request();
-					$this->sess->vars(__CLASS__.'_login_vars',[time(),$req->ar_vars()]);
+					$this->sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
 					
-					if(array_key_exists('@',$selected_pattern)){
+					if(array_key_exists('@',$this->_selected_pattern)){
 						$this->set_before_redirect('do_login');
 					}else{
 						$this->set_before_redirect('login');
@@ -180,7 +180,7 @@ class Request extends \ebi\Request{
 				}
 			}
 		}
-		
+
 		if($this->is_user_logged_in()){
 			if(isset($this->login_anon['type']) && !($this->user() instanceof $this->login_anon['type'])){
 				\ebi\HttpHeader::send_status(401);
@@ -285,64 +285,46 @@ class Request extends \ebi\Request{
 			}
 			$this->sess->rm_vars(__CLASS__.'_login_vars');
 		}
-		$pattern = $this->get_selected_pattern();
 
-		if(!$this->is_user_logged_in()){
-			/**
-			 * ログイン条件処理
-			 * @param \ebi\flow\Request $arg1
-			 * @return bool ログイン成功時にはtrueを返す
-			 */
-			if($this->call_object_plugin_func('login_condition',$this) === true){
-				$this->after_user_login();
-			}
+		if(
+			isset($this->_auth) &&
+			!$this->is_user_logged_in() &&
+			$this->_auth->login_condition($this) === true
+		){ 
+			$this->after_user_login();
 		}
-		$rtn_vars = ['login'=>$this->is_user_logged_in()];
-		
+		$rtn_vars = [];
 		if($this->is_user_logged_in()){
-			/**
-			 * ログイン後またはログイン済みの場合の後処理
-			 * @param \ebi\flow\Request $arg1
-			 */
-			$this->call_object_plugin_funcs('after_login',$this);
-			
+			if(isset($this->_auth)){
+				$this->_auth->after_login($this);
+				$rtn_vars = $this->_auth->get_after_vars_login($this);
+			}
 			$logged_in_redirect_to = $this->in_sessions('logged_in_redirect_to');
 			$this->rm_sessions('logged_in_redirect_to');
 			
-			if(isset($pattern['logged_in_after'])){
-				$logged_in_redirect_to = $pattern['logged_in_after'];
+			if(isset($this->_selected_pattern['logged_in_after'])){
+				$logged_in_redirect_to = $this->_selected_pattern['logged_in_after'];
 			}
 			if(empty($this->get_after_redirect()) && !empty($logged_in_redirect_to)){
 				$this->set_after_redirect($logged_in_redirect_to);
 			}
-			
-			/**
-			 * ログイン処理後にアクションに連想配列を追加する
-			 * @param \ebi\flow\Request $arg1
-			 */
-			$vars = $this->call_object_plugin_funcs('get_after_vars_login',$this);
-			
-			if(!empty($vars) && is_array($vars)){
-				$rtn_vars = array_merge($rtn_vars,$vars);
-			}
 		}else{
-			if(array_key_exists('after',$pattern)){
-				$this->set_after_redirect($pattern['after']);
+			if(array_key_exists('after',$this->_selected_pattern)){
+				$this->set_after_redirect($this->_selected_pattern['after']);
 			}
 			if(empty($this->get_after_redirect())){
 				\ebi\HttpHeader::send_status(401);
 
-				$html = isset($pattern['action']) ? 
-					'/resources/templates/'.preg_replace('/^.+::/','',$pattern['action']).'.html' : '';
-				
+				$html = isset($this->_selected_pattern['action']) ? 
+					'/resources/templates/'.preg_replace('/^.+::/','',$this->_selected_pattern['action']).'.html' : '';
 				if(!(
-					isset($pattern['template']) || 
+					isset($this->_selected_pattern['template']) || 
 					(
-						isset($pattern['@']) && 
+						isset($this->_selected_pattern['@']) && 
 						(
 							!empty($html) && (
-								is_file($pattern['@'].$html) ||
-								(isset($pattern['&']) && is_file(dirname($pattern['@'],$pattern['&']).$html))
+								is_file($this->_selected_pattern['@'].$html) ||
+								(isset($this->_selected_pattern['&']) && is_file(dirname($this->_selected_pattern['@'],$this->_selected_pattern['&']).$html))
 							)
 						)
 					)
@@ -357,11 +339,15 @@ class Request extends \ebi\Request{
 	 * ログアウト
 	 */
 	public function do_logout(): void{
-		/**
-		 * ログアウトの前処理
-		 * @param \ebi\flow\Request $arg1
-		 */
-		$this->call_object_plugin_funcs('before_logout',$this);
+		if($this->_auth instanceof \ebi\flow\AuthenticationHandler){
+			$vars = $this->_auth->before_logout($this);
+		}
+
+		// /**
+		//  * ログアウトの前処理
+		//  * @param \ebi\flow\Request $arg1
+		//  */
+		// $this->call_object_plugin_funcs('before_logout',$this);
 		
 		$this->rm_sessions($this->login_id.'USER');
 		$this->rm_sessions($this->login_id);
