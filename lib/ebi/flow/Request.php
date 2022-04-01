@@ -7,18 +7,18 @@ class Request extends \ebi\Request{
 	private $_after_redirect;
 	private $_auth;
 
-	private $sess;
-	private $login_id;
-	private $login_anon;
-	private $after_vars = [];
+	private $_sess;
+	private $_login_id;
+	private $_login_anon;
+	private $_after_vars = [];
 	
 	public function __construct(){
 		parent::__construct();
 		$sess_name = md5(\ebi\Flow::workgroup());
 		
-		$this->sess = new \ebi\Session($sess_name);
-		$this->login_id = $sess_name.'_LOGIN_';
-		$this->login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
+		$this->_sess = new \ebi\Session($sess_name);
+		$this->_login_id = $sess_name.'_LOGIN_';
+		$this->_login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
 	}	
 
 	/**
@@ -111,7 +111,7 @@ class Request extends \ebi\Request{
 	 * @param mixed $val
 	 */
 	public function sessions(string $key, $val): void{
-		$this->sess->vars($key,$val);
+		$this->_sess->vars($key,$val);
 	}
 	/**
 	 * セッションから取得する
@@ -119,19 +119,19 @@ class Request extends \ebi\Request{
 	 * @return mixed
 	 */
 	public function in_sessions(string $n, $d=null){
-		return $this->sess->in_vars($n,$d);
+		return $this->_sess->in_vars($n,$d);
 	}
 	/**
 	 * セッションから削除する
 	 */
 	public function rm_sessions(...$args): void{
-		call_user_func_array([$this->sess,'rm_vars'], $args);
+		call_user_func_array([$this->_sess,'rm_vars'], $args);
 	}
 	/**
 	 * 指定のキーが存在するか
 	 */
 	public function is_sessions(string $n): bool{
-		return $this->sess->is_vars($n);
+		return $this->_sess->is_vars($n);
 	}
 
 	/**
@@ -153,7 +153,7 @@ class Request extends \ebi\Request{
 			if(isset($this->_auth) && $this->_auth->remember_me($this) === true){
 				$this->after_user_login();
 			}
-			if(!$this->is_user_logged_in() && (isset($this->login_anon) || isset($this->_auth))){
+			if(!$this->is_user_logged_in() && (isset($this->_login_anon) || isset($this->_auth))){
 				if(
 					isset($this->_selected_pattern['action']) && 
 					strpos($this->_selected_pattern['action'],'::do_login') === false
@@ -170,7 +170,7 @@ class Request extends \ebi\Request{
 					){
 						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					}
-					$this->sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
+					$this->_sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
 					
 					if(array_key_exists('@',$this->_selected_pattern)){
 						$this->set_before_redirect('do_login');
@@ -182,14 +182,14 @@ class Request extends \ebi\Request{
 		}
 
 		if($this->is_user_logged_in()){
-			if(isset($this->login_anon['type']) && !($this->user() instanceof $this->login_anon['type'])){
+			if(isset($this->_login_anon['type']) && !($this->user() instanceof $this->_login_anon['type'])){
 				\ebi\HttpHeader::send_status(401);
 				throw new \ebi\exception\UnauthorizedException();
 			}
-			if(isset($annon['user_role']) || isset($this->login_anon['user_role'])){
+			if(isset($annon['user_role']) || isset($this->_login_anon['user_role'])){
 				if(
 					!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) ||
-					(isset($this->login_anon['user_role']) && !in_array($this->login_anon['user_role'],$this->user()->get_role())) ||
+					(isset($this->_login_anon['user_role']) && !in_array($this->_login_anon['user_role'],$this->user()->get_role())) ||
 					(isset($annon['user_role']['value']) && !in_array($annon['user_role']['value'],$this->user()->get_role()))
 				){
 					\ebi\HttpHeader::send_status(403);
@@ -212,7 +212,7 @@ class Request extends \ebi\Request{
 	 */
 	public function after(): void{
 		if($this->is_vars('callback')){
-			$this->after_vars['callback'] = $this->in_vars('callback');
+			$this->_after_vars['callback'] = $this->in_vars('callback');
 		}
 	}
 	
@@ -222,7 +222,7 @@ class Request extends \ebi\Request{
 	 * @compatibility
 	 */
 	public function get_after_vars(){
-		return $this->after_vars;
+		return $this->_after_vars;
 	}
 	
 	/**
@@ -233,12 +233,12 @@ class Request extends \ebi\Request{
 		if(func_num_args() > 0){
 			$user = func_get_arg(0);
 			
-			if(isset($this->login_anon['type']) && !($user instanceof $this->login_anon['type'])){
+			if(isset($this->_login_anon['type']) && !($user instanceof $this->_login_anon['type'])){
 				throw new \ebi\exception\IllegalDataTypeException();
 			}
-			$this->sessions($this->login_id.'USER', $user);
+			$this->sessions($this->_login_id.'USER', $user);
 		}
-		return $this->in_sessions($this->login_id.'USER');
+		return $this->in_sessions($this->_login_id.'USER');
 	}
 	
 	/**
@@ -254,28 +254,28 @@ class Request extends \ebi\Request{
 	 * ログインセッション識別子
 	 */
 	public function user_login_session_id(): string{
-		return $this->login_id;
+		return $this->_login_id;
 	}
 	/**
 	 * ログイン済みか
 	 */
 	public function is_user_logged_in(): bool{
-		return ($this->in_sessions($this->login_id) !== null);
+		return ($this->in_sessions($this->_login_id) !== null);
 	}
 	
 	/**
 	 * ログイン完了処理
 	 */
 	private function after_user_login(): void{
-		$this->sessions($this->login_id,$this->login_id);
+		$this->sessions($this->_login_id,$this->_login_id);
 		session_regenerate_id(true);
 	}
 	/**
 	 * ログイン処理
 	 */
 	public function do_login(): array{
-		if($this->sess->is_vars(__CLASS__.'_login_vars')){
-			$data = $this->sess->in_vars(__CLASS__.'_login_vars');
+		if($this->_sess->is_vars(__CLASS__.'_login_vars')){
+			$data = $this->_sess->in_vars(__CLASS__.'_login_vars');
 			if(($data[0] + 5) > time()){
 				foreach($data[1] as $k => $v){
 					if(!$this->is_vars($k)){
@@ -283,7 +283,7 @@ class Request extends \ebi\Request{
 					}
 				}
 			}
-			$this->sess->rm_vars(__CLASS__.'_login_vars');
+			$this->_sess->rm_vars(__CLASS__.'_login_vars');
 		}
 
 		if(
@@ -342,15 +342,9 @@ class Request extends \ebi\Request{
 		if($this->_auth instanceof \ebi\flow\AuthenticationHandler){
 			$vars = $this->_auth->before_logout($this);
 		}
-
-		// /**
-		//  * ログアウトの前処理
-		//  * @param \ebi\flow\Request $arg1
-		//  */
-		// $this->call_object_plugin_funcs('before_logout',$this);
 		
-		$this->rm_sessions($this->login_id.'USER');
-		$this->rm_sessions($this->login_id);
+		$this->rm_sessions($this->_login_id.'USER');
+		$this->rm_sessions($this->_login_id);
 		session_regenerate_id(true);
 	}
 	/**
