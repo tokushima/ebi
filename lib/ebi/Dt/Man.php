@@ -77,10 +77,6 @@ class Man{
 						$method_info->name($method->getName());
 						
 						$method_document = self::get_method_document($method);
-						
-						if(preg_match("/@plugin\s+([^\s]+)/",$method_document,$m)){
-							$method_info->set_opt('plugin_caller', trim($m[1]));
-						}
 						$method_document = self::find_merge_deprecate($method_info,$method_document);
 						
 						[$summary] = explode(PHP_EOL,trim(preg_replace('/@.+/','',$method_document)));
@@ -407,9 +403,6 @@ class Man{
 			$info->set_opt('method',$ref->getName());
 			$info->set_opt('see_list',self::find_see($document));
 			
-			if(preg_match("/@plugin\s+([^\s]+)/",$document,$m)){
-				$info->set_opt('plugin_caller',trim($m[1]));
-			}
 			if(!$info->is_version()){
 				$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 			}

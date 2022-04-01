@@ -88,13 +88,7 @@ class AutoAction{
 		 * @real auto_action_send.xml
 		 */
 		$mail->send_template(sprintf('auto_action_%s.xml','send'),$vars);
-		
-		/**
-		 * メソッド　プラグイン
-		 * @param string $address
-		 */
-		self::call_class_plugin_funcs('plguin_auto_action_ghi',$address);
-		
+				
 		return [
 			'aaaa'=>'ghi',
 			'bbbb'=>1234,
