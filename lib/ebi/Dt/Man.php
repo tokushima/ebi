@@ -154,7 +154,7 @@ class Man{
 					// 呼び出しが重複したら先にドキュメントがあった方
 					if(!array_key_exists($v[0],$config_list) || !$config_list[$v[0]]->has_params()){
 						$conf_info = \ebi\Dt\DocInfo::parse($v[0],$src,$m[0][$k][1]);
-						$conf_info->set_opt('def',\ebi\Conf::exists($r->getName(),$v[0]));
+						$conf_info->set_opt('def',\ebi\Conf::defined($r->getName().'@'.$v[0]));
 						
 						if(!$conf_info->has_params()){
 							$conf_info->add_params(new \ebi\Dt\DocParam('val',$default_type));
@@ -166,50 +166,6 @@ class Man{
 		}
 		ksort($config_list);
 		$info->set_opt('config_list',$config_list);
-		
-		$call_plugins = [];
-		foreach([
-			"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
-			"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
-			"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
-			"/->call_object_plugin_func\(([\"\'])(.+?)\\1/",
-			"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",
-		] as $preg){
-			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
-				foreach($m[2] as $k => $v){
-					if(!isset($call_plugins[$v[0]]) || empty(trim($call_plugins[$v[0]]->document()))){
-						$call_plugins[$v[0]] = \ebi\Dt\DocInfo::parse($v[0], $src, $m[0][$k][1]);
-						$call_plugins[$v[0]]->set_opt('added',[]);
-					}
-				}
-			}
-		}
-		$traits = [];
-		$parent = new \ReflectionClass($r->getName());
-		do{
-			$traits = array_merge($traits,$parent->getTraitNames());
-			if(($parent = $parent->getParentClass()) === false){
-				break;
-			}
-		}while(true);
-		
-		if(in_array('ebi\\Plugin',$traits)){
-			foreach(\ebi\Conf::get_class_plugin($r->getName()) as $o){
-				$pr = new \ReflectionClass(is_object($o) ? get_class($o) : $o);
-				
-				foreach($pr->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
-					foreach(array_keys($call_plugins) as $method_name){
-						if($m->getName() == $method_name){
-							$added = $call_plugins[$method_name]->opt('added');
-							$added[] = $pr->getName();
-							$call_plugins[$method_name]->set_opt('added',$added);
-						}
-					}
-				}
-			}
-			ksort($call_plugins);
-		}
-		$info->set_opt('call_plugins',$call_plugins);
 		
 		return $info;
 	}
@@ -467,44 +423,10 @@ class Man{
 					(strpos($src,'!$this->is_post()') === false)
 				) ? ' POST' : null);
 			}
-			
-			$call_plugins = $plugins = [];
-			$throws = $mail_list = [];
-			
-			if($detail){
-				foreach([
-					"/->get_object_plugin_funcs\(([\"\'])(.+?)\\1/",
-					"/->call_object_plugin_funcs\(([\"\'])(.+?)\\1/",
-					"/::call_class_plugin_funcs\(([\"\'])(.+?)\\1/",
-					"/->call_object_plugin_func\(([\"\'])(.+?)\\1/",
-					"/::call_class_plugin_func\(([\"\'])(.+?)\\1/",
-				] as $preg){
-					if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
-						foreach($m[2] as $k => $v){
-							$plugins[$v[0]] = true;
-						}
-					}
-				}
-				$class_info = self::class_info($ref->getDeclaringClass()->getName());
-				$class_plugins = $class_info->opt('call_plugins');
-				
-				foreach(array_keys($plugins) as $plugin_method_name){
-					if(array_key_exists($plugin_method_name, $class_plugins)){
-						$call_plugins[$class_plugins[$plugin_method_name]->opt('class').'::'.$plugin_method_name] = $class_plugins[$plugin_method_name];
-					}
-				}
-			}
-			$info->set_opt('call_plugins',$call_plugins);
-			
+			$throws = $mail_list = [];	
 			if($deep){
 				$use_method_list = self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName());
 				$use_method_list = array_merge($use_method_list,[$method_fullname]);
-				
-				foreach($call_plugins as $plugin_info){
-					foreach($plugin_info->opt('added') as $class_name){
-						$use_method_list[] = $class_name.'::'.$plugin_info->name();
-					}
-				}
 			}else{
 				$use_method_list = [$method_fullname];
 			}

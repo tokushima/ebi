@@ -158,34 +158,7 @@ class Dt extends \ebi\flow\Request{
 								}
 							}catch(\ReflectionException $e){
 							}
-						}
-						
-						// ログイン プラグイン情報をマージ
-						foreach($info->opt('call_plugins') as $plugin){
-							if($plugin->name() == 'login_condition'){
-								foreach(array_merge(($m['plugins'] ?? []),($map['plugins'] ?? [])) as $map_plugin){
-									$plugin_class = \ebi\Util::get_class_name($map_plugin);
-									$ref = new \ReflectionClass($plugin_class);
-									$document = trim(preg_replace('/\n*@.+/','',PHP_EOL.\ebi\Dt\Man::trim_doc($ref->getDocComment())));
-									$info->document(trim($info->document().PHP_EOL.$document));
-									
-									foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
-										if($method->getName() == 'login_condition' || $method->getName() == 'get_after_vars_login'){
-											$login_method = \ebi\Dt\Man::method_info($plugin_class,$method->getName());
-											
-											if($login_method->has_opt('http_method')){
-												$info->set_opt('http_method',$login_method->opt('http_method'));
-											}
-											foreach(['requests','contexts'] as $k){
-												$info->set_opt($k,array_merge($login_method->opt($k),$info->opt($k)));
-											}
-										}
-									}
-									break;
-								}
-								break;
-							}
-						}
+						}						
 					}
 				}else{
 					$info = new \ebi\Dt\DocInfo();
@@ -323,46 +296,7 @@ class Dt extends \ebi\flow\Request{
 			'class_info_list'=>$list,
 		];
 	}
-		
-	/**
-	 * Plugins
-	 * @automap
-	 */
-	public function plugin_list(){
-		$list = [];
-		
-		foreach(self::classes() as $class){
-			$class_info = \ebi\Dt\Man::class_info($class['class']);
-			
-			if($class_info->has_opt('call_plugins')){
-				$list[$class_info->name()] = $class_info;
-			}
-		}
-		ksort($list);
-		
-		return [
-			'class_info_list'=>$list,
-		];
-	}
-	/**
-	 * @automap
-	 */
-	public function plugin_doc($class,$plugin){
-		$class_info = \ebi\Dt\Man::class_info($class);
-		$plugins = $class_info->opt('call_plugins');
-
-		if(!empty($plugins)){
-			foreach($plugins as $p){
-				if($p->name() == $plugin){
-					return [
-						'plugin_info'=>$p,
-						'class_info'=>$class_info,
-					];
-				}
-			}
-		}
-		throw new \ebi\exception\NotFoundException($plugin.' not found');
-	}
+	
 	private function test_path(){
 		/**
 		 * @param string $val Test path root

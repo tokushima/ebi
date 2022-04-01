@@ -3,7 +3,6 @@ namespace ebi;
 
 class Conf{
 	private static $value = [self::class=>[]];
-	private static $plugins = [];
 	private static $call_obj = [];
 	
 	private static function get_defined_class_key(string $key): array{
@@ -102,38 +101,6 @@ class Conf{
 		return $result_vars;
 	}
 	
-	/**
-	 * Pluginに遅延セットする
-	 * @param mixed $class_name (string|array)
-	 */
-	public static function set_class_plugin($class_name, array $plugin_class_names=[]): void{
-		if(is_array($class_name)){
-			foreach($class_name as $c => $v){
-				static::set_class_plugin($c,$v);
-			}
-		}else if(!empty($plugin_class_names)){
-			if(!is_array($plugin_class_names)){
-				$plugin_class_names = [$plugin_class_names];
-			}
-			foreach($plugin_class_names as $plugin_class_name){
-				self::$plugins[$class_name][] = $plugin_class_name;
-			}
-		}
-	}
-
-	/**
-	 * Pluginに遅延セットされたオブジェクトを返す
-	 */
-	public static function get_class_plugin(string $class_name): array{
-		$rtn = [];
-	
-		if(isset(self::$plugins[$class_name])){
-			$rtn = self::$plugins[$class_name];
-			unset(self::$plugins[$class_name]);
-		}
-		return $rtn;
-	}
-
 	/**
 	 * @param mixed $default
 	 * @return mixed

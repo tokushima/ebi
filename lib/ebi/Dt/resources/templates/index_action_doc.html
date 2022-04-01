@@ -287,38 +287,6 @@
 </rt:if>
 
 
-
-<rt:if param="{$action_info.opt('call_plugins')}">
-<div class="card border-secondary mb-3">
-	<div class="card-header text-white bg-secondary">Plugins</div>
-	<div class="card-body text-secondary">
-		<table rt:param="{$action_info.opt('call_plugins')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
-		<tr>
-			<td class="cell-1">
-				<a href="{$t.package_method_url('plugin_doc',$action_info.opt('class'),$info.name())}">
-					{$info.name()}
-				</a>
-			</td>
-			
-			<td class="cell-2">
-				{$t.html($info.summary(),200,1)}
-			</td>
-			<td>
-				<rt:loop param="{$info.opt('added')}" var="class_name">
-					<div>
-						<a href="{$t.package_method_url('class_method_doc',$class_name,$info.name())}">
-							{$class_name}
-						</a>
-					</div>
-				</rt:loop>
-			</td>
-		</tr>
-		</table>
-	</div>
-</div>
-</rt:if>
-
-
 <rt:if param="{$action_info.opt('test_list')}">
 <div class="card border-secondary mb-3">
 	<div class="card-header bg-light">Tests</div>
