@@ -11,9 +11,6 @@ class Paginator implements \IteratorAggregate{
 	private $total;
 	private $first;
 	private $last;
-	private $contents = [];
-	private $dynamic = false;
-	private $tmp = [null,null,[],null,false];
 
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator([
@@ -45,7 +42,7 @@ class Paginator implements \IteratorAggregate{
 	 * @return mixed
 	 */
 	public function current(?int $value=null){
-		if(isset($value) && !$this->dynamic){
+		if(isset($value)){
 			$value = intval($value);
 			$this->current = ($value === 0) ? 1 : $value;
 			$this->offset = $this->limit * round(abs($this->current - 1));
@@ -86,7 +83,7 @@ class Paginator implements \IteratorAggregate{
 	 * 合計
 	 */
 	public function total(?int $value=null): int{
-		if(isset($value) && !$this->dynamic){
+		if(isset($value)){
 			$this->total = intval($value);
 			$this->first = 1;
 			$this->last = ($this->total == 0 || $this->limit == 0) ? 0 : intval(ceil($this->total / $this->limit));
@@ -116,44 +113,6 @@ class Paginator implements \IteratorAggregate{
 	 */
 	public function is_last(int $page): bool{
 		return ($this->which_last($page) !== $this->last());
-	}
-	/**
-	 * 動的コンテンツのPaginatorか
-	 * @return bool
-	 * @deprecated
-	 */
-	public function is_dynamic(): bool{
-		return $this->dynamic;
-	}
-	/**
-	 * コンテンツ
-	 * @param mixed $mixed
-	 * @deprecated
-	 */
-	public function contents($mixed=null): array{
-		if(isset($mixed)){
-			if($this->dynamic){
-				if(!$this->tmp[4] && $this->current == (isset($this->tmp[3]) ? (isset($mixed[$this->tmp[3]]) ? $mixed[$this->tmp[3]] : null) : $mixed)) $this->tmp[4] = true;
-				if($this->tmp[4]){
-					if($this->tmp[0] === null && ($size=sizeof($this->contents)) <= $this->limit){
-						if(($size+1) > $this->limit){
-							$this->tmp[0] = $mixed;
-						}else{
-							$this->contents[] = $mixed;
-						}
-					}
-				}else{
-					if(sizeof($this->tmp[2]) >= $this->limit) array_shift($this->tmp[2]);
-					$this->tmp[2][] = $mixed;
-				}
-			}else{
-				$this->total($this->total+1);
-				if($this->page_first() <= $this->total && $this->total <= ($this->offset + $this->limit)){
-					$this->contents[] = $mixed;
-				}
-			}
-		}
-		return $this->contents;
 	}
 
 	/**
@@ -278,15 +237,6 @@ class Paginator implements \IteratorAggregate{
 		return http_build_query($vars);
 	}
 	
-	/**
-	 * コンテンツを追加する
-	 * @param mixed $mixed
-	 * @deprecated
-	 */
-	public function add($mixed): bool{
-		$this->contents($mixed);
-		return (sizeof($this->contents) <= $this->limit);
-	}
 	/**
 	 * 現在のページの最初の位置
 	 */
