@@ -308,15 +308,8 @@ class Conf{
 		[$class_name, $key] = self::get_defined_class_key($key);
 		return self::exists($class_name,$key);
 	}
-	public static function set_handler(array $set_handler): void{
-		foreach($set_handler as $class_name => $handler){
-			self::$value[$class_name]['handler'] = $handler;
-		}
-	}
-	/**
-	 * handlerが登録されていたら実行する
-	 */
-	public static function call(string $method, ...$args){
+
+	public static function handle(string $method, ...$args){
 		$key = 'handler';
 		[$name, $key] = self::get_defined_class_key($key);
 		$class = self::exists($name, $key) ? self::$value[$name][$key] : '';

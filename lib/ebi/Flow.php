@@ -423,7 +423,7 @@ class Flow{
 				}catch(\Exception $exception){
 					\ebi\FlowInvalid::set($exception);
 					\ebi\Dao::rollback_all();
-					\ebi\Conf::call(
+					\ebi\Conf::handle(
 						'flow_exception_occurred', 
 						$pathinfo, 
 						$pattern, 
