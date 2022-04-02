@@ -8,15 +8,11 @@ include_once('bootstrap.php');
 			'name'=>'login',
 			'action'=>'ebi\flow\Request::do_login',
 			'logged_in_after'=>'aaa',
-			'auth'=>\test\flow\plugin\Login2::class,
+			// 'auth'=>\test\flow\plugin\Login2::class,
 		],
 		'logout_url'=>[
 			'name'=>'logout',
 			'action'=>'ebi\flow\Request::do_logout',
-		],
-		'not_user_perm'=>[
-			'name'=>'not_user_perm',
-			'action'=>'test\flow\LoginRequestAction1::not_user_perm',
 		],
 		'aaa'=>[
 			'name'=>'aaa',

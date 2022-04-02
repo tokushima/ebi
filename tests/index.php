@@ -44,7 +44,6 @@ include_once('bootstrap.php');
 		'output'=>'xml',
 	],
 		
-	'helper/range'=>['name'=>'helper_range','template'=>'helper/range.html','vars'=>['max'=>5]],
 	'raise'=>['name'=>'raise','action'=>'test\flow\Action::raise'],
 	'raise/template'=>['name'=>'raise_template','action'=>'test\flow\Action::raise','error_template'=>'exceptions.html'],
 	'raise/template/parent'=>['name'=>'raise_template_parent','action'=>'test\flow\Action::raise','error_template'=>'exceptions_parent.html'],
@@ -55,24 +54,6 @@ include_once('bootstrap.php');
 	
 		
 	'model_list'=>['name'=>'model_list','action'=>'test\flow\Sample::model_list'],
-		
-	'html_filter'=>[
-		'name'=>'html_filter',
-		'template'=>'html_filter.html',
-		'vars'=>[
-			'aaa'=>'hogehoge',
-			'ttt'=>'<tag>ttt</tag>',
-			'bbb'=>'hoge',
-			'XYZ'=>'B',
-			'xyz'=>['A'=>'456','B'=>'789','C'=>'010'],
-			'ddd'=>['456','789'],
-			'eee'=>true,
-			'fff'=>false,
-	
-			'ppp'=>'PPPPP',
-			'qqq'=>'<tag>QQQ</tag>',
-		],
-	],
 	'log'=>[
 		'name'=>'log',
 		'action'=>'test\flow\Action::log',
@@ -146,9 +127,6 @@ include_once('bootstrap.php');
 	],
 	'browser_form'=>[
 		'name'=>'browser_form',
-		'vars'=>[
-			
-		],
 		'template'=>'browser_form.html',
 	],
 	'deprecated/method'=>[

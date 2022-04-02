@@ -318,12 +318,6 @@ class Flow{
 					if(array_key_exists('output',$pattern)){
 						$map_output = $pattern['output'];
 					}
-					if(array_key_exists('vars',$self_map) && is_array($self_map['vars'])){
-						$result_vars = $self_map['vars'];
-					}
-					if(array_key_exists('vars',$pattern) && is_array($pattern['vars'])){
-						$result_vars =  array_merge($result_vars,$pattern['vars']);
-					}
 					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
@@ -333,10 +327,7 @@ class Flow{
 						$is_flow_request = ($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class));
 
 						if($is_flow_request){
-							$selected_pattern = array_merge($pattern, $self_map);
-							unset($selected_pattern['patterns']);
-							$ins->set_pattern($selected_pattern);
-							$ins->before();
+							$ins->before(array_merge($self_map, $pattern));
 							$before_redirect = $ins->get_before_redirect();
 							
 							if(isset($before_redirect)){

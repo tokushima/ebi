@@ -1,15 +1,12 @@
 <?php
 namespace test\flow\plugin;
 
-class Login1 extends \ebi\flow\AuthenticationHandler{
-	/**
-	 * @request string $user ユーザ名1
-	 * @request string $password パスワード1
-	 */
+class Login6 extends \ebi\flow\AuthenticationHandler{
 	public function login_condition(\ebi\flow\Request $req): bool{
 		if($req->in_vars('user') == 'tokushima' && $req->in_vars('password') == 'hogehoge'){
-			$req->user(new \test\model\Member1(123));
-			
+			$req->user(new \test\model\Member1(987));
+			$req->user()->set_role([100]);
+
 			return true;
 		}
 		return false;

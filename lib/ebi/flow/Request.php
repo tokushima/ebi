@@ -14,20 +14,8 @@ class Request extends \ebi\Request{
 	
 	public function __construct(){
 		parent::__construct();
-		$sess_name = md5(\ebi\Flow::workgroup());
-		
-		$this->_sess = new \ebi\Session($sess_name);
-		$this->_login_id = $sess_name.'_LOGIN_';
-		$this->_login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
-	}	
-
-	/**
-	 * Flowが利用
-	 */
-	final public function set_pattern(array $selected_pattern): void{
-		$this->_selected_pattern = $selected_pattern;
 	}
-	
+
 	/**
 	 * action実行後にリダイレクトするURL
 	 */
@@ -137,8 +125,16 @@ class Request extends \ebi\Request{
 	/**
 	 * 前処理、入力値のバリデーションやログイン処理を行う
 	 */
-	public function before(): void{
-		$annon = $this->request_validation(['user_role']);
+	public function before(array $selected_pattern): void{
+		unset($selected_pattern['patterns']);
+		$this->_selected_pattern = $selected_pattern;
+
+		$sess_name = md5(\ebi\Flow::workgroup().($this->_selected_pattern['auth_id'] ?? ''));
+		$this->_sess = new \ebi\Session($sess_name);
+		$this->_login_id = $sess_name.'_LOGIN_';
+
+		$this->_login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
+		$this->request_validation();
 
 		if(isset($this->_selected_pattern['auth'])){
 			$auth_ref = new \ReflectionClass($this->_selected_pattern['auth']);
@@ -182,15 +178,14 @@ class Request extends \ebi\Request{
 		}
 
 		if($this->is_user_logged_in()){
-			if(isset($this->_login_anon['type']) && !($this->user() instanceof $this->_login_anon['type'])){
-				\ebi\HttpHeader::send_status(401);
-				throw new \ebi\exception\UnauthorizedException();
-			}
-			if(isset($annon['user_role']) || isset($this->_login_anon['user_role'])){
+			if((isset($this->_login_anon['type']) && !($this->user() instanceof $this->_login_anon['type']))){
+				\ebi\HttpHeader::send_status(403);
+				throw new \ebi\exception\AccessDeniedException();
+			}			
+			if(isset($this->_login_anon['user_role'])){
 				if(
-					!in_array(\ebi\UserRole::class,\ebi\Util::get_class_traits(get_class($this->user()))) ||
-					(isset($this->_login_anon['user_role']) && !in_array($this->_login_anon['user_role'],$this->user()->get_role())) ||
-					(isset($annon['user_role']['value']) && !in_array($annon['user_role']['value'],$this->user()->get_role()))
+					!in_array(\ebi\UserRole::class, \ebi\Util::get_class_traits(get_class($this->user()))) ||
+					(isset($this->_login_anon['user_role']) && !$this->user()->has_role($this->_login_anon['user_role']))
 				){
 					\ebi\HttpHeader::send_status(403);
 					throw new \ebi\exception\AccessDeniedException();
@@ -234,7 +229,7 @@ class Request extends \ebi\Request{
 			$user = func_get_arg(0);
 			
 			if(isset($this->_login_anon['type']) && !($user instanceof $this->_login_anon['type'])){
-				throw new \ebi\exception\IllegalDataTypeException();
+				throw new \ebi\exception\IllegalLoginUserDataTypeException();
 			}
 			$this->sessions($this->_login_id.'USER', $user);
 		}
@@ -286,13 +281,19 @@ class Request extends \ebi\Request{
 			$this->_sess->rm_vars(__CLASS__.'_login_vars');
 		}
 
-		if(
-			isset($this->_auth) &&
-			!$this->is_user_logged_in() &&
-			$this->_auth->login_condition($this) === true
-		){ 
-			$this->after_user_login();
+		try{
+			if(
+				isset($this->_auth) &&
+				!$this->is_user_logged_in() &&
+				$this->_auth->login_condition($this) === true
+			){ 
+				$this->after_user_login();
+			}
+		}catch(\ebi\exception\IllegalLoginUserDataTypeException $e){
+			\ebi\HttpHeader::send_status(403);
+			throw new \ebi\exception\AccessDeniedException();
 		}
+
 		$rtn_vars = [];
 		if($this->is_user_logged_in()){
 			if(isset($this->_auth)){
@@ -301,7 +302,7 @@ class Request extends \ebi\Request{
 			}
 			$logged_in_redirect_to = $this->in_sessions('logged_in_redirect_to');
 			$this->rm_sessions('logged_in_redirect_to');
-			
+
 			if(isset($this->_selected_pattern['logged_in_after'])){
 				$logged_in_redirect_to = $this->_selected_pattern['logged_in_after'];
 			}
