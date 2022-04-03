@@ -10,7 +10,7 @@ class SessionDao extends \ebi\Dao implements \ebi\SessionHandler{
 	protected $data;
 	protected $expires;
 
-	protected function __before_save__(): void{
+	protected function __before_save__(bool $is_update): void{
 		$this->expires = time();
 	}
 
