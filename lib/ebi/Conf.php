@@ -3,7 +3,7 @@ namespace ebi;
 
 class Conf{
 	private static $value = [self::class=>[]];
-	private static $call_obj = [];
+	private static $handler_obj = [];
 	
 	private static function get_defined_class_key(string $key): array{
 		if(strpos($key,'@') === false){
@@ -304,34 +304,25 @@ class Conf{
 	}
 
 	public static function defined_handler(): bool{
-		$key = 'handler';
-		[$class_name, $key] = self::get_defined_class_key($key);
+		[$class_name, $key] = self::get_defined_class_key('handler');
 		return self::exists($class_name,$key);
 	}
 
 	public static function handle(string $method, ...$args){
-		$key = 'handler';
-		[$name, $key] = self::get_defined_class_key($key);
-		$class = self::exists($name, $key) ? self::$value[$name][$key] : '';
+		[$name, $key] = self::get_defined_class_key('handler');
+		$handler_class = self::exists($name, $key) ? self::$value[$name][$key] : '';
 
-		if(!isset(self::$call_obj[$name][1][$key])){
-			self::$call_obj[$name][1][$key] = false;
-			
-			if(!empty($class)){
-				if(!isset(self::$call_obj[$name][0][$class])){
-					self::$call_obj[$name][0][$class] = (new \ReflectionClass($class))->newInstance();
-				}
+		if(!empty($handler_class)){
+			if(!isset(self::$handler_obj[$name])){
+				self::$handler_obj[$name] = (new \ReflectionClass($handler_class))->newInstance();
+
 				$interface = $name.'Handler';
-				if(!is_subclass_of(self::$call_obj[$name][0][$class], $interface)){
+				if(!is_subclass_of(self::$handler_obj[$name], $interface)){
 					throw new \ebi\exception\NotImplementedException('does not implement: '.$interface);
 				}
-				self::$call_obj[$name][1][$key] = true;
 			}
+			return call_user_func_array([self::$handler_obj[$name], $method], $args);
 		}
-
-		if(!isset(self::$call_obj[$name][1][$key])){
-			return;
-		}
-		return call_user_func_array([self::$call_obj[$name][0][$class], $method], $args);
+		return;
 	}
 }
