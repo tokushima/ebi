@@ -122,6 +122,14 @@ class Request extends \ebi\Request{
 		return $this->_sess->is_vars($n);
 	}
 
+	protected function set_auth_object(object $object): void{
+		$this->_auth = $object;
+
+		if(!($this->_auth instanceof \ebi\flow\AuthenticationHandler)){
+			throw new \ebi\exception\NotImplementedException();
+		}
+	}
+
 	/**
 	 * 前処理、入力値のバリデーションやログイン処理を行う
 	 */
@@ -138,11 +146,7 @@ class Request extends \ebi\Request{
 
 		if(isset($this->_selected_pattern['auth'])){
 			$auth_ref = new \ReflectionClass($this->_selected_pattern['auth']);
-			$this->_auth = $auth_ref->newInstance();
-
-			if(!($this->_auth instanceof \ebi\flow\AuthenticationHandler)){
-				throw new \ebi\exception\NotImplementedException();
-			}
+			$this->set_auth_object($auth_ref->newInstance());
 		}
 
 		if(!$this->is_user_logged_in()){
