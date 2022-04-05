@@ -7,7 +7,7 @@ class Note extends \ebi\Dao{
 	protected $value;
 	protected $vote = 0;
 
-	protected function __before_save__(): void{
+	protected function __before_save__(bool $is_update): void{
 		if($this->vote > 5){
 			$this->vote = 5;
 		}else if($this->vote < 0){

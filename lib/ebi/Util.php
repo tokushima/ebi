@@ -429,7 +429,6 @@ class Util{
 	 * 値をプリミティブ型で返す
 	 * @param mixed $value
 	 * @return mixed
-	 * @deprecated
 	 */
 	public static function to_primitive($value){
 		switch(gettype($value)){

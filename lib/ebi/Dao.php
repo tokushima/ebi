@@ -432,58 +432,13 @@ abstract class Dao extends \ebi\Obj{
 		return self::$_co_anon_[get_class($this)][1];
 	}
 
-	/**
-	 * @compatibility
-	 * @return \ebi\Q
-	 */
-	protected function __find_conds__(){
+	protected function __find_conds__(): \ebi\Q{
 		return Q::b();
 	}
-
-	/**
-	 * @compatibility
-	 * @return void
-	 */
-	protected function __before_create__(){}
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __after_create__(){}
-	
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __before_update__(){}
-
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __after_update__(){}
-	
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __after_delete__(){}
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __before_delete__(){}
-
-	/**
-	 * @compatibility
-	 * @return void
-	 */
-	protected function __before_save__(){}
-	/**
-	 * @compatibility
-	 * @return void
-	 */	
-	protected function __after_save__(){}
+	protected function __before_save__(bool $is_update): void{
+	}
+	protected function __after_save__(bool $is_update): void{
+	}
 	
 	/**
 	 * 発行したSQLの記録を開始する
@@ -877,12 +832,10 @@ abstract class Dao extends \ebi\Obj{
 		if(self::$_co_anon_[get_class($this)][2]){
 			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
 		}
-		$this->__before_delete__();
 		$daq = self::$_con_[get_called_class()]->delete_sql($this);
 		if($this->update_query($daq) == 0){
 			throw new \ebi\exception\NotFoundException('delete failed');
 		}
-		$this->__after_delete__();
 	}
 
 	/**
@@ -1026,8 +979,7 @@ abstract class Dao extends \ebi\Obj{
 			}
 			if(!$this->_saving_[1]){ // after中は実行しない
 				$this->_saving_[0] = true;
-				$this->__before_save__();
-				$this->__before_create__();
+				$this->__before_save__(false);
 				$this->_saving_[0] = false;
 			}
 			
@@ -1046,8 +998,7 @@ abstract class Dao extends \ebi\Obj{
 			}
 			if(!$this->_saving_[1]){
 				$this->_saving_[1] = true;
-				$this->__after_create__();
-				$this->__after_save__();
+				$this->__after_save__(false);
 				$this->_saving_[1] = false;
 			}
 		}else{
@@ -1056,8 +1007,7 @@ abstract class Dao extends \ebi\Obj{
 			}
 			if(!$this->_saving_[1]){ // after中は実行しない
 				$this->_saving_[0] = true;
-				$this->__before_save__();
-				$this->__before_update__();
+				$this->__before_save__(true);
 				$this->_saving_[0] = false;
 			}
 			
@@ -1085,8 +1035,7 @@ abstract class Dao extends \ebi\Obj{
 			}
 			if(!$this->_saving_[1]){
 				$this->_saving_[1] = true;
-				$this->__after_update__();
-				$this->__after_save__();
+				$this->__after_save__(true);
 				$this->_saving_[1] = false;
 			}
 		}

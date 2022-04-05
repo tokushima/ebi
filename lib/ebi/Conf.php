@@ -3,7 +3,7 @@ namespace ebi;
 
 class Conf{
 	private static $value = [self::class=>[]];
-	private static $plugins = [];
+	private static $handler_obj = [];
 	
 	private static function get_defined_class_key(string $key): array{
 		if(strpos($key,'@') === false){
@@ -55,14 +55,19 @@ class Conf{
 		}
 	}
 
-	/**
-	 * 定義されている
-	 */
-	public static function exists(string $class_name, string $key): bool{
+	private static function exists(string $class_name, string $key): bool{
 		return (
 			array_key_exists($class_name,self::$value) &&
 			array_key_exists($key,self::$value[$class_name])
 		);
+	}
+
+	/**
+	 * 定義されている
+	 */
+	public static function defined(string $key): bool{
+		[$class_name, $key] = self::get_defined_class_key($key);
+		return self::exists($class_name,$key);
 	}
 
 	/**
@@ -96,38 +101,6 @@ class Conf{
 		return $result_vars;
 	}
 	
-	/**
-	 * Pluginに遅延セットする
-	 * @param mixed $class_name (string|array)
-	 */
-	public static function set_class_plugin($class_name, array $plugin_class_names=[]): void{
-		if(is_array($class_name)){
-			foreach($class_name as $c => $v){
-				static::set_class_plugin($c,$v);
-			}
-		}else if(!empty($plugin_class_names)){
-			if(!is_array($plugin_class_names)){
-				$plugin_class_names = [$plugin_class_names];
-			}
-			foreach($plugin_class_names as $plugin_class_name){
-				self::$plugins[$class_name][] = $plugin_class_name;
-			}
-		}
-	}
-
-	/**
-	 * Pluginに遅延セットされたオブジェクトを返す
-	 */
-	public static function get_class_plugin(string $class_name): array{
-		$rtn = [];
-	
-		if(isset(self::$plugins[$class_name])){
-			$rtn = self::$plugins[$class_name];
-			unset(self::$plugins[$class_name]);
-		}
-		return $rtn;
-	}
-
 	/**
 	 * @param mixed $default
 	 * @return mixed
@@ -328,5 +301,28 @@ class Conf{
 	 */
 	public static function memory_limit(int $memory_limit_size): void{
 		ini_set('memory_limit',($memory_limit_size > 0) ? $memory_limit_size.'M' : -1);
+	}
+
+	public static function defined_handler(): bool{
+		[$class_name, $key] = self::get_defined_class_key('handler');
+		return self::exists($class_name,$key);
+	}
+
+	public static function handle(string $method, ...$args){
+		[$name, $key] = self::get_defined_class_key('handler');
+		$handler_class = self::exists($name, $key) ? self::$value[$name][$key] : '';
+
+		if(!empty($handler_class)){
+			if(!isset(self::$handler_obj[$name])){
+				self::$handler_obj[$name] = (new \ReflectionClass($handler_class))->newInstance();
+
+				$interface = $name.'Handler';
+				if(!is_subclass_of(self::$handler_obj[$name], $interface)){
+					throw new \ebi\exception\NotImplementedException('does not implement: '.$interface);
+				}
+			}
+			return call_user_func_array([self::$handler_obj[$name], $method], $args);
+		}
+		return;
 	}
 }

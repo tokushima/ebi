@@ -13,7 +13,7 @@ namespace ebi;
  * @var string $tcode
  * @var timestamp $create_date @['auto_now_add'=>true]
  */
-class SmtpBlackholeDao extends \ebi\Dao{
+class SmtpBlackholeDao extends \ebi\Dao implements \ebi\MailHandler{
 	protected $id;
 	protected $from;
 	protected $to;

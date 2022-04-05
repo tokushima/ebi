@@ -10,21 +10,26 @@
 	'ebi\Log'=>[
 		'level'=>'debug',
 		'file'=>dirname(__DIR__).'/work/ebi.log',
+		'handler'=>\ebi\LogMailSender::class,
+	],
+	'ebi\Session'=>[
+		'handler'=>\ebi\SessionDao::class,
+	],
+	'ebi\Mail'=>[
+		'handler'=>\ebi\SmtpBlackholeDao::class,
 	],
 	'ebi\Flow'=>[
 //		'exception_trace'=>true,
 		'app_url'=>'http://localhost:8000/**',
 // 		'secure'=>false,
 		'accept_debug'=>true,
+		'handler'=>\test\flow\plugin\ErrorLog::class,
 	],
 	'ebi\flow\plugin\No'=>[ // x
 		'abc'=>1,
 	],
-	'ebi.flow.plugin.Cors'=>[ // x
-		'abc'=>1,
-	],
-	'ebi\flow\plugin\Cors'=>[
-		'origin'=>'http://localhost:8000',
+	'ebi\flow\Request'=>[
+		'cors_origin'=>'http://localhost:8000',
 	],
 	'ebi\Dt'=>[
 		'test_dir'=>dirname(__DIR__).'/test',
@@ -46,14 +51,4 @@
 		]
 	],
 ]);
-
-\ebi\Conf::set_class_plugin([
-	'ebi\Mail'=>['ebi\SmtpBlackholeDao'],
-	'ebi\Session'=>['ebi\SessionDao'],
-// 	'ebi\Log'=>['ebi\LogMailSender'],
-	'ebi\Log'=>['ebi\LogMailSender'],
-	'test\flow\RequestFlow'=>['test\plugin\RequestPlugin'],
-	'ebi\Flow'=>['test\flow\plugin\ErrorLog'],
-]);
-
 

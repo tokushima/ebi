@@ -9,15 +9,7 @@ namespace test\flow;
  * @see \test\flow\RequestFlow::sendmail
  * @see \test\flow\RequestFlow
  */
-class RequestFlow extends \ebi\flow\Request{
-	/**
-	 * 前処理
-	 * @request int $zzz 前処理のリクエスト
-	 */
-	protected function __before__(){
-		
-	}
-	
+class RequestFlow extends \ebi\flow\Request{	
 	/**
 	 * aaa
 	 * bbb
@@ -66,32 +58,6 @@ class RequestFlow extends \ebi\flow\Request{
 	 */
 	public function get_vars(){
 		return ['abc'=>123,'def'=>456];
-	}
-	
-	/**
-	 * メールを送信する
-	 * @see https://google.com
-	 * @see \test\flow\RequestFlow::sendmail
-	 * @see \test\flow\RequestFlow
-	 */
-	public function sendmail(){
-		$vars = ['abc'=>'ABC'];
-		$mail = new \ebi\Mail();
-		$mail->to('test@email.address');
-		
-		$address = 'test@email.address';
-		
-		/**
-		 * 
-		 * @param string $abc ABCが出せる
-		 */
-		$mail->send_template('send.xml',$vars);
-		
-		/**
-		 * メール送信拡張
-		 * @param string $address
-		 */
-		self::call_class_plugin_funcs('plguin_sendmail',$address);
 	}
 	
 	/**
