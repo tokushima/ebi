@@ -18,6 +18,6 @@ eq(\testman\Util::url('login1::aaa'),$b->url());
 // ログインしているがユーザータイプが違うのでエラー
 $b->do_get('login1::othertype');
 eq(\testman\Util::url('login1::othertype'),$b->url());
-eq(401,$b->status());
-$b->has_error('UnauthorizedException');
+eq(403,$b->status());
+$b->has_error('AccessDeniedException');
 

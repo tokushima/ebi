@@ -2,8 +2,6 @@
 namespace ebi;
 
 class Flow{
-	use \ebi\Plugin;
-
 	private static $app_url;
 	private static $media_url;
 	private static $template_dir;
@@ -65,7 +63,6 @@ class Flow{
 	 * @param mixed $template_dir string|array
 	 */
 	private static function template(array $vars, array $selected_pattern, $ins, string $path, ?string $media, $template_dir): void{
-		self::$template->set_object_plugin(new \ebi\FlowInvalid());
 		self::$template->media_url(empty($media) ? self::$media_url : $media);
 		
 		if(is_array($vars) || is_object($vars)){
@@ -286,8 +283,9 @@ class Flow{
 				
 				$funcs = $class = $method = $template = $ins = null;
 				$exception = null;
-				$has_flow_plugin = false;
-				$result_vars = $plugins = [];
+				$is_flow_request = false;
+				$result_vars = [];
+				$map_output = $self_map['output'] ?? 'json';
 				$accept_debug = (
 					/**
 					 * @param bool $val Accept: application/debug を有効にする
@@ -317,59 +315,26 @@ class Flow{
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
 					}
-					if(array_key_exists('vars',$self_map) && is_array($self_map['vars'])){
-						$result_vars = $self_map['vars'];
-					}
-					if(array_key_exists('vars',$pattern) && is_array($pattern['vars'])){
-						$result_vars =  array_merge($result_vars,$pattern['vars']);
+					if(array_key_exists('output',$pattern)){
+						$map_output = $pattern['output'];
 					}
 					if(array_key_exists('redirect',$pattern)){
 						self::map_redirect($pattern['redirect'],$result_vars,$pattern);
 					}
 					
-					foreach(array_merge(
-						(array_key_exists('plugins',$pattern) ? (is_array($pattern['plugins']) ? $pattern['plugins'] : [$pattern['plugins']]) : []),
-						(array_key_exists('plugins',$self_map) ? (is_array($self_map['plugins']) ? $self_map['plugins'] : [$self_map['plugins']]) : [])
-					) as $m){
-						$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
-						self::set_class_plugin($o);
-						$plugins[] = $o;
-					}
 					if(!isset($funcs) && isset($class)){
 						$ins = is_object($class) ? $class : (new \ReflectionClass($class))->newInstance();
-						$traits = \ebi\Util::get_class_traits(get_class($ins));
-						
-						if($has_flow_plugin = in_array('ebi\\FlowPlugin',$traits)){
-							foreach($ins->get_flow_plugins() as $m){
-								$o = is_object($m) ? $m : (new \ReflectionClass($m))->newInstance();
-								$plugins[] = $o;
-								self::set_class_plugin($o);
-							}
-							$ins->set_pattern($pattern);
+						$is_flow_request = ($ins instanceof \ebi\flow\Request || is_subclass_of($ins, \ebi\flow\Request::class));
+
+						if($is_flow_request){
+							$ins->before(array_merge($self_map, $pattern));
+							$before_redirect = $ins->get_before_redirect();
+							
+							if(isset($before_redirect)){
+								self::map_redirect($before_redirect,$result_vars,$pattern);
+							}							
 						}
-						if(in_array('ebi\\Plugin',$traits)){
-							foreach($plugins as $o){
-								$ins->set_object_plugin($o);
-							}
-						}
-						$funcs = [$ins,$method];
-					}
-					foreach($plugins as $o){
-						self::$template->set_object_plugin($o);
-					}
-					if(self::has_class_plugin('before_flow_action')){
-						/**
-						 * 前処理
-						 */
-						self::call_class_plugin_funcs('before_flow_action');
-					}
-					if($has_flow_plugin){
-						$ins->before();
-						$before_redirect = $ins->get_before_redirect();
-						
-						if(isset($before_redirect)){
-							self::map_redirect($before_redirect,$result_vars,$pattern);
-						}
+						$funcs = [$ins, $method];
 					}
 					if(isset($funcs)){
 						try{
@@ -381,27 +346,16 @@ class Flow{
 						}catch(\Exception $exception){
 						}
 					}
-					if($has_flow_plugin){
+					if($is_flow_request){
 						$ins->after();
 						
-						$template = $ins->get_template();
-						if(!empty($template)){
-							$pattern['template'] = $template;
-						}
-						$result_vars = array_merge($result_vars,$ins->get_after_vars());
+						$result_vars = array_merge($result_vars, $ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
-						if(isset($after_redirect) && !array_key_exists('after',$pattern) && !array_key_exists('cond_after',$pattern)){
+						if(isset($after_redirect) && !array_key_exists('after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
-					}
-					if(self::has_class_plugin('after_flow_action')){
-						/**
-						 * 後処理
-						 */
-						self::call_class_plugin_funcs('after_flow_action');
-					}
-					
+					}					
 					if(isset($exception)){
 						throw $exception;
 					}
@@ -409,22 +363,8 @@ class Flow{
 					
 					if(!$accept_debug){
 						if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST'){
-							if(array_key_exists('post_cond_after',$pattern) && is_array($pattern['post_cond_after'])){
-								foreach($pattern['post_cond_after'] as $cak => $cav){
-									if(isset($result_vars[$cak])){
-										self::map_redirect($cav,$result_vars,$pattern);
-									}
-								}
-							}
 							if(array_key_exists('post_after',$pattern)){
 								self::map_redirect($pattern['post_after'],$result_vars,$pattern);
-							}
-						}
-						if(array_key_exists('cond_after',$pattern) && is_array($pattern['cond_after'])){
-							foreach($pattern['cond_after'] as $cak => $cav){
-								if(isset($result_vars[$cak])){
-									self::map_redirect($cav,$result_vars,$pattern);
-								}
 							}
 						}
 						if(array_key_exists('after',$pattern)){
@@ -454,14 +394,16 @@ class Flow{
 								}
 							}
 						}
-						if(self::has_class_plugin('flow_output')){
-							/**
-							 * 結果を出力する
-							 * @param mixed{} $result_vars actionで返却された変数
-							 */
-							self::call_class_plugin_funcs('flow_output',$result_vars);
-							self::terminate();
-							return;
+						if($map_output === 'xml'){
+							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') === false){
+								$xml = new \ebi\Xml('result');
+								$xml->add($result_vars);
+								
+								\ebi\HttpHeader::send('Content-Type','application/xml');
+								print($xml->get(\ebi\Conf::get('encoding')));
+								self::terminate();
+								return;	
+							}					
 						}
 					}
 					
@@ -469,20 +411,16 @@ class Flow{
 					print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
 					self::terminate();
 					return;
-				}catch(\Exception $e){
-					\ebi\FlowInvalid::set($e);
+				}catch(\Exception $exception){
+					\ebi\FlowInvalid::set($exception);
 					\ebi\Dao::rollback_all();
-					
-					if(self::has_class_plugin('flow_exception_log')){
-						/**
-						 * 例外発生時のログ
-						 * @param string $pathinfo PATH_INFO
-						 * @param mixed{} $pattern マッチしたパターン
-						 * @param mixed $ins 実行されたActionのインスタンス
-						 * @param \Exception $e 発生した例外
-						 */
-						self::call_class_plugin_funcs('flow_exception_log',$pathinfo,$pattern,$ins,$e);
-					}
+					\ebi\Conf::handle(
+						'flow_exception_occurred', 
+						$pathinfo, 
+						$pattern, 
+						$ins,
+						$exception
+					);
 
 					if(isset($pattern['error_status'])){
 						\ebi\HttpHeader::send_status($pattern['error_status']);
@@ -521,35 +459,34 @@ class Flow{
 						if(array_key_exists('error_template',$self_map)){
 							self::template($result_vars,$pattern,$ins,$self_map['error_template'],null,null);
 						}
-						if(self::has_class_plugin('flow_exception')){
-							/**
-							 * 例外発生時の処理・出力
-							 * @param \Exception $e 発生した例外
-							 */
-							self::call_class_plugin_funcs('flow_exception',$e);
-							self::terminate();
-							return;
-						}else if(self::has_class_plugin('flow_output')){
-							self::call_class_plugin_funcs('flow_output',['error'=>['message'=>$e->getMessage()]]);
-							self::terminate();
-							return;
+
+						if($map_output === 'xml'){
+							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') === false){
+								$xml = new \ebi\Xml('error');
+								
+								foreach(\ebi\FlowInvalid::get() as $g => $e){
+									$message = new \ebi\Xml('message',$e->getMessage());
+									$type = basename(str_replace("\\",'/',get_class($e)));
+									
+									if(!empty($g)){
+										$message->add('group',$g);
+									}
+									$message->add('type',$type);
+									$xml->add($message);
+								}
+								\ebi\HttpHeader::send('Content-Type','application/xml');
+								print($xml->get(\ebi\Conf::get('encoding')));
+								self::terminate();
+								return;
+							}
 						}
 					}
-					
-					/**
-					 *  @param bool $val Error Json出力時にException traceも出力するフラグ
-					 */
-					$trace = \ebi\Conf::get('exception_trace',false);
-					$message = [];
-					
+					$message = [];					
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
 						$em = [
 							'message'=>$e->getMessage(),
 							'type'=>basename(str_replace("\\",'/',get_class($e)))
 						];
-						if($trace){
-							$em['trace'] = $e->getTraceAsString();
-						}
 						if(!empty($g)){
 							$em['group'] = $g;
 						}
@@ -582,7 +519,7 @@ class Flow{
 	
 	private static function expand_patterns(string $pk, array $patterns, array $extends, int &$automap_idx): array{
 		$result = [];
-		$ext_arr = ['plugins'=>[],'vars'=>[]];
+		$ext_arr = ['vars'=>[]];
 		
 		foreach($ext_arr as $k =>$v){
 			if(array_key_exists($k,$extends)){

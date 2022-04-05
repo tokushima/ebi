@@ -2,28 +2,17 @@
 include_once('bootstrap.php');
 
 \ebi\Flow::app([
-	'plugins'=>[
-		'test\flow\plugin\Login1',
-		'ebi\flow\plugin\Cors'
-	],
+	'auth'=>\test\flow\plugin\Login1::class,
 	'patterns'=>[
 		'login_url'=>[
 			'name'=>'login',
 			'action'=>'ebi\flow\Request::do_login',
 			'logged_in_after'=>'aaa',
-			'plugins'=>['test\flow\plugin\Login2'],
+			// 'auth'=>\test\flow\plugin\Login2::class,
 		],
 		'logout_url'=>[
 			'name'=>'logout',
 			'action'=>'ebi\flow\Request::do_logout',
-		],
-		'aaa'=>[
-			'name'=>'aaa',
-			'action'=>'test\flow\LoginRequestAction1::aaa',
-		],
-		'not_user_perm'=>[
-			'name'=>'not_user_perm',
-			'action'=>'test\flow\LoginRequestAction1::not_user_perm',
 		],
 		'aaa'=>[
 			'name'=>'aaa',

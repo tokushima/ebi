@@ -11,9 +11,6 @@ class Paginator implements \IteratorAggregate{
 	private $total;
 	private $first;
 	private $last;
-	private $contents = [];
-	private $dynamic = false;
-	private $tmp = [null,null,[],null,false];
 
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator([
@@ -45,7 +42,7 @@ class Paginator implements \IteratorAggregate{
 	 * @return mixed
 	 */
 	public function current(?int $value=null){
-		if(isset($value) && !$this->dynamic){
+		if(isset($value)){
 			$value = intval($value);
 			$this->current = ($value === 0) ? 1 : $value;
 			$this->offset = $this->limit * round(abs($this->current - 1));
@@ -86,7 +83,7 @@ class Paginator implements \IteratorAggregate{
 	 * 合計
 	 */
 	public function total(?int $value=null): int{
-		if(isset($value) && !$this->dynamic){
+		if(isset($value)){
 			$this->total = intval($value);
 			$this->first = 1;
 			$this->last = ($this->total == 0 || $this->limit == 0) ? 0 : intval(ceil($this->total / $this->limit));
@@ -116,44 +113,6 @@ class Paginator implements \IteratorAggregate{
 	 */
 	public function is_last(int $page): bool{
 		return ($this->which_last($page) !== $this->last());
-	}
-	/**
-	 * 動的コンテンツのPaginatorか
-	 * @return bool
-	 * @deprecated
-	 */
-	public function is_dynamic(): bool{
-		return $this->dynamic;
-	}
-	/**
-	 * コンテンツ
-	 * @param mixed $mixed
-	 * @deprecated
-	 */
-	public function contents($mixed=null): array{
-		if(isset($mixed)){
-			if($this->dynamic){
-				if(!$this->tmp[4] && $this->current == (isset($this->tmp[3]) ? (isset($mixed[$this->tmp[3]]) ? $mixed[$this->tmp[3]] : null) : $mixed)) $this->tmp[4] = true;
-				if($this->tmp[4]){
-					if($this->tmp[0] === null && ($size=sizeof($this->contents)) <= $this->limit){
-						if(($size+1) > $this->limit){
-							$this->tmp[0] = $mixed;
-						}else{
-							$this->contents[] = $mixed;
-						}
-					}
-				}else{
-					if(sizeof($this->tmp[2]) >= $this->limit) array_shift($this->tmp[2]);
-					$this->tmp[2][] = $mixed;
-				}
-			}else{
-				$this->total($this->total+1);
-				if($this->page_first() <= $this->total && $this->total <= ($this->offset + $this->limit)){
-					$this->contents[] = $mixed;
-				}
-			}
-		}
-		return $this->contents;
 	}
 
 	/**
@@ -279,15 +238,6 @@ class Paginator implements \IteratorAggregate{
 	}
 	
 	/**
-	 * コンテンツを追加する
-	 * @param mixed $mixed
-	 * @deprecated
-	 */
-	public function add($mixed): bool{
-		$this->contents($mixed);
-		return (sizeof($this->contents) <= $this->limit);
-	}
-	/**
 	 * 現在のページの最初の位置
 	 */
 	public function page_first(): int{
@@ -336,54 +286,5 @@ class Paginator implements \IteratorAggregate{
 	 */
 	public function has_range(): bool{
 		return ($this->last > 1);
-	}
-
-	public function before_template(string $src): string{
-		return \ebi\Xml::find_replace($src, 'rt:paginator',function($xml){
-			$param = '$'.$xml->in_attr('param','paginator');
-			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('navi','prev,next,first,last,counter'))));
-			$counter = $xml->in_attr('counter',10);
-			$lt = strtolower($xml->in_attr('lt','true'));
-			$href = $xml->in_attr('href','?');
-			
-			$uniq = uniqid('');
-			$counter_var = '$__counter__'.$uniq;
-			$func = '';
-			
-			if($lt == 'false'){
-				$func .= sprintf('<?php if(%s->total() > %s->limit()){ ?>',$param,$param);
-			}
-			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">',$param);
-			if(isset($navi['prev'])){
-				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
-			}
-			if(isset($navi['first'])){
-				$func .= sprintf('<?php if(%s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
-			}
-			if(isset($navi['counter'])){
-				$func .= sprintf('<?php if(%s->total() == 0){ ?>',$param)
-								.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
-							.'<?php }else{ ?>'
-								.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
-									.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
-										.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
-									.'<?php }else{ ?>'
-										.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
-									.'<?php } ?>'
-								.'<?php } ?>'
-						.'<?php } ?>';
-			}
-			if(isset($navi['last'])){
-				$func .= sprintf('<?php if(%s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
-			}
-			if(isset($navi['next'])){
-				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);
-			}
-			$func .= "<?php } ?><?php }catch(\\Exception \$e){} ?></ul>";
-			if($lt == 'false'){
-				$func .= sprintf('<?php } ?>',$param);
-			}
-			return $func;
-		});
 	}
 }

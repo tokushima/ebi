@@ -2,8 +2,6 @@
 namespace ebi;
 
 class Log{
-	use \ebi\Plugin;
-	
 	private static $level_str = ['emergency','alert','critical','error','warning','notice','info','debug'];
 	private static $current_level;
 	private static $filename;
@@ -74,11 +72,7 @@ class Log{
 				FILE_APPEND
 			);
 		}
-		/**
-		 * ログ出力
-		 * @param \ebi\Log $arg1
-		 */
-		static::call_class_plugin_funcs('log_output',$this);
+		\ebi\Conf::handle('output', $this);
 	}
 
 	public function fm_message(): string{

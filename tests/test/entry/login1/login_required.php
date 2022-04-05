@@ -6,7 +6,6 @@ $b = b();
 
 // loginにリダイレクトされる
 $b->do_get('login1::bbb');
-eq(401,$b->status());
 eq(\testman\Util::url('login1::login'),$b->url());
 eq('{"error":[{"message":"Unauthorized","type":"UnauthorizedException"}]}',$b->body());
 

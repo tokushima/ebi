@@ -4,7 +4,6 @@ namespace ebi;
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
  */
 class Session{
-	use \ebi\Plugin;
 	private $ses_n;
 
 	/**
@@ -43,7 +42,7 @@ class Session{
 				session_set_cookie_params($opt);
 			}
 			
-			if(static::has_class_plugin('session_read')){
+			if(\ebi\Conf::defined_handler()){
 				session_set_save_handler(
 					[$this,'open'],
 					[$this,'close'],
@@ -111,21 +110,14 @@ class Session{
 			}
 		}
 	}
-	
-	
+		
 	/**
 	 * (session_set_save_handler) 初期処理
 	 * @param $path セッションを格納/取得するパス。
 	 * @param $name セッション名
 	 */
 	public function open(string $path, string $name): bool{
-		/**
-		 * 初期処理
-		 * @param string $path セッションを格納/取得するパス
-		 * @param string $name セッション名
-		 * @return bool
-		 */
-		$bool = static::call_class_plugin_funcs('session_open',$path,$name);
+		$bool = \ebi\Conf::handle('session_open', $path, $name);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -133,11 +125,7 @@ class Session{
 	 * (session_set_save_handler) writeが実行された後で実行される
 	 */
 	public function close(): bool{
-		/**
-		 * writeが実行された後で実行される
-		 * @return bool
-		 */
-		$bool = static::call_class_plugin_funcs('session_close');
+		$bool = \ebi\Conf::handle('session_close');
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -146,41 +134,22 @@ class Session{
 	 * @return mixed
 	 */
 	public function read(string $id){
-		/**
-		 * データを読み込む
-		 * @param string $id セッションのid
-		 * @return mixed 読み込んだデータ
-		 */
-		return static::call_class_plugin_funcs('session_read',$id);
+		return \ebi\Conf::handle('session_read', $id);
 	}
 	
 	/**
 	 * (session_set_save_handler) データを書き込む
-	 * @param $id セッションのid
-	 * @param mixed $sess_data データ
 	 */
 	public function write(string $id, $sess_data): bool{
-		/**
-		 * データを書き込む
-		 * @param string セッションのid
-		 * @param mixed データ
-		 * @return bool
-		 */
-		$bool = static::call_class_plugin_funcs('session_write',$id,$sess_data);
+		$bool = \ebi\Conf::handle('session_write', $id, $sess_data);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
 	/**
 	 * (session_set_save_handler) 破棄
-	 * @param $id セッションのid
 	 */
 	public function destroy(string $id): bool{
-		/**
-		 * 破棄
-		 * @param string セッションのid
-		 * @return bool
-		 */
-		$bool = static::call_class_plugin_funcs('session_destroy',$id);
+		$bool = \ebi\Conf::handle('session_destroy', $id);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 	
@@ -189,12 +158,7 @@ class Session{
 	 * @param $maxlifetime session.gc_maxlifetime
 	 */
 	public function gc(int $maxlifetime): bool{
-		/**
-		 * 古いセッションを削除する
-		 * @param int $maxlifetime session.gc_maxlifetime
-		 * @return bool
-		 */
-		$bool = static::call_class_plugin_funcs('session_gc',$maxlifetime);
+		$bool = \ebi\Conf::handle('session_gc', $maxlifetime);
 		return (!is_bool($bool)) ? true : $bool;
 	}
 }

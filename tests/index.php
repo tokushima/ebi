@@ -41,28 +41,9 @@ include_once('bootstrap.php');
 			'bbb'=>['name'=>'group_bbb_xml','action'=>'test\flow\Action::abc'],
 			'eee'=>['name'=>'group_eee_xml','action'=>'test\flow\Action::raise'],
 		],
-		'plugins'=>['ebi\flow\plugin\Xml'],
+		'output'=>'xml',
 	],
-	
-	'after'=>['name'=>'after','action'=>'test\flow\Sample::after_redirect','after'=>'after_to'],
-	'after/to'=>['name'=>'after_to','action'=>'test\flow\Sample::after_to'],
-	'after/to/arg1'=>['name'=>'after_arg1','action'=>'test\flow\Sample::after_redirect','after'=>['after_to_arg1','@next_var_A']],
-	'after/to/(.+)'=>['name'=>'after_to_arg1','action'=>'test\flow\Sample::after_to'],
-	'after/to/arg2'=>['name'=>'after_arg2','action'=>'test\flow\Sample::after_redirect','after'=>['after_to_arg2','@next_var_A','@next_var_B']],
-	'after/to/(.+)/(.+)'=>['name'=>'after_to_arg2','action'=>'test\flow\Sample::after_to'],
-	
-	'post_after'=>['name'=>'post_after','action'=>'test\flow\Sample::after_redirect','post_after'=>'post_after_to'],
-	'post_after/to'=>['name'=>'post_after_to','action'=>'test\flow\Sample::after_to'],
-	'post_after/to/arg1'=>[
-		'name'=>'post_after_arg1',
-		'action'=>'test\flow\Sample::after_redirect',
-		'after'=>['post_after_to_arg1','@next_var_A'],
-	],
-	'post_after/to/(.+)'=>['name'=>'post_after_to_arg1','action'=>'test\flow\Sample::after_to'],
-	'post_after/to/arg2'=>['name'=>'post_after_arg2','action'=>'test\flow\Sample::after_redirect','after'=>['post_after_to_arg2','@next_var_A','@next_var_B']],
-	'post_after/to/(.+)/(.+)'=>['name'=>'post_after_to_arg2','action'=>'test\flow\Sample::after_to'],
-	
-	'helper/range'=>['name'=>'helper_range','template'=>'helper/range.html','vars'=>['max'=>5]],
+		
 	'raise'=>['name'=>'raise','action'=>'test\flow\Action::raise'],
 	'raise/template'=>['name'=>'raise_template','action'=>'test\flow\Action::raise','error_template'=>'exceptions.html'],
 	'raise/template/parent'=>['name'=>'raise_template_parent','action'=>'test\flow\Action::raise','error_template'=>'exceptions_parent.html'],
@@ -73,25 +54,6 @@ include_once('bootstrap.php');
 	
 		
 	'model_list'=>['name'=>'model_list','action'=>'test\flow\Sample::model_list'],
-		
-	'html_filter'=>[
-		'name'=>'html_filter',
-		'template'=>'html_filter.html',
-		'vars'=>[
-			'aaa'=>'hogehoge',
-			'ttt'=>'<tag>ttt</tag>',
-			'bbb'=>'hoge',
-			'XYZ'=>'B',
-			'xyz'=>['A'=>'456','B'=>'789','C'=>'010'],
-			'ddd'=>['456','789'],
-			'eee'=>true,
-			'fff'=>false,
-	
-			'ppp'=>'PPPPP',
-			'qqq'=>'<tag>QQQ</tag>',
-		],
-		'plugins'=>['ebi\flow\plugin\HtmlFilter']
-	],
 	'log'=>[
 		'name'=>'log',
 		'action'=>'test\flow\Action::log',
@@ -128,12 +90,6 @@ include_once('bootstrap.php');
 	'form/file'=>['name'=>'file_form','template'=>'file.html'],
 	'form/file/upload'=>['name'=>'file_upload','action'=>'test\flow\RequestFlow::file_upload'],
 	
-	'form/csrf'=>[
-		'name'=>'form_csrf',
-		'template'=>'form_csrf.html',
-		'action'=>'ebi\flow\Request::noop',
-		'plugins'=>'ebi\flow\plugin\Csrf',
-	], 
 	'get_method'=>['name'=>'ge_method','action'=>'test\flow\Action::get_method'],
 	
 	'flow/request/require/vars'=>['name'=>'require_vars','action'=>'test\flow\RequestFlow::require_vars'],
@@ -153,15 +109,6 @@ include_once('bootstrap.php');
 	'flow/request/vars/callback'=>[
 		'name'=>'requestflow_vars_callback',
 		'action'=>'test\flow\RequestFlow::get_vars',
-		'plugins'=>[
-			'test\flow\plugin\Callback',
-			\test\flow\plugin\Callback2::class,
-		],
-	],
-	'flow/request/vars/callback_addvars'=>[
-		'name'=>'requestflow_vars_callback_addvars',
-		'action'=>'test\flow\RequestFlow::get_vars',
-		'plugins'=>['test\flow\plugin\Callback','test\flow\plugin\AddVars'],
 	],
 	'flow/request/mail'=>[
 		'name'=>'requestflow_mail',
@@ -180,9 +127,6 @@ include_once('bootstrap.php');
 	],
 	'browser_form'=>[
 		'name'=>'browser_form',
-		'vars'=>[
-			
-		],
 		'template'=>'browser_form.html',
 	],
 	'deprecated/method'=>[

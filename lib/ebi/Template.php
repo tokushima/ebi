@@ -2,7 +2,7 @@
 namespace ebi;
 
 class Template{
-	use \ebi\Plugin, \ebi\TemplateVariable;
+	use \ebi\TemplateVariable;
 	
 	private $secure = false;
 	private $vars = [];
@@ -58,14 +58,6 @@ class Template{
 			$src = str_replace(['#PS#','#PE#'],['<?','?>'],$this->html_form($src));
 			$src = $this->exec($this->parse_print_variable($this->html_input($src)));
 		}
-		/**
-		 * 実行後処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('after_exec_template') as $o){
-			$src = static::call_func($o,$src);
-		}
 		return $src;
 	}
 	/**
@@ -81,32 +73,13 @@ class Template{
 		$src = preg_replace("/([\w])\->/","\\1__PHP_ARROW__",$src);
 		$src = str_replace(["\\\\","\\\"","\\'"],['__ESC_DESC__','__ESC_DQ__','__ESC_SQ__'],$src);
 		$src = $this->replace_xtag($src);
-		/**
-		 * 初期処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('init_template') as $o){
-			$src = static::call_func($o,$src);
-		}
 		$src = $this->rtcomment($this->rtinclude($this->rtblock($src)));
-		/**
-		 * 前処理
-		 * @param string $src
-		 * @return string $src
-		 */		
-		foreach($this->get_object_plugin_funcs('before_template') as $o){
-			$src = static::call_func($o,$src);
-		}
-		$src = $this->rtpaginator($this->rtif($this->rtloop($this->html_form($this->html_list($src)))));
-		/**
-		 * 後処理
-		 * @param string $src
-		 * @return string $src
-		 */		
-		foreach($this->get_object_plugin_funcs('after_template') as $o){
-			$src = static::call_func($o,$src);
-		}
+		$src = $this->rtinvalid($src);
+		$src = $this->html_list($src);
+		$src = $this->html_form($src);
+		$src = $this->rtloop($src);
+		$src = $this->rtif($src);
+		$src = $this->rtpaginator($src);
 		$src = str_replace('__PHP_ARROW__','->',$src);
 		$src = $this->parse_print_variable($src);
 		$php = [' ?>','<?php ','->'];
@@ -127,14 +100,6 @@ class Template{
 		return $src;
 	}
 	private function exec(string $_src_): string{
-		/**
-		 * 実行直前処理
-		 * @param string $src
-		 * @return string $src
-		 */
-		foreach($this->get_object_plugin_funcs('before_exec_template') as $o){
-			$_src_ = static::call_func($o,$_src_);
-		}
 		foreach($this->default_vars() as $k => $v){
 			$this->vars($k,$v);
 		}
@@ -584,53 +549,72 @@ class Template{
 	private function rtpaginator(string $src): string{
 		return \ebi\Xml::find_replace($src,'rt:paginator',function($xml){
 			$param = $this->variable_string($this->parse_plain_variable($xml->in_attr('param','paginator')));
-			$navi = array_change_key_case(array_flip(explode(',',$xml->in_attr('nav','prev,next,first,last,counter'))));
 			$counter = $xml->in_attr('counter',10);
-			$lt = strtolower($xml->in_attr('lt','true'));
-			$href = $xml->in_attr('href','?');
-			
+			$href = $xml->in_attr('href','?');			
 			$uniq = uniqid('');
 			$counter_var = '$__counter__'.$uniq;
-			$func = '';
-			
-			if($lt == 'false'){
-				$func .= sprintf('<?php if(%s->is_dynamic() || %s->total() > %s->limit()){ ?>',$param,$param,$param);
-			}
-			$func .= sprintf('<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">',$param);
-			if(isset($navi['prev'])){
-				$func .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
-			}
-			if(isset($navi['first'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
-			}
-			if(isset($navi['counter'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic()){ ?>',$param)
-					.sprintf('<?php if(%s->total() == 0){ ?>',$param)
-						.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
-					.'<?php }else{ ?>'
-						.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
-							.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
-								.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
-							.'<?php }else{ ?>'
-								.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
-							.'<?php } ?>'
+
+			$html = '';			
+			$html .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
+			$html .= sprintf('<?php if(%s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
+			$html .= sprintf('<?php if(%s->total() == 0){ ?>',$param)
+					.sprintf('<li class="page-item active"><a class="page-link">1</a></li>')
+				.'<?php }else{ ?>'
+					.sprintf('<?php for(%s=%s->which_first(%d);%s<=%s->which_last(%d);%s++){ ?>',$counter_var,$param,$counter,$counter_var,$param,$counter,$counter_var)
+						.sprintf('<?php if(%s == %s->current()){ ?>',$counter_var,$param)
+							.sprintf('<li class="page-item active"><a class="page-link">{%s}</a></li>',$counter_var)
+						.'<?php }else{ ?>'
+							.sprintf('<li class="page-item"><a class="page-link" href="%s{%s.query(%s)}">{%s}</a></li>',$href,$param,$counter_var,$counter_var)
 						.'<?php } ?>'
 					.'<?php } ?>'
 				.'<?php } ?>';
-			}
-			if(isset($navi['last'])){
-				$func .= sprintf('<?php if(!%s->is_dynamic() && %s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$param,$counter,$href,$param,$param,$param);
-			}
-			if(isset($navi['next'])){
-				$func .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);
-			}
-			$func .= "<?php } ?><?php }catch(\\Exception \$e){} ?></ul>";
-			if($lt == 'false'){
-				$func .= sprintf('<?php } ?>',$param);
-			}
-			return $func;
+			$html .= sprintf('<?php if(%s->is_last(%d)){ ?><li class="page-item disabled"><a class="page-link">...</a></li><li class="page-item"><a class="page-link" href="%s{%s.query(%s.last())}">{%s.last()}</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
+			$html .= sprintf('<?php if(%s->is_next()){ ?><li class="page-item next"><a class="page-link" href="%s{%s.query_next()}" rel="next"><?php }else{ ?><li class="page-item next disabled"><a class="page-link"><?php } ?>&raquo;</a></li>',$param,$href,$param);
+
+			$html = sprintf(
+				'<?php try{ ?><?php if(%s instanceof \\ebi\\Paginator){ ?><ul class="pagination justify-content-center">'.
+				'%s'.
+				"<?php } ?><?php }catch(\\Exception \$e){} ?></ul>",
+				$param, $html
+			);
+
+			$html = sprintf('<?php if(%s->total() > %s->limit()){ ?>%s<?php } ?>', $param, $param, $html);
+
+			return $html;
 		});
 	}
+	private function rtinvalid(string $src): string{
+		return \ebi\Xml::find_replace_all($src,'rt:invalid',function($xml){
+			$group = $xml->in_attr('group');
+			$type = $xml->in_attr('type');
+			$var = $xml->in_attr('var','rtinvalid_var'.uniqid(''));
+			if(!isset($group[0]) || $group[0] !== '$'){
+				$group = '"'.$group.'"';
+			}
+			if(!isset($type[0]) || $type[0] !== '$'){
+				$type = '"'.$type.'"';
+			}
+			$value = $xml->value();
+				
+			if(empty($value)){
+				$varnm = 'rtinvalid_varnm'.uniqid('');
+				$value = sprintf('<div class="%s"><ul><rt:loop param="%s" var="%s">'.PHP_EOL
+					.'<li><rt:if param="{$t.has($%s.getMessage())}">{$%s.getMessage()}<rt:else />{$t.get_class($%s)}</rt:if></li>'
+					.'</rt:loop></ul></div>'
+					,$xml->in_attr('class','alert alert-danger'),$var,$varnm,
+					$varnm,$varnm,$varnm
+				);
+			}
+			return sprintf("<?php if(\\ebi\\FlowInvalid::has(%s,%s)){ ?>"
+				."<?php \$%s = \\ebi\\FlowInvalid::get(%s,%s); ?>"
+				.preg_replace("/<rt\:else[\s]*.*?>/i","<?php }else{ ?>",$value)
+				."<?php } ?>"
+				,$group,$type
+				,$var,$group,$type
+			);
+		});
+	}
+
 	
 	private function form_variable_name(string $name): string{
 		$m = [];
