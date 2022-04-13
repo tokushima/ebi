@@ -212,7 +212,6 @@ class Request extends \ebi\Request{
 	public function after(): void{
 		if($this->is_vars('callback')){
 			$this->_after_vars['callback'] = $this->in_vars('callback');
-			$this->_after_vars['result_date'] = date(\ebi\Conf::timestamp_format());
 		}
 	}
 	
