@@ -61,7 +61,7 @@ class FlowHelper{
 		return '';
 	}
 	/**
-	 * handlerでpackageを呼び出してる場合にメソッド名が実行されている場合に$trueを、違うなら$falseを返す
+	 * handlerでpackageを呼び出してる場合に実行されているメソッド名が一致する場合に$trueを、違うなら$falseを返す
 	 * @param $name 対象のメソッド名
 	 * @param $true 一致した場合に返す文字列
 	 * @param $false 一致しなかった場合に返す文字列
@@ -70,7 +70,19 @@ class FlowHelper{
 		$exp = explode('/',$this->name());
 		$method = array_pop($exp);
 		return ($name == $method) ? $true : $false;
+}
+		/**
+	 * handlerでpackageを呼び出してる場合に実行されているメソッド名と前方一致の場合に$trueを、違うなら$falseを返す
+	 * @param $name 対象のメソッド名
+	 * @param $true 一致した場合に返す文字列
+	 * @param $false 一致しなかった場合に返す文字列
+	 */
+	public function startswith_package_method_switch(string $pattern, string $true='on', string $false=''): string{
+		$exp = explode('/',$this->name());
+		$method = array_pop($exp);
+		return (strpos($method, $pattern) === 0) ? $true : $false;
 	}
+
 	/**
 	 * 現在のURLを返す
 	 */
