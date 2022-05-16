@@ -438,6 +438,13 @@ class FlowHelper{
 	}
 
 	/**
+	 * appmode
+	 */
+	public function appmode(): string{
+		return \ebi\Conf::appmode();
+	}
+
+	/**
 	 * モードによる背景選択
 	 */
 	public function navbgcolor(): string{
