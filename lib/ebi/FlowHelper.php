@@ -436,4 +436,32 @@ class FlowHelper{
 	public function sum(float $a, float $b): float{
 		return $a + $b;
 	}
+
+	/**
+	 * モードによる背景選択
+	 */
+	public function navbgcolor(): string{
+		$appmode = \ebi\Conf::appmode();
+		
+		if(strpos($appmode, 'production') !== false){
+			return 'bg-dark';
+		}
+		if(strpos($appmode, 'stag') !== false){
+				return 'bg-info';
+		}
+		if(strpos($appmode, 'local') !== false){
+			return 'bg-warning';
+		}
+		if(strpos($appmode, 'standalone') !== false){
+			return 'bg-success';
+		}
+		return 'bg-danger';
+	}
+
+	/**
+	 * 開発モードか(production以外)
+	 */
+	public function is_develop(): bool{
+		return !\ebi\Conf::is_production();
+	}
 }
