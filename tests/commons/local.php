@@ -33,9 +33,6 @@
 	],
 	'ebi\Dt'=>[
 		'test_dir'=>dirname(__DIR__).'/test',
-		'ignore'=>[
-			'test\*',
-		],
 		'use_vendor'=>[
 			'ebi\SmtpBlackholeDao',
 			'ebi\SessionDao',
