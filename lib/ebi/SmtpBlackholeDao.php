@@ -32,10 +32,12 @@ class SmtpBlackholeDao extends \ebi\Dao implements \ebi\MailHandler{
 		$data = $mail->get();
 		
 		$header = $data['header'];
-		
+		$to = array_keys($data['to']);
+		sort($to);
+
 		$self = new static();
 		$self->from($data['from']);
-		$self->to(implode(PHP_EOL,array_keys($data['to'])));
+		$self->to(implode(PHP_EOL,$to));
 		$self->cc(implode(PHP_EOL,array_keys($data['cc'])));
 		$self->bcc(implode(PHP_EOL,array_keys($data['bcc'])));
 		$self->subject($data['subject']);

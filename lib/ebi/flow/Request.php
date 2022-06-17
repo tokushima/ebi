@@ -10,7 +10,6 @@ class Request extends \ebi\Request{
 	private $_sess;
 	private $_login_id;
 	private $_login_anon;
-	private $_after_vars = [];
 	
 	public function __construct(){
 		parent::__construct();
@@ -210,10 +209,6 @@ class Request extends \ebi\Request{
 	 * 後処理
 	 */
 	public function after(): void{
-		if($this->is_vars('callback')){
-			$this->_after_vars['callback'] = $this->in_vars('callback');
-			$this->_after_vars['result_date'] = date(\ebi\Conf::timestamp_format());
-		}
 	}
 	
 	/**
@@ -222,7 +217,7 @@ class Request extends \ebi\Request{
 	 * @compatibility
 	 */
 	public function get_after_vars(){
-		return $this->_after_vars;
+		return [];
 	}
 	
 	/**

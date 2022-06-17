@@ -554,7 +554,7 @@ class Template{
 			$uniq = uniqid('');
 			$counter_var = '$__counter__'.$uniq;
 
-			$html = '';			
+			$html = '';
 			$html .= sprintf('<?php if(%s->is_prev()){ ?><li class="page-item prev"><a class="page-link" href="%s{%s.query_prev()}" rel="prev"><?php }else{ ?><li class="page-item prev disabled"><a class="page-link"><?php } ?>&laquo;</a></li>',$param,$href,$param);
 			$html .= sprintf('<?php if(%s->is_first(%d)){ ?><li page-item><a class="page-link" href="%s{%s.query(%s.first())}">{%s.first()}</a></li><li class="page-item disabled"><a class="page-link">...</a></li><?php } ?>',$param,$counter,$href,$param,$param,$param);
 			$html .= sprintf('<?php if(%s->total() == 0){ ?>',$param)
@@ -577,9 +577,6 @@ class Template{
 				"<?php } ?><?php }catch(\\Exception \$e){} ?></ul>",
 				$param, $html
 			);
-
-			$html = sprintf('<?php if(%s->total() > %s->limit()){ ?>%s<?php } ?>', $param, $param, $html);
-
 			return $html;
 		});
 	}

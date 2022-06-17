@@ -99,8 +99,10 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 	if(isset($find_defined_classes[$class])){
 		foreach($keys as $key){
 			if(!in_array($key, $find_defined_classes[$class])){
-				$failure['conf']++;
-				\cmdman\Std::println_warning(' x '.$class.'@'.$key);
+				if($key !== 'handler'){
+					$failure['conf']++;
+					\cmdman\Std::println_warning(' x '.$class.'@'.$key);
+				}
 			}
 		}
 	}

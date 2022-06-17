@@ -121,6 +121,14 @@ class Conf{
 		return '';
 	}
 
+	public static function is_production(): bool{
+		return (strpos(self::appmode(), 'production') !== false);
+	}
+	public static function is_local(): bool{
+		return (strpos(self::appmode(),'local') !== false);
+	}
+
+
 	/**
 	 * 現在のアプリケーションモードがモードに所属しているか
 	 * アプリケーションモード、　グループを指定する場合は「@グループ名」

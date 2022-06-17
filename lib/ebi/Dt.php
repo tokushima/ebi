@@ -2,14 +2,12 @@
 namespace ebi;
 /**
  * 開発支援ツール
- * @author tokushima
- *
  */
 class Dt extends \ebi\flow\Request{
 	private $entry;
 	private $entry_name;
 	
-	public function __construct($entryfile=null){
+	public function __construct(?string $entryfile=null){
 		if(empty($entryfile)){
 			$trace = debug_backtrace(false);
 			krsort($trace);
@@ -28,18 +26,17 @@ class Dt extends \ebi\flow\Request{
 		}
 		parent::__construct();
 	}
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		$vars = [
 			'f'=>new \ebi\Dt\Helper(),
 			'appmode'=>constant('APPMODE'),
-			'has_test'=>is_dir(self::test_path()),
 		];
 		return $vars;
 	}
 	/**
 	 * @automap
 	 */
-	public function index(){
+	public function index(): array{
 		$flow_output_maps = [];
 		
 		$map = \ebi\Flow::get_map($this->entry);
@@ -135,7 +132,7 @@ class Dt extends \ebi\flow\Request{
 	 * @context \ebi\man\DocInfo $method
 	 * @automap
 	 */
-	public function index_action_doc($name){
+	public function index_action_doc(?string $name): array{
 		$map = \ebi\Flow::get_map($this->entry);
 		
 		foreach($map['patterns'] as $m){
@@ -175,7 +172,6 @@ class Dt extends \ebi\flow\Request{
 				
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
-				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
@@ -188,7 +184,7 @@ class Dt extends \ebi\flow\Request{
 		throw new \ebi\exception\NotFoundException();
 	}
 	
-	private function get_login_annotation($class,$method){
+	private function get_login_annotation(string $class, string $method): array{
 		$class = \ebi\Util::get_class_name($class);
 		$login_anon = \ebi\Annotation::get_class($class,'login');
 
@@ -204,10 +200,9 @@ class Dt extends \ebi\flow\Request{
 	
 	/**
 	 * クラスのドキュメント
-	 * @param string $class
 	 * @automap
 	 */
-	public function class_doc($class){
+	public function class_doc(string $class): array{
 		$info = \ebi\Dt\Man::class_info($class);
 		
 		return [
@@ -216,11 +211,9 @@ class Dt extends \ebi\flow\Request{
 	}
 	/**
 	 * クラスドメソッドのドキュメント
-	 * @param string $class
-	 * @param string $method
 	 * @automap
 	 */
-	public function class_method_doc($class,$method){
+	public function class_method_doc(string $class, string $method): array{
 		$info = \ebi\Dt\Man::method_info($class,$method,true,true);
 		
 		return [
@@ -232,7 +225,7 @@ class Dt extends \ebi\flow\Request{
 	 * class list
 	 * @automap
 	 */
-	public function class_list(){
+	public function class_list(): array{
 		$req = new \ebi\Request();
 		$parent = $req->in_vars('parent');
 		$select = 'other';
@@ -280,7 +273,7 @@ class Dt extends \ebi\flow\Request{
 	 * Config
 	 * @automap
 	 */
-	public function config_list(){
+	public function config_list(): array{
 		$list = [];
 	
 		foreach(self::classes() as $info){
@@ -296,109 +289,13 @@ class Dt extends \ebi\flow\Request{
 			'class_info_list'=>$list,
 		];
 	}
-	
-	private function test_path(){
-		/**
-		 * @param string $val Test path root
-		 */
-		$testdir = \ebi\Conf::get('test_dir',getcwd().'/test/');
 		
-		return \ebi\Util::path_slash($testdir,null,true);
-	}
-	private function test_file_list($entry=null){
-		$testdir = $this->test_path();
-		$test_list = [];
-		
-		try{
-			foreach(\ebi\Util::ls($testdir,true,'/\.php$/') as $f){
-				if(
-					strpos($f->getFilename(),'testman') === false &&
-					strpos($f->getPathname(),'/_') === false
-				){
-					$name = str_replace($testdir,'',$f->getPathname());
-					$src = file_get_contents($f->getPathname());
-					
-					if(empty($entry) || preg_match('@\(([\'\"])'.preg_quote($entry,'@').'\\1@',$src)){
-						$pos = strpos($src,'*/');
-
-						if($pos === false){
-							$info = new \ebi\Dt\DocInfo();
-							$info->name($name);
-						}else{
-							$start_pos = strpos($src,'/**');
-							$info = \ebi\Dt\DocInfo::parse($name,substr($src,$start_pos+2,$pos-$start_pos));
-						}
-						$short_name = substr($info->name(),0,-4);
-						
-						if(strlen($short_name) > 60){
-							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
-						}
-						$info->set_opt('short_name',$short_name);
-						$info->set_opt('has_mail',(bool)preg_match('/Dt::find_mail/',$src));
-						
-						$test_list[$info->name()] = $info;
-					}
-				}
-			}
-			ksort($test_list);
-		}catch(\ebi\exception\InvalidArgumentException $e){
-		}
-		return $test_list;
-	}
-	/**
-	 * @automap
-	 */
-	public function test_list(){
-		$test_list = self::test_file_list();
-		
-		return [
-			'test_list'=>$test_list,
-		];
-	}
-	/**
-	 * @automap
-	 * @throws \ebi\exception\NotFoundException
-	 */
-	public function test_view(){
-		$req = new \ebi\Request();
-		$testdir = $this->test_path();
-		$req_path = $req->in_vars('path');
-		$path = \ebi\Util::path_absolute($testdir,$req_path);
-		
-		if(strpos($path,$testdir) === false){
-			throw new \ebi\exception\NotFoundException($req->in_vars('path').' not found');
-		}
-		$src = str_replace('<?php','',file_get_contents($path));
-		
-		$pos = strpos($src,'*/');
-		
-		if($pos === false){
-			$info = new \ebi\Dt\DocInfo();
-			$info->name($req_path);
-		}else{
-			$start_pos = strpos($src,'/**');
-			$info = \ebi\Dt\DocInfo::parse($req_path,substr($src,$start_pos+2,$pos-$start_pos));
-		}
-		while($path != $testdir){
-			$path = dirname($path).'/';
-			
-			if(is_file($f=$path.'__setup__.php')){
-				$src = str_replace('<?php','',file_get_contents($f)).PHP_EOL.'// '.str_repeat('-',80).PHP_EOL.$src;
-			}
-		}
-		return [
-			'info'=>$info,
-			'src'=>'<?php'.PHP_EOL.$src,
-		];
-	}
-	
 	/**
 	 * Mail Templates
 	 * @context \ebi\Dt\DocInfo[] $template_list
-	 * @context bool $is_test
 	 * @automap
 	 */
-	public function mail_list(){
+	public function mail_list(): array{
 		$has_bh = false;
 		
 		try{
@@ -435,14 +332,13 @@ class Dt extends \ebi\flow\Request{
 			}
 		}
 		return [
-			'is_test'=>$has_bh,
 			'template_list'=>$template_list,
 		];
 	}
 	/**
 	 * @automap
 	 */
-	public function mail_info(){
+	public function mail_info(): array{
 		$req = new \ebi\Request();
 		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
 		
@@ -491,7 +387,7 @@ class Dt extends \ebi\flow\Request{
 			'method_list'=>$method_list,
 		];
 	}
-	private function find_mail_template_info($tcode){
+	private function find_mail_template_info(?string $tcode): \ebi\Dt\DocInfo{
 		foreach(\ebi\Dt\Man::mail_template_list() as $info){
 			if($info->opt('x_t_code') == $tcode){
 				$path = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
@@ -526,7 +422,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * @automap
 	 */
-	public function mail_blackhole(){
+	public function mail_blackhole(): array{
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
 		$list = \ebi\SmtpBlackholeDao::find_all(
@@ -551,7 +447,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * @automap
 	 */
-	public function mail_view(){
+	public function mail_view(): array{
 		$req = new \ebi\Request();
 		$obj = \ebi\SmtpBlackholeDao::find_get(
 			Q::eq('tcode',$req->in_vars('tcode')),
@@ -574,9 +470,8 @@ class Dt extends \ebi\flow\Request{
 	
 	/**
 	 * ライブラリ一覧
-	 * @return array
 	 */
-	public static function classes($parent_class=null){
+	public static function classes(?string $parent_class=null): \Generator{
 		$include_path = [];
 		
 		if(is_dir(getcwd().DIRECTORY_SEPARATOR.'lib')){
@@ -684,10 +579,8 @@ class Dt extends \ebi\flow\Request{
 	
 	/**
 	 * エントリのURL群
-	 * @param string $dir
-	 * @return array
 	 */
-	public static function get_urls($dir=null){
+	public static function get_urls(?string $dir=null): array{
 		if(empty($dir)){
 			$dir = getcwd();
 		}
@@ -715,12 +608,14 @@ class Dt extends \ebi\flow\Request{
 	}
 	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
-	 * @param string $to
-	 * @param string $tcode
-	 * @param string $keyword
-	 * @return \ebi\SmtpBlackholeDao
+	 * @param string|array $to
 	 */
-	public static function find_mail($to,$tcode='',$keyword=''){
+	public static function find_mail($to, string $tcode='', string $keyword=''): \ebi\SmtpBlackholeDao{
+		if(is_array($to)){
+			sort($to);
+			$to = implode(PHP_EOL, $to);
+		}
+
 		$q = new Q();
 		$q->add(Q::eq('to',$to));
 		$q->add(Q::gte('create_date',time()-300));
@@ -728,7 +623,7 @@ class Dt extends \ebi\flow\Request{
 		if(!empty($tcode)){
 			$q->add(Q::eq('tcode',$tcode));
 		}	
-		foreach(\ebi\SmtpBlackholeDao::find($q,Q::order('-id')) as $mail){
+		foreach(\ebi\SmtpBlackholeDao::find_all($q,Q::order('-id')) as $mail){
 			$value = $mail->subject().$mail->message();
 				
 			if(empty($keyword) || mb_strpos($value,$keyword) !== false){
@@ -740,7 +635,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * テーブルを削除後作成する
 	 */
-	public static function  reset_tables(){
+	public static function  reset_tables(): void{
 		foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 			$class = \ebi\Util::get_class_name($class_info['class']);
 			call_user_func([$class,'drop_table']);

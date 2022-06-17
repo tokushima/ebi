@@ -352,6 +352,9 @@ class Flow{
 						$result_vars = array_merge($result_vars, $ins->get_after_vars());
 						$after_redirect = $ins->get_after_redirect();
 						
+						if($ins->is_vars('callback')){
+							$result_vars['callback'] = $ins->in_vars('callback');
+						}
 						if(isset($after_redirect) && !array_key_exists('after',$pattern)){
 							$pattern['after'] = $after_redirect;
 						}
