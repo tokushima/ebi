@@ -1,77 +1,64 @@
-
 <!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<title>{$appmode}</title>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$appmode}</title>
 
-	<link rel="stylesheet" href="bootstrap-4.4.1-dist/bootstrap.min.css" />
-	<link rel="stylesheet" href="google-code-prettify/prettify.css" />
-	<link rel="stylesheet" href="style.css" />
-	<link rel="stylesheet" href="dashboard.css" />
-</head>
-<body>
-	<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-		<a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">{$appmode}</a>
-	</nav>
-	
-	<div class="container-fluid">
-		<div class="row">
-			<nav class="col-md-2 d-none d-md-block bg-light sidebar">
-				<div class="sidebar-sticky">
-					<ul class="nav flex-column">
-						<li class="nav-item">
-							<a class="nav-link {$t.contains_pattern_switch('index','active')}" href="{$t.package_method_url('index')}">
-								Routes
-							</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link {$t.contains_pattern_switch('config','active')}" href="{$t.package_method_url('config_list')}">
-								Configs
-							</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link {$t.contains_pattern_switch('class','active')}" href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">
-								Classes
-							</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link {$t.contains_pattern_switch('mail','active')}" href="{$t.package_method_url('mail_list')}">
-								Mails
-							</a>
-						</li>
-						
-						<rt:if param="{$has_test}">
-							<li class="nav-item">
-								<a class="nav-link {$t.contains_pattern_switch('test','active')}" href="{$t.package_method_url('test_list')}">
-									Tests
-								</a>
-							</li>
-						</rt:if>
-					</ul>
-				</div>
-			</nav>
-			
-			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-				<rt:block name="content"></rt:block>
-			</main>
-		</div>
-	</div>
+  	<link href="bootstrap-5.0.2-dist/bootstrap.min.css" rel="stylesheet">
+    <link href="dashboard.css" rel="stylesheet">
+  </head>
+  <body>
 
+    <header class="navbar navbar-dark sticky-top flex-md-nowrap p-0 shadow {$t.navbgcolor()}">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">{$appmode}</a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
+      <ul class="navbar-nav px-3">
+        <li class="nav-item text-nowrap">
+        </li>
+      </ul>
+    </header>
 
+    <div class="container-fluid">
+      <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-3">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link {$t.contains_pattern_switch('index','active')}" href="{$t.package_method_url('index')}">
+                  Routes
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {$t.contains_pattern_switch('config','active')}" href="{$t.package_method_url('config_list')}">
+                  Configs
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {$t.contains_pattern_switch('class','active')}" href="{$t.package_method_url('class_list')}?parent=\ebi\Dao">
+                  Classes
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {$t.contains_pattern_switch('mail','active')}" href="{$t.package_method_url('mail_list')}">
+                  Mails
+                </a>
+              </li>
+            </ul>
 
-	<form name="linkform"></form>
+          </div>
+        </nav>
 
-	<script src="google-code-prettify/prettify.js"></script>
-	
-	<script type="text/javascript">
-		window.onload = function(){
-			PR.prettyPrint();
-		};
-	</script>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-top: 20px;">
+          <rt:block name="content"></rt:block>      
+        </main>
+      </div>
+    </div>
 
-	<div style="height: 100px;"></div>
-</body>
+    <div style="height: 100px;"></div>
+  </body>
 </html>
+

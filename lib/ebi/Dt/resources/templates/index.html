@@ -1,17 +1,6 @@
 <rt:extends href="base.html" />
 
-<rt:block name="content">
-	<div style="margin-bottom: 30px;">
-		<form name="version_select_frm">
-			<div class="input-group">
-				<div class="input-group-prepend">
-					<div class="input-group-text">Version</div>
-				</div>
-				<select class="custom-select" id="version" rt:param="{$version_list}" name="version" rt:null="ALL" rt:ref="true" onChange="location.href='?version='+version_select_frm.version.options[version_select_frm.version.selectedIndex].value;"></select>
-			</div>
-		</form>
-	</div>
-	
+<rt:block name="content">	
 	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
 	<thead>
 	<tr class="text-muted">

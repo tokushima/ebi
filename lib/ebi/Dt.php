@@ -30,7 +30,6 @@ class Dt extends \ebi\flow\Request{
 		$vars = [
 			'f'=>new \ebi\Dt\Helper(),
 			'appmode'=>constant('APPMODE'),
-			'has_test'=>is_dir(self::test_path()),
 		];
 		return $vars;
 	}
@@ -173,7 +172,6 @@ class Dt extends \ebi\flow\Request{
 				
 				$info->set_opt('name',$name);
 				$info->set_opt('url',$m['format']);
-				$info->set_opt('test_list',self::test_file_list(basename($this->entry,'.php').'::'.$name));
 				
 				$info->reset_params(array_slice($info->params(),0,$m['num']));
 				
@@ -291,105 +289,10 @@ class Dt extends \ebi\flow\Request{
 			'class_info_list'=>$list,
 		];
 	}
-	
-	private function test_path(): ?string{
-		/**
-		 * @param string $val Test path root
-		 */
-		$testdir = \ebi\Conf::get('test_dir',getcwd().'/test/');
 		
-		return \ebi\Util::path_slash($testdir,null,true);
-	}
-	private function test_file_list(?string $entry=null): array{
-		$testdir = $this->test_path();
-		$test_list = [];
-		
-		try{
-			foreach(\ebi\Util::ls($testdir,true,'/\.php$/') as $f){
-				if(
-					strpos($f->getFilename(),'testman') === false &&
-					strpos($f->getPathname(),'/_') === false
-				){
-					$name = str_replace($testdir,'',$f->getPathname());
-					$src = file_get_contents($f->getPathname());
-					
-					if(empty($entry) || preg_match('@\(([\'\"])'.preg_quote($entry,'@').'\\1@',$src)){
-						$pos = strpos($src,'*/');
-
-						if($pos === false){
-							$info = new \ebi\Dt\DocInfo();
-							$info->name($name);
-						}else{
-							$start_pos = strpos($src,'/**');
-							$info = \ebi\Dt\DocInfo::parse($name,substr($src,$start_pos+2,$pos-$start_pos));
-						}
-						$short_name = substr($info->name(),0,-4);
-						
-						if(strlen($short_name) > 60){
-							$short_name = substr($short_name,0,20).' ... '.substr($short_name,-40);
-						}
-						$info->set_opt('short_name',$short_name);
-						$info->set_opt('has_mail',(bool)preg_match('/Dt::find_mail/',$src));
-						
-						$test_list[$info->name()] = $info;
-					}
-				}
-			}
-			ksort($test_list);
-		}catch(\ebi\exception\InvalidArgumentException $e){
-		}
-		return $test_list;
-	}
-	/**
-	 * @automap
-	 */
-	public function test_list(): array{
-		$test_list = self::test_file_list();
-		
-		return [
-			'test_list'=>$test_list,
-		];
-	}
-	/**
-	 * @automap
-	 */
-	public function test_view(): array{
-		$req = new \ebi\Request();
-		$testdir = $this->test_path();
-		$req_path = $req->in_vars('path');
-		$path = \ebi\Util::path_absolute($testdir,$req_path);
-		
-		if(strpos($path,$testdir) === false){
-			throw new \ebi\exception\NotFoundException($req->in_vars('path').' not found');
-		}
-		$src = str_replace('<?php','',file_get_contents($path));
-		
-		$pos = strpos($src,'*/');
-		
-		if($pos === false){
-			$info = new \ebi\Dt\DocInfo();
-			$info->name($req_path);
-		}else{
-			$start_pos = strpos($src,'/**');
-			$info = \ebi\Dt\DocInfo::parse($req_path,substr($src,$start_pos+2,$pos-$start_pos));
-		}
-		while($path != $testdir){
-			$path = dirname($path).'/';
-			
-			if(is_file($f=$path.'__setup__.php')){
-				$src = str_replace('<?php','',file_get_contents($f)).PHP_EOL.'// '.str_repeat('-',80).PHP_EOL.$src;
-			}
-		}
-		return [
-			'info'=>$info,
-			'src'=>'<?php'.PHP_EOL.$src,
-		];
-	}
-	
 	/**
 	 * Mail Templates
 	 * @context \ebi\Dt\DocInfo[] $template_list
-	 * @context bool $is_test
 	 * @automap
 	 */
 	public function mail_list(): array{
@@ -429,7 +332,6 @@ class Dt extends \ebi\flow\Request{
 			}
 		}
 		return [
-			'is_test'=>$has_bh,
 			'template_list'=>$template_list,
 		];
 	}
