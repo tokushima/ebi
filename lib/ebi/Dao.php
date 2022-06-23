@@ -552,7 +552,7 @@ abstract class Dao extends \ebi\Obj{
 	/**
 	 * @return mixed
 	 */
-	private static function exec_aggregator_result_cast(self $dao, $target_name, string $value, ?string $cast){
+	private static function exec_aggregator_result_cast(self $dao, $target_name, ?string $value, ?string $cast){
 		switch($cast){
  			case 'float': return (float)$value;
  			case 'int': return (int)$value;
@@ -590,7 +590,7 @@ abstract class Dao extends \ebi\Obj{
 		return static::exec_aggregator('avg', $target_prop, $args, 'float');
 	}
 	public static function find_sum(string $target_prop, ...$args): float{
-		return static::exec_aggregator('sum', $target_prop, $args);
+		return static::exec_aggregator('sum', $target_prop, $args, 'float');
 	}
 	/**
 	 * @return mixed
