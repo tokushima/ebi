@@ -10,6 +10,8 @@ use \ebi\Q;
 (new \test\db\Calc())->price(20)->type('A')->name('AAA')->save();
 (new \test\db\Calc())->price(10)->type('A')->name('BBB')->save();
 
+eq(0,\test\db\Calc::find_sum('price',Q::eq('type','C')));
+
 eq(80,\test\db\Calc::find_sum('price'));
 eq(30,\test\db\Calc::find_sum('price',Q::eq('type','A')));
 
