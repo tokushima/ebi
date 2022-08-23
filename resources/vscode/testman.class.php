@@ -79,27 +79,27 @@ class Browser{
 	/**
 	 * GETリクエスト
 	 */
-	public function do_get(string $url){
+	public function do_get($url){
 	}
 	/**
 	 * POSTリクエスト
 	 */
-	public function do_post(string $url){
+	public function do_post($url){
 	}
 	/**
 	 * POSTリクエスト(JSON)
 	 */
-	public function do_json(string $url){
+	public function do_json($url){
 	}
 	/**
 	 * GETリクエストでダウンロードする
 	 */
-	public function do_download(string $url, string $filename){
+	public function do_download($url, string $filename){
 	}
 	/**
 	 * POSTリクエストでダウンロードする
 	 */
-	public function do_post_download(string $url, string $filename){
+	public function do_post_download($url, string $filename){
 	}
 	/**
 	 * bodyを解析し配列として返す
