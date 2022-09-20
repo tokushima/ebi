@@ -367,7 +367,7 @@ class Util{
 
 	/**
 	 * 次回の営業日のタイムスタンプ
-	 * holidays: 休日の日付文字列(YYYY-MM-DD)の配列
+	 * holidays: 休日の日付文字列(YYYYMMDD)の配列
 	 * regular_holiday: 休日の曜日番号
 	 */
 	public static function next_business_day(int $base, int $days, array $holidays=[], $regular_holiday=[0,6]): int{
@@ -376,7 +376,7 @@ class Util{
 		for($i=0;$i<$days;){
 			$d += 86400;
 
-			if(!in_array(date('w', $d), $regular_holiday) && !in_array(date('Y-m-d', $d), $holidays)){
+			if(!in_array(date('w', $d), $regular_holiday) && !in_array(date('Ymd', $d), $holidays)){
 				$i++;
 			}
 		}
