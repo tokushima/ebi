@@ -2,7 +2,7 @@
 namespace testman;
 
 class Util{
-    public static function url(string $entry_key): string{
+    public static function url($entry_key): string{
         return '';
     }
 }
