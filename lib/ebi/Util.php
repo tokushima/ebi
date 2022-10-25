@@ -295,7 +295,6 @@ class Util{
 	 * ヒアドキュメントのようなテキストを生成する
 	 * １行目のインデントに合わせてインデントが消去される
 	 * @param string $text 対象の文字列
-	 * @deprecated
 	 */
 	public static function plain_text(string $text): string{
 		if(!empty($text)){
