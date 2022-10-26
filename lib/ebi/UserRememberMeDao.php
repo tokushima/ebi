@@ -57,8 +57,8 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->expire_date($expire);
 				$self->save();
 				
-				\ebi\Request::write_cookie(self::name($req,'token'),$self->token(),$expire);
-				\ebi\Request::write_cookie(self::name($req,'key'),$self->key().'/'.self::crypt($self->user_id()),$expire);
+				setcookie(self::name($req,'token'),$self->token(),$expire);
+				setcookie(self::name($req,'key'),$self->key().'/'.self::crypt($self->user_id()),$expire);
 			}
 		}
 	}
@@ -66,7 +66,7 @@ class UserRememberMeDao extends \ebi\Dao{
 	 * remember_meで利用しuser_idを取得する
 	 */
 	public static function read_cookie(\ebi\flow\Request $req): string{
-		$token = \ebi\Request::read_cookie(self::name($req,'token'));
+		$token = $_COOKIE[self::name($req,'token')] ?? null;
 		
 		if(!empty($token)){
 			if(rand(1,10) == 5){
@@ -74,7 +74,7 @@ class UserRememberMeDao extends \ebi\Dao{
 					$obj->delete();
 				}
 			}
-			$sk = explode('/',\ebi\Request::read_cookie(self::name($req,'key')));
+			$sk = explode('/', $_COOKIE[self::name($req,'key')] ?? null);
 			
 			if(isset($sk[1])){
 				[$key, $id] = $sk;
@@ -103,7 +103,14 @@ class UserRememberMeDao extends \ebi\Dao{
 	 * before_do_logoutで利用する
 	 */
 	public static function delete_cookie(\ebi\flow\Request $req): void{
-		\ebi\Request::delete_cookie(self::name($req,'token'));
-		\ebi\Request::delete_cookie(self::name($req,'key'));
+		if($req->user() instanceof \ebi\User){
+			try{
+				$self = static::find_get(Q::eq('user_id',$req->user()->id()));
+				$self->delete();
+			}catch(\ebi\exception\NotFoundException $e){
+			}
+		}
+		setcookie(self::name($req,'token'), '', time() - 1209600);
+		setcookie(self::name($req,'key'), '', time() - 1209600);
 	}
 }

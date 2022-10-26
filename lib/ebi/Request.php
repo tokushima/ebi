@@ -175,53 +175,6 @@ class Request implements \IteratorAggregate{
 		return isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : null;
 	}
 	/**
-	 * クッキーへの書き出し
-	 * @param mixed $value
-	 */
-	public static function write_cookie(string $name, $value, ?int $expire_sec=null): void{
-		$cookie_params = \ebi\Conf::cookie_params();
-		
-		if(empty($expire_sec)){
-			$expire_sec = time() + $cookie_params['cookie_lifetime'];
-		}
-		$opt = [
-			'expires'=>$expire_sec,
-			'path'=>$cookie_params['cookie_path'],
-			'domain'=>$cookie_params['cookie_domain'],
-			'secure'=>$cookie_params['cookie_secure'],
-		];
-		if(!empty($cookie_params['cookie_samesite'])){
-			$opt['samesite'] = $cookie_params['cookie_samesite'];
-		}
-		setcookie($name, (string)$value, $opt);
-	}
-	/**
-	 * クッキーから取得
-	 * @param mixed $default
-	 * @return mixed
-	 */
-	public static function read_cookie(string $name, $default=null){
-		return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
-	}
-	/**
-	 * クッキーから削除
-	 * 登録時と同条件のものが削除される
-	 * @param string $name クッキー名
-	 */
-	public static function delete_cookie(string $name): void{
-		$cookie_params = \ebi\Conf::cookie_params();
-		$opt = [
-			'expires'=>(time() - 1209600),
-			'path'=>$cookie_params['cookie_path'],
-			'domain'=>$cookie_params['cookie_domain'],
-			'secure'=>$cookie_params['cookie_secure'],
-		];
-		if(!empty($cookie_params['cookie_samesite'])){
-			$opt['samesite'] = $cookie_params['cookie_samesite'];
-		}
-		setcookie($name, '', $opt);
-	}
-	/**
 	 * pathinfo または argv
 	 */
 	public function args(): ?string{
