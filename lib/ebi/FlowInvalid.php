@@ -2,11 +2,11 @@
 namespace ebi;
 
 class FlowInvalid implements \Iterator{
-	private static $self;
-	private $messages = [];
-	private $pos = 0;
-	private $group = null;
-	private $type = null;
+	private static self $self;
+	private array $messages = [];
+	private int $pos = 0;
+	private ?string $group = null;
+	private ?string $type = null;
 	
 	public function rewind(): void{
 		$this->pos = 0;

@@ -2,8 +2,8 @@
 namespace ebi;
 
 class Obj implements \IteratorAggregate{
-	private static $_m = [];
-	protected $_;
+	private static array $_m = [];
+	protected string $_;
 
 	/**
 	 * プロパティのアノテーションを取得する

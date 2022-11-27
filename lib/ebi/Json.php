@@ -2,7 +2,7 @@
 namespace ebi;
 
 class Json{
-	private $arr = [];
+	private array $arr = [];
 	
 	public function __construct(string $json){
 		$this->arr = self::decode($json);

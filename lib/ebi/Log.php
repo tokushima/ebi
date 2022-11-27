@@ -2,14 +2,18 @@
 namespace ebi;
 
 class Log{
-	private static $level_str = ['emergency','alert','critical','error','warning','notice','info','debug'];
-	private static $current_level;
-	private static $filename;
+	private static array $level_str = ['emergency','alert','critical','error','warning','notice','info','debug'];
+	private static ?int $current_level = null;
+	private static ?string $filename = null;
 
-	private $level;
-	private $time;
-	private $file;
-	private $line;
+	private string $level;
+	private int $time;
+	private string $file;
+	private int $line;
+
+	/**
+	 * @var mixed $message
+	 */
 	private $message;
 		
 	private static function cur_level(): int{

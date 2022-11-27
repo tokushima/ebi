@@ -2,8 +2,8 @@
 namespace ebi;
 
 class HttpHeader{
-	private static $header = [];
-	private static $send_status;
+	private static array $header = [];
+	private static int $send_status;
 
 	/**
 	 * statusを出力する

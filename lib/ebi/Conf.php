@@ -2,8 +2,8 @@
 namespace ebi;
 
 class Conf{
-	private static $value = [self::class=>[]];
-	private static $handler_obj = [];
+	private static array $value = [self::class=>[]];
+	private static array $handler_obj = [];
 	
 	private static function get_defined_class_key(string $key): array{
 		if(strpos($key,'@') === false){

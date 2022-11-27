@@ -2,24 +2,24 @@
 namespace ebi;
 
 class Mail{	
-	private $attach = [];
-	private $media = [];
+	private array $attach = [];
+	private array $media = [];
 	
-	private $from = '';
-	private $sender_name = '';
-	private $return_path = '';
-	private $to = [];
-	private $cc = [];
-	private $bcc = [];
-	private $unsubscribe = '';
-	private $header = [];
+	private string $from = '';
+	private string $sender_name = '';
+	private string $return_path = '';
+	private array $to = [];
+	private array $cc = [];
+	private array $bcc = [];
+	private string $unsubscribe = '';
+	private array $header = [];
 	
-	private $subject = '';
-	private $message = '';
-	private $html = '';
+	private string $subject = '';
+	private string $message = '';
+	private string $html = '';
 	
-	private $eol = "\n";
-	private $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
+	private string $eol = "\n";
+	private array $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
 
 	public function __construct(){
 		$this->boundary = ['mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related')];
@@ -27,7 +27,7 @@ class Mail{
 	/**
 	 * Set from address
 	 */
-	public function from(string $address, ?string $sender_name=null): void{
+	public function from(string $address, ?string $sender_name=''): void{
 		$this->sender_name = $sender_name;
 		$this->from = $address;
 
@@ -245,7 +245,7 @@ class Mail{
 		return $value.$this->eol;
 	}
 
-	private function attach_string(array $list, ?string $id=null): string{
+	private function attach_string(array $list, string $id=''): string{
 		[$filename, $src, $type] = $list;
 		$send = '';
 		$send .= $this->line(sprintf('Content-Type: %s; name="%s"',(empty($type) ? 'application/octet-stream' : $type),$filename));
@@ -341,7 +341,7 @@ class Mail{
 		try{
 			try{
 				$from = $xml->find_get('from');
-				$this->from($from->in_attr('address'),$from->in_attr('name'));
+				$this->from($from->in_attr('address',''), $from->in_attr('name', ''));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
 			foreach($xml->find('to') as $to){

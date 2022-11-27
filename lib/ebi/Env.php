@@ -2,7 +2,7 @@
 namespace ebi;
 
 class Env{
-	private $vars = [];
+	private array $vars = [];
 	
 	public function __construct(array $vars=[]){
 		$this->vars = $vars;

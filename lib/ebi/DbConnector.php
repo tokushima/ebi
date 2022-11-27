@@ -2,10 +2,10 @@
 namespace ebi;
 
 abstract class DbConnector{
-	protected $encode;
-	protected $timezone;
-	protected $quotation = '`';
-	protected $order_random_str;
+	protected ?string $encode = null;
+	protected ?string $timezone = null;
+	protected string $quotation = '`';
+	protected string $order_random_str = '';
 	
 	public function __construct(?string $encode=null, ?string $timezone=null){
 		$this->encode = $encode;
