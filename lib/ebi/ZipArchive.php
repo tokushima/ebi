@@ -3,9 +3,9 @@
 namespace ebi;
 
 class ZipArchive{
-	private $zip;
-	private $wrote = false;
-	private $filename;
+	private \ZipArchive $zip;
+	private bool $wrote = false;
+	private string $filename;
 
 	public function __construct(string $filename, bool $append = false){
 		$this->filename = $filename;

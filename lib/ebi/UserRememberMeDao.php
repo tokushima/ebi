@@ -6,7 +6,7 @@ namespace ebi;
  * @var string $user_id @['max'=>128]
  * @var string $token @['auto_code_add'=>true,'max'=>80]
  * @var string $key @['auto_code_add'=>true,'max'=>45]
- * @var timestamp $expire_date
+ * @var datetime $expire_date
  */
 class UserRememberMeDao extends \ebi\Dao{
 	protected $id;

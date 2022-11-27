@@ -2,8 +2,8 @@
 namespace ebi;
 
 class WorkingStorage{
-	static private $work;
-	private $list = [];
+	static private ?self $work;
+	private array $list = [];
 	
 	public function __destruct(){
 		rsort($this->list);

@@ -127,6 +127,9 @@ class Validator{
 		}
 	}
 	
+	/**
+	 * @return mixed
+	 */
 	public static function value(string $name, $v, array $anon){
 		$get = function($an) use($anon){
 			return isset($anon[$an]) ? $anon[$an] : null;
