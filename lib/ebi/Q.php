@@ -352,7 +352,7 @@ class Q{
 		if(!empty($columns) && !is_array($columns)){
 			$columns = explode(',',$columns);
 		}
-		$values = trim(str_replace(['　',' '], ' ', $val));
+		$values = trim(str_replace(['　',' '], ' ', (string)$val));
 		
 		if(!empty($values)){
 			$values = array_unique(explode(' ', $values));

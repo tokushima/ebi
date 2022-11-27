@@ -2,19 +2,15 @@
 namespace ebi\flow;
 
 class Request extends \ebi\Request{
-	private $_selected_pattern = [];
-	private $_before_redirect;
-	private $_after_redirect;
-	private $_auth;
+	private array $_selected_pattern = [];
+	private ?string $_before_redirect = null;
+	private ?string $_after_redirect = null;
+	private object $_auth;
 
-	private $_sess;
-	private $_login_id;
-	private $_login_anon;
+	private \ebi\Session $_sess;
+	private string $_login_id;
+	private ?array $_login_anon = null;
 	
-	public function __construct(){
-		parent::__construct();
-	}
-
 	/**
 	 * action実行後にリダイレクトするURL
 	 */
@@ -91,8 +87,6 @@ class Request extends \ebi\Request{
 		return $ann;
 	}
 
-
-
 	/**
 	 * セッションにセットする
 	 * @param mixed $val
@@ -140,7 +134,7 @@ class Request extends \ebi\Request{
 		$this->_sess = new \ebi\Session($sess_name);
 		$this->_login_id = $sess_name.'_LOGIN_';
 
-		$this->_login_anon = \ebi\Annotation::get_class($this,'login',null,__CLASS__);
+		$this->_login_anon = \ebi\Annotation::get_class($this, 'login' ,null, __CLASS__);
 		$this->request_validation();
 
 		if(isset($this->_selected_pattern['auth'])){
@@ -213,10 +207,8 @@ class Request extends \ebi\Request{
 	
 	/**
 	 * Flowの結果に返却値を追加する
-	 * @return array 
-	 * @compatibility
 	 */
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		return [];
 	}
 	
