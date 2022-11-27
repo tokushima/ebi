@@ -2,40 +2,40 @@
 namespace ebi;
 
 class Q{
-	const EQ = 1;
-	const NEQ = 2;
-	const GT = 3;
-	const LT = 4;
-	const GTE = 5;
-	const LTE = 6;
-	const START_WITH = 7;
-	const END_WITH = 8;
-	const CONTAINS = 9;
-	const IN = 10;
-	const ORDER_ASC = 11;
-	const ORDER_DESC = 12;
-	const ORDER_RAND = 13;
-	const ORDER = 14;
-	const MATCH = 15;
+	public const EQ = 1;
+	public const NEQ = 2;
+	public const GT = 3;
+	public const LT = 4;
+	public const GTE = 5;
+	public const LTE = 6;
+	public const START_WITH = 7;
+	public const END_WITH = 8;
+	public const CONTAINS = 9;
+	public const IN = 10;
+	public const ORDER_ASC = 11;
+	private const ORDER_DESC = 12;
+	private const ORDER_RAND = 13;
+	public const ORDER = 14;
+	public const MATCH = 15;
 	
-	const OR_BLOCK = 16;
-	const AND_BLOCK = 17;
-	const DATE_FORMAT = 18;
-	const FOR_UPDATE = 19;
+	private const OR_BLOCK = 16;
+	private const AND_BLOCK = 17;
+	private const DATE_FORMAT = 18;
+	private const FOR_UPDATE = 19;
 	
-	const IGNORE = 2;
-	const NOT = 4;
+	public const IGNORE = 2;
+	public const NOT = 4;
 	
 	private $arg1;
 	private $arg2;
-	private $type;
+	private int $type;
 	private $param;
-	private $and_block = [];
-	private $or_block = [];
-	private $paginator;
-	private $order_by = [];
-	private $date_format = [];
-	private $for_update = false;
+	private ?array $and_block = [];
+	private ?array $or_block = [];
+	private ?\ebi\Paginator $paginator = null;
+	private array $order_by = [];
+	private array $date_format = [];
+	private bool $for_update = false;
 
 	/**
 	 * @param mixed $arg1 
