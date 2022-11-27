@@ -2,13 +2,12 @@
 namespace ebi;
 /**
  * リクエストを処理する
- * @author tokushima
  */
 class Request implements \IteratorAggregate{
-	private $vars = [];
-	private $files = [];
-	private $args;
-	private $_method;
+	private array $vars = [];
+	private array $files = [];
+	private ?string $args = null;
+	private ?string $_method = null;
 	
 	public function __construct(){
 		if('' != ($pathinfo = array_key_exists('PATH_INFO',$_SERVER) ? $_SERVER['PATH_INFO'] : '')){
