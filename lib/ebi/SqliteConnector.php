@@ -2,8 +2,8 @@
 namespace ebi;
 
 class SqliteConnector extends \ebi\DbConnector{
-	protected $order_random_str = 'random()';
-	private $timezone_offset = 0;
+	protected string $order_random_str = 'random()';
+	private int $timezone_offset = 0;
 	
 	public function connect(?string $name, ?string $host, ?int $port, ?string $user, ?string $password, ?string $sock, bool $autocommit): \PDO{
 		unset($port,$user,$password,$sock);

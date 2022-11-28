@@ -2,14 +2,14 @@
 namespace ebi;
 
 class Column{
-	private $name;
-	private $column;
-	private $column_alias;
-	private $table;
-	private $table_alias;
-	private $primary = false;
-	private $auto = false;
-	private $base = true;
+	private ?string $name = null;
+	private ?string $column = null;
+	private ?string $column_alias = null;
+	private ?string $table = null;
+	private ?string $table_alias = null;
+	private bool $primary = false;
+	private bool $auto = false;
+	private bool $base = true;
 
 	public function name(?string $v=null): ?string{
 		return ($v !== null) ? ($this->name = $v) : $this->name;

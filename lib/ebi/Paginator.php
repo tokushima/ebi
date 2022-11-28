@@ -2,15 +2,15 @@
 namespace ebi;
 
 class Paginator implements \IteratorAggregate{
-	private $query_name = 'page';
-	private $vars = [];
-	private $current;
-	private $offset;
-	private $limit;
-	private $order;
-	private $total;
-	private $first;
-	private $last;
+	private string $query_name = 'page';
+	private array $vars = [];
+	private ?int $current = null;
+	private int $offset = 0;
+	private int $limit;
+	private ?string $order = null;
+	private int $total;
+	private int $first;
+	private int $last;
 
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator([

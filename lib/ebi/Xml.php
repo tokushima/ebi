@@ -2,15 +2,15 @@
 namespace ebi;
 
 class Xml implements \IteratorAggregate{
-	private $attr = [];
-	private $plain_attr = [];
-	private $name;
-	private $value;
-	private $close_empty = true;
+	private array $attr = [];
+	private array $plain_attr = [];
+	private ?string $name;
+	private ?string $value;
+	private bool $close_empty = true;
 
-	private $plain;
-	private $pos;
-	private $esc = true;
+	private string $plain;
+	private int $pos;
+	private bool $esc = true;
 
 	/**
 	 * @param mixed $name string|object

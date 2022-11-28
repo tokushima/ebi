@@ -4,7 +4,6 @@ namespace test\flow;
 /**
  * リクエストフロー
  * 様々な
- * @author tokushima
  * @see https://google.com
  * @see \test\flow\RequestFlow::sendmail
  * @see \test\flow\RequestFlow

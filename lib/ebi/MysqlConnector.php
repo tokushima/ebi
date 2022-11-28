@@ -2,7 +2,7 @@
 namespace ebi;
 
 class MysqlConnector extends \ebi\DbConnector{
-	protected $order_random_str = 'rand()';
+	protected string $order_random_str = 'rand()';
 	
 	public function connect(?string $name, ?string $host, ?int $port, ?string $user, ?string $password, ?string $sock, bool $autocommit): \PDO{
 		if(!extension_loaded('pdo_mysql')){

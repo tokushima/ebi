@@ -6,9 +6,9 @@ namespace ebi;
  * @var int $expires
  */
 class SessionDao extends \ebi\Dao implements \ebi\SessionHandler{
-	protected $id;
-	protected $data;
-	protected $expires;
+	protected ?string $id = null;
+	protected ?string $data = null;
+	protected ?int $expires = null;
 
 	protected function __before_save__(bool $is_update): void{
 		$this->expires = time();

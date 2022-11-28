@@ -3,7 +3,6 @@ namespace test\db;
 /**
  * @var serial $id @['hash'=>false]
  * @var string $value
- * @author tokushima
  */
 class SaveLoop extends \ebi\Dao{
 	protected $id;

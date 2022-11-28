@@ -1,8 +1,6 @@
 <?php
 namespace ebi;
 
-use Iterator;
-
 /**
  * ユーティリティ群
  */
@@ -67,7 +65,7 @@ class Util{
 	/**
 	 * ファイルに書き出す
 	 */
-	public static function file_write(string $filename, string $src='', bool $lock=true){
+	public static function file_write(string $filename, string $src='', bool $lock=true): void{
 		if(empty($filename)){
 			throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`',$filename));
 		}
@@ -84,7 +82,7 @@ class Util{
 	/**
 	 * ファイルに追記する
 	 */
-	public static function file_append(string $filename, string $src='', bool $lock=true){
+	public static function file_append(string $filename, string $src='', bool $lock=true): void{
 		self::mkdir(dirname($filename));
 		
 		if(false === file_put_contents($filename,(string)$src,FILE_APPEND|(($lock) ? LOCK_EX : 0))){
@@ -118,7 +116,7 @@ class Util{
 	/**
 	 * 移動
 	 */
-	public static function mv(string $source, string $dest){
+	public static function mv(string $source, string $dest): bool{
 		if(is_file($source) || is_dir($source)){
 			self::mkdir(dirname($dest));
 			return rename($source,$dest);
@@ -198,7 +196,7 @@ class Util{
 	 * @param $recursive 階層を潜って取得するか
 	 * @param $pattern 検索するパターンを表す文字列
 	 */
-	public static function ls(string $directory, bool $recursive=false, string $pattern=null): Iterator{
+	public static function ls(string $directory, bool $recursive=false, string $pattern=null): \Iterator{
 		$directory = self::parse_filename($directory);
 		
 		if(is_file($directory)){

@@ -4,7 +4,6 @@ namespace test;
  * @var int $abc @['hash'=>false]
  * @var string $def
  * @var int $ghi
- * @author tokushima
  *
  */
 class Json extends \ebi\Obj{

@@ -6,14 +6,14 @@ namespace ebi;
  * @var string $user_id @['max'=>128]
  * @var string $token @['auto_code_add'=>true,'max'=>80]
  * @var string $key @['auto_code_add'=>true,'max'=>45]
- * @var timestamp $expire_date
+ * @var datetime $expire_date
  */
 class UserRememberMeDao extends \ebi\Dao{
-	protected $id;
-	protected $user_id;
-	protected $token;
-	protected $key;
-	protected $expire_date;
+	protected ?int $id = null;
+	protected ?string $user_id = null;
+	protected ?string $token = null;
+	protected ?string $key = null;
+	protected ?int $expire_date = null;
 	
 	private static function crypt(string $user_id): string{
 		/**

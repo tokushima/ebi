@@ -1,8 +1,6 @@
 <?php
 namespace test\flow;
 /**
- * 
- * @author tokushima
  * @login @['type'=>'test\model\Member2']
  */
 class LoginRequestAction2 extends \ebi\flow\AutomapLoginRequest{

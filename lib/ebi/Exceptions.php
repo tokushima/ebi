@@ -2,10 +2,10 @@
 namespace ebi;
 
 class Exceptions extends \ebi\Exception implements \Iterator{
-	private static $self;
-	private $messages = [];
-	private $pos = 0;
-	private $group = null;
+	private static ?self $self = null;
+	private array $messages = [];
+	private int $pos = 0;
+	private ?string $group = null;
 	
 	public function rewind(): void{
 		$this->pos = 0;

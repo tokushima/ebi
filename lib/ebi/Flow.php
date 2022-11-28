@@ -2,19 +2,19 @@
 namespace ebi;
 
 class Flow{
-	private static $app_url;
-	private static $media_url;
-	private static $template_dir;
-	private static $package_media_url = 'package/resources/media';
+	private static ?string $app_url = null;
+	private static ?string $media_url = null;
+	private static ?string $template_dir = null;
+	private static string $package_media_url = 'package/resources/media';
 	
-	private static $url_pattern = [];
-	private static $selected_class_pattern = [];
-	private static $workgroup;
+	private static array $url_pattern = [];
+	private static array $selected_class_pattern = [];
+	private static string $workgroup;
 	
-	private static $is_get_map = false;
-	private static $map = [];
+	private static bool $is_get_map = false;
+	private static array $map = [];
 	
-	private static $template;
+	private static \ebi\Template $template;
 	
 	/**
 	 * アプリケーションのURL

@@ -2,8 +2,6 @@
 namespace test\flow;
 /**
  * Sample Action
- * @author tokushima
- *
  */
 class Action{
 	/**
@@ -20,10 +18,8 @@ class Action{
 	}
 	/**
 	 * @request string $rrrrr らららら
-	 * @return array
-	 * @compatibility
 	 */
-	public function get_after_vars(){
+	public function get_after_vars(): array{
 		return [];
 	}
 	/**

@@ -4,11 +4,14 @@ namespace ebi;
 class Template{
 	use \ebi\TemplateVariable;
 	
-	private $secure = false;
-	private $vars = [];
-	private $media_url;
+	private bool $secure = false;
+	private array $vars = [];
+	private ?string $media_url = null;
 
-	private $base_dir;
+	/**
+	 * @var string|array $base_dir
+	 */
+	private $base_dir = null;
 	
 	/**
 	 * メディアURLをhttpsにする

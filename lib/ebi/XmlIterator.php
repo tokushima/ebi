@@ -2,16 +2,14 @@
 namespace ebi;
 /**
  * XMLクラスのイテレータ
- * @author tokushima
- *
  */
 class XmlIterator implements \Iterator{
 	private $name = null;
-	private $plain = null;
-	private $tag = null;
-	private $offset = 0;
-	private $length = 0;
-	private $count = 0;
+	private ?string $plain = null;
+	private ?\ebi\Xml $tag = null;
+	private int $offset = 0;
+	private int $length = 0;
+	private int $count = 0;
 
 	public function __construct($tag_name,$value,$offset,$length){
 		$this->name = $tag_name;

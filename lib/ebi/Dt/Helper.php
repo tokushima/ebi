@@ -2,8 +2,6 @@
 namespace ebi\Dt;
 /**
  * DT用のヘルパー
- * @author tokushima
- *
  */
 class Helper{
 	/**

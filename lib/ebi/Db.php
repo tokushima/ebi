@@ -4,12 +4,19 @@ namespace ebi;
 class Db implements \Iterator{
 	static private $autocommit;
 	
-	private $dbname;	
-	private $connection;
+	private ?string $dbname = null;
+	private \PDO $connection;
+	/**
+	 * @var \PDOStatement|bool $statement
+	 */
 	private $statement;
+
+	/**
+	 * @var array|bool $resultset
+	 */
 	private $resultset;
-	private $resultset_counter;
-	private $connector;
+	private int $resultset_counter;
+	private \ebi\SqliteConnector $connector;
 	
 	/**
 	 * @param string{} $def 接続情報 [type,host,name,port,user,password,sock,encode,timezone]

@@ -2,31 +2,32 @@
 namespace ebi;
 
 class Browser{
-	private $resource;
-	private $agent;
-	private $timeout = 30;
-	private $redirect_max = 20;
-	private $redirect_count = 1;
+	private $resource; // resource|false|CurlHandle
+	private ?string $agent;
+	private int $timeout = 30;
+	private int $redirect_max = 20;
+	private int $redirect_count = 1;
 
-	private $request_header = [];
-	private $request_vars = [];
-	private $request_file_vars = [];
-	private $head;
-	private $body;
-	private $cookie = [];
-	private $url;
-	private $status;
+	private array $request_header = [];
+	private array $request_vars = [];
+	private array $request_file_vars = [];
+	private string $head;
+	private string $body;
+	private array $cookie = [];
+	private string $url;
+	private int $status;
 	
-	private $user;
-	private $password;
-	private $bearer_token;
-	private $proxy;
-	private $ssl_verify = true;
+	private ?string $user;
+	private ?string $password;
+	private ?string $bearer_token;
+
+	private ?array $proxy;
+	private bool $ssl_verify = true;
 	
-	private $raw;
+	private string $raw;
 	
-	private static $recording_request = false;
-	private static $record_request = [];
+	private static bool $recording_request = false;
+	private static array $record_request = [];
 	
 	public function __construct(?string $agent=null, int $timeout=30, int $redirect_max=20){
 		$this->agent = $agent;

@@ -2,7 +2,6 @@
 namespace ebi\Dt;
 /**
  * 
- * @author tokushima
  * @var string $name
  * @var string $type
  * @var string $summary

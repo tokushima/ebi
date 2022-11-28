@@ -1,8 +1,6 @@
 <?php
 namespace test\flow;
 /**
- * 
- * @author tokushima
  * @login
  */
 class LoginRequestNoTypeAction extends \ebi\flow\Request{

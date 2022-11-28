@@ -2,8 +2,8 @@
 namespace ebi;
 
 class FlowHelper{
-	private $name;
-	private $req;
+	private ?string $name = null;
+	private ?\ebi\flow\Request $req = null;
 	
 	public function __construct(?string $name=null, ?\ebi\flow\Request $obj=null){
 		$this->name = $name;

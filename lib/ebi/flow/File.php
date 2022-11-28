@@ -6,10 +6,9 @@ class File{
 
 	public function __construct(){
 		/**
-		 * 
 		 * @param string $root ルートパス
 		 */
-		$this->root = \ebi\Conf::get('root',\ebi\Conf::resource_path('files'));
+		$this->root = \ebi\Conf::get('root', \ebi\Conf::resource_path('files'));
 	}
 
 	/**

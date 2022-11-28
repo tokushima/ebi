@@ -4,7 +4,7 @@ namespace ebi;
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
  */
 class Session{
-	private $ses_n;
+	private string $ses_n;
 
 	/**
 	 * セッションを開始する

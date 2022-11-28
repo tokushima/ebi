@@ -2,12 +2,12 @@
 namespace ebi;
 
 class Daq{
-	private static $count = 0;
-	private $sql;
-	private $vars = [];
-	private $id;
+	private static int $count = 0;
+	private ?string $sql;
+	private array $vars = [];
+	private ?string $id;
 
-	public function __construct($sql=null, array $vars=[], $id_name=null){
+	public function __construct($sql=null, array $vars=[], ?string $id_name=null){
 		$this->sql = $sql;
 		$this->id = $id_name;
 		
