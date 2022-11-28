@@ -2,7 +2,6 @@
 namespace ebi\Dt;
 /**
  * ドキュメントの取得
- * @author tokushima
  */
 class Man{
 	private static function get_reflection_source(\ReflectionClass $r){

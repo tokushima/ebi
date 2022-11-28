@@ -1,7 +1,5 @@
 <?php
 /**
- * @author tokushima
- * 
  * GETリクエスト
  */
 $b = new \ebi\Browser();

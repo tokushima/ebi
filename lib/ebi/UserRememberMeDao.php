@@ -9,11 +9,11 @@ namespace ebi;
  * @var datetime $expire_date
  */
 class UserRememberMeDao extends \ebi\Dao{
-	protected $id;
-	protected $user_id;
-	protected $token;
-	protected $key;
-	protected $expire_date;
+	protected ?int $id = null;
+	protected ?string $user_id = null;
+	protected ?string $token = null;
+	protected ?string $key = null;
+	protected ?int $expire_date = null;
 	
 	private static function crypt(string $user_id): string{
 		/**

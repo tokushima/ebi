@@ -14,16 +14,16 @@ namespace ebi;
  * @var timestamp $create_date @['auto_now_add'=>true]
  */
 class SmtpBlackholeDao extends \ebi\Dao implements \ebi\MailHandler{
-	protected $id;
-	protected $from;
-	protected $to;
-	protected $cc;
-	protected $bcc;
-	protected $subject;
-	protected $message;
-	protected $tcode;
-	protected $manuscript;
-	protected $create_date;
+	protected ?int $id = null;
+	protected ?string $from = null;
+	protected ?string $to = null;
+	protected ?string $cc = null;
+	protected ?string $bcc = null;
+	protected ?string $subject = null;
+	protected ?string $message = null;
+	protected ?string $tcode = null;
+	protected ?string $manuscript = null;
+	protected ?int $create_date = null;
 	
 	/**
 	 * メールの内容をDBに保存する

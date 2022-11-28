@@ -7,8 +7,6 @@ namespace test\model;
  * @var string $ccc @deprecated 2017-03-28 いいい @['hash'=>false]
  * @var string $ddd
  * @var \test\model\DeprecatedClass $eee 
- * @author tokushima
- *
  */
 class DeprecatedModel extends \ebi\Obj{
 	protected $aaa;

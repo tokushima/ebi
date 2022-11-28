@@ -6,7 +6,7 @@ namespace test\model;
  * @var string $bbb @['hash'=>false]
  * @var string $ccc @deprecated 2017-03-28 いいい @['hash'=>false]
  * @var string $ddd
- * @author tokushima
+ * 
  * @deprecated 2017-04-01
  */
 class DeprecatedClass extends \ebi\Obj{

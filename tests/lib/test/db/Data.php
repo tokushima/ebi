@@ -6,7 +6,6 @@ namespace test\db;
  * @var int $num
  * @var string $val1
  * @var string $val2
- * @author tokushima
  */
 class Data extends \ebi\Dao{
 	protected $id;

@@ -4,8 +4,7 @@ namespace ebi;
  * 開発支援ツール
  */
 class Dt extends \ebi\flow\Request{
-	private $entry;
-	private $entry_name;
+	private string $entry;
 	
 	public function __construct(?string $entryfile=null){
 		if(empty($entryfile)){
@@ -15,14 +14,12 @@ class Dt extends \ebi\flow\Request{
 			foreach($trace as $t){
 				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
 					$this->entry = $t['file'];
-					$this->entry_name = basename($this->entry,'.php');
 					break;
 				}
 			}
 		}else{
 			$entryfile = realpath($entryfile);
 			$this->entry = $entryfile;
-			$this->entry_name = basename($this->entry,'.php');
 		}
 		parent::__construct();
 	}

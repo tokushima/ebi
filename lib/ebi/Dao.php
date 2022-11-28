@@ -2,20 +2,20 @@
 namespace ebi;
 
 abstract class Dao extends \ebi\Obj{
-	private static $_dao_ = [];
-	private static $_cnt_ = 0;
-	private static $_con_ = [];
+	private static array $_dao_ = [];
+	private static int $_cnt_ = 0;
+	private static array $_con_ = [];
 
-	private $_has_hierarchy_ = 1;
-	private $_class_id_;
-	private $_hierarchy_;
-	private $_saving_ = [false,false];
+	private int $_has_hierarchy_ = 1;
+	private ?string $_class_id_ = null;
+	private ?int $_hierarchy_ = null;
+	private array $_saving_ = [false,false];
 
-	private static $_co_anon_ = [];
-	private static $_connections_ = [];
-	private static $_connection_settings_ = [];
-	private static $recording_query = false;
-	private static $record_query = [];
+	private static array $_co_anon_ = [];
+	private static array $_connections_ = [];
+	private static array $_connection_settings_ = [];
+	private static bool $recording_query = false;
+	private static array $record_query = [];
 
 	/**
 	 * 接続情報一覧

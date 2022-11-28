@@ -7,16 +7,15 @@ namespace ebi\Dt;
  * @var \ebi\Dt\DocParam[] $params
  * @var \ebi\Dt\DocParam $return
  * @var string $version
- * @author tokushima
  *
  */
 class DocInfo extends \ebi\Obj{
-	protected $name;
-	protected $document;
-	protected $params = [];
-	protected $return;
-	protected $version;
-	private $opt = [];
+	protected string $name;
+	protected string $document;
+	protected array $params = [];
+	protected string $return;
+	protected string $version;
+	private array $opt = [];
 	
 	public function summary(){
 		[$summary] = explode(PHP_EOL,trim($this->document()));

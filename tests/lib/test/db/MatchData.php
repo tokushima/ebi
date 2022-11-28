@@ -5,7 +5,6 @@ namespace test\db;
  * @var string $data1
  * @var string $data2
  * @var string $data3
- * @author tokushima
  */
 class MatchData extends \ebi\Dao{
 	protected $id;
