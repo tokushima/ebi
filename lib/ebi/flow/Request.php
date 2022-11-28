@@ -5,7 +5,7 @@ class Request extends \ebi\Request{
 	private array $_selected_pattern = [];
 	private ?string $_before_redirect = null;
 	private ?string $_after_redirect = null;
-	private object $_auth;
+	private ?object $_auth = null;
 
 	private \ebi\Session $_sess;
 	private string $_login_id;
