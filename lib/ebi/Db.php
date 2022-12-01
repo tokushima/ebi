@@ -16,7 +16,7 @@ class Db implements \Iterator{
 	 */
 	private $resultset;
 	private int $resultset_counter;
-	private \ebi\SqliteConnector $connector;
+	private \ebi\DbConnector $connector;
 	
 	/**
 	 * @param string{} $def 接続情報 [type,host,name,port,user,password,sock,encode,timezone]
