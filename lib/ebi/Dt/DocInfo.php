@@ -10,11 +10,11 @@ namespace ebi\Dt;
  *
  */
 class DocInfo extends \ebi\Obj{
-	protected string $name;
-	protected string $document;
+	protected string $name = '';
+	protected string $document = '';
 	protected array $params = [];
-	protected string $return;
-	protected string $version;
+	protected ?\ebi\Dt\DocParam $return = null;
+	protected string $version = '';
 	private array $opt = [];
 	
 	public function summary(){

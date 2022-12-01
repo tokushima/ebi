@@ -1,18 +1,13 @@
 <?php
 namespace ebi\Dt;
-/**
- * 
- * @var string $name
- * @var string $type
- * @var string $summary
- */
+
 class DocParam extends \ebi\Obj{
-	protected $name;
-	protected $type;
-	protected $summary;
+	protected string $name = '';
+	protected string $type = '';
+	protected string $summary = '';
 	private $opt = [];
 	
-	public function __construct($name, $type, $summary='', $opt=[]){
+	public function __construct(string $name, string $type, string $summary='', $opt=[]){
 		$this->name = trim($name);
 		$this->type = trim($type);
 		$this->summary = trim($summary);

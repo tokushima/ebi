@@ -2,12 +2,12 @@
 namespace ebi;
 
 class User{
-	private $id;
+	private ?string $id = null;
 	
 	public function __construct(string $id){
 		$this->id = $id;
 	}
-	public function id(): string{
+	public function id(): ?string{
 		return $this->id;
 	}
 }
