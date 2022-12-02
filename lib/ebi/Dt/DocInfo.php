@@ -7,9 +7,8 @@ namespace ebi\Dt;
  * @var \ebi\Dt\DocParam[] $params
  * @var \ebi\Dt\DocParam $return
  * @var string $version
- *
  */
-class DocInfo extends \ebi\Obj{
+class DocInfo extends \ebi\Obj implements \ebi\Dt\DocOptIf{
 	protected string $name = '';
 	protected string $document = '';
 	protected array $params = [];
@@ -17,38 +16,38 @@ class DocInfo extends \ebi\Obj{
 	protected string $version = '';
 	private array $opt = [];
 	
-	public function summary(){
+	public function set_opt(string $n, $val): void{
+		$this->opt[$n] = $val;
+	}
+	public function opt(string $n, $def=null){
+		return (isset($this->opt[$n])) ? $this->opt[$n] : $def;
+	}
+
+	public function has_opt(string $n): bool{
+		return (isset($this->opt[$n]) && !empty($this->opt[$n]));
+	}
+
+	public function summary(): string{
 		[$summary] = explode(PHP_EOL,trim($this->document()));
 		return $summary;
 	}
-	public function add_params(\ebi\Dt\DocParam $p){
+	public function add_params(\ebi\Dt\DocParam $p): void{
 		$this->params[] = $p;
 	}
-	public function reset_params($new=[]){
+	public function reset_params(array $new=[]): void{
 		$this->params = $new;
 	}
-	public function has_params(){
+	public function has_params(): bool{
 		return !empty($this->params);
 	}
-	public function param(){
+	public function param(): \ebi\Dt\DocParam{
 		if(!empty($this->params)){
 			return $this->params[0];
 		}
-		return new \ebi\Dt\DocParam(null,null);
+		return new \ebi\Dt\DocParam('', '');
 	}
-	
-	public function set_opt($n,$val){
-		$this->opt[$n] = $val;
-	}
-	public function has_opt($n){
-		return (isset($this->opt[$n]) && !empty($this->opt[$n]));
-	}
-	public function opt($n,$def=null){
-		return (isset($this->opt[$n])) ? $this->opt[$n] : $def;
-	}
-	
-	
-	public static function parse($name,$src,$docendpos=0){
+		
+	public static function parse(string $name, string $src, int $docendpos=0): self{
 		$info = new static();
 		$info->name($name);
 		
