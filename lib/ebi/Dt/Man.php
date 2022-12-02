@@ -4,7 +4,7 @@ namespace ebi\Dt;
  * ドキュメントの取得
  */
 class Man{
-	private static function get_reflection_source(\ReflectionClass $r){
+	private static function get_reflection_source(\ReflectionClass $r): string{
 		return implode(array_slice(
 			file($r->getFileName()),
 			$r->getStartLine(),
@@ -12,7 +12,7 @@ class Man{
 		));
 	}
 	
-	private static function get_method_document(\ReflectionMethod $method){
+	private static function get_method_document(\ReflectionMethod $method): string{
 		$method_document = $method->getDocComment();
 		
 		if($method_document === false){
@@ -35,9 +35,8 @@ class Man{
 	}
 	/**
 	 * クラスのドキュメント
-	 * @param string $class
 	 */
-	public static function class_info($class){
+	public static function class_info(string $class): \ebi\Dt\DocInfo{
 		$info = new \ebi\Dt\DocInfo();
 		$r = new \ReflectionClass(self::get_class_name($class));
 		
@@ -165,7 +164,7 @@ class Man{
 		return $info;
 	}
 	
-	private static function get_class_name($class_name){
+	private static function get_class_name(string $class_name): string{
 		$class_name = str_replace(['.','/'],['\\','\\'],$class_name);
 		
 		if(class_exists($class_name)){
@@ -177,10 +176,10 @@ class Man{
 			}
 			return $name;
 		}
-		return false;
+		return '';
 	}
 	
-	private static function find_merge_params($info,$parameters){
+	private static function find_merge_params(\ebi\Dt\DocInfo $info, array $parameters): void{
 		$doc_params = $info->params();
 		$info->rm_params();
 		
@@ -199,10 +198,10 @@ class Man{
 			}
 		}
 	}
-	private static function find_merge_deprecate($info,$summary,$rootobj=null,$containt=false){
+	private static function find_merge_deprecate(\ebi\Dt\DocOptIf $info, string $summary, ?\ebi\Dt\DocInfo $root_obj=null, bool $contains=false){
 		$m = $mm = [];
 		
-		if(preg_match('/'.($containt ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
+		if(preg_match('/'.($contains ? '' : '^').'@deprecated(.*)/m',$summary,$m)){
 			$d = time();
 			
 			if(preg_match('/\d{4}[\-\/\.]*\d{1,2}[\-\/\.]*\d{1,2}/',$m[1],$mm)){
@@ -210,15 +209,15 @@ class Man{
 			}
 			$info->set_opt('deprecated',$d);
 			
-			if(isset($rootobj)){
-				if(empty($rootobj->opt('first_depricated_date')) || $rootobj->opt('first_depricated_date') > $d){
-					$rootobj->set_opt('first_depricated_date',$d);
+			if(isset($root_obj)){
+				if(empty($root_obj->opt('first_deprecated_date')) || $root_obj->opt('first_deprecated_date') > $d){
+					$root_obj->set_opt('first_deprecated_date',$d);
 				}
 			}
 		}
 		return trim(preg_replace('/@.+/','',$summary));
 	}
-	private static function find_merge_request_context($info,$document){
+	private static function find_merge_request_context(\ebi\Dt\DocInfo $info, string $document): void{
 		$requests = \ebi\Dt\DocParam::parse('request',$document);
 		$contexts = \ebi\Dt\DocParam::parse('context',$document);
 		
@@ -235,7 +234,7 @@ class Man{
 		}
 	}
 	
-	private static function find_throws($throws,$doc,$src){
+	private static function find_throws(array $throws, string $doc, string $src): array{
 		$m = [];
 		
 		if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$doc,$m)){
@@ -270,7 +269,7 @@ class Man{
 		return $throws;
 	}
 	
-	private static function merge_find_throws(array $throws){
+	private static function merge_find_throws(array $throws): array{
 		$throw_param = [];
 		
 		foreach($throws as $n => $t){
@@ -289,7 +288,7 @@ class Man{
 		return $throw_param;
 	}
 	
-	public static function find_mail_doc($mail_info,$src){
+	public static function find_mail_doc(\ebi\Dt\DocInfo $mail_info, string $src): bool{
 		$m = [];
 		
 		if(preg_match_all('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$src,$m,PREG_OFFSET_CAPTURE)){
@@ -362,13 +361,8 @@ class Man{
 	
 	/**
 	 * クラスドメソッドのキュメント
-	 * @param string $class
-	 * @param string $method
-	 * 
-	 * @throws \ebi\exception\NotFoundException
-	 * @return \ebi\Dt\DocInfo
 	 */
-	public static function method_info($class,$method,$detail=false,$deep=false){
+	public static function method_info(string $class, string $method, bool $detail=false, bool $deep=false): \ebi\Dt\DocInfo{
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -464,15 +458,13 @@ class Man{
 	
 	/**
 	 * クロージャのキュメント
-	 * @param \Closure $closure
-	 * @return \ebi\Dt\DocInfo
 	 */
-	public static function closure_info(\Closure $closure){
+	public static function closure_info(\Closure $closure): \ebi\Dt\DocInfo{
 		$ref = new \ReflectionFunction($closure);
 		$doc = self::trim_doc($ref->getDocComment());
 		$src = implode(array_slice(file($ref->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
 		
-		$info = \ebi\Dt\DocInfo::parse(null,$doc);
+		$info = \ebi\Dt\DocInfo::parse('', $doc);
 		self::find_merge_params($info,$ref->getParameters());
 		self::find_merge_deprecate($info,$doc);
 		self::find_merge_request_context($info, $doc);
@@ -492,19 +484,16 @@ class Man{
 	
 	/**
 	 * メールテンプレートパス
-	 * @param string $path
-	 * @return string
 	 */
-	public static function mail_template_path($path){
+	public static function mail_template_path(string $path): string{
 		$dir = \ebi\Conf::get(\ebi\Mail::class.'@resource_path',\ebi\Conf::resource_path('mail'));
 		return \ebi\Util::path_absolute($dir, $path);
 	}
 	
 	/**
 	 * メールテンプレート一覧
-	 * @return \ebi\Dt\DocInfo[]
 	 */
-	public static function mail_template_list(){
+	public static function mail_template_list(): array{
 		$path = self::mail_template_path('');
 		$template_list = [];
 		
@@ -548,17 +537,17 @@ class Man{
 		return $template_list;
 	}
 	
-	public static function method_src(\ReflectionMethod $ref){
+	public static function method_src(\ReflectionMethod $ref): string{
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
 		}
 		return '';
 	}
-	public static function trim_doc($doc){
+	public static function trim_doc(string $doc): string{
 		$doc = trim(preg_replace("/^[\s]*\*[\s]{0,1}/m","",str_replace(['/'.'**','*'.'/'],'',$doc)));
 		return (string)$doc;
 	}
-	private static function use_method_list($class,$method,&$loaded_method_src=[]){
+	private static function use_method_list(string $class, string $method, array &$loaded_method_src=[]): array{
 		$list = [];
 		
 		try{

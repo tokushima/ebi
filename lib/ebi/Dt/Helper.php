@@ -6,7 +6,6 @@ namespace ebi\Dt;
 class Helper{
 	/**
 	 * print_r
-	 * @param mixed $obj
 	 */
 	public function dump($obj){
 		$result = [];
