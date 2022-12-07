@@ -134,7 +134,7 @@ class Command{
 	 * @param bool $invisible 入力を非表示にする(Windowsでは非表示になりません)
 	 */
 	public static function stdin(string $msg, ?string $default=null, array $choice=[], bool $multiline=false, bool $invisible=false): string{
-		$result = $b = null;
+		$result = $b = '';
 		print($msg.(empty($choice) ? '' : ' ('.implode(' / ',$choice).')').(empty($default) ? '' : ' ['.$default.']').': ');
 		
 		if($invisible && substr(PHP_OS,0,3) != 'WIN'){

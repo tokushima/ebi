@@ -56,7 +56,7 @@ class Validator{
 						case 'datetime':
 						case 'timestamp':
 						case 'date':
-							if(ctype_digit((string)$v) || (substr($v,0,1) == '-' && ctype_digit(substr($v,1)))){
+							if(ctype_digit((string)$v) || (substr((string)$v,0,1) == '-' && ctype_digit(substr((string)$v,1)))){
 								return (int)$v;
 							}
 							if(preg_match('/^0+$/',preg_replace('/[^\d]/','',$v))){

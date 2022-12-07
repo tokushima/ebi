@@ -254,6 +254,7 @@ class Mail{
 			$send .= $this->line(sprintf('Content-ID: <%s>', $id));
 		}
 		$send .= $this->line();
+		$src = (string)$src;
 		
 		if(substr($src,0,1) == '@' && is_file(substr($src,1))){
 			$src = file_get_contents(substr($src,1));

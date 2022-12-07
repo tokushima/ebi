@@ -184,7 +184,7 @@ class Conf{
 		/**
 		 * @param string $val リソースファイルのディレクトリ
 		 */
-		$dir = self::get_self_conf_get('resource_dir');
+		$dir = self::get_self_conf_get('resource_dir', '');
 		
 		if(empty($dir)){
 			$dir = defined('RESOURCE_DIR') ? constant('RESOURCE_DIR') : (getcwd().'/resources/');

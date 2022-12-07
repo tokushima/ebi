@@ -111,11 +111,11 @@ class Request implements \IteratorAggregate{
 	/**
 	 * 現在のURLを返す
 	 */
-	public static function current_url(int $port_https=443, int $port_http=80): ?string{
+	public static function current_url(int $port_https=443, int $port_http=80): string{
 		$server = self::host($port_https,$port_http);
 		
 		if(empty($server)){
-			return null;
+			return '';
 		}
 		$path = isset($_SERVER['REQUEST_URI']) ?
 			preg_replace("/^(.+)\?.*$/","\\1",$_SERVER['REQUEST_URI']) :
@@ -125,7 +125,7 @@ class Request implements \IteratorAggregate{
 	/**
 	 * 現在のホスト
 	 */
-	public static function host(int $port_https=443, int $port_http=80): ?string{
+	public static function host(int $port_https=443, int $port_http=80): string{
 		$port = $port_http;
 		if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'){
 			$port = $port_https;
@@ -143,7 +143,7 @@ class Request implements \IteratorAggregate{
 				(isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '')
 			));
 		if($port != $port_http && $port != $port_https) $server = $server.':'.$port;
-		if(empty($server)) return null;
+		if(empty($server)) return '';
 		return (($port == $port_https) ? 'https' : 'http').'://'.preg_replace("/^(.+?)\?.*/","\\1",$server);
 	}
 	/**

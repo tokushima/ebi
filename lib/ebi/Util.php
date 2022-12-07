@@ -214,7 +214,7 @@ class Util{
 		}
 		throw new \ebi\exception\InvalidArgumentException(sprintf('permission denied `%s`',$directory));
 	}
-	private static function parse_filename($filename){
+	private static function parse_filename(string $filename){
 		$filename = preg_replace("/[\/]+/",'/',str_replace("\\",'/',trim($filename)));
 		return (substr($filename,-1) == '/') ? substr($filename,0,-1) : $filename;
 	}

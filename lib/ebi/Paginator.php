@@ -127,8 +127,8 @@ class Paginator implements \IteratorAggregate{
 		$self = new self($paginate_by,$req->in_vars('page',1));
 		
 		if($req->is_vars('order')){
-			$o = $req->in_vars('order');
-			$p = $req->in_vars('porder');
+			$o = $req->in_vars('order', '');
+			$p = $req->in_vars('porder', '');
 			
 			if($o == $p){
 				if($o[0] == '-'){
