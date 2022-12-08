@@ -198,7 +198,7 @@ class Template{
 						$n = $b->in_attr('name');
 						
 						if(!empty($n) && !array_key_exists($n,$blocks)){
-							$blocks[$n] = $b->value();
+							$blocks[$n] = (string)$b->value();
 						}
 					}
 					$src = $this->replace_xtag($this->read_src($extends->in_attr('href')));
@@ -208,14 +208,14 @@ class Template{
 			
 			if(empty($blocks)){
 				foreach(\ebi\Xml::anonymous($src)->find('rt:block') as $b){
-					$src = str_replace($b->plain(),$b->value(),$src);
+					$src = str_replace((string)$b->plain(), (string)$b->value(), $src);
 				}
 			}else{
 				try{
 					while(true){
 						$b = \ebi\Xml::extract($src,'rt:block');
 						$n = $b->in_attr('name');
-						$src = str_replace($b->plain(),(array_key_exists($n,$blocks) ? $blocks[$n] : $b->value()),$src);
+						$src = str_replace($b->plain(), (array_key_exists($n,$blocks) ? $blocks[$n] : (string)$b->value()), $src);
 					}
 				}catch(\ebi\exception\NotFoundException $e){
 				}
