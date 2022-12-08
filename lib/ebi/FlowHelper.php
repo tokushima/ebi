@@ -205,7 +205,7 @@ class FlowHelper{
 	/**
 	 * HTMLエスケープされた文字列を返す
 	 */
-	public function html(string $value, int $length=0, int $lines=0, ?string $postfix=null, bool $nl2br=true): string{
+	public function html(?string $value, int $length=0, int $lines=0, ?string $postfix=null, bool $nl2br=true): string{
 		$value = str_replace(["\r\n","\r","\n"],PHP_EOL,$value ?? '');
 
 		if($length > 0){
