@@ -330,6 +330,7 @@ class Dt extends \ebi\flow\Request{
 		}
 		return [
 			'template_list'=>$template_list,
+			'has_bh'=>$has_bh,
 		];
 	}
 	/**

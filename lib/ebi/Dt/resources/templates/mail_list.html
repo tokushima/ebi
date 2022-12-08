@@ -8,9 +8,8 @@
 	<th>Template</th>
 	<th>Summary</th>
 	<th>Code</th>
-	<th>Version</th>
 	
-	<rt:if param="{$is_test}">
+	<rt:if param="{$has_bh}">
 		<th>Test</th>
 	</rt:if>
 </tr>
@@ -34,15 +33,9 @@
 			</span>
 		</a>
 	</td>
-	
-	<td style="opacity: 0.6">
-		<a href="{$t.package_method_url('index')}?version={$info.version()}">
-			{$info.version()}
-		</a>
-	</td>
-	
-	<rt:if param="{$is_test}">
-		<td class="text-right">
+
+	<rt:if param="{$has_bh}">
+		<td class="text-end">
 			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}" class="{$t.cond_switch($info.opt('new'),'text-danger font-weight-bold')}">
 				{$info.opt('count')}
 			</a>
