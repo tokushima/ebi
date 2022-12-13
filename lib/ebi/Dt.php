@@ -41,7 +41,7 @@ class Dt extends \ebi\flow\Request{
 		unset($map['patterns']);
 
 		$req = new \ebi\Request();
-		$target_version = $req->in_vars('version');
+		$target_version = (string)$req->in_vars('version');
 		$file_version = date('Ymd',filemtime($this->entry));
 		$version_list = [];
 		$self_class = get_class($this);
@@ -224,7 +224,7 @@ class Dt extends \ebi\flow\Request{
 	 */
 	public function class_list(): array{
 		$req = new \ebi\Request();
-		$parent = $req->in_vars('parent');
+		$parent = (string)$req->in_vars('parent');
 		$select = 'other';
 
 		if(!empty($parent)){
@@ -338,7 +338,7 @@ class Dt extends \ebi\flow\Request{
 	 */
 	public function mail_info(): array{
 		$req = new \ebi\Request();
-		$mail_info = $this->find_mail_template_info($req->in_vars('tcode'));
+		$mail_info = $this->find_mail_template_info((string)$req->in_vars('tcode'));
 		
 		$method_list = [];
 		$method_mail_info = null;
@@ -424,7 +424,7 @@ class Dt extends \ebi\flow\Request{
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
 		$list = \ebi\SmtpBlackholeDao::find_all(
-			Q::eq('tcode',$req->in_vars('tcode')),
+			Q::eq('tcode', $req->in_vars('tcode')),
 			$paginator,
 			Q::order('-id')
 		);

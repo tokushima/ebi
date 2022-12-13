@@ -119,7 +119,7 @@ class Paginator implements \IteratorAggregate{
 	 * RequestのPaginator
 	 */
 	public static function request(\ebi\Request $req, int $default_paginate_by=20, int $max_paginate_by=100): self{
-		$paginate_by = $req->in_vars('paginate_by',$default_paginate_by);
+		$paginate_by = $req->in_vars('paginate_by', $default_paginate_by);
 	
 		if($paginate_by > $max_paginate_by){
 			$paginate_by = $max_paginate_by;
@@ -127,8 +127,8 @@ class Paginator implements \IteratorAggregate{
 		$self = new self($paginate_by,$req->in_vars('page',1));
 		
 		if($req->is_vars('order')){
-			$o = $req->in_vars('order', '');
-			$p = $req->in_vars('porder', '');
+			$o = (string)$req->in_vars('order');
+			$p = (string)$req->in_vars('porder');
 			
 			if($o == $p){
 				if($o[0] == '-'){

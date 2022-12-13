@@ -293,7 +293,7 @@ class Flow{
 					 * テンプレートやリダイレクト、出力プラグインを無視する
 					 */
 					\ebi\Conf::get('accept_debug',false) &&
-					strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
+					strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')),'application/debug') !== false
 				);
 				array_shift($param_arr);
 				
@@ -398,7 +398,7 @@ class Flow{
 							}
 						}
 						if($map_output === 'xml'){
-							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')),'application/json') === false){
+							if(strpos((string)(new \ebi\Env())->get('HTTP_ACCEPT'),'application/json') === false){
 								$xml = new \ebi\Xml('result');
 								$xml->add($result_vars);
 								
@@ -464,7 +464,7 @@ class Flow{
 						}
 
 						if($map_output === 'xml'){
-							if(strpos(strtolower((new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') === false){
+							if(strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') === false){
 								$xml = new \ebi\Xml('error');
 								
 								foreach(\ebi\FlowInvalid::get() as $g => $e){

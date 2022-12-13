@@ -171,7 +171,7 @@ class Q{
 				$this->paginator = $arg;
 			}else if($arg instanceof \ebi\Request){
 				if($arg->is_vars('query')){
-					$this->add(self::match($arg->in_vars('query')));
+					$this->add(self::match((string)$arg->in_vars('query')));
 				}
 			}else{
 				throw new \ebi\exception\BadMethodCallException('`'.(string)$arg.'` not supported');
