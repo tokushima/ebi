@@ -281,6 +281,16 @@ class Browser{
 	}
 
 	private function request(string $method,string $url, ?string $download_path=null): self{
+		$rewrite = \ebi\Conf::get('rewrite', []);
+
+		if(!empty($rewrite)){
+			foreach($rewrite as $pattern => $replacement){
+				if(!empty($pattern) && preg_match($pattern, $url)){
+					$url = preg_replace($pattern, $replacement, $url);
+					break;
+				}
+			}
+		}
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
 		}

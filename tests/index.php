@@ -197,6 +197,8 @@ include_once('bootstrap.php');
 			];
 		}
 	],
+	'rewrite/abc'=>['action'=>function(){ return ['value'=>'ABC']; }],
+	'rewrite/def'=>['action'=>function(){ return ['value'=>'DEF']; }],
 	'dt'=>['action'=>'ebi\Dt','mode'=>'@dev'],
 ]);
 
