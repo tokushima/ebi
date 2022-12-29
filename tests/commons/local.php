@@ -46,5 +46,10 @@
 			'test\db\Abc'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
+	'ebi\Browser'=>[
+		'rewrite'=>[
+			'@/rewrite/abc$@'=>'/rewrite/def',
+		]
+	]
 ]);
 

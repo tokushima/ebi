@@ -13,7 +13,7 @@ class Env{
 	 * @param mixed $default
 	 * @return mixed
 	 */
-	public function get(string $name, $default=null){
+	public function get(string $name, $default=''){
 		if(array_key_exists($name,$this->vars)){
 			return $this->vars[$name];
 		}
