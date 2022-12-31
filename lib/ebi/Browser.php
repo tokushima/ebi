@@ -280,7 +280,7 @@ class Browser{
 		return self::$record_request;
 	}
 
-	private function request(string $method,string $url, ?string $download_path=null): self{
+	private static function rewrite(string $url): string{
 		$rewrite = \ebi\Conf::get('rewrite', []);
 
 		if(!empty($rewrite)){
@@ -291,6 +291,11 @@ class Browser{
 				}
 			}
 		}
+		return $url;		
+	}
+	private function request(string $method,string $url, ?string $download_path=null): self{
+		$url = self::rewrite($url);
+
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
 		}
@@ -653,5 +658,21 @@ class Browser{
 			}
 		}
 		return $array;
+	}
+
+	/**
+	 * リダイレクトする
+	 */
+	public static function redirect(string $url, array $vars=[]): void{
+		$url = self::rewrite($url);
+
+		if(!empty($vars)){
+			$requestString = http_build_query($vars);
+			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);
+			$url = sprintf('%s?%s',$url,$requestString);
+		}
+		\ebi\HttpHeader::send_status(302);
+		\ebi\HttpHeader::send('Location',$url);
+		exit;
 	}
 }

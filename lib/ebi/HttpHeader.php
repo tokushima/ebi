@@ -94,16 +94,10 @@ class HttpHeader{
 
 	/**
 	 * リダイレクトする
+	 * @deprecated
 	 */
 	public static function redirect(string $url, array $vars=[]): void{
-		if(!empty($vars)){
-			$requestString = http_build_query($vars);
-			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);
-			$url = sprintf('%s?%s',$url,$requestString);
-		}
-		self::send_status(302);
-		self::send('Location',$url);
-		exit;
+		\ebi\Browser::redirect($url, $vars);
 	}
 
 	/**
@@ -115,13 +109,6 @@ class HttpHeader{
 			$_SERVER['HTTP_HOST'] ?? '';
 	}
 	
-	/**
-	 * リファラにリダイレクトする
-	 */
-	public static function redirect_referer(): void{
-		self::redirect(self::referer());
-	}
-
 	/**
 	 * raw dataを取得する
 	 */

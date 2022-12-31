@@ -99,7 +99,7 @@ class Flow{
 			$name = $map_name;
 		}
 		if(empty($name)){
-			\ebi\HttpHeader::redirect_referer();
+			\ebi\HttpHeader::redirect(\ebi\HttpHeader::referer());
 		}
 		foreach($params as $vn){
 			if(is_string($vn) && isset($vn[0]) && $vn[0] == '@'){
