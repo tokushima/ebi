@@ -8,8 +8,8 @@ class Xml implements \IteratorAggregate{
 	private ?string $value;
 	private bool $close_empty = true;
 
-	private string $plain;
-	private int $pos;
+	private ?string $plain = null;
+	private int $pos = 0;
 	private bool $esc = true;
 
 	/**
@@ -41,7 +41,7 @@ class Xml implements \IteratorAggregate{
 	 * エスケープするか
 	 */
 	public function escape(bool $bool): self{
-		$this->esc = (bool)$bool;
+		$this->esc = $bool;
 		return $this;
 	}
 
@@ -122,7 +122,7 @@ class Xml implements \IteratorAggregate{
 		if(sizeof($args) === 2){
 			$this->attr($args[0], $args[1]);
 		}else{
-			$this->value .= $this->get_value(func_get_arg(0));
+			$this->value .= $this->get_value($args[0]);
 		}
 		return $this;
 	}

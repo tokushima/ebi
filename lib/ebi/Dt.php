@@ -574,15 +574,46 @@ class Dt extends \ebi\flow\Request{
 			}
 		}
 	}
-	
-	/**
-	 * エントリのURL群
-	 */
-	public static function get_urls(?string $dir=null): array{
-		if(empty($dir)){
-			$dir = getcwd();
+
+	public static function url_rewrite(string $url): string{
+		if(\ebi\Conf::is_production()){
+			return $url;
 		}
-		
+		$rewrite = self::get_url_rewrite();
+
+		if(!empty($rewrite)){
+			foreach($rewrite as $pattern => $replacement){
+				if(!empty($pattern) && preg_match($pattern, $url)){
+					$url = self::replace_url(preg_replace($pattern, $replacement, $url));
+					break;
+				}
+			}
+		}
+		return $url;
+	}
+
+	private static function replace_url(string $url): string{
+		if(is_array($url) || strpos($url,'://') === false){
+			$urls = self::get_urls();
+			$url_args = [];
+			
+			if(is_array($url)){
+				$url_args = $url;
+				$url = array_shift($url_args);
+			}
+			if(!empty($urls) && isset($urls[$url]) && substr_count($urls[$url],'%s') == sizeof($url_args)){
+				$url = vsprintf($urls[$url],$url_args);
+			}
+		}
+		return $url;
+	}
+	
+	private static function get_url_rewrite(): array{
+		return \ebi\Conf::get('url_rewrite', []);
+	}
+
+	private static function get_urls(): array{
+		$dir = getcwd();		
 		$urls = [];
 		foreach(new \RecursiveDirectoryIterator(
 			$dir,
@@ -604,6 +635,17 @@ class Dt extends \ebi\flow\Request{
 		}
 		return $urls;
 	}
+
+	public static function testman_config(bool $autocommit=true): array{
+		\ebi\Conf::set(\ebi\Db::class, 'autocommit', $autocommit);
+		
+		return [
+			'urls'=>self::get_urls(),
+			'url_rewrite'=>self::get_url_rewrite(),	
+			'ssl-verify'=>false,	
+		];
+	}
+
 	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
 	 * @param string|array $to

@@ -280,21 +280,8 @@ class Browser{
 		return self::$record_request;
 	}
 
-	private static function rewrite(string $url): string{
-		$rewrite = \ebi\Conf::get('rewrite', []);
-
-		if(!empty($rewrite)){
-			foreach($rewrite as $pattern => $replacement){
-				if(!empty($pattern) && preg_match($pattern, $url)){
-					$url = preg_replace($pattern, $replacement, $url);
-					break;
-				}
-			}
-		}
-		return $url;		
-	}
-	private function request(string $method,string $url, ?string $download_path=null): self{
-		$url = self::rewrite($url);
+	private function request(string $method, string $url, ?string $download_path=null): self{
+		$url = \ebi\Dt::url_rewrite($url);
 
 		if(!isset($this->resource)){
 			$this->resource = curl_init();
@@ -664,7 +651,7 @@ class Browser{
 	 * リダイレクトする
 	 */
 	public static function redirect(string $url, array $vars=[]): void{
-		$url = self::rewrite($url);
+		$url = \ebi\Dt::url_rewrite($url);
 
 		if(!empty($vars)){
 			$requestString = http_build_query($vars);

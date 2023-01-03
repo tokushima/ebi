@@ -1,7 +1,6 @@
 <?php
 \ebi\Dt::reset_tables();
 
-
 $obj = new \test\flow\model\Note();
 $obj->value('aaabbbbccc');
 $obj->save();
