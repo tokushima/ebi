@@ -31,14 +31,6 @@
 	'ebi\flow\Request'=>[
 		'cors_origin'=>'http://localhost:8000',
 	],
-	'ebi\Dt'=>[
-		'use_vendor'=>[
-			'ebi\SmtpBlackholeDao',
-			'ebi\SessionDao',
-			'ebi\UserRememberMeDao',
-			'test\model\DeprecatedClass',
-		],
-	],
 	'ebi\Dao'=>[
 		'connection'=>[
 			'*'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
@@ -46,10 +38,16 @@
 			'test\db\Abc'=>['type'=>'ebi\SqliteConnector','timezone'=>'+09:00'],
 		]
 	],
-	'ebi\Browser'=>[
-		'rewrite'=>[
+	'ebi\Dt'=>[
+		'use_vendor'=>[
+			'ebi\SmtpBlackholeDao',
+			'ebi\SessionDao',
+			'ebi\UserRememberMeDao',
+			'test\model\DeprecatedClass',
+		],
+		'url_rewrite'=>[
 			'@/rewrite/abc$@'=>'/rewrite/def',
 		]
-	]
+	],
 ]);
 
