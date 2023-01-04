@@ -576,24 +576,29 @@ class Dt extends \ebi\flow\Request{
 	}
 
 	public static function url_rewrite(string $url): string{
-		if(\ebi\Conf::is_production()){
-			return $url;
-		}
-		$rewrite = self::get_url_rewrite();
+		if(!\ebi\Conf::is_production()){
+			$rewrite = self::get_url_rewrite();
 
-		if(!empty($rewrite)){
-			foreach($rewrite as $pattern => $replacement){
-				if(!empty($pattern) && preg_match($pattern, $url)){
-					$url = self::replace_url(preg_replace($pattern, $replacement, $url));
-					break;
+			if(!empty($rewrite)){
+				foreach($rewrite as $pattern => $replacement){
+					if(!empty($pattern) && preg_match($pattern, $url)){
+						$url = self::url(preg_replace($pattern, $replacement, $url));
+						break;
+					}
 				}
 			}
 		}
 		return $url;
 	}
 
-	private static function replace_url(string $url): string{
-		if(is_array($url) || strpos($url,'://') === false){
+	/**
+	 * @param string|array $url
+	 */
+	public static function url($url): string{
+		if(\ebi\Conf::is_production()){
+			throw new \ebi\exception\BadMethodCallException();
+		}
+		if(strpos($url,'://') === false){
 			$urls = self::get_urls();
 			$url_args = [];
 			
