@@ -1,6 +1,11 @@
 <?php
 namespace testman;
 
+class Conf{
+    public static function set(array $vars): void{
+    }
+}
+
 class Util{
     public static function url($entry_key): string{
         return '';
@@ -108,9 +113,19 @@ class Browser{
         return [];
 	}
 	/**
+	 * bodyを解析し配列として返す
+	 */
+	public function xml(?string $name=null): \testman\Xml{
+		return new \testman\Xml();
+	}
+	/**
 	 * エラーがあるか
 	 */
 	public function has_error(string $type): bool{
         return false;
 	}
+}
+
+class Xml{
+
 }
