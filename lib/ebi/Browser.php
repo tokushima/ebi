@@ -646,20 +646,4 @@ class Browser{
 		}
 		return $array;
 	}
-
-	/**
-	 * リダイレクトする
-	 */
-	public static function redirect(string $url, array $vars=[]): void{
-		$url = \ebi\Dt::url_rewrite($url);
-
-		if(!empty($vars)){
-			$requestString = http_build_query($vars);
-			if(substr($requestString,0,1) == '?') $requestString = substr($requestString,1);
-			$url = sprintf('%s?%s',$url,$requestString);
-		}
-		\ebi\HttpHeader::send_status(302);
-		\ebi\HttpHeader::send('Location',$url);
-		exit;
-	}
 }

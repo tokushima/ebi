@@ -581,9 +581,12 @@ class Dt extends \ebi\flow\Request{
 
 			if(!empty($rewrite)){
 				foreach($rewrite as $pattern => $replacement){
-					if(!empty($pattern) && preg_match($pattern, $url)){
-						$url = self::url(preg_replace($pattern, $replacement, $url));
-						break;
+					$new_url = preg_replace($pattern, $replacement, $url);
+
+					if($new_url !== $url){
+						$new_url = self::url($new_url);
+						\ebi\Log::debug('URL rewrite: '.$url.' to '.$new_url);
+						return $new_url;
 					}
 				}
 			}
@@ -595,19 +598,24 @@ class Dt extends \ebi\flow\Request{
 	 * @param string|array $url
 	 */
 	public static function url($url): string{
-		if(\ebi\Conf::is_production()){
-			throw new \ebi\exception\BadMethodCallException();
-		}
-		if(strpos($url,'://') === false){
-			$urls = self::get_urls();
-			$url_args = [];
-			
-			if(is_array($url)){
-				$url_args = $url;
-				$url = array_shift($url_args);
+		if(!\ebi\Conf::is_production()){
+			$query = '';
+
+			if(strpos($url, '?') !== false){
+				[$url, $query] = explode('?', $url, 2);
+				$query = '?'.$query;
 			}
-			if(!empty($urls) && isset($urls[$url]) && substr_count($urls[$url],'%s') == sizeof($url_args)){
-				$url = vsprintf($urls[$url],$url_args);
+			if(strpos($url,'://') === false){
+				$urls = self::get_urls();
+				$url_args = [];
+				
+				if(is_array($url)){
+					$url_args = $url;
+					$url = array_shift($url_args);
+				}
+				if(!empty($urls) && isset($urls[$url]) && substr_count($urls[$url],'%s') == sizeof($url_args)){
+					$url = vsprintf($urls[$url],$url_args).$query;
+				}
 			}
 		}
 		return $url;
@@ -647,7 +655,8 @@ class Dt extends \ebi\flow\Request{
 		return [
 			'urls'=>self::get_urls(),
 			'url_rewrite'=>self::get_url_rewrite(),	
-			'ssl-verify'=>false,	
+			'ssl-verify'=>false,
+			'log_debug_callback'=>'\\ebi\\Log::debug',
 		];
 	}
 
