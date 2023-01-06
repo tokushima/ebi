@@ -127,5 +127,22 @@ class Browser{
 }
 
 class Xml{
-
+	/**
+	 * @return array<self>
+	 */
+	public function find($path=null, int $offset=0, int $length=0): array{
+		return [];
+	}
+	public function find_get(string $path, int $offset=0): self{
+		return new self();
+	}
+	public function in_attr(string $name, ?string $default=null): ?string{
+		return '';
+	}
+	public function name(): string{
+		return '';
+	}
+	public function value(): string{
+		return '';
+	}
 }
