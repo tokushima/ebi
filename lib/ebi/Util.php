@@ -464,7 +464,6 @@ class Util{
 	
 	/**
 	 * 指定のクラスと同階層にあるクラスの一覧
-	 * @deprecated
 	 */
 	public static function ls_classes(string $base_class, ?string $parent_class_name=null, bool $recursive=false): array{
 		$result = [];
