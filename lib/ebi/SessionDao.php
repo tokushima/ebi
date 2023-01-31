@@ -33,12 +33,16 @@ class SessionDao extends \ebi\Dao implements \ebi\SessionHandler{
 	 * @param mixed $data
 	 */
 	public function session_write(string $id, $data): bool{
-		$obj = new self();
-		$obj->id($id);
-		$obj->data($data);
-		$obj->save();
+		try{
+			$obj = new self();
+			$obj->id($id);
+			$obj->data($data);
+			$obj->save();
 
-		return true;
+			return true;
+		}catch(\Exception $e){
+		}
+		return false;
 	}
 
 	public function session_destroy(string $id): bool{
