@@ -6,6 +6,12 @@ class Conf{
     }
 }
 
+class Runner{
+    public static function current(): string{
+        return '';
+    }
+}
+
 class Util{
     public static function url($entry_key): string{
         return '';
@@ -123,6 +129,8 @@ class Browser{
 	 */
 	public function has_error(string $type): bool{
         return false;
+	}
+	public function find_get(string $name){
 	}
 }
 
