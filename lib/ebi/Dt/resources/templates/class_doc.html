@@ -88,7 +88,7 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<span class="badge badge-warning">
+					<span class="badge text-bg-warning">
 						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
@@ -123,7 +123,7 @@
 				
 				<rt:if param="{$param.opt('deprecated')}">
 					<div>
-						<span class="badge badge-pill badge-danger">
+						<span class="badge text-bg-danger">
 							{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 						</span>
 					</div>
@@ -151,7 +151,7 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<span class="badge badge-danger">
+					<span class="badge text-bg-danger">
 						Deprecated
 						{$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
