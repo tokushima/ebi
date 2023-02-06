@@ -187,7 +187,7 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<span class="badge badge-danger badge-margin">Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}</span>
+					<span class="badge text-bg-danger">Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}</span>
 				</rt:if>
 			</td>
 		</tr>
@@ -219,7 +219,7 @@
 				{$t.html($param.summary())}
 				
 				<rt:if param="{$param.opt('deprecated')}">
-					<span class="badge badge-warning badge-margin">
+					<span class="badge text-bg-warning">
 						Deprecated {$t.date_format('Y-m-d',$param.opt('deprecated'))}
 					</span>
 				</rt:if>

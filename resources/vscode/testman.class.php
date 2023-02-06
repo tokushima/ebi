@@ -114,9 +114,9 @@ class Browser{
 	}
 	/**
 	 * bodyを解析し配列として返す
+	 * @return mixed
 	 */
-	public function json(?string $name=null): array{
-        return [];
+	public function json(?string $name=null){
 	}
 	/**
 	 * bodyを解析し配列として返す

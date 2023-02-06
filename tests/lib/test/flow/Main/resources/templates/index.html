@@ -9,7 +9,7 @@
 <ul rt:param="notes" rt:var="note">
 	<li class="row">
 		<div>
-			<span class="badge badge-pill badge-info" id="vote_{$note.id()}">{$note.vote()}</span>
+			<span class="badge text-bg-info" id="vote_{$note.id()}">{$note.vote()}</span>
 			<button class="btn" style="padding:3px; margin:1px;" onclick="vote({$note.id()},1,'vote_{$note. id()}')">↑</button>
 			<button class="btn" style="padding:3px; margin:1px;" onclick="vote({$note.id()},-1,'vote_{$note.id()}')">↓</button>
 		</div>
