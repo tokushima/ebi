@@ -60,7 +60,7 @@ class Session{
 				}
 			});
 			
-			if(isset($this->vars[session_name()])){
+			if(isset($_SESSION[session_name()])){
 				session_regenerate_id(true);
 			}
 		}
