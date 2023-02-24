@@ -56,7 +56,9 @@ class Session{
 			
 			register_shutdown_function(function(){
 				if('' != session_id()){
-					session_write_close();
+					try{
+						session_write_close();
+					}catch(\Exception $e){}
 				}
 			});
 			
