@@ -84,8 +84,8 @@ abstract class Dao extends \ebi\Obj{
 		return get_class($this);
 	}
 	public function __construct(){
-		call_user_func_array('parent::__construct',func_get_args());
-		
+		parent::__construct();
+
 		if(func_num_args() == 1){
 			foreach(func_get_arg(0) as $n => $v){
 				switch($n){
