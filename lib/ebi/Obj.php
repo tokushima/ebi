@@ -1,7 +1,7 @@
 <?php
 namespace ebi;
 
-#[AllowDynamicProperties]
+#[\AllowDynamicProperties]
 class Obj implements \IteratorAggregate{
 	private static array $_m = [];
 	protected string $_;
