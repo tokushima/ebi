@@ -106,39 +106,6 @@ abstract class DbConnector{
 	}
 	
 	/**
-	 * 条件式update文を生成する
-	 */
-	public function find_update_sql(\ebi\Dao $dao, \ebi\Q $query, array $target_props): \ebi\Daq{
-		$update = $update_vars = $from = [];
-		
-		$target_all = empty($target_props);
-		foreach($dao->dao_columns(true) as $column){
-			if(!$column->primary() && ($target_all || in_array($column->name(),$target_props))){
-				$update[] = $this->quotation($column->column()).' = ?';
-				$update_vars[] = $this->column_value($dao,$column->name(),$dao->{$column->name()}());
-			}
-		}
-		if(empty($update) || (!$target_all && sizeof($target_props) != sizeof($update))){
-			throw new \ebi\exception\InvalidQueryException('no update column');
-		}
-		[$where_sql, $where_vars] = $this->where_sql(
-			$dao,
-			$from,
-			$query,
-			$dao->dao_columns(true),
-			null,
-			false
-		);
-		
-		return new \ebi\Daq(
-			'update '.$this->quotation($column->table()).' set '.
-			implode(',',$update).' where '.
-			$where_sql,
-			array_merge($update_vars,$where_vars)
-		);
-	}
-	
-	/**
 	 * delete文を生成する
 	 */
 	public function delete_sql(\ebi\Dao $dao): \ebi\Daq{

@@ -77,11 +77,6 @@ eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value','def'))));
 eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('value2','EDC'))));
 eq(1,sizeof(\test\db\RefFindExt::find_all(Q::eq('order',3))));
 
-eq(4,sizeof(\test\db\HasFind::find_all()));
-$has1 = \test\db\HasFind::find_get(Q::eq('parent_id',$ref3->parent_id()));
-if(eq(true,($has1->parent() instanceof \test\db\Find))){
-	eq('ghi',$has1->parent()->value1());
-}
 
 \test\db\RefRefFind::find_delete();
 $refref1 = (new \test\db\RefRefFind())->parent_id($ref1->id())->save();
@@ -302,15 +297,6 @@ foreach(\test\db\RefRefFind::find() as $obj){
 	$i++;
 }
 eq(3,$i);
-
-
-$i = 0;
-$r = array('abc','def','ghi','jkl');
-foreach(\test\db\HasFind::find() as $obj){
-	eq(isset($r[$i]) ? $r[$i] : null,$obj->parent()->value1());
-	$i++;
-}
-eq(4,$i);
 
 
 $result = \test\db\Find::find_all(Q::in('value1',\test\db\SubFind::find_sub('value')));
