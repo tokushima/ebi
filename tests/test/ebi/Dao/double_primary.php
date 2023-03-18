@@ -9,5 +9,3 @@ try{
 }catch(\ebi\Exception $e){
 	fail();
 }
-$p = new \test\db\DoublePrimary();
-eq("hoge",$p->id1(1)->id2(1)->sync()->value());
