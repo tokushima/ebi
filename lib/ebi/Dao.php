@@ -146,24 +146,11 @@ abstract class Dao extends \ebi\Obj{
 			}
 			$anon[1] = \ebi\Util::camel2snake($table_class);
 		}
-		$db_settings = self::get_db_settings($anon[0],$p);
-		$prefix = isset($db_settings['prefix']) ? $db_settings['prefix'] : '';
-		$upper = (isset($db_settings['upper']) && $db_settings['upper'] === true);
-		$lower = (isset($db_settings['lower']) && $db_settings['lower'] === true);
-		
+		self::get_db_settings($anon[0],$p);		
 		self::$_con_[get_called_class()] = self::$_connections_[$anon[0]]->connector();
 		
-		$set_table_name = function($name,$class) use($prefix,$upper,$lower){
-			$name = $prefix.$name;
-			if($upper){
-				$name = strtoupper($name);
-			}else if($lower){
-				$name = strtolower($name);
-			}
-			return $name;
-		};
 		self::$_co_anon_[$p] = $anon;
-		self::$_co_anon_[$p][1] = $set_table_name(self::$_co_anon_[$p][1],$p);
+		self::$_co_anon_[$p][1] = self::$_co_anon_[$p][1];
 		
 		$root_table_alias = 't'.self::$_cnt_++;
 		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_dao_ = [];
@@ -230,13 +217,13 @@ abstract class Dao extends \ebi\Obj{
 									break;
 								case 2:
 									[$t, $c1] = $tcc;
-									$ref_table = $set_table_name($t,$p);
+									$ref_table = $t;
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									break;
 								case 3:
 									[$t, $c1, $c2] = $tcc;
-									$ref_table = $set_table_name($t,$p);
+									$ref_table = $t;
 									$ref_table_alias = 't'.self::$_cnt_++;
 									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
 									$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
@@ -728,38 +715,6 @@ abstract class Dao extends \ebi\Obj{
 	}
 	
 	/**
-	 * 条件により更新する
-	 * before/after/verifyは実行されない
-	 * @param static $obj
-	 * @return 実行した件数
-	 */
-	public static function find_update($obj): int{
-		if(!($obj instanceof static)){
-			throw new \ebi\exception\InvalidArgumentException('must be an '.get_class($obj));
-		}
-		$args = func_get_args();
-		array_shift($args);
-		
-		$target = [];
-		$query = new \ebi\Q();
-		
-		if(!empty($args)){
-			foreach($args as $arg){
-				if(is_string($arg)){
-					$target[] = $arg;
-				}else if($arg instanceof \ebi\Q){
-					$query->add($arg);
-				}
-			}
-		}
-		if(empty($target)){
-			throw new \ebi\exception\InvalidArgumentException('target column required');
-		}
-		$daq = static::$_con_[get_called_class()]->find_update_sql($obj,$query,$target);
-		return $obj->update_query($daq);
-	}
-	
-	/**
 	 * 条件により削除する
 	 * before/after/verifyは実行されない
 	 * @return 実行した件数
@@ -994,51 +949,6 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return $this;
 	}
-
-
-
-
-
-	/**
-	 * DBの値と同じにする
-	 * @return static
-	 */
-	public function sync(){
-		$query = new \ebi\Q();
-		$query->add(new \ebi\Paginator(1,1));
-		foreach($this->dao_primary_columns() as $column){
-			$query->add(Q::eq($column->name(),$this->{$column->name()}()));
-		}
-		foreach(self::get_statement_iterator($this,$query) as $dao){
-			foreach(get_object_vars($dao) as $k => $v){
-				if($k[0] != '_'){
-					$this->{$k}($v);
-				}
-			}
-			return $this;
-		}
-		throw new \ebi\exception\NotFoundException('synchronization failed');
-	}
-	/**
-	 * 配列からプロパティに値をセットする
-	 * @return static
-	 */
-	public function set_props(array $arg){
-		if(isset($arg) && (is_array($arg) || (is_object($arg) && ($arg instanceof \Traversable)))){
-			$vars = get_object_vars($this);
-			foreach($arg as $name => $value){
-				if($name[0] != '_' && array_key_exists($name,$vars)){
-					try{
-						$this->{$name}($value);
-					}catch(\Exception $e){
-						\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($e->getMessage()),$name);
-					}
-				}
-			}
-		}
-		return $this;
-	}
-
 
 	/**
 	 * テーブルの作成
