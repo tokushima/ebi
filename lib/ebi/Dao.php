@@ -6,9 +6,7 @@ abstract class Dao extends \ebi\Obj{
 	private static int $_cnt_ = 0;
 	private static array $_con_ = [];
 
-	private int $_has_hierarchy_ = 1;
 	private ?string $_class_id_ = null;
-	private ?int $_hierarchy_ = null;
 	private array $_saving_ = [false,false];
 
 	private static array $_co_anon_ = [];
@@ -89,9 +87,7 @@ abstract class Dao extends \ebi\Obj{
 		if(func_num_args() == 1){
 			foreach(func_get_arg(0) as $n => $v){
 				switch($n){
-					case '_has_hierarchy_':
 					case '_class_id_':
-					case '_hierarchy_':
 						$this->{$n} = $v;
 						break;
 					default:
@@ -117,21 +113,6 @@ abstract class Dao extends \ebi\Obj{
 		
 		if(empty(self::$_connection_settings_)){
 			/**
-			 * DBの接続情報
-			 * 
-			 * ``````````````````````````````````````````````````````````
-			 * [
-			 * 	'ebi\SessionDao'=>[ // ebi\SessionDaoモデルの接続情報となります
-			 * 		'type'=>'ebi\MysqlConnector',
-			 * 		'name'=>'ebitest'
-			 * 	],
-			 * 	'*'=>[ // *を指定した場合は他のパターンにマッチしたなかったもの全てがこの接続になります
-			 * 		'type'=>'ebi\MysqlConnector',
-			 * 		'name'=>'ebitest'
-			 * 	],
-			 * ]
-			 * ``````````````````````````````````````````````````````````
-			 * 
 			 * @param string{} $connection 接続情報配列
 			 */
 			self::$_connection_settings_ = \ebi\Conf::gets('connection');
@@ -184,9 +165,8 @@ abstract class Dao extends \ebi\Obj{
 		self::$_co_anon_[$p] = $anon;
 		self::$_co_anon_[$p][1] = $set_table_name(self::$_co_anon_[$p][1],$p);
 		
-		$has_hierarchy = (isset($this->_hierarchy_)) ? $this->_hierarchy_ - 1 : $this->_has_hierarchy_;
 		$root_table_alias = 't'.self::$_cnt_++;
-		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_many_conds_ = $_has_dao_ = [];
+		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_dao_ = [];
 		
 		$props = $last_cond_column = [];
 		$ref = new \ReflectionClass($this);
@@ -234,11 +214,9 @@ abstract class Dao extends \ebi\Obj{
 				
 				$_self_columns_[$name] = $column;
 			}else if(false !== strpos($anon_cond,'(')){
-				$is_has = (class_exists($column_type) && is_subclass_of($column_type,__CLASS__));
-				$is_has_many = ($is_has && $this->prop_anon($name,'attr') === 'a');
 				$matches = [];
 				
-				if((!$is_has || $has_hierarchy > 0) && preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$matches)){
+				if(preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$matches)){
 					[, $self_var, $conds_string, $has_var] = $matches;
 					$conds = [];
 					$ref_table = $ref_table_alias = null;
@@ -268,68 +246,51 @@ abstract class Dao extends \ebi\Obj{
 							}
 						}
 					}
-					if($is_has_many){
-						if(empty($has_var)){
-							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
+					if($self_var[0] == '@'){
+						$cond_var = null;
+						$cond_name = substr($self_var,1);
+						if(strpos($cond_name,'.') !== false){
+							[$cond_name, $cond_var] = explode('.',$cond_name);
 						}
-						$dao = new $column_type(['_class_id_'=>$p.'___'.self::$_cnt_++]);
-						$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
+						if(!isset($last_cond_column[$cond_name])){
+							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');
+						}
+						if(in_array($cond_name,$props)){
+							$props[] = $name;
+							continue;
+						}
+						$cond_column = clone($last_cond_column[$cond_name]);
+						if(isset($cond_var)){
+							$cond_column->column($cond_var);
+							$cond_column->column_alias('c'.self::$_cnt_++);
+						}
+						array_unshift($conds,$cond_column);
 					}else{
-						if($is_has){
-							if(empty($has_var)){
-								throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
-							}
-							$dao = new $column_type(['_class_id_'=>($p.'___'.self::$_cnt_++),'_hierarchy_'=>$has_hierarchy]);
-							$this->{$name}($dao);
-
-							$_has_many_conds_[$name] = [$dao,$has_var,$self_var];
-						}else{
-							if($self_var[0] == '@'){
-								$cond_var = null;
-								$cond_name = substr($self_var,1);
-								if(strpos($cond_name,'.') !== false){
-									[$cond_name, $cond_var] = explode('.',$cond_name);
-								}
-								if(!isset($last_cond_column[$cond_name])){
-									throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');
-								}
-								if(in_array($cond_name,$props)){
-									$props[] = $name;
-									continue;
-								}
-								$cond_column = clone($last_cond_column[$cond_name]);
-								if(isset($cond_var)){
-									$cond_column->column($cond_var);
-									$cond_column->column_alias('c'.self::$_cnt_++);
-								}
-								array_unshift($conds,$cond_column);
-							}else{
-								array_unshift($conds,
-									\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias)
-								);
-							}
-							$column->table($ref_table);
-							$column->table_alias($ref_table_alias);
-							$_alias_[$column->column_alias()] = $name;
-							
-							if(sizeof($conds) % 2 != 0){
-								throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
-							}
-							if($this->prop_anon($name,'join',false)){
-								$this->prop_anon($name,'get',false,true);
-								$this->prop_anon($name,'set',false,true);
-							
-								for($i=0;$i<sizeof($conds);$i+=2){
-									$_join_conds_[$name][] = [$conds[$i],$conds[$i+1]];
-								}
-							}else{
-								for($i=0;$i<sizeof($conds);$i+=2){
-									$_conds_[] = [$conds[$i],$conds[$i+1]];
-								}
-							}
-							$_where_columns_[$name] = $column;
+						array_unshift($conds,
+							\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias)
+						);
+					}
+					$column->table($ref_table);
+					$column->table_alias($ref_table_alias);
+					$_alias_[$column->column_alias()] = $name;
+					
+					if(sizeof($conds) % 2 != 0){
+						throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
+					}
+					if($this->prop_anon($name,'join',false)){
+						$this->prop_anon($name,'get',false,true);
+						$this->prop_anon($name,'set',false,true);
+					
+						for($i=0;$i<sizeof($conds);$i+=2){
+							$_join_conds_[$name][] = [$conds[$i],$conds[$i+1]];
+						}
+					}else{
+						for($i=0;$i<sizeof($conds);$i+=2){
+							$_conds_[] = [$conds[$i],$conds[$i+1]];
 						}
 					}
+					$_where_columns_[$name] = $column;
+
 					if(!empty($conds)){
 						$cond_column = clone($conds[sizeof($conds)-1]);
 						$cond_column->column($column->column());
@@ -364,7 +325,6 @@ abstract class Dao extends \ebi\Obj{
 			'_join_conds_'=>$_join_conds_,
 			'_alias_'=>$_alias_,
 			'_has_dao_'=>$_has_dao_,
-			'_has_many_conds_'=>$_has_many_conds_
 		];
 	}
 
@@ -414,13 +374,6 @@ abstract class Dao extends \ebi\Obj{
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}()->dao_cast_resultset([$alias=>$value]);
 				}else{
 					$this->{self::$_dao_[$this->_class_id_]->_alias_[$alias]}($value);
-				}
-			}
-		}
-		if(!empty(self::$_dao_[$this->_class_id_]->_has_many_conds_)){
-			foreach(self::$_dao_[$this->_class_id_]->_has_many_conds_ as $name => $conds){
-				foreach($conds[0]::find(Q::eq($conds[1],$this->{$conds[2]}())) as $dao){
-					$this->{$name}($dao);
 				}
 			}
 		}
@@ -1042,6 +995,10 @@ abstract class Dao extends \ebi\Obj{
 		return $this;
 	}
 
+
+
+
+
 	/**
 	 * DBの値と同じにする
 	 * @return static
@@ -1081,6 +1038,8 @@ abstract class Dao extends \ebi\Obj{
 		}
 		return $this;
 	}
+
+
 	/**
 	 * テーブルの作成
 	 */
