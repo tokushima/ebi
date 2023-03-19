@@ -457,10 +457,6 @@ s	 */
 					$is_add_value = false;
 					$vars = array_merge($vars,$value->ar_vars());
 				}
-				$add_join_conds = $dao->dao_join_conds($column->name());
-				if(!empty($add_join_conds)){
-					$column_alias .= ' and '.$this->where_cond_columns($add_join_conds,$from);
-				}
 				$or[] = $column_alias;
 
 				if($is_add_value){
