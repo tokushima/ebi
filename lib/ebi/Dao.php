@@ -99,9 +99,6 @@ abstract class Dao extends \ebi\Obj{
 			$this->_class_id_ = $p;
 		}
 		if(isset(self::$_dao_[$this->_class_id_])){
-			foreach(self::$_dao_[$this->_class_id_]->_has_dao_ as $name => $dao){
-				$this->{$name}($dao);
-			}
 			return;
 		}
 		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);
@@ -153,7 +150,7 @@ abstract class Dao extends \ebi\Obj{
 		self::$_co_anon_[$p][1] = self::$_co_anon_[$p][1];
 		
 		$root_table_alias = 't'.self::$_cnt_++;
-		$_self_columns_ = $_where_columns_ = $_conds_ = $_join_conds_ = $_alias_ = $_has_dao_ = [];
+		$_self_columns_ = $_where_columns_ = $_conds_ = $_alias_ = [];
 		
 		$props = $last_cond_column = [];
 		$ref = new \ReflectionClass($this);
@@ -264,17 +261,8 @@ abstract class Dao extends \ebi\Obj{
 					if(sizeof($conds) % 2 != 0){
 						throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
 					}
-					if($this->prop_anon($name,'join',false)){
-						$this->prop_anon($name,'get',false,true);
-						$this->prop_anon($name,'set',false,true);
-					
-						for($i=0;$i<sizeof($conds);$i+=2){
-							$_join_conds_[$name][] = [$conds[$i],$conds[$i+1]];
-						}
-					}else{
-						for($i=0;$i<sizeof($conds);$i+=2){
-							$_conds_[] = [$conds[$i],$conds[$i+1]];
-						}
+					for($i=0;$i<sizeof($conds);$i+=2){
+						$_conds_[] = [$conds[$i],$conds[$i+1]];
 					}
 					$_where_columns_[$name] = $column;
 
@@ -309,9 +297,7 @@ abstract class Dao extends \ebi\Obj{
 			'_self_columns_'=>$_self_columns_,
 			'_where_columns_'=>$_where_columns_,
 			'_conds_'=>$_conds_,
-			'_join_conds_'=>$_join_conds_,
 			'_alias_'=>$_alias_,
-			'_has_dao_'=>$_has_dao_,
 		];
 	}
 
@@ -341,12 +327,6 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public function dao_conds(): array{
 		return self::$_dao_[$this->_class_id_]->_conds_;
-	}
-	/**
-	 * join時の条件を取得する
-	 */
-	public function dao_join_conds($name): array{
-		return (isset(self::$_dao_[$this->_class_id_]->_join_conds_[$name])) ? self::$_dao_[$this->_class_id_]->_join_conds_[$name] : [];
 	}
 	/**
 	 * 結果配列から値を自身にセットする
