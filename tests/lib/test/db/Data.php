@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var timestamp $create_date
+ * @var datetime $create_date
  * @var int $num
  * @var string $val1
  * @var string $val2

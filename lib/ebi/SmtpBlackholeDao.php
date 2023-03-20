@@ -11,7 +11,7 @@ namespace ebi;
  * @var text $message
  * @var text $manuscript
  * @var string $tcode
- * @var timestamp $create_date @['auto_now_add'=>true]
+ * @var datetime $create_date @['auto_now_add'=>true]
  */
 class SmtpBlackholeDao extends \ebi\Dao implements \ebi\MailHandler{
 	protected ?int $id = null;

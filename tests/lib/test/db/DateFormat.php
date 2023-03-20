@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var timestamp $ts
+ * @var datetime $ts
  * @var int $num
  */
 class DateFormat extends \ebi\Dao{

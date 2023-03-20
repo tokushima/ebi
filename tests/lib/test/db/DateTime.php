@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * @var serial $id
- * @var timestamp $ts
+ * @var datetime $ts
  * @var date $date
  * @var intdate $idate
  * @var intdate $birthday @['max'=>8]

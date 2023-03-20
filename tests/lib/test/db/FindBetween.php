@@ -5,7 +5,7 @@ namespace test\db;
  * @var int $int
  * @var string $char
  * @var date $date
- * @var timestamp $timestamp
+ * @var datetime $timestamp
  */
 class FindBetween extends \ebi\Dao{
 	protected $id;
