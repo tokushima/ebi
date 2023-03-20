@@ -8,7 +8,7 @@ namespace test\object;
  * @var serial $cc
  * @var float $dd
  * @var bool $ee
- * @var timestamp $ff
+ * @var datetime $ff
  * @var time $gg
  * @var string{} $ii
  * @var string[] $jj

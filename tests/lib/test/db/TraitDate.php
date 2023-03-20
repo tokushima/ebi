@@ -2,7 +2,7 @@
 namespace test\db;
 /**
  * 日付情報のみのモデル
- * @var timestamp $create_date
+ * @var datetime $create_date
  * @var float $number
  */
 trait TraitDate{

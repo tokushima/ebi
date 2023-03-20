@@ -3,7 +3,7 @@ namespace test\db;
 /**
  * @var serial $id @['hash'=>false]
  * @var int $order
- * @var timestamp $updated
+ * @var datetime $updated
  * @var string $value1
  * @var string $value2
  */

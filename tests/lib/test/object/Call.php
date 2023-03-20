@@ -5,7 +5,7 @@ namespace test\object;
  * @var int $aaa
  * @var int[] $bbb
  * @var string{} $ccc
- * @var timestamp $eee
+ * @var datetime $eee
  * @var string $fff @['column'=>'Acol','table'=>'BTbl']
  * @var string $ggg @['set'=>false]
  * @var bool $hhh

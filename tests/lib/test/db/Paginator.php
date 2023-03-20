@@ -3,7 +3,7 @@ namespace test\db;
 /**
  * @var serial $id
  * @var int $order
- * @var timestamp $updated @['auto_now'=>true]
+ * @var datetime $updated @['auto_now'=>true]
  * @var string $code1 @['auto_code_add'=>true,'ctype'=>'0']
  * @var string $code2 @['auto_code_add'=>true,'ctype'=>'a']
  */
