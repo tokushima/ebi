@@ -10,13 +10,13 @@
 	{$method_info.opt('method')}
 </p>
 
-<div class="alert alert-warning doc" style="margin-top: 10px; margin-bottom: 50px;">
+<div class="alert alert-warning doc mt-2 mb-3">
 	<div>
 		{$t.noop($method_info.document())}
 	</div>
 	
 	<rt:if param="{$method_info.opt('see_list')}">
-		<div style="margin-top: 30px;" class="small">
+		<div class="mt-2">
 			<rt:loop param="{$method_info.opt('see_list')}" var="see">
 				<div>
 					<rt:if param="{$t.eq($see['type'],'url')}">

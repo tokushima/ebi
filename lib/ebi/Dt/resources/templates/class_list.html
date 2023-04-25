@@ -2,7 +2,7 @@
 
 <rt:block name="content">
 
-<div class="btn-group btn-group-toggle"  style="margin-bottom: 10px; width: 100%;">
+<div class="btn-group btn-group-toggle mb-2 w-100">
 	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'model'),'active')}" href="?parent=\ebi\Dao">Model</a>
 	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'request'),'active')}" href="?parent=\ebi\flow\Request">Request</a>
 	<a class="btn btn-secondary {$t.cond_switch($t.eq($select,'other'),'active')}" href="?">Other</a>
@@ -12,7 +12,7 @@
 <table rt:param="{$class_info_list}" rt:var="class_info" class="table table-sm table-condensed table-striped">
 <tbody>
 <tr class="{$t.cond_switch($class_info.opt('deprecated'),'deprecated','')} {$t.cond_switch($class_info.opt('first_depricated_date'),'text-deprecated','')}">
-	<td style="width:20%;">
+	<td>
 		<a href="{$t.package_method_url('class_doc',$class_info.name())}" class="{$t.cond_switch($class_info.opt('first_depricated_date'),'text-deprecated','')}">
 			{$class_info.name()}
 		</a>
