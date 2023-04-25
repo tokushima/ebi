@@ -75,6 +75,9 @@ class Browser{
 	public function body(): string{
         return '';
 	}
+	public function cookies(): array{
+		return [];
+	}
 	/**
 	 * 結果のURLを取得
 	 */

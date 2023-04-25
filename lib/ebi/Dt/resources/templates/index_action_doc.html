@@ -6,13 +6,13 @@
 	{$action_info.opt('name')}
 </p>
 
-<div class="alert alert-warning doc" style="margin-top: 10px; margin-bottom: 50px; min-height: 50px;">
+<div class="alert alert-warning doc mb-3">
 <div>
 	{$t.noop($action_info.document())}
 </div>
 
 <rt:if param="{$action_info.opt('see_list')}">
-	<div style="margin-top: 30px;" class="small">
+	<div class="mt-2">
 		<rt:loop param="{$action_info.opt('see_list')}" var="see">
 			<div>
 				<rt:if param="{$t.eq($see['type'],'url')}">
@@ -171,7 +171,7 @@
 				{$param.name()}
 				
 				<rt:if param="{$param.opt('require')}">
-					<span style="color: #ffbbbb;">*</span>
+					<span class="text-danger">*</span>
 				</rt:if>
 			</td>
 			<td class="cell-2">

@@ -130,7 +130,7 @@ class Paginator implements \IteratorAggregate{
 			$o = (string)$req->in_vars('order');
 			$p = (string)$req->in_vars('porder');
 			
-			if($o == $p){
+			if(!empty($o) && $o == $p){
 				if($o[0] == '-'){
 					$o = substr($o,1);
 				}else{
