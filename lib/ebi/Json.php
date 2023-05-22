@@ -4,7 +4,7 @@ namespace ebi;
 class Json{
 	private array $arr = [];
 	
-	public function __construct(string $json){
+	public function __construct(?string $json){
 		$this->arr = self::decode($json);
 	}
 
@@ -65,7 +65,7 @@ class Json{
 	 * JSON 文字列をデコードする
 	 * @return mixed
 	 */
-	public static function decode(string $json){
+	public static function decode(?string $json){
 		if(is_null($json) || $json === ''){
 			return null;
 		}
