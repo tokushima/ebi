@@ -493,12 +493,12 @@ s	 */
 			switch($dao->prop_anon($name,'type')){
 				case 'datetime':
 				case 'timestamp':
-					if(!ctype_digit($value)){
+					if(!ctype_digit((string)$value)){
 						$value = strtotime($value);
 					}
 					return date('Y-m-d H:i:s',$value);
 				case 'date':
-					if(!ctype_digit($value)){
+					if(!ctype_digit((string)$value)){
 						$value = strtotime($value);
 					}
 					return date('Y-m-d',$value);
