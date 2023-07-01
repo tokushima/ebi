@@ -513,13 +513,13 @@ class Man{
 						$info->set_opt('x_t_code',\ebi\Mail::xtc($info->name()));
 						
 						try{
-							$subject = trim($xml->find_get('subject')->value());
+							$subject = trim($xml->find_get('subject')->value() ?? '');
 							$info->document($subject);
 							$info->set_opt('subject',$subject);
 						}catch(\ebi\exception\NotFoundException $e){
 						}
 						try{
-							$summary = trim($xml->find_get('summary')->value());
+							$summary = trim($xml->find_get('summary')->value() ?? '');
 							$info->document($summary);
 						}catch(\ebi\exception\NotFoundException $e){
 						}
