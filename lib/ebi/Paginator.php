@@ -14,11 +14,12 @@ class Paginator implements \IteratorAggregate{
 
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator([
-			'current'=>$this->current()
-			,'limit'=>$this->limit()
-			,'offset'=>$this->offset()
-			,'total'=>$this->total()
-			,'order'=>$this->order()
+			'current'=>$this->current(),
+			'pages'=>ceil($this->total() / $this->limit()),
+			'limit'=>$this->limit(),
+			'offset'=>$this->offset(),
+			'total'=>$this->total(),
+			'order'=>$this->order(),
 		]);
 	}
 	/**

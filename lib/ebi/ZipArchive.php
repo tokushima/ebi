@@ -95,7 +95,7 @@ class ZipArchive{
 
 	/**
 	 * 書き出す
-	 * @return 書き出したZIPファイルパス
+	 * @return string 書き出したZIPファイルパス
 	 */
 	public function write(): string{
 		if (!$this->wrote) {
