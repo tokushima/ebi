@@ -31,8 +31,8 @@ class Request implements \IteratorAggregate{
 						}else{
 							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));
 							$eval = 'if(isset($files[\'name\']'.$ks.') && !empty($files[\'name\']'.$ks.')){ ';
-								foreach(['name','tmp_name','size','error'] as $k){
-									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.';';
+								foreach(['name','tmp_name','size','error','full_path'] as $k){
+									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.' ?? \'\';';
 								}
 							eval($eval.'}');
 						}
@@ -196,6 +196,7 @@ class Request implements \IteratorAggregate{
 		}else if(is_file($file)){
 			$this->files[$key] = [
 				'name'=>basename($file),
+				'full_path'=>basename($file),
 				'tmp_name'=>$file,
 				'size'=>filesize($file),
 			];
@@ -323,6 +324,16 @@ class Request implements \IteratorAggregate{
 		}
 		return isset($file_info['name']) ? $file_info['name'] : null;
 	}
+	/**
+	 * 添付ファイルのオリジナルフルパスの取得
+	 * @param mixed $file_info string|array
+	 */
+	public function file_full_path($file_info): ?string{
+		if(is_string($file_info)){
+			$file_info = $this->in_files($file_info);
+		}
+		return isset($file_info['full_path']) ? $file_info['full_path'] : null;
+	}	
 	/**
 	 * 添付ファイルのファイルパスの取得
 	 * @param mixed $file_info string|array
