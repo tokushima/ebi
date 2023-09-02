@@ -3,11 +3,12 @@ namespace ebi;
 
 class Json{
 	private array $arr = [];
-	
-	public function __construct(?string $json){
-		$this->arr = self::decode($json);
-	}
 
+	public function __construct(?string $json){
+		$arr = self::decode($json);
+		$this->arr = is_array($arr) ? $arr : [$arr];
+	}
+	
 	/**
 	 * パスから値を取得する
 	 * @return mixed
