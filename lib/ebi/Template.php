@@ -306,7 +306,7 @@ class Template{
 							$uniq,$arg1,$uniq,
 							$uniq
 						).
-						preg_replace('/<rt\:else[\s]*.*?>/i','<?php }else{ ?>',$tag->value()).'<?php } ?>'),
+						preg_replace('/<rt\:else[\s]*.*?>/i','<?php }else{ ?>',$tag->value() ?? '').'<?php } ?>'),
 					$src
 				);
 			}
