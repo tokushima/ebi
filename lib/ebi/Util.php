@@ -318,7 +318,6 @@ class Util{
 	/**
 	 * フォーマット文字列 $str に基づき生成された文字列を返します。
 	 * フォーマット中に現れた置換文字列{1},{2}...を置換する
-	 * @deprecated
 	 */
 	public static function fstring(string $str, ...$args): string{
 		$match = [];
