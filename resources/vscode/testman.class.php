@@ -31,43 +31,51 @@ class Browser{
 	/**
 	 * ユーザエージェントを設定
 	 */
-	public function agent(string $agent){
+	public function agent(string $agent): self{
+		return $this;
 	}
 	/**
 	 * Basic認証
 	 */
-	public function basic(string $user, string $password){
+	public function basic(string $user, string $password): self{
+		return $this;
 	}
 	/**
 	 * Bearer token
 	 */
-	public function bearer_token(string $token){
+	public function bearer_token(string $token): self{
+		return $this;
 	}	
 	/**
 	 * ヘッダを設定
 	 */
-	public function header(string $key, ?string $value=null){
+	public function header(string $key, ?string $value=null): self{
+		return $this;
 	}
 	/**
 	 * ACCEPT=application/debugを設定する
 	 */
-	public function set_header_accept_debug(){
+	public function set_header_accept_debug(): self{
+		return $this;
 	}
 	/**
 	 * ACCEPT=application/jsonを設定する
 	 */
-	public function set_header_accept_json(){
+	public function set_header_accept_json(): self{
+		return $this;
 	}
 	
 	/**
 	 * クエリを設定
 	 */
-	public function vars(string $key, $value=null){
+	public function vars(string $key, $value=null): self{
+		return $this;
 	}
 	/**
 	 * クエリにファイルを設定
 	 */
-	public function file_vars(string $key, string $filename){
+	public function file_vars(string $key, string $filename): self{
+		return $this;
 	}
 	/**
 	 * 結果の本文を取得
@@ -93,27 +101,32 @@ class Browser{
 	/**
 	 * GETリクエスト
 	 */
-	public function do_get($url){
+	public function do_get($url): self{
+		return $this;
 	}
 	/**
 	 * POSTリクエスト
 	 */
-	public function do_post($url){
+	public function do_post($url): self{
+		return $this;
 	}
 	/**
 	 * POSTリクエスト(JSON)
 	 */
-	public function do_json($url){
+	public function do_json($url): self{
+		return $this;
 	}
 	/**
 	 * GETリクエストでダウンロードする
 	 */
-	public function do_download($url, string $filename){
+	public function do_download($url, string $filename): self{
+		return $this;
 	}
 	/**
 	 * POSTリクエストでダウンロードする
 	 */
-	public function do_post_download($url, string $filename){
+	public function do_post_download($url, string $filename): self{
+		return $this;
 	}
 	/**
 	 * bodyを解析し配列として返す
