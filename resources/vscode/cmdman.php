@@ -29,6 +29,12 @@ class Args{
 	public static function opts(string $name): array{
         return [];
 	}
+    public static function cmd(): string{
+        return '';
+    }
+    public static function script(): string{
+        return '';
+    }
 }
 
 class Util{
