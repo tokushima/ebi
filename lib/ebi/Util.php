@@ -398,7 +398,6 @@ class Util{
 	}
 	/**
 	 * クラス名
-	 * @deprecated
 	 */
 	public static function get_class_name(string $class_name): string{
 		if(class_exists($class_name)){
