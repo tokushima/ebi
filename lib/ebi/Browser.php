@@ -193,20 +193,6 @@ class Browser{
 	}
 
 	/**
-	 * PUTリクエスト
-	 */
-	public function do_put(string $url): self{
-		return $this->request('PUT', $url);
-	}
-
-	/**
-	 * DELETEリクエスト
-	 */
-	public function do_delete(string $url): self{
-		return $this->request('DELETE', $url);
-	}
-
-	/**
 	 * GETリクエスト
 	 */
 	public function do_get(string $url): self{
@@ -226,6 +212,22 @@ class Browser{
 	public function do_raw(string $url, string $value): self{
 		$this->raw = $value;
 		return $this->request('RAW', $url);
+	}
+
+	/**
+	 * PUTリクエスト
+	 */
+	public function do_put(string $url, string $value=''): self{
+		$this->raw = $value;
+		return $this->request('PUT', $url);
+	}
+
+	/**
+	 * DELETEリクエスト
+	 */
+	public function do_delete(string $url, string $value=''): self{
+		$this->raw = $value;
+		return $this->request('DELETE', $url);
 	}
 
 	/**
@@ -347,6 +349,8 @@ class Browser{
 				}
 				break;
 			case 'RAW':
+			case 'PUT':
+			case 'DELETE':
 				if(!isset($this->request_header['Content-Type'])){
 					$this->request_header['Content-Type'] = 'text/plain';
 				}
@@ -354,8 +358,6 @@ class Browser{
 				break;
 			case 'GET':
 			case 'HEAD':
-			case 'PUT':
-			case 'DELETE':
 				$url = $url.(!empty($this->request_vars) ? '?'.$http_build_query($this->request_vars) : '');
 		}
 		curl_setopt($this->resource,CURLOPT_URL,$url);
