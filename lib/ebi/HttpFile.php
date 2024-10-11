@@ -73,7 +73,7 @@ class HttpFile{
 		$ext = (false !== ($p = strrpos($filename,'.'))) ? strtolower(substr($filename,$p+1)) : null;
 		switch($ext){
 			case 'jpg':
-			case 'jpeg': return 'jpeg';
+			case 'jpeg': return 'image/jpeg';
 			case 'png':
 			case 'gif':
 			case 'bmp':
