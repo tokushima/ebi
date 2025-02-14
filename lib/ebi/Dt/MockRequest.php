@@ -2,9 +2,6 @@
 namespace ebi\Dt;
 
 abstract class MockRequest extends \ebi\flow\Request{
-	public function __construct(){		
-	}
-
 	/**
 	 * [$pattern=>$replacement]
 	 */
