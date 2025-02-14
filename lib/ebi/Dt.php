@@ -5,6 +5,7 @@ namespace ebi;
  */
 class Dt extends \ebi\flow\Request{
 	private string $entry;
+	private static $mock = [];
 	
 	public function __construct(?string $entryfile=null){
 		if(empty($entryfile)){
@@ -575,19 +576,68 @@ class Dt extends \ebi\flow\Request{
 		}
 	}
 
+	/**
+	 * \ebi\Dt\MockRequestを継承したクラス名を登録する
+	 * $entryにはmock_flow_mappingsを通じて\ebi\Flow::app()のマッピングを行うエントリを指定する
+	 */
+	public static function add_mock(...$mock_class_names): void{
+		foreach($mock_class_names as $class_name){
+			if(is_object($class_name)){
+				$class_name = get_class($class_name);
+			}
+			if(is_string($class_name)){
+				if(!(class_exists($class_name) && is_subclass_of($class_name, \ebi\Dt\MockRequest::class))){
+					throw new \InvalidArgumentException('invalid mock class: '.$class_name);
+				}
+				self::$mock[] = ltrim($class_name, '\\');
+			}else if(is_array($class_name)){
+				foreach($class_name as $c){
+					self::add_mock($c);
+				}
+			}
+		}
+	}
+
+	/**
+	 * mock.phpの\ebi\Flow::app()に指定するマッピングを返す
+	 */
+	public static function mock_flow_mappings(array $map=[]): array{
+		$patterns = $map['patterns'] ?? [];
+		$patterns[''] = ['action'=>'ebi\Dt'];
+
+		foreach(self::$mock as $class_name){
+			$patterns[str_replace('\\', '/', $class_name)] = ['action'=>$class_name];
+		}
+		$map['patterns'] = $patterns;
+		return $map;
+	}
+
+	private static function get_url_rewrite(): array{
+		$patterns = \ebi\Conf::get('url_rewrite', []);
+
+		$entry = \ebi\Conf::get('mock_entry_name', 'mock');
+		foreach(self::$mock as $class_name){
+			$inst = (new \ReflectionClass($class_name))->newInstance();
+			foreach($inst->rewrite_map() as $pattern => $replacement){
+				$patterns[$pattern] = $entry.'::'.str_replace('\\', '/', $class_name).(substr($replacement, 0, 1) == '/' ? $replacement : '/'.$replacement);
+			}
+		}
+		return $patterns;
+	}
 	public static function url_rewrite(string $url): string{
 		if(!\ebi\Conf::is_production()){
 			$rewrite = self::get_url_rewrite();
 
 			if(!empty($rewrite)){
-				foreach($rewrite as $pattern => $replacement){
-					$new_url = preg_replace($pattern, $replacement, $url);
+				[$url, $query] = (strpos($url, '?') === false) ? [$url, ''] : explode('?', $url, 2);
 
-					if($new_url !== $url){
-						$new_url = self::url($new_url);
+				foreach($rewrite as $pattern => $replacement){
+					if(!empty($pattern) && preg_match($pattern, $url)){
+						$new_url = preg_replace($pattern, $replacement, $url);
+						$new_url = self::url($new_url).(empty($query) ? '' : '?'.$query);
 						\ebi\Log::debug('URL rewrite: '.$url.' to '.$new_url);
 						return $new_url;
-					}
+					}	
 				}
 			}
 		}
@@ -621,10 +671,6 @@ class Dt extends \ebi\flow\Request{
 		return $url;
 	}
 	
-	private static function get_url_rewrite(): array{
-		return \ebi\Conf::get('url_rewrite', []);
-	}
-
 	private static function get_urls(): array{
 		$dir = getcwd();		
 		$urls = [];

@@ -466,7 +466,7 @@ class Browser{
 			if($err_code == 47 || $err_code == 52){
 				return $this;
 			}
-			throw new \ebi\exception\ConnectionException($err_code.': '.curl_error($this->resource));
+			throw new \ebi\exception\ConnectionException($err_code.': '.curl_error($this->resource).' ('.$url.')');
 		}
 		$this->url = curl_getinfo($this->resource,CURLINFO_EFFECTIVE_URL);
 		$this->status = curl_getinfo($this->resource,CURLINFO_HTTP_CODE);
