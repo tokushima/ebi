@@ -632,11 +632,10 @@ class Dt extends \ebi\flow\Request{
 				[$base_url, $query] = (strpos($url, '?') === false) ? [$url, ''] : explode('?', $url, 2);
 
 				foreach($rewrite as $pattern => $replacement){
-					if(strpos($pattern, '\?') !== false){
-						$base_url = $url;
-					}	
-					if(!empty($pattern) && preg_match($pattern, $base_url)){
-						$new_url = preg_replace($pattern, $replacement, $base_url);
+					$subject = (strpos($pattern, '\?') === false) ? $base_url : $url;
+
+					if(!empty($pattern) && preg_match($pattern, $subject)){
+						$new_url = preg_replace($pattern, $replacement, $subject);
 						$new_url = self::url($new_url).(empty($query) ? '' : '?'.$query);
 						\ebi\Log::debug('URL rewrite: '.$url.' to '.$new_url);
 						return $new_url;
