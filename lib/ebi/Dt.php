@@ -624,6 +624,7 @@ class Dt extends \ebi\flow\Request{
 		}
 		return $patterns;
 	}
+
 	public static function url_rewrite(string $url): string{
 		if(!\ebi\Conf::is_production()){
 			$rewrite = self::get_url_rewrite();
@@ -634,39 +635,45 @@ class Dt extends \ebi\flow\Request{
 				foreach($rewrite as $pattern => $replacement){
 					$subject = (strpos($pattern, '\?') === false) ? $base_url : $url;
 
-					if(!empty($pattern) && preg_match($pattern, $subject)){
+					if(!empty($pattern) && preg_match($pattern, $subject, $matches)){	
+						$new_url_params = [];
+
+						if(preg_match_all('/(\/%[0-9s]+)/', $replacement, $param_matches)){
+							$match_params = array_slice($matches, 1);
+
+							foreach($param_matches[0] as $i => $param_match){
+								$idx = ($param_match == 's') ? $i : (int)substr($param_match, 2);
+								$new_url_params[$idx] = $match_params[$idx] ?? '';
+
+								$replacement = str_replace($param_match, '', $replacement);
+							}
+						}
 						$new_url = preg_replace($pattern, $replacement, $subject);
-						$new_url = self::url($new_url).(empty($query) ? '' : '?'.$query);
+						if(strpos($new_url, '?') !== false){
+							[$new_url, $new_query] = explode('?', $new_url, 2);
+							$query = $query.(empty($query) ? '' : '&').$new_query;
+						}
+						$new_url = self::url(empty($new_url_params) ? $new_url : array_merge([$new_url], $new_url_params));
+						$new_url = $new_url.(empty($query) ? '' : ((strpos($new_url, '?') === false) ? '?' : '&').$query);
 						\ebi\Log::debug('URL rewrite: '.$url.' to '.$new_url);
+
 						return $new_url;
-					}	
+					}
 				}
 			}
 		}
 		return $url;
 	}
 
-	/**
-	 * @param string|array $url
-	 */
-	public static function url($url): string{
+	public static function url(string|array $url): string{
 		if(!\ebi\Conf::is_production()){
-			$query = '';
+			[$url, $params] = is_array($url) ? [$url[0], array_slice($url, 1)] : [$url, []];
 
-			if(strpos($url, '?') !== false){
-				[$url, $query] = explode('?', $url, 2);
-				$query = '?'.$query;
-			}
-			if(strpos($url,'://') === false){
-				$urls = self::get_urls();
-				$url_args = [];
-				
-				if(is_array($url)){
-					$url_args = $url;
-					$url = array_shift($url_args);
-				}
-				if(!empty($urls) && isset($urls[$url]) && substr_count($urls[$url],'%s') == sizeof($url_args)){
-					$url = vsprintf($urls[$url],$url_args).$query;
+			if(strpos($url, '://') === false){
+				$map_urls = self::get_urls();
+
+				if(!empty($map_urls) && isset($map_urls[$url]) && substr_count($map_urls[$url], '%s') == sizeof($params)){
+					return vsprintf($map_urls[$url], $params);
 				}
 			}
 		}
@@ -699,7 +706,7 @@ class Dt extends \ebi\flow\Request{
 
 	public static function testman_config(bool $autocommit=true): array{
 		\ebi\Conf::set(\ebi\Db::class, 'autocommit', $autocommit);
-		
+ 		
 		return [
 			'urls'=>self::get_urls(),
 			'url_rewrite'=>self::get_url_rewrite(),	
