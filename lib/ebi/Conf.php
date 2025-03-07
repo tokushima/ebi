@@ -329,6 +329,9 @@ class Conf{
 					throw new \ebi\exception\NotImplementedException('does not implement: '.$interface);
 				}
 			}
+			if(!method_exists(self::$handler_obj[$name], $method)){
+				throw new \ebi\exception\BadMethodCallException(sprintf('does not implement: %s::%s', get_class(self::$handler_obj[$name]), $method));
+			}
 			return call_user_func_array([self::$handler_obj[$name], $method], $args);
 		}
 		return;
