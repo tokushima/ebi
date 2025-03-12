@@ -309,7 +309,7 @@ class Browser{
 				curl_setopt($this->resource,CURLOPT_HTTPGET,true);
 				break;
 			case 'HEAD': curl_setopt($this->resource, CURLOPT_NOBODY, true); break;
-			case 'PUT': curl_setopt($this->resource, CURLOPT_PUT, true); break;
+			case 'PUT': curl_setopt($this->resource, CURLOPT_CUSTOMREQUEST, 'PUT'); break;
 			case 'DELETE': curl_setopt($this->resource, CURLOPT_CUSTOMREQUEST, 'DELETE'); break;
 		}
 		
