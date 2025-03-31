@@ -5,12 +5,12 @@ trait TemplateVariable{
 	/**
 	 * HTMLエンコード
 	 */
-	public function htmlencode(string $v): string{
+	public function htmlencode(?string $v): string{
 		if(!empty($v) && is_string($v)){
 			$v = mb_convert_encoding($v,'UTF-8',mb_detect_encoding($v));
 			return htmlentities($v,ENT_QUOTES,'UTF-8');
 		}
-		return $v;
+		return $v ?? '';
 	}
 	
 	/**
