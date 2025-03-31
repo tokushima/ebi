@@ -365,4 +365,20 @@ class Request implements \IteratorAggregate{
 		\ebi\Util::copy($file_info['tmp_name'],$newname);
 		\ebi\Util::rm($file_info['tmp_name']);
 	}
+
+	/**
+	 * JSONで出力する
+	 */
+	protected function output_json(array $data, int $http_status=200){
+		// JSONが浮動小数の変換で精度が変わってしまうことを防ぐ
+		ini_set('serialize_precision', -1);
+
+		if($http_status != 200){
+			\ebi\HttpHeader::send_status($http_status);
+		}
+
+		\ebi\HttpHeader::send('Content-Type', 'application/json');
+		print( \ebi\Json::encode([$data],true, true));
+		exit;
+	}
 }
