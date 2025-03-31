@@ -378,7 +378,7 @@ class Request implements \IteratorAggregate{
 		}
 
 		\ebi\HttpHeader::send('Content-Type', 'application/json');
-		print( \ebi\Json::encode([$data],true, true));
+		print(\ebi\Json::encode($data, true, true));
 		exit;
 	}
 }
