@@ -62,7 +62,7 @@ class Exceptions extends \ebi\Exception implements \Iterator{
 		}
 	}
 
-	public static function has(string $group_name=null): bool{
+	public static function has(?string $group_name=null): bool{
 		if(!isset(self::$self)){
 			return false;
 		}

@@ -3,7 +3,7 @@ namespace ebi;
 /**
  * @see http://jp2.php.net/manual/ja/function.session-set-save-handler.php
  */
-class Session{
+class Session implements \SessionHandlerInterface{
 	private string $ses_n;
 
 	/**
@@ -17,9 +17,6 @@ class Session{
 			
 			session_name($cookie_params['session_name']);
 			
-			if(!empty($cookie_params['session_sid_length'])){
-				ini_set('session.sid_length',$cookie_params['session_sid_length']);
-			}
 			if($cookie_params['session_maxlifetime'] > 0){
 				ini_set('session.gc_maxlifetime',$cookie_params['session_maxlifetime']);
 			}
@@ -43,14 +40,7 @@ class Session{
 			}
 			
 			if(\ebi\Conf::defined_handler()){
-				session_set_save_handler(
-					[$this,'open'],
-					[$this,'close'],
-					[$this,'read'],
-					[$this,'write'],
-					[$this,'destroy'],
-					[$this,'gc']
-				);
+				session_set_save_handler($this);
 			}
 			session_start();
 			
@@ -135,7 +125,7 @@ class Session{
 	 * (session_set_save_handler) データを読み込む
 	 * @return mixed
 	 */
-	public function read(string $id){
+	public function read(string $id): string{
 		return \ebi\Conf::handle('session_read', $id);
 	}
 	
@@ -159,8 +149,8 @@ class Session{
 	 * (session_set_save_handler) 古いセッションを削除する
 	 * @param $maxlifetime session.gc_maxlifetime
 	 */
-	public function gc(int $maxlifetime): bool{
-		$bool = \ebi\Conf::handle('session_gc', $maxlifetime);
-		return (!is_bool($bool)) ? true : $bool;
+	public function gc(int $maxlifetime): int{
+		\ebi\Conf::handle('session_gc', $maxlifetime);
+		return 0;
 	}
 }

@@ -196,7 +196,7 @@ class Util{
 	 * @param $recursive 階層を潜って取得するか
 	 * @param $pattern 検索するパターンを表す文字列
 	 */
-	public static function ls(string $directory, bool $recursive=false, string $pattern=null): \Iterator{
+	public static function ls(string $directory, bool $recursive=false, ?string $pattern=null): \Iterator{
 		$directory = self::parse_filename($directory);
 		
 		if(is_file($directory)){
