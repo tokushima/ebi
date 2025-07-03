@@ -717,29 +717,9 @@ class Dt extends \ebi\flow\Request{
 
 	/**
 	 * SmtpBlackholeDaoから送信されたメールの一番新しいものを返す
-	 * @param string|array $to
 	 */
-	public static function find_mail($to, string $tcode='', string $keyword=''): \ebi\SmtpBlackholeDao{
-		if(is_array($to)){
-			sort($to);
-			$to = implode(PHP_EOL, $to);
-		}
-
-		$q = new Q();
-		$q->add(Q::eq('to',$to));
-		$q->add(Q::gte('create_date',time()-300));
-		
-		if(!empty($tcode)){
-			$q->add(Q::eq('tcode',$tcode));
-		}	
-		foreach(\ebi\SmtpBlackholeDao::find_all($q,Q::order('-id')) as $mail){
-			$value = $mail->subject().$mail->message();
-				
-			if(empty($keyword) || mb_strpos($value,$keyword) !== false){
-				return $mail;
-			}
-		}
-		throw new \ebi\exception\NotFoundException('mail not found');
+	public static function find_mail(string $to, string $tcode='', string $keyword=''): \ebi\SmtpBlackholeDao{
+		return \ebi\SmtpBlackholeDao::find_mail($to, $tcode, $keyword);
 	}
 	/**
 	 * テーブルを削除後作成する
