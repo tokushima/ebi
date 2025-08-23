@@ -29,6 +29,11 @@ class Resource{
 
 class Browser{
 	/**
+	 * 実行ファイル中でdebugモードにする
+	 */
+	public static function debug(bool $debug=true): void{
+	}
+	/**
 	 * ユーザエージェントを設定
 	 */
 	public function agent(string $agent): self{
