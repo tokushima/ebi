@@ -603,10 +603,10 @@ class Dt extends \ebi\flow\Request{
 	 */
 	public static function mock_flow_mappings(array $map=[]): array{
 		$patterns = $map['patterns'] ?? [];
-		$patterns[''] = ['action'=>'ebi\Dt'];
+		$patterns[''] = ['action'=>'ebi\Dt', 'mode'=>'@dev'];
 
 		foreach(self::$mock as $class_name){
-			$patterns[str_replace('\\', '/', $class_name)] = ['action'=>$class_name];
+			$patterns[str_replace('\\', '/', $class_name)] = ['action'=>$class_name, 'mode'=>'@dev'];
 		}
 		$map['patterns'] = $patterns;
 		return $map;
