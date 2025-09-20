@@ -449,12 +449,7 @@ class Browser{
 			$fp = fopen($download_path,'wb');
 			
 			curl_setopt($this->resource, CURLOPT_BUFFERSIZE, 131072); // 128KB
-			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION, function($curl,$data) use(&$fp){
-				if(is_resource($fp)){
-					fwrite($fp,$data);
-				}
-				return strlen($data);
-			});
+			curl_setopt($this->resource, CURLOPT_FILE, $fp);
 		}
 		$this->request_header = $this->request_vars = $this->request_file_vars = [];
 		$this->head = $this->body = $this->raw = '';
