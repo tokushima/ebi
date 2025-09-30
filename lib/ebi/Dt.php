@@ -424,9 +424,14 @@ class Dt extends \ebi\flow\Request{
 	public function mail_blackhole(): array{
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
+		$query = new \ebi\Q();
+		if(!empty($req->in_vars('query'))){
+			$query->add(Q::match($req->in_vars('query')));
+		}
 		$list = \ebi\SmtpBlackholeDao::find_all(
 			Q::eq('tcode', $req->in_vars('tcode')),
 			$paginator,
+			$query,
 			Q::order('-id')
 		);
 		

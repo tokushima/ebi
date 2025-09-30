@@ -8,6 +8,6 @@ $mail->send('subject','body');
 $dao = \ebi\SmtpBlackholeDao::find_get(\ebi\Q::order('-id'));
 eq('subject',$dao->subject());
 eq('body',$dao->message());
-eq('to@email.address',$dao->to());
+eq(PHP_EOL.'to@email.address'.PHP_EOL,$dao->to());
 
 
