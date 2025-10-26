@@ -17,10 +17,10 @@ class Util{
 	/**
 	 * CSVファイルから１行ずつ配列で取得する
 	 */
-	public static function file_read_csv(string $filename, string $delimiter=','): \Generator{
+	public static function file_read_csv(string $filename, string $separator=','): \Generator{
 		try{
 			$file = new \SplFileObject($filename);
-			$file->setCsvControl($delimiter);
+			$file->setCsvControl($separator, '"', "\\");
 			$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
 			
 			foreach($file as $line){
@@ -52,7 +52,7 @@ class Util{
 			throw new \ebi\exception\AccessDeniedException();
 		}
 		if(!empty($arr)){
-			$file->fputcsv($arr);
+			$file->fputcsv($arr, ',', '"', "\\");
 		}
 		return $file;
 	}

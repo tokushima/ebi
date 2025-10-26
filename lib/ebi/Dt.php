@@ -424,9 +424,14 @@ class Dt extends \ebi\flow\Request{
 	public function mail_blackhole(): array{
 		$req = new \ebi\Request();
 		$paginator = \ebi\Paginator::request($req);
+		$query = new \ebi\Q();
+		if(!empty($req->in_vars('query'))){
+			$query->add(Q::match($req->in_vars('query')));
+		}
 		$list = \ebi\SmtpBlackholeDao::find_all(
 			Q::eq('tcode', $req->in_vars('tcode')),
 			$paginator,
+			$query,
 			Q::order('-id')
 		);
 		
@@ -603,10 +608,10 @@ class Dt extends \ebi\flow\Request{
 	 */
 	public static function mock_flow_mappings(array $map=[]): array{
 		$patterns = $map['patterns'] ?? [];
-		$patterns[''] = ['action'=>'ebi\Dt'];
+		$patterns[''] = ['action'=>'ebi\Dt', 'mode'=>'@dev'];
 
 		foreach(self::$mock as $class_name){
-			$patterns[str_replace('\\', '/', $class_name)] = ['action'=>$class_name];
+			$patterns[str_replace('\\', '/', $class_name)] = ['action'=>$class_name, 'mode'=>'@dev'];
 		}
 		$map['patterns'] = $patterns;
 		return $map;

@@ -367,6 +367,7 @@ class Browser{
 		curl_setopt($this->resource,CURLOPT_FORBID_REUSE,true);
 		curl_setopt($this->resource,CURLOPT_FAILONERROR,false);
 		curl_setopt($this->resource,CURLOPT_TIMEOUT,$this->timeout);
+		curl_setopt($this->resource,CURLOPT_NOPROGRESS, true);
 		
 		if(self::$recording_request){
 			curl_setopt($this->resource,CURLINFO_HEADER_OUT,true);
@@ -435,10 +436,11 @@ class Browser{
 			return strlen($data);
 		});
 		
+		$fp = null;
 		if(empty($download_path)){
 			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION, function($curl, $data){
 				$this->body .= $data;
-				return strlen($data);		
+				return strlen($data);
 			});
 		}else{
 			if(strpos($download_path,'://') === false && !is_dir(dirname($download_path))){
@@ -446,12 +448,8 @@ class Browser{
 			}
 			$fp = fopen($download_path,'wb');
 			
-			curl_setopt($this->resource,CURLOPT_WRITEFUNCTION, function($curl,$data) use(&$fp){
-				if($fp){
-					fwrite($fp,$data);
-				}
-				return strlen($data);
-			});
+			curl_setopt($this->resource, CURLOPT_BUFFERSIZE, 131072); // 128KB
+			curl_setopt($this->resource, CURLOPT_FILE, $fp);
 		}
 		$this->request_header = $this->request_vars = $this->request_file_vars = [];
 		$this->head = $this->body = $this->raw = '';
@@ -459,7 +457,7 @@ class Browser{
 		
 		curl_exec($this->resource);
 		
-		if(!empty($download_path) && $fp){
+		if(!empty($download_path) && is_resource($fp)){
 			fclose($fp);
 		}
 		if(($err_code = curl_errno($this->resource)) > 0){
