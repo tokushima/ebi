@@ -1,0 +1,48 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<table rt:param="{$template_list}" rt:var="info" class="table table-sm table-condensed table-striped">
+<thead>
+<tr class="text-muted">
+	<th>Template</th>
+	<th>Summary</th>
+	<th>Code</th>
+	
+	<rt:if param="{$has_bh}">
+		<th>Test</th>
+	</rt:if>
+</tr>
+</thead>
+<tbody>
+<tr>
+	<td>
+		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','')}">
+				{$info.name()}
+			</span>
+		</a>
+	</td>
+	<td>
+		{$info.summary()}
+	</td>
+	<td>
+		<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+			<span class="{$t.cond_switch($info.has_opt('use'),'text-success','text-muted')}">
+				{$info.opt('x_t_code')}
+			</span>
+		</a>
+	</td>
+
+	<rt:if param="{$has_bh}">
+		<td class="text-end">
+			<a href="{$t.package_method_url('mail_blackhole')}?tcode={$info.opt('x_t_code')}" class="{$t.cond_switch($info.opt('new'),'text-danger font-weight-bold')}">
+				{$info.opt('count')}
+			</a>
+		</td>
+	</rt:if>
+</tr>
+</tbody>
+</table>
+</rt:block>
+

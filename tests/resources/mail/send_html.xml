@@ -1,0 +1,10 @@
+<mail>
+<subject>テストサブジェクト</subject>
+<body>
+123{$abc}456
+</body>
+<html src="send_html.html">
+	<media src="media/send_html.css" />
+</html>
+<attach src="media/send_html.css" name="newname.css" />
+</mail>

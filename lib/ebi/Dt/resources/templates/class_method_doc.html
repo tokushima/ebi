@@ -1,0 +1,174 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<p class="h3 {$t.cond_switch($method_info.opt('deprecated'),'deprecated;','')}">
+	<a href="{$t.package_method_url('class_doc',$method_info.opt('class'))}">
+		{$method_info.opt('class')}
+	</a>
+	::
+	{$method_info.opt('method')}
+</p>
+
+<div class="alert alert-warning doc mt-2 mb-3">
+	<div>
+		{$t.noop($method_info.document())}
+	</div>
+	
+	<rt:if param="{$method_info.opt('see_list')}">
+		<div class="mt-2">
+			<rt:loop param="{$method_info.opt('see_list')}" var="see">
+				<div>
+					<rt:if param="{$t.eq($see['type'],'url')}">
+						<a href="{$see['url']}">{$see['url']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'method')}">
+						<a href="{$t.package_method_url('class_method_doc',$see['class'],$see['method'])}">{$see['class']}::{$see['method']}</a>
+					</rt:if>
+					<rt:if param="{$t.eq($see['type'],'class')}">
+						<a href="{$t.package_method_url('class_doc',$see['class'])}">{$see['class']}</a>
+					</rt:if>
+				</div>
+			</rt:loop>
+		</div>
+	</rt:if>
+
+</div>
+
+
+
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-info">Infomation</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm style-table-borderless">
+		<tr>
+			<th class="cell-1">Version</th>
+			<td>
+				<a href="{$t.package_method_url('index')}?version={$method_info.version()}">
+					{$method_info.version()}
+				</a>
+			</td>
+		</tr>
+		
+		<rt:if param="{$method_info.opt('deprecated')}">
+			<tr>
+				<th>Deprecated</th>
+				<td>
+					<div class="text-danger">
+						{$t.date_format('Y-m-d',$method_info.opt('deprecated'))}
+					</div>
+				</td>
+			</tr>
+		</rt:if>
+		
+		</table>
+	</div>
+</div>
+
+
+<rt:if param="{$method_info.params()}">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-primary">Params</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.params()}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td class="cell-1">
+				{$param.name()}
+			</td>
+			<td class="cell-2">
+				<rt:if param="{$method_info.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$method_info.plain_type())}">
+						{$param.fm_type()}
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+			</td>
+		</tr>
+		</table>
+	</div>
+</div>
+</rt:if>
+
+
+
+<rt:if param="{$method_info.return()}">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-warning">Return</div>
+	<div class="card-body text-secondary">
+		<table class="table table-sm table-striped style-table-borderles">
+		<tr>
+			<td class="cell-1">
+				<rt:if param="{$method_info.return().is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$method_info.return().plain_type())}">
+						{$method_info.return().fm_type()}
+					</a>
+				<rt:else />
+					{$method_info.return().fm_type()}
+				</rt:if>
+			</td>
+			<td>
+				{$t.html($method_info.return().summary())}
+			</td>
+		</tr>
+		</table>
+	</div>
+</div>
+</rt:if>
+
+
+<rt:if param="{$method_info.opt('throws')}">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-danger">Throws</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('throws')}" rt:var="param" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td class="cell-1">
+				<rt:if param="{$param.is_type_class()}">
+					<a href="{$t.package_method_url('class_doc',$param.plain_type())}">
+						{$param.fm_type()}
+					</a>
+				<rt:else />
+					{$param.fm_type()}
+				</rt:if>
+			</td>
+			<td>
+				{$t.html($param.summary())}
+			</td>
+		</tr>
+		</table>
+	</div>
+</div>
+</rt:if>
+
+
+
+
+<rt:if param="{$method_info.opt('mail_list')}">
+<div class="card border-secondary mb-3">
+	<div class="card-header text-white bg-dark">Mail</div>
+	<div class="card-body text-secondary">
+		<table rt:param="{$method_info.opt('mail_list')}" rt:var="info" class="table table-sm table-striped style-table-borderless">
+		<tr>
+			<td class="cell-1">
+				<a href="{$t.package_method_url('mail_info')}?tcode={$info.opt('x_t_code')}">
+					{$info.opt('x_t_code')}
+				</a>
+			</td>
+			<td class="cell-2">
+				{$info.name()}
+			</td>
+			<td>
+				{$t.html($info.document())}
+			</td>
+		</tr>
+		</table>
+	</div>
+</div>
+</rt:if>
+
+</rt:block>
+

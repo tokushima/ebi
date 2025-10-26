@@ -1,0 +1,18 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form method="post" rt:ref="true">
+	<input type="text" name="id1" />
+</form>
+
+ID1={$id1}
+
+<form method="post" action="{$t.map_url('form2')}" name="next_form"> 
+	<input type="text" name="id2" />
+</form>
+</body>
+</html>

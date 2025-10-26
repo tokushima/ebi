@@ -1,0 +1,39 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">
+
+<p class="h3">{$mail_info.opt('x_t_code')} ({$mail_info.name()})</p>
+
+<div class="alert alert-secondary">
+	{$t.html($mail_info.document())}
+</div>
+
+<table rt:param="{$object_list}" rt:var="obj" class="table table-sm table-striped style-table-borderless">
+<thead>
+<tr class="text-muted">
+	<th>From</th>
+	<th>To</th>
+	<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+	<td>
+		{$obj.from()}
+	</td>
+	<td>
+		{$obj.to()}
+	</td>
+	<td nowrap>
+		<a href="{$t.package_method_url('mail_view')}?tcode={$tcode}&id={$obj.id()}" class="{$t.cond_switch($t.gt($obj.create_date(),$t.time() - 600),'text-danger')}">
+			{$obj.fm_create_date()}
+		</a>
+	</td>
+</tr>
+</tbody>
+</table>
+
+<rt:paginator />
+
+</rt:block>
+

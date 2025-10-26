@@ -1,0 +1,11 @@
+<html>
+<body>
+<a href="{$t.map_url('newapp#nosecure')}">no</a>
+<a href="{$t.map_url('newapp#secure')}">yes</a>
+<a href="{$t.map_url('secure#secure')}">yes</a>
+<a href="http://localhost/abc/def">no</a>
+<img src="images/abc.jpg" />yes
+<img src="{$t.media('images/abc.jpg')}" />yes
+<img src="http://localhost/images/abc.jpg" />no
+</body>
+</html>

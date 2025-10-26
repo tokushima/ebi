@@ -1,0 +1,44 @@
+<rt:extends href="base.html" />
+<rt:block name="list_search"></rt:block>
+
+<rt:block name="content">
+
+<table rt:param="{$class_info_list}" rt:var="class_info" class="table table-sm table-condensed">
+<thead>
+	<tr class="text-muted">
+		<th>Class</th>
+		
+		<th>Name</th>
+		<th>Type</th>
+		<th>Summary</th>
+	</tr>
+</thead>
+<tbody>
+	<rt:loop param="{$class_info.opt('config_list')}" var="conf" counter="cnt">
+	<tr>
+		<rt:if param="{$t.eq($cnt,1)}">
+			<td rowspan="{$t.sizeof($class_info.opt('config_list'))}">
+				<a href="{$t.package_method_url('class_doc',$class_info.name())}">
+					{$class_info.name()}
+				</a>
+				
+				<div class="text-muted">
+					{$class_info.summary()}
+				</div>
+			</td>
+		</rt:if>
+	
+		
+		<td>
+			<span class="{$t.cond_switch($conf.opt('def'),'text-success','')}">
+				{$conf.name()}
+			</span>
+		</td>
+		<td>{$conf.param().type()}</td>
+		<td>{$conf.param().summary()}</td>
+	</tr>
+	</rt:loop>
+</tbody>
+</table>
+</rt:block>
+

@@ -1,0 +1,17 @@
+/work
+/__settings__.php
+/composer.lock
+/composer.phar
+/cmdman.phar
+/data.sqlite3
+/make.sh
+/version
+/tests/work
+/tests/vendor
+/tests/cmdman.phar
+/tests/composer.phar
+/tests/__settings__.php
+/tests/data.sqlite3
+/tests/test.php
+/tests/testman.phar
+

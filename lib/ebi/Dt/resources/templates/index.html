@@ -1,0 +1,45 @@
+<rt:extends href="base.html" />
+
+<rt:block name="content">	
+	<table rt:param="map_list" rt:var="map" rt:counter="count" class="table table-sm table-sm table-condensed table-striped">
+	<thead>
+	<tr class="text-muted">
+		<th>Url</th>
+		<th>Name</th>
+		<th>Summary</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
+		<td>
+			{$map['url']}
+		</td>
+		<td>
+			<a href="{$t.package_method_url('index_action_doc',$map['name'])}" class="{$t.cond_switch($map['first_depricated_date'],'text-danger','')}">
+				{$map['name']}
+			</a>
+		</td>
+		<td>
+			<span >
+				{$t.html($map['summary'])}
+			</span>
+			
+			<rt:if param="{$map['first_depricated_date']}">
+				<rt:if param="{$map['deprecated']}">
+					<span class="badge text-bg-danger">Deprecated</span>
+				<rt:else />
+					<span class="badge text-bg-warning">Deprecated</span>
+				</rt:if>
+			</rt:if>
+			
+			
+			<rt:if param="{$map['error']}">
+				<div>
+					<span class="text-danger">{$map['error']}</span>
+				</div>
+			</rt:if>
+		</td>
+	</tr>
+	</tbody>
+	</table>
+</rt:block>

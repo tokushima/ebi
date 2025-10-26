@@ -1,0 +1,23 @@
+{
+	"name": "tokushima/ebi",
+	"type" : "library",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "tokushima"
+		}
+	],
+	"require": {
+		"php": ">=7.3.0",
+		"ext-mbstring": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"ebi\\": "lib/ebi/"
+		},
+		"files": [
+			"main.php"
+		]
+	}
+}
+
