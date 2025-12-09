@@ -629,6 +629,7 @@ abstract class Dao extends \ebi\Obj{
 
 	/**
 	 * 検索を実行する
+	 * @return iterable<static>
 	 */
 	public static function find(): \Generator{
 		$args = func_get_args();

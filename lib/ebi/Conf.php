@@ -139,7 +139,7 @@ class Conf{
 		 * 
 		 * @param string{} $group アプリケーションモードのグループ 
 		 */
-		$group = self::get_self_conf_get('appmode_group',[]);
+		$group = self::get_self_conf_get('appmode_group',['dev'=>['local', 'development']]);
 
 		foreach((is_array($mode) ? 
 			$mode : 
