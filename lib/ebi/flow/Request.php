@@ -49,7 +49,7 @@ class Request extends \ebi\Request{
 	protected function request_validation(array $doc_names=[]): array{
 		$doc_names = empty($doc_names) ? ['http_method','request'] : array_merge(['http_method','request'],$doc_names);
 		[,$method] = explode('::',$this->get_selected_pattern()['action']);
-		$ann = \ebi\Annotation::get_method(get_class($this), $method,$doc_names);
+		$ann = \ebi\Annotation::get_method(get_class($this), $method, $doc_names);
 		
 		if(isset($ann['http_method']['value']) && strtoupper($ann['http_method']['value']) != \ebi\Request::method()){
 			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
