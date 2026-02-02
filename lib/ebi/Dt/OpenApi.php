@@ -371,6 +371,11 @@ class OpenApi extends \ebi\flow\Request{
 			$properties = [];
 			if($class_info->has_opt('properties')){
 				foreach($class_info->opt('properties') as $prop){
+					// hash=>false のプロパティはスキップ
+					if($prop->opt('hash') === false){
+						continue;
+					}
+
 					$prop_schema = $this->get_schema_type($prop->type(), $schemas);
 
 					if(!empty($prop->summary())){
