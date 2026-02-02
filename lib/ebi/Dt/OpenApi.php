@@ -226,31 +226,30 @@ class OpenApi extends \ebi\flow\Request{
 			$operation['deprecated'] = true;
 		}
 
-		// タグ（クラスの説明から日本語名を取得）
+		// タグ（クラス名をname、クラスの説明をx-displayNameに設定）
 		if(isset($m['class'])){
 			$class_parts = explode('\\', $m['class']);
-			$class_short_name = end($class_parts);
-			$tag_name = $class_short_name;
+			$tag_name = end($class_parts);
+			$operation['tags'] = [$tag_name];
 
-			// クラスの説明があればタグ名として使用
-			if(!isset($tags[$class_short_name])){
+			// タグ定義を収集（重複を防ぐ）
+			if(!isset($tags[$tag_name])){
+				$tag_def = ['name' => $tag_name];
+
 				try{
 					$class_info = \ebi\Dt\Man::class_info($m['class']);
 					if(!empty($class_info->document())){
-						[$tag_description] = explode(PHP_EOL, $class_info->document());
-						if(!empty($tag_description)){
-							$tag_name = $tag_description;
+						[$display_name] = explode(PHP_EOL, $class_info->document());
+						if(!empty($display_name)){
+							$tag_def['x-displayName'] = $display_name;
 						}
 					}
 				}catch(\Exception $e){
 					// クラス情報の取得に失敗した場合はスキップ
 				}
-				$tags[$class_short_name] = ['name' => $tag_name];
-			}else{
-				$tag_name = $tags[$class_short_name]['name'];
-			}
 
-			$operation['tags'] = [$tag_name];
+				$tags[$tag_name] = $tag_def;
+			}
 		}
 
 		// パラメータ
