@@ -503,7 +503,7 @@ class Flow{
 						\ebi\HttpHeader::send_status(422);
 					}
 					\ebi\HttpHeader::send('Content-Type','application/json');
-					print(json_encode($is_plain_json ? $message : ['error'=>$message]));
+					print(json_encode(['error'=>$message]));
 
 					self::terminate();
 					return;
