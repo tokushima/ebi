@@ -96,6 +96,7 @@ class OpenApi extends \ebi\flow\Request{
 
 		$schemas = [];
 		$has_security = false;
+		$tags = [];
 
 		foreach($patterns as $url_pattern => $m){
 			foreach([
@@ -148,7 +149,7 @@ class OpenApi extends \ebi\flow\Request{
 					}
 
 					$path = $this->convert_to_openapi_path($url_pattern);
-					$operation = $this->build_operation($m, $info, $schemas, $has_security);
+					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
 
 					if(!isset($spec['paths'][$path])){
 						$spec['paths'][$path] = [];
@@ -159,6 +160,10 @@ class OpenApi extends \ebi\flow\Request{
 					// エラーが発生した場合はスキップ
 				}
 			}
+		}
+
+		if(!empty($tags)){
+			$spec['tags'] = array_values($tags);
 		}
 
 		if(!empty($schemas)){
@@ -201,7 +206,7 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * オペレーション（エンドポイント定義）を構築
 	 */
-	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security): array{
+	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags): array{
 		$operation = [];
 
 		if(!empty($m['summary'])){
@@ -221,11 +226,31 @@ class OpenApi extends \ebi\flow\Request{
 			$operation['deprecated'] = true;
 		}
 
-		// タグ
+		// タグ（クラスの説明から日本語名を取得）
 		if(isset($m['class'])){
 			$class_parts = explode('\\', $m['class']);
-			$tag = end($class_parts);
-			$operation['tags'] = [$tag];
+			$class_short_name = end($class_parts);
+			$tag_name = $class_short_name;
+
+			// クラスの説明があればタグ名として使用
+			if(!isset($tags[$class_short_name])){
+				try{
+					$class_info = \ebi\Dt\Man::class_info($m['class']);
+					if(!empty($class_info->document())){
+						[$tag_description] = explode(PHP_EOL, $class_info->document());
+						if(!empty($tag_description)){
+							$tag_name = $tag_description;
+						}
+					}
+				}catch(\Exception $e){
+					// クラス情報の取得に失敗した場合はスキップ
+				}
+				$tags[$class_short_name] = ['name' => $tag_name];
+			}else{
+				$tag_name = $tags[$class_short_name]['name'];
+			}
+
+			$operation['tags'] = [$tag_name];
 		}
 
 		// パラメータ
