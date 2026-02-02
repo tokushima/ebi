@@ -302,20 +302,29 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * PHPの型をOpenAPIスキーマ型に変換
 	 */
-	private function get_schema_type(string $php_type): array{
-		$type = str_replace(['\\', '[]', '{}'], '', $php_type);
+	private function get_schema_type(string $php_type, array &$schemas = []): array{
 		$is_array = (strpos($php_type, '[]') !== false);
 		$is_map = (strpos($php_type, '{}') !== false);
 
-		$schema = match(strtolower($type)){
-			'int', 'integer' => ['type' => 'integer'],
-			'float', 'double' => ['type' => 'number'],
-			'bool', 'boolean' => ['type' => 'boolean'],
-			'string' => ['type' => 'string'],
-			'array' => ['type' => 'array', 'items' => ['type' => 'string']],
-			'mixed' => ['type' => 'object'],
-			default => ['type' => 'object'],
-		};
+		// []や{}のサフィックスを除去（バックスラッシュは保持）
+		$type = str_replace(['[]', '{}'], '', $php_type);
+
+		// クラス型かどうかを判定（大文字を含む場合はクラス型）
+		$is_class = (bool)preg_match('/[A-Z]/', $type);
+
+		if($is_class && !empty($type)){
+			$schema = $this->build_model_schema($type, $schemas);
+		}else{
+			$schema = match(strtolower($type)){
+				'int', 'integer' => ['type' => 'integer'],
+				'float', 'double' => ['type' => 'number'],
+				'bool', 'boolean' => ['type' => 'boolean'],
+				'string' => ['type' => 'string'],
+				'array' => ['type' => 'array', 'items' => ['type' => 'string']],
+				'mixed' => ['type' => 'object'],
+				default => ['type' => 'object'],
+			};
+		}
 
 		if($is_array){
 			$schema = [
@@ -330,6 +339,66 @@ class OpenApi extends \ebi\flow\Request{
 		}
 
 		return $schema;
+	}
+
+	/**
+	 * モデルクラスのスキーマを構築
+	 */
+	private function build_model_schema(string $class_name, array &$schemas): array{
+		// クラス名を正規化
+		$normalized_class = ltrim($class_name, '\\');
+
+		// スキーマ名（バックスラッシュをドットに変換）
+		$schema_name = str_replace('\\', '.', $normalized_class);
+
+		// 既に構築済みの場合は$refを返す
+		if(isset($schemas[$schema_name])){
+			return ['$ref' => '#/components/schemas/' . $schema_name];
+		}
+
+		// クラスが存在するか確認（先頭にバックスラッシュを付けて確認）
+		$full_class_name = '\\' . $normalized_class;
+		if(!class_exists($full_class_name)){
+			return ['type' => 'object'];
+		}
+
+		try{
+			$class_info = \ebi\Dt\Man::class_info($full_class_name);
+
+			// プレースホルダーを設置（再帰参照を防ぐ）
+			$schemas[$schema_name] = ['type' => 'object'];
+
+			$properties = [];
+			if($class_info->has_opt('properties')){
+				foreach($class_info->opt('properties') as $prop){
+					$prop_schema = $this->get_schema_type($prop->type(), $schemas);
+
+					if(!empty($prop->summary())){
+						$prop_schema['description'] = $prop->summary();
+					}
+
+					$properties[$prop->name()] = $prop_schema;
+				}
+			}
+
+			$model_schema = ['type' => 'object'];
+
+			if(!empty($properties)){
+				$model_schema['properties'] = $properties;
+			}
+
+			if(!empty($class_info->document())){
+				$model_schema['description'] = $class_info->document();
+			}
+
+			$schemas[$schema_name] = $model_schema;
+
+			return ['$ref' => '#/components/schemas/' . $schema_name];
+		}catch(\Exception $e){
+			// クラス情報の取得に失敗した場合は汎用オブジェクト型を返す
+			unset($schemas[$schema_name]);
+			return ['type' => 'object'];
+		}
 	}
 
 	/**
@@ -348,11 +417,21 @@ class OpenApi extends \ebi\flow\Request{
 			$properties = [];
 
 			foreach($info->opt('contexts') as $context){
-				$properties[$context->name()] = $this->get_schema_type($context->type());
+				$prop_schema = $this->get_schema_type($context->type(), $schemas);
 
+				// $refを使用している場合、descriptionはallOfでラップする必要がある
 				if(!empty($context->summary())){
-					$properties[$context->name()]['description'] = $context->summary();
+					if(isset($prop_schema['$ref'])){
+						$prop_schema = [
+							'allOf' => [$prop_schema],
+							'description' => $context->summary(),
+						];
+					}else{
+						$prop_schema['description'] = $context->summary();
+					}
 				}
+
+				$properties[$context->name()] = $prop_schema;
 			}
 
 			if(!empty($properties)){
