@@ -72,6 +72,8 @@ class Dt extends \ebi\flow\Request{
 					$m['url'] = $k;
 					
 					if(isset($m['method'])){
+						[$m['is_login_required']] = $this->get_login_annotation($m['class'], $m['method']);
+
 						$info = \ebi\Dt\Man::method_info($m['class'],$m['method']);
 						
 						if(!isset($m['version'])){
@@ -735,5 +737,23 @@ class Dt extends \ebi\flow\Request{
 			call_user_func([$class,'drop_table']);
 			call_user_func([$class,'create_table']);
 		}
+	}
+
+	/**
+	 * @automap @['suffix'=>'.json']
+	 */
+	public function openapi(): array{
+		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec();
+		
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode($spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		exit;
+	}
+
+	/**
+	 * @automap
+	 */
+	public function redoc(): array{
+		return [];
 	}
 }

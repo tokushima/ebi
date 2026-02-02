@@ -7,6 +7,7 @@
 		<th>Url</th>
 		<th>Name</th>
 		<th>Summary</th>
+		<th>Login</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -36,6 +37,13 @@
 			<rt:if param="{$map['error']}">
 				<div>
 					<span class="text-danger">{$map['error']}</span>
+				</div>
+			</rt:if>
+		</td>
+		<td>
+			<rt:if param="{$map['is_login_required']}">
+				<div>
+					<span>✓</span>
 				</div>
 			</rt:if>
 		</td>

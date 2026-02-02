@@ -409,9 +409,11 @@ class Flow{
 							}					
 						}
 					}
-					
+
+					$is_plain_json = (strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'envelope=false') !== false);
+
 					\ebi\HttpHeader::send('Content-Type','application/json');
-					print(\ebi\Json::encode(['result'=>\ebi\Util::to_primitive($result_vars)]));
+					print(\ebi\Json::encode($is_plain_json ? \ebi\Util::to_primitive($result_vars) : ['result'=>\ebi\Util::to_primitive($result_vars)]));
 					self::terminate();
 					return;
 				}catch(\Exception $exception){
@@ -484,7 +486,7 @@ class Flow{
 							}
 						}
 					}
-					$message = [];					
+					$message = [];
 					foreach(\ebi\FlowInvalid::get() as $g => $e){
 						$em = [
 							'message'=>$e->getMessage(),
@@ -495,9 +497,14 @@ class Flow{
 						}
 						$message[] = $em;
 					}
+
+					$is_plain_json = (strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'envelope=false') !== false);
+					if($is_plain_json){
+						\ebi\HttpHeader::send_status(422);
+					}
 					\ebi\HttpHeader::send('Content-Type','application/json');
-					print(json_encode(['error'=>$message]));
-					
+					print(json_encode($is_plain_json ? $message : ['error'=>$message]));
+
 					self::terminate();
 					return;
 				}
