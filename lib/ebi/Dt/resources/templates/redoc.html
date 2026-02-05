@@ -51,7 +51,7 @@
     <div class="description" id="api-description"></div>
   </header>
 
-  <input type="hidden" id="url-input" value="{$t.package_method_url('openapi')}">
+  <input type="hidden" id="url-input" value="{$t.package_method_url('openapi')}{$t.cond_switch($envelope, '?envelope=true')}">
 
   <div id="redoc-container"></div>
 

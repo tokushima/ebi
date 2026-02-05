@@ -754,6 +754,10 @@ class Dt extends \ebi\flow\Request{
 	 * @automap
 	 */
 	public function redoc(): array{
-		return [];
+		$envelope = \ebi\Util::is_true($this->in_vars('envelope'));
+
+		return [
+			'envelope'=>$envelope,
+		];
 	}
 }
