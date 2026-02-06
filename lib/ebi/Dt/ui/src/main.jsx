@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // PHPから渡されるグローバル変数
 const spec = window.spec || {};
 const mailTemplates = window.mailTemplates || [];
 const apiUrls = window.apiUrls || {};
+const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
@@ -285,63 +286,114 @@ function Schemas({ selected, onSelect, onClose }) {
 	);
 }
 
+function PaginationNav({ pagination, onPageChange }) {
+	if (!pagination || pagination.pages <= 1) return null;
+	const current = pagination.current;
+	const last = pagination.pages;
+	const delta = 3;
+	let start = Math.max(1, current - delta);
+	let end = Math.min(last, current + delta);
+	if (current - delta < 1) end = Math.min(last, end + (delta - current + 1));
+	if (current + delta > last) start = Math.max(1, start - (current + delta - last));
+	const range = [];
+	for (let i = start; i <= end; i++) range.push(i);
+
+	return (
+		<nav>
+			<ul className="pagination pagination-sm mb-0">
+				<li className={`page-item ${current <= 1 ? 'disabled' : ''}`}><button className="page-link" onClick={() => onPageChange(current - 1)}>Prev</button></li>
+				{start > 1 && <><li className="page-item"><button className="page-link" onClick={() => onPageChange(1)}>1</button></li>{start > 2 && <li className="page-item disabled"><span className="page-link">...</span></li>}</>}
+				{range.map(p => <li key={p} className={`page-item ${p === current ? 'active' : ''}`}><button className="page-link" onClick={() => onPageChange(p)}>{p}</button></li>)}
+				{end < last && <>{end < last - 1 && <li className="page-item disabled"><span className="page-link">...</span></li>}<li className="page-item"><button className="page-link" onClick={() => onPageChange(last)}>{last}</button></li></>}
+				<li className={`page-item ${current >= last ? 'disabled' : ''}`}><button className="page-link" onClick={() => onPageChange(current + 1)}>Next</button></li>
+			</ul>
+		</nav>
+	);
+}
+
 function MailPage() {
-	const [tab, setTab] = useState('sent');
+	const [tab, setTab] = useState(hasSmtpBlackhole ? 'sent' : 'templates');
 	const [sentMails, setSentMails] = useState([]);
+	const [pagination, setPagination] = useState(null);
 	const [loadingSent, setLoadingSent] = useState(true);
 	const [selectedMail, setSelectedMail] = useState(null);
-	const [filterEmail, setFilterEmail] = useState('');
-	const [filterTemplate, setFilterTemplate] = useState('');
+	const [filterTcode, setFilterTcode] = useState('');
+	const [filterText, setFilterText] = useState('');
+	const [debouncedText, setDebouncedText] = useState('');
+	const [page, setPage] = useState(1);
+	const debounceRef = useRef(null);
 
-	useEffect(() => {
-		fetch(apiUrls.sent_mails)
+	const handleFilterText = (v) => {
+		setFilterText(v);
+		if (debounceRef.current) clearTimeout(debounceRef.current);
+		debounceRef.current = setTimeout(() => { setDebouncedText(v); setPage(1); }, 300);
+	};
+
+	const fetchMails = (p, tcode, search) => {
+		setLoadingSent(true);
+		const params = new URLSearchParams({ page: p, paginate_by: 20 });
+		if (tcode) params.set('tcode', tcode);
+		if (search) params.set('search', search);
+		fetch(`${apiUrls.sent_mails}?${params}`)
 			.then(res => res.json())
-			.then(data => { setSentMails(data.mails || []); setLoadingSent(false); })
+			.then(data => { setSentMails(data.mails || []); setPagination(data.pagination || null); setLoadingSent(false); })
 			.catch(() => setLoadingSent(false));
+	};
+
+	useEffect(() => { if (hasSmtpBlackhole) fetchMails(page, filterTcode, debouncedText); }, [page, filterTcode, debouncedText]);
+
+	const templateOptions = useMemo(() => {
+		return mailTemplates.filter(t => t.code).map(t => ({ code: t.code, label: `${t.code} - ${t.summary || t.subject || t.name}` }));
 	}, []);
 
-	const templateCodes = useMemo(() => [...new Set(sentMails.map(m => m.tcode).filter(Boolean))].sort(), [sentMails]);
-	const filteredMails = sentMails.filter(m => {
-		const emailMatch = !filterEmail || (m.to && m.to.toLowerCase().includes(filterEmail.toLowerCase())) || (m.from && m.from.toLowerCase().includes(filterEmail.toLowerCase()));
-		const templateMatch = !filterTemplate || m.tcode === filterTemplate;
-		return emailMatch && templateMatch;
-	});
+	const handlePageChange = (p) => { setPage(p); };
+	const handleFilterTcode = (v) => { setFilterTcode(v); setPage(1); };
+	const openSentWithTcode = (tcode) => { setFilterTcode(tcode); setFilterText(''); setDebouncedText(''); setPage(1); setTab('sent'); };
 
 	return (
 		<div>
 			<h1 className="h3 mb-4">Mail</h1>
-			<ul className="nav nav-tabs mb-4">
+			{hasSmtpBlackhole && <ul className="nav nav-tabs mb-4">
 				<li className="nav-item"><button className={`nav-link ${tab === 'sent' ? 'active' : ''}`} onClick={() => setTab('sent')}>Sent Mails</button></li>
 				<li className="nav-item"><button className={`nav-link ${tab === 'templates' ? 'active' : ''}`} onClick={() => setTab('templates')}>Templates</button></li>
-			</ul>
+			</ul>}
 
 			{tab === 'sent' && (
 				<div>
-					{loadingSent ? <div className="text-center py-4"><div className="spinner-border text-primary" /></div> : sentMails.length === 0 ? <div className="alert alert-info">No sent mails found. (SmtpBlackholeDao)</div> : (
+					{loadingSent && sentMails.length === 0 ? <div className="text-center py-4"><div className="spinner-border text-primary" /></div> : sentMails.length === 0 && !loadingSent ? <div className="alert alert-info">No sent mails found. (SmtpBlackholeDao)</div> : (
 						<>
-							<div className="row mb-3 g-2">
-								<div className="col-md-6"><input type="text" className="form-control" placeholder="Filter by email address..." value={filterEmail} onChange={e => setFilterEmail(e.target.value)} /></div>
+							<div className="row mb-3 g-2 align-items-center">
 								<div className="col-md-4">
-									<select className="form-select" value={filterTemplate} onChange={e => setFilterTemplate(e.target.value)}>
+									<select className="form-select form-select-sm" value={filterTcode} onChange={e => handleFilterTcode(e.target.value)}>
 										<option value="">All Templates</option>
-										{templateCodes.map(code => <option key={code} value={code}>{code}</option>)}
+										{templateOptions.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
 									</select>
 								</div>
-								<div className="col-md-2 text-muted small d-flex align-items-center">{filteredMails.length} / {sentMails.length}</div>
+								<div className="col-md-5">
+									<input type="text" className="form-control form-control-sm" placeholder="Search to, from, subject..." value={filterText} onChange={e => handleFilterText(e.target.value)} />
+								</div>
+								<div className="col-md-3 d-flex justify-content-end align-items-center">
+									{pagination && <span className="text-muted small">{pagination.total} mails</span>}
+								</div>
 							</div>
 							<div className="card">
-								<table className="table table-hover mb-0">
-									<thead className="table-light"><tr><th style={{width:'160px'}}>Date</th><th>To</th><th>Subject</th><th style={{width:'100px'}}>Code</th></tr></thead>
-									<tbody>{filteredMails.map((m, i) => (
+								<table className="table table-hover mb-0" style={{fontSize:'0.875rem'}}>
+									<thead className="table-light"><tr><th style={{width:'140px'}}>Date</th><th style={{width:'180px'}}>To</th><th>Subject</th><th style={{width:'90px'}}>Code</th></tr></thead>
+									<tbody>{sentMails.map((m, i) => (
 										<tr key={i} className="endpoint-row" onClick={() => setSelectedMail(m)}>
-											<td className="text-muted small">{m.create_date}</td>
-											<td><code className="text-primary">{m.to}</code></td>
+											<td className="text-muted text-nowrap">{m.create_date}</td>
+											<td className="text-truncate text-nowrap" style={{maxWidth:'180px'}} title={m.to}><code className="text-primary small">{m.to}</code></td>
 											<td>{m.subject}</td>
 											<td>{m.tcode && <span className="badge bg-secondary">{m.tcode}</span>}</td>
 										</tr>
 									))}</tbody>
 								</table>
 							</div>
+							{pagination && pagination.pages > 1 && (
+								<div className="d-flex justify-content-center mt-3">
+									<PaginationNav pagination={pagination} onPageChange={handlePageChange} />
+								</div>
+							)}
 						</>
 					)}
 				</div>
@@ -350,17 +402,15 @@ function MailPage() {
 			{tab === 'templates' && (
 				mailTemplates.length === 0 ? <div className="text-muted">No mail templates.</div> : (
 					<div className="card">
-						<table className="table table-hover mb-0">
-							<thead className="table-light"><tr><th>Name</th><th>Code</th><th>Summary</th><th style={{width:'80px'}}>Sent</th></tr></thead>
-							<tbody>{mailTemplates.map((t, i) => {
-								const sentCount = sentMails.filter(m => m.tcode === t.code).length;
-								return <tr key={i} className={sentCount > 0 ? 'endpoint-row' : ''} onClick={() => { if(sentCount > 0){ setFilterTemplate(t.code); setTab('sent'); } }}>
+						<table className="table table-hover mb-0" style={{fontSize:'0.875rem'}}>
+							<thead className="table-light"><tr><th>Name</th><th>Code</th><th>Summary</th></tr></thead>
+							<tbody>{mailTemplates.map((t, i) => (
+								<tr key={i} className={hasSmtpBlackhole ? 'endpoint-row' : ''} onClick={hasSmtpBlackhole ? () => openSentWithTcode(t.code) : undefined}>
 									<td className="fw-medium">{t.name}</td>
 									<td><code className="bg-light px-2 py-1 rounded">{t.code}</code></td>
 									<td className="text-muted">{t.summary || t.subject}</td>
-									<td>{sentCount > 0 ? <span className="badge bg-primary">{sentCount}</span> : <span className="text-muted">-</span>}</td>
-								</tr>;
-							})}</tbody>
+								</tr>
+							))}</tbody>
 						</table>
 					</div>
 				)
@@ -512,7 +562,7 @@ function App() {
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
 						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
-						<button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>
+						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
 					</div>
 					<a href={apiUrls.redoc} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi} className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>

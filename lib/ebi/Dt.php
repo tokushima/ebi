@@ -87,10 +87,31 @@ HTML;
 	#[Automap(suffix: '.json')]
 	public function sent_mails(): void{
 		$mails = [];
+		$pagination = null;
 
 		try{
-			$count = 0;
-			foreach(\ebi\SmtpBlackholeDao::find_all(Q::order('-id')) as $mail){
+			$q = new Q();
+			$q->add(Q::order('-id'));
+
+			$tcode = (string)$this->in_vars('tcode', '');
+			if($tcode !== ''){
+				$q->add(Q::eq('tcode', $tcode));
+			}
+			$search = (string)$this->in_vars('search', '');
+			if($search !== ''){
+				$q->add(Q::ob(
+					Q::contains('to', $search),
+					Q::contains('from', $search),
+					Q::contains('subject', $search)
+				));
+			}
+
+			$paginator = new \ebi\Paginator(
+				intval($this->in_vars('paginate_by', 20)),
+				intval($this->in_vars('page', 1))
+			);
+
+			foreach(\ebi\SmtpBlackholeDao::find_all($q, $paginator) as $mail){
 				$mails[] = [
 					'id' => $mail->id(),
 					'from' => $mail->from(),
@@ -100,14 +121,18 @@ HTML;
 					'tcode' => $mail->tcode(),
 					'create_date' => date('Y-m-d H:i:s', $mail->create_date()),
 				];
-				if(++$count >= 50) break;
 			}
+			$pagination = [
+				'current' => $paginator->current(),
+				'pages' => $paginator->last(),
+				'total' => $paginator->total(),
+				'limit' => $paginator->limit(),
+			];
 		}catch(\Exception){
-			// テーブルが存在しない場合など
 		}
 
 		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
-		echo json_encode(['mails' => $mails], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+		echo json_encode(['mails' => $mails, 'pagination' => $pagination], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		exit;
 	}
 
@@ -168,6 +193,14 @@ HTML;
 		}
 		$mail_json = json_encode($mail_templates, JSON_UNESCAPED_UNICODE);
 
+		$has_smtp_blackhole = false;
+		try{
+			\ebi\SmtpBlackholeDao::find_count();
+			$has_smtp_blackhole = true;
+		}catch(\Exception){
+		}
+		$has_smtp_blackhole_json = $has_smtp_blackhole ? 'true' : 'false';
+
 		// FlowHelperでURLを生成
 		$helper = new \ebi\FlowHelper();
 		$urls = json_encode([
@@ -207,6 +240,7 @@ HTML;
 		window.spec = {$spec_json};
 		window.mailTemplates = {$mail_json};
 		window.apiUrls = {$urls};
+		window.hasSmtpBlackhole = {$has_smtp_blackhole_json};
 	</script>
 	<script>{$app_js}</script>
 </body>

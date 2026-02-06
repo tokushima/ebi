@@ -82,6 +82,23 @@ export interface MailTemplate {
   subject: string;
 }
 
+export interface Mail {
+  id: number;
+  from: string;
+  to: string;
+  subject: string;
+  message: string;
+  tcode: string;
+  create_date: string;
+}
+
+export interface Pagination {
+  current: number;
+  pages: number;
+  total: number;
+  limit: number;
+}
+
 declare global {
   interface Window {
     __DT_CONFIG__?: {
