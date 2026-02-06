@@ -5,6 +5,7 @@ namespace ebi\Dt;
  */
 class OpenApi extends \ebi\flow\Request{
 	private string $entry;
+	private array $doc_cache = [];
 
 	public function __construct(?string $entryfile=null){
 		if(empty($entryfile)){
@@ -46,6 +47,7 @@ class OpenApi extends \ebi\flow\Request{
 
 		$req = new \ebi\Request();
 		$target_version = (string)$req->in_vars('version');
+		$envelope = (bool)$req->in_vars('envelope', false);
 		$file_version = date('Ymd', filemtime($this->entry));
 		$self_class = get_class($this);
 
@@ -117,24 +119,23 @@ class OpenApi extends \ebi\flow\Request{
 
 			if(!isset($m['class']) || $class_name($m['class']) != $self_class){
 				try{
-					$info = null;
+					$method_doc = null;
 					$http_method = 'get';
 
 					if(isset($m['method'])){
-						$info = \ebi\Dt\Man::method_info($m['class'], $m['method'], true, true);
+						$method_doc = $this->parse_method_doc($m['class'], $m['method']);
 
-						if(!isset($m['version'])){
-							$m['version'] = $info->version();
+						if(!isset($m['version']) && !empty($method_doc['version'])){
+							$m['version'] = $method_doc['version'];
 						}
-						if(empty($m['summary'])){
-							[$summary] = explode(PHP_EOL, $info->document());
-							$m['summary'] = empty($summary) ? null : $summary;
+						if(empty($m['summary']) && !empty($method_doc['summary'])){
+							$m['summary'] = $method_doc['summary'];
 						}
-						if($m['deprecated'] || $info->opt('deprecated')){
+						if($m['deprecated'] || ($method_doc['deprecated'] ?? false)){
 							$m['deprecated'] = true;
 						}
 
-						$http_method = strtolower($info->opt('http_method') ?? 'get');
+						$http_method = strtolower($method_doc['http_method'] ?? 'get');
 						if(empty(trim($http_method))){
 							$http_method = 'get';
 						}
@@ -149,7 +150,7 @@ class OpenApi extends \ebi\flow\Request{
 					}
 
 					$path = $this->convert_to_openapi_path($url_pattern);
-					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
+					$operation = $this->build_operation($m, $method_doc, $schemas, $has_security, $tags, $envelope);
 
 					if(!isset($spec['paths'][$path])){
 						$spec['paths'][$path] = [];
@@ -189,13 +190,225 @@ class OpenApi extends \ebi\flow\Request{
 	}
 
 	/**
+	 * メソッドのDocBlockを解析
+	 */
+	private function parse_method_doc(string $class, string $method): array{
+		$cache_key = $class . '::' . $method;
+		if(isset($this->doc_cache[$cache_key])){
+			return $this->doc_cache[$cache_key];
+		}
+
+		$result = [
+			'summary' => '',
+			'description' => '',
+			'params' => [],
+			'requests' => [],
+			'contexts' => [],
+			'throws' => [],
+			'http_method' => 'get',
+			'deprecated' => false,
+			'version' => null,
+		];
+
+		try{
+			$ref = new \ReflectionMethod($class, $method);
+			$doc = $ref->getDocComment();
+
+			if($doc !== false){
+				$result = array_merge($result, $this->parse_docblock($doc));
+			}
+
+			// メソッドパラメータから@paramを補完
+			foreach($ref->getParameters() as $param){
+				$param_name = $param->getName();
+				$exists = false;
+				foreach($result['params'] as $p){
+					if($p['name'] === $param_name){
+						$exists = true;
+						break;
+					}
+				}
+				if(!$exists){
+					$type = 'mixed';
+					if($param->hasType()){
+						$type = $param->getType()->getName();
+					}
+					$result['params'][] = [
+						'name' => $param_name,
+						'type' => $type,
+						'summary' => '',
+					];
+				}
+			}
+		}catch(\ReflectionException $e){
+			// リフレクション失敗時は空の結果を返す
+		}
+
+		$this->doc_cache[$cache_key] = $result;
+		return $result;
+	}
+
+	/**
+	 * クラスのDocBlockを解析
+	 */
+	private function parse_class_doc(string $class): array{
+		$cache_key = 'class:' . $class;
+		if(isset($this->doc_cache[$cache_key])){
+			return $this->doc_cache[$cache_key];
+		}
+
+		$result = [
+			'summary' => '',
+			'description' => '',
+			'properties' => [],
+		];
+
+		try{
+			$ref = new \ReflectionClass($class);
+			$doc = $ref->getDocComment();
+
+			if($doc !== false){
+				$parsed = $this->parse_docblock($doc);
+				$result['summary'] = $parsed['summary'];
+				$result['description'] = $parsed['description'];
+			}
+
+			// プロパティを取得
+			foreach($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop){
+				$prop_doc = $prop->getDocComment();
+				$prop_info = [
+					'name' => $prop->getName(),
+					'type' => 'mixed',
+					'summary' => '',
+					'hash' => true,
+				];
+
+				if($prop->hasType()){
+					$prop_info['type'] = $prop->getType()->getName();
+				}
+
+				if($prop_doc !== false){
+					$prop_parsed = $this->parse_docblock($prop_doc);
+					if(!empty($prop_parsed['summary'])){
+						$prop_info['summary'] = $prop_parsed['summary'];
+					}
+					if(!empty($prop_parsed['var_type'])){
+						$prop_info['type'] = $prop_parsed['var_type'];
+					}
+					if(isset($prop_parsed['hash'])){
+						$prop_info['hash'] = $prop_parsed['hash'];
+					}
+				}
+
+				$result['properties'][] = $prop_info;
+			}
+		}catch(\ReflectionException $e){
+			// リフレクション失敗時は空の結果を返す
+		}
+
+		$this->doc_cache[$cache_key] = $result;
+		return $result;
+	}
+
+	/**
+	 * DocBlockをパース
+	 */
+	private function parse_docblock(string $doc): array{
+		$result = [
+			'summary' => '',
+			'description' => '',
+			'params' => [],
+			'requests' => [],
+			'contexts' => [],
+			'throws' => [],
+			'http_method' => 'get',
+			'deprecated' => false,
+			'version' => null,
+			'var_type' => null,
+			'hash' => null,
+		];
+
+		// DocBlockのコメント記号を除去
+		$doc = preg_replace('/^[\s]*\*[\s]?/m', '', $doc);
+		$doc = str_replace(['/**', '*/'], '', $doc);
+		$doc = trim($doc);
+
+		$lines = explode("\n", $doc);
+		$desc_lines = [];
+		$in_description = true;
+
+		foreach($lines as $line){
+			$line = trim($line);
+
+			if(empty($line)){
+				if($in_description && !empty($desc_lines)){
+					$desc_lines[] = '';
+				}
+				continue;
+			}
+
+			// アノテーション行
+			if($line[0] === '@'){
+				$in_description = false;
+
+				if(preg_match('/@param\s+(\S+)\s+\$(\w+)(?:\s+(.*))?/', $line, $m)){
+					$result['params'][] = [
+						'name' => $m[2],
+						'type' => $m[1],
+						'summary' => $m[3] ?? '',
+					];
+				}elseif(preg_match('/@request\s+(\S+)\s+\$(\w+)(?:\s+(.*))?/', $line, $m)){
+					$result['requests'][] = [
+						'name' => $m[2],
+						'type' => $m[1],
+						'summary' => $m[3] ?? '',
+					];
+				}elseif(preg_match('/@context\s+(\S+)\s+\$(\w+)(?:\s+(.*))?/', $line, $m)){
+					$result['contexts'][] = [
+						'name' => $m[2],
+						'type' => $m[1],
+						'summary' => $m[3] ?? '',
+					];
+				}elseif(preg_match('/@throws\s+(\S+)(?:\s+(.*))?/', $line, $m)){
+					$result['throws'][] = [
+						'name' => $m[1],
+						'summary' => $m[2] ?? '',
+					];
+				}elseif(preg_match('/@http_method\s+(\S+)/', $line, $m)){
+					$result['http_method'] = $m[1];
+				}elseif(preg_match('/@version\s+(\S+)/', $line, $m)){
+					$result['version'] = $m[1];
+				}elseif(strpos($line, '@deprecated') === 0){
+					$result['deprecated'] = true;
+				}elseif(preg_match('/@var\s+(\S+)/', $line, $m)){
+					$result['var_type'] = $m[1];
+				}elseif(preg_match('/@hash\s+(true|false)/', $line, $m)){
+					$result['hash'] = ($m[1] === 'true');
+				}
+			}else{
+				if($in_description){
+					$desc_lines[] = $line;
+				}
+			}
+		}
+
+		if(!empty($desc_lines)){
+			$result['summary'] = array_shift($desc_lines);
+			$result['description'] = trim(implode("\n", $desc_lines));
+			if(empty($result['description'])){
+				$result['description'] = $result['summary'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * URLパターンをOpenAPIパス形式に変換
 	 */
 	private function convert_to_openapi_path(string $url_pattern): string{
-		// :param 形式を {param} 形式に変換
 		$path = preg_replace('/:([a-zA-Z_][a-zA-Z0-9_]*)/', '{$1}', $url_pattern);
 
-		// 先頭にスラッシュがない場合は追加
 		if(empty($path) || $path[0] !== '/'){
 			$path = '/' . $path;
 		}
@@ -206,15 +419,15 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * オペレーション（エンドポイント定義）を構築
 	 */
-	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags): array{
+	private function build_operation(array $m, ?array $method_doc, array &$schemas, bool &$has_security, array &$tags, bool $envelope = false): array{
 		$operation = [];
 
 		if(!empty($m['summary'])){
 			$operation['summary'] = $m['summary'];
 		}
 
-		if(isset($info) && !empty($info->document())){
-			$desc = $info->document();
+		if(isset($method_doc) && !empty($method_doc['description'])){
+			$desc = $method_doc['description'];
 			if($desc !== ($m['summary'] ?? '')){
 				$operation['description'] = $desc;
 			}
@@ -226,26 +439,21 @@ class OpenApi extends \ebi\flow\Request{
 			$operation['deprecated'] = true;
 		}
 
-		// タグ（クラス名をname、クラスの説明をx-displayNameに設定）
+		// タグ
 		if(isset($m['class'])){
 			$class_parts = explode('\\', $m['class']);
 			$tag_name = end($class_parts);
 			$operation['tags'] = [$tag_name];
 
-			// タグ定義を収集（重複を防ぐ）
 			if(!isset($tags[$tag_name])){
 				$tag_def = ['name' => $tag_name];
 
 				try{
-					$class_info = \ebi\Dt\Man::class_info($m['class']);
-					if(!empty($class_info->document())){
-						[$display_name] = explode(PHP_EOL, $class_info->document());
-						if(!empty($display_name)){
-							$tag_def['x-displayName'] = $display_name;
-						}
+					$class_doc = $this->parse_class_doc($m['class']);
+					if(!empty($class_doc['summary'])){
+						$tag_def['x-displayName'] = $class_doc['summary'];
 					}
 				}catch(\Exception $e){
-					// クラス情報の取得に失敗した場合はスキップ
 				}
 
 				$tags[$tag_name] = $tag_def;
@@ -255,18 +463,13 @@ class OpenApi extends \ebi\flow\Request{
 		// パラメータ
 		$parameters = [];
 
-		// URLパスパラメータ
-		if(isset($info)){
-			foreach($info->params() as $param){
+		if(isset($method_doc)){
+			foreach($method_doc['params'] as $param){
 				$parameters[] = $this->build_parameter($param, 'path');
 			}
-		}
 
-		// リクエストパラメータ
-		if(isset($info) && $info->has_opt('requests')){
-			foreach($info->opt('requests') as $param){
-				$in = (strtolower($info->opt('http_method') ?? 'get') === 'post') ? 'query' : 'query';
-				$parameters[] = $this->build_parameter($param, $in);
+			foreach($method_doc['requests'] as $param){
+				$parameters[] = $this->build_parameter($param, 'query');
 			}
 		}
 
@@ -275,16 +478,15 @@ class OpenApi extends \ebi\flow\Request{
 		}
 
 		// レスポンス
-		$operation['responses'] = $this->build_responses($m, $info, $schemas);
+		$operation['responses'] = $this->build_responses($m, $method_doc, $schemas, $envelope);
 
-		// ログイン要件のチェック
+		// ログイン要件
 		if(isset($m['class'])){
 			$login_anon = \ebi\Annotation::get_class($m['class'], 'login');
 			if(!empty($login_anon)){
 				$has_security = true;
 				$operation['security'] = [['sessionAuth' => []]];
 
-				// 401レスポンスを追加
 				if(!isset($operation['responses']['401'])){
 					$operation['responses']['401'] = [
 						'description' => 'Unauthorized - Login required',
@@ -293,32 +495,27 @@ class OpenApi extends \ebi\flow\Request{
 			}
 		}
 
-		// nullを除去
-		$operation = array_filter($operation, function($v){
-			return $v !== null;
-		});
-
-		return $operation;
+		return array_filter($operation, fn($v) => $v !== null);
 	}
 
 	/**
 	 * パラメータを構築
 	 */
-	private function build_parameter(\ebi\Dt\DocParam $param, string $in): array{
+	private function build_parameter(array $param, string $in): array{
 		$parameter = [
-			'name' => $param->name(),
+			'name' => $param['name'],
 			'in' => $in,
 		];
 
-		if(!empty($param->summary())){
-			$parameter['description'] = $param->summary();
+		if(!empty($param['summary'])){
+			$parameter['description'] = $param['summary'];
 		}
 
 		if($in === 'path'){
 			$parameter['required'] = true;
 		}
 
-		$parameter['schema'] = $this->get_schema_type($param->type());
+		$parameter['schema'] = $this->get_schema_type($param['type']);
 
 		return $parameter;
 	}
@@ -330,10 +527,7 @@ class OpenApi extends \ebi\flow\Request{
 		$is_array = (strpos($php_type, '[]') !== false);
 		$is_map = (strpos($php_type, '{}') !== false);
 
-		// []や{}のサフィックスを除去（バックスラッシュは保持）
 		$type = str_replace(['[]', '{}'], '', $php_type);
-
-		// クラス型かどうかを判定（大文字を含む場合はクラス型）
 		$is_class = (bool)preg_match('/[A-Z]/', $type);
 
 		if($is_class && !empty($type)){
@@ -369,45 +563,37 @@ class OpenApi extends \ebi\flow\Request{
 	 * モデルクラスのスキーマを構築
 	 */
 	private function build_model_schema(string $class_name, array &$schemas): array{
-		// クラス名を正規化
 		$normalized_class = ltrim($class_name, '\\');
-
-		// スキーマ名（バックスラッシュをドットに変換）
 		$schema_name = str_replace('\\', '.', $normalized_class);
 
-		// 既に構築済みの場合は$refを返す
 		if(isset($schemas[$schema_name])){
 			return ['$ref' => '#/components/schemas/' . $schema_name];
 		}
 
-		// クラスが存在するか確認（先頭にバックスラッシュを付けて確認）
 		$full_class_name = '\\' . $normalized_class;
 		if(!class_exists($full_class_name)){
 			return ['type' => 'object'];
 		}
 
 		try{
-			$class_info = \ebi\Dt\Man::class_info($full_class_name);
+			$class_doc = $this->parse_class_doc($full_class_name);
 
-			// プレースホルダーを設置（再帰参照を防ぐ）
+			// プレースホルダー
 			$schemas[$schema_name] = ['type' => 'object'];
 
 			$properties = [];
-			if($class_info->has_opt('properties')){
-				foreach($class_info->opt('properties') as $prop){
-					// hash=>false のプロパティはスキップ
-					if($prop->opt('hash') === false){
-						continue;
-					}
-
-					$prop_schema = $this->get_schema_type($prop->type(), $schemas);
-
-					if(!empty($prop->summary())){
-						$prop_schema['description'] = $prop->summary();
-					}
-
-					$properties[$prop->name()] = $prop_schema;
+			foreach($class_doc['properties'] as $prop){
+				if($prop['hash'] === false){
+					continue;
 				}
+
+				$prop_schema = $this->get_schema_type($prop['type'], $schemas);
+
+				if(!empty($prop['summary'])){
+					$prop_schema['description'] = $prop['summary'];
+				}
+
+				$properties[$prop['name']] = $prop_schema;
 			}
 
 			$model_schema = ['type' => 'object'];
@@ -416,15 +602,14 @@ class OpenApi extends \ebi\flow\Request{
 				$model_schema['properties'] = $properties;
 			}
 
-			if(!empty($class_info->document())){
-				$model_schema['description'] = $class_info->document();
+			if(!empty($class_doc['description'])){
+				$model_schema['description'] = $class_doc['description'];
 			}
 
 			$schemas[$schema_name] = $model_schema;
 
 			return ['$ref' => '#/components/schemas/' . $schema_name];
 		}catch(\Exception $e){
-			// クラス情報の取得に失敗した場合は汎用オブジェクト型を返す
 			unset($schemas[$schema_name]);
 			return ['type' => 'object'];
 		}
@@ -433,43 +618,51 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * レスポンス定義を構築
 	 */
-	private function build_responses(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas): array{
+	private function build_responses(array $m, ?array $method_doc, array &$schemas, bool $envelope = false): array{
 		$responses = [];
 
-		// 成功レスポンス
 		$success_response = [
 			'description' => 'Successful response',
 		];
 
-		// contextsからレスポンススキーマを構築
-		if(isset($info) && $info->has_opt('contexts')){
+		if(isset($method_doc) && !empty($method_doc['contexts'])){
 			$properties = [];
 
-			foreach($info->opt('contexts') as $context){
-				$prop_schema = $this->get_schema_type($context->type(), $schemas);
+			foreach($method_doc['contexts'] as $context){
+				$prop_schema = $this->get_schema_type($context['type'], $schemas);
 
-				// $refを使用している場合、descriptionはallOfでラップする必要がある
-				if(!empty($context->summary())){
+				if(!empty($context['summary'])){
 					if(isset($prop_schema['$ref'])){
 						$prop_schema = [
 							'allOf' => [$prop_schema],
-							'description' => $context->summary(),
+							'description' => $context['summary'],
 						];
 					}else{
-						$prop_schema['description'] = $context->summary();
+						$prop_schema['description'] = $context['summary'];
 					}
 				}
 
-				$properties[$context->name()] = $prop_schema;
+				$properties[$context['name']] = $prop_schema;
 			}
 
 			if(!empty($properties)){
+				$response_schema = [
+					'type' => 'object',
+					'properties' => $properties,
+				];
+
+				if($envelope){
+					$response_schema = [
+						'type' => 'object',
+						'properties' => [
+							'result' => $response_schema,
+						],
+					];
+				}
+
 				$success_response['content'] = [
 					'application/json' => [
-						'schema' => [
-							'type' => 'object',
-							'properties' => $properties,
-						],
+						'schema' => $response_schema,
 					],
 				];
 			}
@@ -477,14 +670,11 @@ class OpenApi extends \ebi\flow\Request{
 
 		$responses['200'] = $success_response;
 
-		// エラーレスポンス（throws情報から）
-		if(isset($info) && $info->has_opt('throws')){
-			foreach($info->opt('throws') as $throw){
-				$exception_name = $throw->name();
-
-				if(strpos($exception_name, 'UnauthorizedException') !== false){
+		if(isset($method_doc) && !empty($method_doc['throws'])){
+			foreach($method_doc['throws'] as $throw){
+				if(strpos($throw['name'], 'UnauthorizedException') !== false){
 					$responses['401'] = [
-						'description' => $throw->summary() ?: 'Unauthorized',
+						'description' => $throw['summary'] ?: 'Unauthorized',
 					];
 				}
 			}
