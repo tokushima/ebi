@@ -79,30 +79,32 @@ function ResponsesView({ responses, schemas, operationId }) {
 	return (
 		<section>
 			<div className="section-label">Responses</div>
-			<div style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-				{Object.entries(responses).map(([code, resp], idx) => {
+			<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+				{Object.entries(responses).flatMap(([code, resp], idx) => {
 					const hasSchema = !!resp.content?.['application/json']?.schema;
 					const props = hasSchema ? resp.content['application/json'].schema : null;
 					const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
-					return (
-						<div key={code} style={{ borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
-							<div className="param-row" style={{ background: idx % 2 === 0 ? '#f8fafc' : 'transparent' }}>
-								<span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 140 }}>
-									<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
-									<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
-								</span>
-								<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
-								{hasSchema && <button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8', textDecoration: 'none' }} onClick={() => copyTs(code, props)}>{copied === code ? 'Copied!' : 'Copy TS'}</button>}
-							</div>
-							{properties && properties.map((p, pi) => (
-								<div key={pi} className="param-row" style={{ paddingLeft: '2rem' }}>
-									<span className="param-name">{p.name}</span>
+					const items = [];
+					items.push(
+						<div key={`h-${code}`} className="resp-header" style={{ gridColumn: '1 / -1', borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
+							<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
+							<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
+							<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
+							{hasSchema && <button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8', textDecoration: 'none' }} onClick={() => copyTs(code, props)}>{copied === code ? 'Copied!' : 'Copy TS'}</button>}
+						</div>
+					);
+					if (properties) {
+						properties.forEach((p, pi) => {
+							items.push(
+								<div key={`p-${code}-${pi}`} className="param-row">
+									<span className="param-name" style={{ paddingLeft: '1.25rem' }}>{p.name}</span>
 									<span className="param-type">{p.type || (p.$ref ? p.$ref.replace('#/components/schemas/', '') : '-')}</span>
 									<span className="param-desc">{p.description || '-'}</span>
 								</div>
-							))}
-						</div>
-					);
+							);
+						});
+					}
+					return items;
 				})}
 			</div>
 		</section>

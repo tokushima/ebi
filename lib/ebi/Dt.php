@@ -258,6 +258,7 @@ HTML;
 		.param-name { font-family: 'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-weight: 500; color: #1e293b; white-space: nowrap; }
 		.param-type { color: #64748b; white-space: nowrap; }
 		.param-desc { color: #475569; }
+		.resp-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; background: #f1f5f9; }
 		.try-it-section { background: #f8fafc; border-radius: 0.5rem; padding: 1.25rem; }
 		.try-input { border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
 		.try-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
