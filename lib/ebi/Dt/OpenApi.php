@@ -330,6 +330,23 @@ class OpenApi extends \ebi\flow\Request{
 			}
 		}
 
+		// authクラスのlogin_conditionメソッドからパラメータを取得
+		if(isset($m['auth'])){
+			try{
+				$auth_info = \ebi\Dt\SourceAnalyzer::method_info($m['auth'], 'login_condition', true, false);
+
+				if($auth_info->has_opt('requests')){
+					foreach($auth_info->opt('requests') as $param){
+						if(!isset($added_params[$param->name()])){
+							$parameters[] = $this->build_parameter($param, 'query');
+							$added_params[$param->name()] = true;
+						}
+					}
+				}
+			}catch(\Exception $e){
+			}
+		}
+
 		if(!empty($parameters)){
 			$operation['parameters'] = $parameters;
 		}

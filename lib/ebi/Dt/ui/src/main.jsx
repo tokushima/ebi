@@ -195,7 +195,15 @@ function TryItPanel({ endpoint, op, envelope }) {
 				{allParams.map(p => (
 					<div key={p.name} className="d-flex align-items-center gap-2 mb-2">
 						<label className="param-name" style={{ minWidth: 120 }}>{p.name}{p.required && <span className="text-danger ms-1">*</span>}</label>
-						<input type="text" className="try-input" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))} placeholder={p.schema?.type || 'value'} />
+						{p.schema?.type === 'boolean' ? (
+							<select className="try-input" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))}>
+								<option value="">-</option>
+								<option value="true">true</option>
+								<option value="false">false</option>
+							</select>
+						) : (
+							<input type="text" className="try-input" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))} placeholder={p.schema?.type || 'value'} />
+						)}
 					</div>
 				))}
 			</div>}
