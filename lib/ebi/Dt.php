@@ -41,7 +41,8 @@ class Dt extends \ebi\flow\Request{
 	 */
 	#[Automap(suffix: '.json')]
 	public function openapi(): void{
-		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec();
+		$envelope = ($this->in_vars('envelope', '') === 'true');
+		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
 
 		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
 		\ebi\HttpHeader::send('Access-Control-Allow-Origin', '*');
@@ -54,7 +55,8 @@ class Dt extends \ebi\flow\Request{
 	 */
 	#[Automap]
 	public function redoc(): void{
-		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec();
+		$envelope = ($this->in_vars('envelope', '') === 'true');
+		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
 		$title = htmlspecialchars($spec['info']['title'] ?? 'API Documentation', ENT_QUOTES, 'UTF-8');
 		$spec_json = json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -210,6 +212,8 @@ HTML;
 			'configs' => $helper->package_method_url('configs'),
 		], JSON_UNESCAPED_SLASHES);
 
+		$appmode = \ebi\Conf::appmode();
+
 		// ビルド済みのapp.jsを読み込む
 		$app_js = file_get_contents(__DIR__.'/Dt/assets/app.js');
 
@@ -222,7 +226,7 @@ HTML;
 	<title>Developer Tools</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 	<style>
-		.method-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: white; }
+		.method-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: white; display: inline-block; min-width: 60px; text-align: center; }
 		.method-get { background-color: #0d6efd; }
 		.method-post { background-color: #198754; }
 		.method-put { background-color: #fd7e14; }
@@ -230,8 +234,44 @@ HTML;
 		.method-patch { background-color: #20c997; }
 		.endpoint-row { cursor: pointer; transition: background-color 0.15s; }
 		.endpoint-row:hover { background-color: rgba(0,0,0,0.03); }
-		.code-block { background-color: #1e1e1e; color: #4ec9b0; font-family: monospace; font-size: 0.875rem; max-height: 400px; overflow: auto; }
+		.code-block { background-color: #1e1e1e; color: #d4d4d4; font-family: 'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size: 0.8125rem; max-height: 500px; overflow: auto; border-radius: 0 0 0.5rem 0.5rem; }
+		.code-block .json-key { color: #9cdcfe; }
+		.code-block .json-string { color: #ce9178; }
+		.code-block .json-number { color: #b5cea8; }
+		.code-block .json-bool { color: #569cd6; }
+		.code-block .json-null { color: #569cd6; }
 		pre { white-space: pre-wrap; word-break: break-all; }
+		.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1050; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
+		.modal-panel { background: #fff; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 900px; overflow: hidden; animation: modalIn 0.2s ease-out; }
+		@keyframes modalIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+		.modal-panel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; }
+		.modal-panel-body { padding: 1.5rem; }
+		.modal-panel-body section { margin-bottom: 1.5rem; }
+		.modal-panel-body section:last-child { margin-bottom: 0; }
+		.section-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.5rem; }
+		.param-grid { display: grid; grid-template-columns: auto auto 1fr; }
+		.param-grid > .param-row { display: contents; }
+		.param-grid > .param-row:nth-child(odd) > span { background: #f8fafc; }
+		.param-grid > .param-row > span { padding: 0.5rem 0.75rem; font-size: 0.8125rem; display: flex; align-items: center; }
+		.param-row { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.8125rem; gap: 0.75rem; }
+		.param-row:nth-child(odd) { background: #f8fafc; }
+		.param-name { font-family: 'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-weight: 500; color: #1e293b; white-space: nowrap; }
+		.param-type { color: #64748b; white-space: nowrap; }
+		.param-desc { color: #475569; }
+		.try-it-section { background: #f8fafc; border-radius: 0.5rem; padding: 1.25rem; }
+		.try-input { border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+		.try-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
+		.response-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; background: #1e1e1e; border-radius: 0.5rem 0.5rem 0 0; }
+		.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+		.status-dot-ok { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+		.status-dot-warn { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+		.status-dot-err { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+		.hint-wrap { position: relative; display: inline-flex; }
+		.hint-icon { width: 14px; height: 14px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: help; flex-shrink: 0; transition: background 0.15s; }
+		.hint-wrap:hover .hint-icon { background: #cbd5e1; }
+		.hint-popup { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #1e293b; color: #f1f5f9; font-size: 0.6875rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 0.375rem; white-space: nowrap; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+		.hint-popup::before { content: ''; position: absolute; top: -4px; right: 10px; width: 8px; height: 8px; background: #1e293b; transform: rotate(45deg); }
+		.hint-wrap:hover .hint-popup { display: block; }
 	</style>
 </head>
 <body class="bg-light">
@@ -241,6 +281,7 @@ HTML;
 		window.mailTemplates = {$mail_json};
 		window.apiUrls = {$urls};
 		window.hasSmtpBlackhole = {$has_smtp_blackhole_json};
+		window.appmode = '{$appmode}';
 	</script>
 	<script>{$app_js}</script>
 </body>

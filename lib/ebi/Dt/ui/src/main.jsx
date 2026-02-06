@@ -6,6 +6,7 @@ const spec = window.spec || {};
 const mailTemplates = window.mailTemplates || [];
 const apiUrls = window.apiUrls || {};
 const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
+const appmode = window.appmode || '';
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
@@ -73,26 +74,54 @@ function ResponsesView({ responses, schemas, operationId }) {
 		const ts = `type ${typeName} = ${schemaToTs(schema, schemas)};`;
 		navigator.clipboard.writeText(ts).then(() => { setCopied(code); setTimeout(() => setCopied(null), 2000); });
 	};
+	const statusColor = (code) => code.startsWith('2') ? '#22c55e' : code.startsWith('4') ? '#f59e0b' : '#ef4444';
+
 	return (
-		<div className="mb-3">
-			<h6 className="fw-semibold text-secondary">Responses</h6>
-			{Object.entries(responses).map(([code, resp]) => (
-				<div key={code} className="card mb-2">
-					<div className="card-header py-2 d-flex align-items-center gap-2">
-						<span className={`badge ${code.startsWith('2') ? 'bg-success' : code.startsWith('4') ? 'bg-warning' : 'bg-danger'}`}>{code}</span>
-						<span className="small text-muted flex-grow-1">{resp.description}</span>
-						{resp.content?.['application/json']?.schema && <button className="btn btn-outline-secondary btn-sm py-0 px-2" onClick={() => copyTs(code, resp.content['application/json'].schema)}>{copied === code ? 'Copied!' : 'Copy TS'}</button>}
-					</div>
-					{resp.content?.['application/json']?.schema && <div className="card-body py-2"><SchemaView schema={resp.content['application/json'].schema} schemas={schemas} /></div>}
-				</div>
-			))}
-		</div>
+		<section>
+			<div className="section-label">Responses</div>
+			<div style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+				{Object.entries(responses).map(([code, resp], idx) => {
+					const hasSchema = !!resp.content?.['application/json']?.schema;
+					const props = hasSchema ? resp.content['application/json'].schema : null;
+					const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
+					return (
+						<div key={code} style={{ borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
+							<div className="param-row" style={{ background: idx % 2 === 0 ? '#f8fafc' : 'transparent' }}>
+								<span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 140 }}>
+									<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
+									<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
+								</span>
+								<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
+								{hasSchema && <button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8', textDecoration: 'none' }} onClick={() => copyTs(code, props)}>{copied === code ? 'Copied!' : 'Copy TS'}</button>}
+							</div>
+							{properties && properties.map((p, pi) => (
+								<div key={pi} className="param-row" style={{ paddingLeft: '2rem' }}>
+									<span className="param-name">{p.name}</span>
+									<span className="param-type">{p.type || (p.$ref ? p.$ref.replace('#/components/schemas/', '') : '-')}</span>
+									<span className="param-desc">{p.description || '-'}</span>
+								</div>
+							))}
+						</div>
+					);
+				})}
+			</div>
+		</section>
 	);
 }
 
-function TryItPanel({ endpoint, op }) {
+function syntaxHighlight(json) {
+	if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+	return json.replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, (match) => {
+		let cls = 'json-number';
+		if (/^"/.test(match)) { cls = /:$/.test(match) ? 'json-key' : 'json-string'; }
+		else if (/true|false/.test(match)) cls = 'json-bool';
+		else if (/null/.test(match)) cls = 'json-null';
+		return `<span class="${cls}">${match}</span>`;
+	});
+}
+
+function TryItPanel({ endpoint, op, envelope }) {
 	const [params, setParams] = useState({});
-	const [body, setBody] = useState('');
 	const [response, setResponse] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const allParams = op.parameters || [];
@@ -101,12 +130,23 @@ function TryItPanel({ endpoint, op }) {
 		setLoading(true); setResponse(null);
 		try {
 			let url = endpoint.path;
+			const method = endpoint.method.toUpperCase();
+			const isBodyMethod = ['POST', 'PUT', 'PATCH'].includes(method);
 			allParams.filter(p => p.in === 'path').forEach(p => { url = url.replace(`{${p.name}}`, encodeURIComponent(params[p.name] || '')); });
-			const qp = allParams.filter(p => p.in === 'query' && params[p.name]).map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
-			if (qp.length) url += '?' + qp.join('&');
+			const nonPathParams = allParams.filter(p => p.in !== 'path' && params[p.name]);
+			if (!isBodyMethod) {
+				const qp = nonPathParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
+				if (qp.length) url += '?' + qp.join('&');
+			}
 			const baseUrl = window.location.pathname.replace(/\/dt\/?$/, '');
-			const opts = { method: endpoint.method, headers: {} };
-			if (['POST', 'PUT', 'PATCH'].includes(endpoint.method) && body) { opts.body = body; opts.headers['Content-Type'] = 'application/json'; }
+			const accept = envelope ? 'application/json' : 'application/json; envelope=false';
+			const opts = { method, headers: { 'Accept': accept } };
+			if (isBodyMethod && nonPathParams.length) {
+				const jsonBody = {};
+				nonPathParams.forEach(p => { jsonBody[p.name] = params[p.name]; });
+				opts.body = JSON.stringify(jsonBody);
+				opts.headers['Content-Type'] = 'application/json';
+			}
 			const start = Date.now();
 			const res = await fetch(baseUrl + url, opts);
 			const time = Date.now() - start;
@@ -117,60 +157,85 @@ function TryItPanel({ endpoint, op }) {
 		setLoading(false);
 	};
 
+	const dotClass = response && !('error' in response) ? (response.status < 300 ? 'status-dot-ok' : response.status < 400 ? 'status-dot-warn' : 'status-dot-err') : '';
+
 	return (
-		<div className="border-top pt-3 mt-3">
-			<h6 className="fw-semibold text-secondary mb-3">Try It</h6>
+		<div className="try-it-section">
+			<div className="section-label">Try It</div>
 			{allParams.length > 0 && <div className="mb-3">
 				{allParams.map(p => (
-					<div key={p.name} className="row mb-2 align-items-center">
-						<label className="col-3 col-form-label font-monospace small">{p.name} {p.required && <span className="text-danger">*</span>}</label>
-						<div className="col-7"><input type="text" className="form-control form-control-sm" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))} placeholder={p.schema?.type || 'value'} /></div>
-						<div className="col-2 text-muted small">{p.in}</div>
+					<div key={p.name} className="d-flex align-items-center gap-2 mb-2">
+						<label className="param-name" style={{ minWidth: 120 }}>{p.name}{p.required && <span className="text-danger ms-1">*</span>}</label>
+						<input type="text" className="try-input" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))} placeholder={p.schema?.type || 'value'} />
 					</div>
 				))}
 			</div>}
-			{['POST', 'PUT', 'PATCH'].includes(endpoint.method) && <div className="mb-3"><label className="form-label small text-muted">Request Body (JSON)</label><textarea className="form-control font-monospace" rows={4} value={body} onChange={e => setBody(e.target.value)} placeholder='{"key": "value"}' /></div>}
-			<button className="btn btn-primary" onClick={execute} disabled={loading}>{loading ? 'Sending...' : 'Execute'}</button>
+			<button className="btn btn-primary btn-sm px-4" onClick={execute} disabled={loading}>{loading ? 'Sending...' : 'Execute'}</button>
 			{response && <div className="mt-3">
-				{'error' in response ? <div className="alert alert-danger">Error: {response.error}</div> : <div className="card">
-					<div className="card-header py-2 d-flex align-items-center gap-3">
-						<span className={`badge ${response.status < 300 ? 'bg-success' : response.status < 400 ? 'bg-warning' : 'bg-danger'}`}>{response.status}</span>
-						<span className="small text-muted">{response.time}ms</span>
+				{'error' in response ? <div className="alert alert-danger mb-0 py-2 small">Error: {response.error}</div> : <>
+					<div className="response-header">
+						<span className={`status-dot ${dotClass}`} />
+						<span style={{ color: '#e2e8f0', fontSize: '0.8125rem', fontWeight: 600 }}>{response.status}</span>
+						<span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{response.time}ms</span>
 					</div>
-					<pre className="code-block mb-0 p-3">{typeof response.body === 'object' ? JSON.stringify(response.body, null, 2) : response.body}</pre>
-				</div>}
+					<pre className="code-block mb-0 p-3" dangerouslySetInnerHTML={{ __html: typeof response.body === 'object' ? syntaxHighlight(response.body) : (response.body || '') }} />
+				</>}
 			</div>}
 		</div>
 	);
 }
 
-function EndpointModal({ endpoint, schemas, onClose }) {
+function EndpointModal({ endpoint, schemas, envelope, onClose }) {
 	const [showTry, setShowTry] = useState(false);
 	const op = endpoint.op;
+	const method = endpoint.method.toUpperCase();
+	const methodBg = { GET: '#0d6efd', POST: '#198754', PUT: '#fd7e14', DELETE: '#dc3545', PATCH: '#20c997' }[method] || '#6c757d';
+
 	return (
-		<div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
-			<div className="modal-dialog modal-xl modal-dialog-scrollable" onClick={e => e.stopPropagation()}>
-				<div className="modal-content">
-					<div className="modal-header">
-						<div className="d-flex align-items-center gap-2">
-							<span className={`method-badge ${methodColors[endpoint.method]}`}>{endpoint.method}</span>
-							<code className="fs-5">{endpoint.path}</code>
+		<div className="modal-backdrop-custom" onClick={onClose}>
+			<div className="modal-panel" onClick={e => e.stopPropagation()}>
+				<div className="modal-panel-header">
+					<div className="d-flex align-items-center justify-content-between">
+						<div className="d-flex align-items-center gap-3">
+							<span className={`method-badge ${methodColors[method] || methodColors[endpoint.method]}`}>{method}</span>
+							<code style={{ fontSize: '1.1rem', color: '#1e293b' }}>{endpoint.path}</code>
 						</div>
-						<button type="button" className="btn-close" onClick={onClose}></button>
+						<button type="button" className="btn-close" onClick={onClose} />
 					</div>
-					<div className="modal-body">
-						{op.summary && <p className="lead">{op.summary}</p>}
-						{op.description && <p className="text-muted" style={{ whiteSpace: 'pre-wrap' }}>{op.description}</p>}
-						<div className="d-flex gap-2 mb-3">
-							{op.tags?.map(t => <span key={t} className="badge bg-secondary">{t}</span>)}
-							{op.deprecated && <span className="badge bg-danger">deprecated</span>}
+					{(op.summary || op.description) && <div className="mt-2">
+						{op.summary && <div style={{ fontSize: '0.9375rem', color: '#334155', fontWeight: 500 }}>{op.summary}</div>}
+						{op.description && <div style={{ fontSize: '0.8125rem', color: '#64748b', whiteSpace: 'pre-wrap', marginTop: 4 }}>{op.description}</div>}
+					</div>}
+					<div className="d-flex align-items-center gap-2 mt-2">
+						{op.tags?.map(t => <span key={t} className="badge" style={{ background: '#e2e8f0', color: '#475569', fontWeight: 500 }}>{t}</span>)}
+						{op.deprecated && <span className="badge bg-danger">deprecated</span>}
+						{op.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8', marginLeft: 'auto' }}>{op.operationId}</code>}
+					</div>
+				</div>
+				<div className="modal-panel-body">
+					{op.parameters && op.parameters.length > 0 && <section>
+						<div className="section-label">Parameters</div>
+						<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+							{op.parameters.map((p, i) => (
+								<div key={i} className="param-row">
+									<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
+									<span className="param-type">{p.schema?.type || p.type || '-'}</span>
+									<span className="param-desc">{p.description || '-'}</span>
+								</div>
+							))}
 						</div>
-						{op.operationId && <p className="small mb-3"><span className="text-muted">Operation ID:</span><code className="ms-2 bg-light px-2 py-1 rounded">{op.operationId}</code></p>}
-						<PropsTable items={op.parameters} title="Parameters" />
-						{op.requestBody?.content && <div className="mb-3"><h6 className="fw-semibold text-secondary">Request Body</h6><div className="card"><div className="card-body py-2">{Object.entries(op.requestBody.content).map(([ct, c]) => <div key={ct}>{c.schema && <SchemaView schema={c.schema} schemas={schemas} />}</div>)}</div></div></div>}
-						<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} />
-						<div className="mt-4"><button className="btn btn-outline-secondary" onClick={() => setShowTry(!showTry)}>{showTry ? 'Hide Try It' : 'Try It'}</button>{showTry && <TryItPanel endpoint={endpoint} op={op} />}</div>
-					</div>
+					</section>}
+					{op.requestBody?.content && <section>
+						<div className="section-label">Request Body</div>
+						<div className="card border-0" style={{ background: '#f8fafc' }}>
+							<div className="card-body py-2">{Object.entries(op.requestBody.content).map(([ct, c]) => <div key={ct}>{c.schema && <SchemaView schema={c.schema} schemas={schemas} />}</div>)}</div>
+						</div>
+					</section>}
+					<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} />
+					<section>
+						<button className={`btn btn-sm px-4 ${showTry ? 'btn-outline-danger' : 'btn-dark'}`} onClick={() => setShowTry(!showTry)}>{showTry ? 'Close' : 'Try It'}</button>
+						{showTry && <div className="mt-3"><TryItPanel endpoint={endpoint} op={op} envelope={envelope} /></div>}
+					</section>
 				</div>
 			</div>
 		</div>
@@ -267,17 +332,38 @@ function Schemas({ selected, onSelect, onClose }) {
 				</table>
 			</div>
 			{selected && (
-				<div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
-					<div className="modal-dialog modal-xl" onClick={e => e.stopPropagation()}>
-						<div className="modal-content">
-							<div className="modal-header">
-								<h5 className="modal-title"><code className="text-primary">{selected.name}</code>{selected.schema['x-dao'] && <span className="badge bg-info ms-2">Dao</span>}</h5>
-								<button type="button" className="btn-close" onClick={onClose}></button>
+				<div className="modal-backdrop-custom" onClick={onClose}>
+					<div className="modal-panel" onClick={e => e.stopPropagation()}>
+						<div className="modal-panel-header">
+							<div className="d-flex align-items-center justify-content-between">
+								<div className="d-flex align-items-center gap-3">
+									<code style={{ fontSize: '1.1rem', color: '#1e293b' }}>{selected.name}</code>
+									{selected.schema['x-dao'] ? <span className="badge bg-info">Dao</span> : <span className="badge bg-secondary">Obj</span>}
+								</div>
+								<button type="button" className="btn-close" onClick={onClose} />
 							</div>
-							<div className="modal-body">
-								{selected.schema.description && <p className="text-muted mb-3" style={{ whiteSpace: 'pre-wrap' }}>{selected.schema.description}</p>}
-								<SchemaView schema={selected.schema} schemas={schemas} />
-							</div>
+							{selected.schema.description && <div className="mt-2" style={{ fontSize: '0.8125rem', color: '#64748b', whiteSpace: 'pre-wrap' }}>{selected.schema.description}</div>}
+						</div>
+						<div className="modal-panel-body">
+							{selected.schema.properties && <section>
+								<div className="section-label">Properties</div>
+								<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+									{Object.entries(selected.schema.properties).map(([k, v], i) => {
+										const isRequired = (selected.schema.required || []).includes(k);
+										const refName = v.$ref ? v.$ref.replace('#/components/schemas/', '') : null;
+										const propType = v.type || (refName ? refName.split('\\').pop() : '-');
+										const isArray = v.type === 'array';
+										const arrayRef = isArray && v.items?.$ref ? v.items.$ref.replace('#/components/schemas/', '').split('\\').pop() : null;
+										return (
+											<div key={k} className="param-row">
+												<span className="param-name">{k}{isRequired && <span className="text-danger ms-1">*</span>}</span>
+												<span className="param-type">{isArray ? (arrayRef ? `${arrayRef}[]` : `${v.items?.type || 'any'}[]`) : propType}</span>
+												<span className="param-desc">{v.description || '-'}</span>
+											</div>
+										);
+									})}
+								</div>
+							</section>}
 						</div>
 					</div>
 				</div>
@@ -506,6 +592,7 @@ function App() {
 	const [page, setPage] = useState(initial.page);
 	const [selected, setSelected] = useState(null);
 	const [selectedSchema, setSelectedSchema] = useState(null);
+	const [envelope, setEnvelope] = useState(true);
 
 	const updateHash = (p, detail = null) => {
 		const hash = detail ? `${p}=${encodeURIComponent(detail)}` : p;
@@ -557,14 +644,26 @@ function App() {
 		<div className="min-vh-100">
 			<nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
 				<div className="container">
-					<span className="navbar-brand fw-bold">DevTools</span>
+					<span className="navbar-brand fw-bold">DevTools</span>{appmode && <span className="badge bg-info text-dark ms-2">{appmode}</span>}
 					<div className="navbar-nav me-auto flex-row gap-2">
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
 						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
 						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
 					</div>
-					<a href={apiUrls.redoc} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi} className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
+					<label className="d-flex align-items-center gap-1 me-3" style={{ fontSize: '0.75rem', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}>
+						<input type="checkbox" checked={envelope} onChange={e => setEnvelope(e.target.checked)} style={{ accentColor: '#3b82f6' }} />
+						envelope
+					</label>
+					<span className="hint-wrap me-3">
+						<span className="hint-icon">?</span>
+						<span className="hint-popup">
+							ON: レスポンスを {"{ result: {...} }"} でラップ<br />
+							OFF: フラットなJSONを返す<br />
+							<span style={{ color: '#94a3b8', fontSize: '0.625rem' }}>Accept: application/json; envelope=false と同等</span>
+						</span>
+					</span>
+					<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>
 			</nav>
 			<main className="container py-4">
@@ -573,7 +672,7 @@ function App() {
 				{page === 'config' && <ConfigPage />}
 				{page === 'mail' && <MailPage />}
 			</main>
-			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} onClose={handleCloseEndpoint} />}
+			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} />}
 		</div>
 	);
 }

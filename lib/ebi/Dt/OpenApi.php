@@ -39,7 +39,10 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * OpenAPI仕様を生成する
 	 */
-	public function generate_spec(): array{
+	private bool $envelope = false;
+
+	public function generate_spec(bool $envelope=false): array{
+		$this->envelope = $envelope;
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
@@ -284,7 +287,7 @@ class OpenApi extends \ebi\flow\Request{
 
 		// #[Parameter]属性からパラメータを取得（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
-			$attr_params = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'request');
+			$attr_params = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'request', 'summary');
 			if(!empty($attr_params)){
 				foreach($attr_params as $name => $data){
 					if(!isset($added_params[$name])){
@@ -669,7 +672,7 @@ class OpenApi extends \ebi\flow\Request{
 
 		// #[Response]属性からレスポンススキーマを構築（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
-			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context');
+			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
@@ -714,12 +717,23 @@ class OpenApi extends \ebi\flow\Request{
 		}
 
 		if(!empty($properties)){
+			$schema = [
+				'type' => 'object',
+				'properties' => $properties,
+			];
+
+			if($this->envelope){
+				$schema = [
+					'type' => 'object',
+					'properties' => [
+						'result' => $schema,
+					],
+				];
+			}
+
 			$success_response['content'] = [
 				'application/json' => [
-					'schema' => [
-						'type' => 'object',
-						'properties' => $properties,
-					],
+					'schema' => $schema,
 				],
 			];
 		}
