@@ -10,6 +10,53 @@ const appmode = window.appmode || '';
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
+function resolveTypeName(v) {
+	if (!v) return '-';
+	const refToName = (r) => r.replace('#/components/schemas/', '').split('\\').pop();
+	if (v.$ref) return refToName(v.$ref);
+	if (v.allOf?.[0]?.$ref) return refToName(v.allOf[0].$ref);
+	if (v.type === 'array' && v.items) {
+		if (v.items.$ref) return refToName(v.items.$ref) + '[]';
+		if (v.items.allOf?.[0]?.$ref) return refToName(v.items.allOf[0].$ref) + '[]';
+		return (v.items.type || 'any') + '[]';
+	}
+	return v.type || '-';
+}
+
+function resolveRefSchema(v, schemas) {
+	if (!v || !schemas) return null;
+	const getRef = (r) => r.replace('#/components/schemas/', '');
+	let refKey = null;
+	if (v.$ref) refKey = getRef(v.$ref);
+	else if (v.allOf?.[0]?.$ref) refKey = getRef(v.allOf[0].$ref);
+	else if (v.type === 'array' && v.items) {
+		if (v.items.$ref) refKey = getRef(v.items.$ref);
+		else if (v.items.allOf?.[0]?.$ref) refKey = getRef(v.items.allOf[0].$ref);
+		else if (v.items.properties) return v.items;
+	}
+	if (refKey && schemas[refKey]?.properties) return schemas[refKey];
+	if (v.type === 'object' && v.properties) return v;
+	return null;
+}
+
+function renderNestedProps(items, parentKey, schemas, expanded, depth = 1) {
+	const rows = [];
+	items.forEach((p, pi) => {
+		const key = `${parentKey}-${pi}`;
+		const nested = resolveRefSchema(p, schemas);
+		const hasChildren = !!(nested?.properties) && depth < 3;
+		const isOpen = expanded.has(key);
+		rows.push(
+			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', depth, hasChildren, isOpen }
+		);
+		if (hasChildren && isOpen) {
+			const children = Object.entries(nested.properties).map(([k, v]) => ({ name: k, ...v }));
+			rows.push(...renderNestedProps(children, key, schemas, expanded, depth + 1));
+		}
+	});
+	return rows;
+}
+
 function PropsTable({ items, title }) {
 	if (!items || items.length === 0) return null;
 	return (
@@ -45,35 +92,9 @@ function SchemaView({ schema, schemas, name }) {
 	return <span className="text-muted">{schema.type || name || 'object'}</span>;
 }
 
-function schemaToTs(schema, schemas, indent = '', visited = new Set()) {
-	if (!schema) return 'unknown';
-	if (schema.$ref) {
-		const refName = schema.$ref.replace('#/components/schemas/', '');
-		if (visited.has(refName)) return refName.split('\\').pop();
-		visited.add(refName);
-		return schemaToTs(schemas[refName], schemas, indent, visited);
-	}
-	if (schema.type === 'array' && schema.items) return `${schemaToTs(schema.items, schemas, indent, visited)}[]`;
-	if (schema.type === 'object' && schema.properties) {
-		const props = Object.entries(schema.properties).map(([k, v]) => {
-			const req = (schema.required || []).includes(k);
-			return `${indent}  ${k}${req ? '' : '?'}: ${schemaToTs(v, schemas, indent + '  ', visited)};`;
-		});
-		return `{\n${props.join('\n')}\n${indent}}`;
-	}
-	const typeMap = { integer: 'number', number: 'number', string: 'string', boolean: 'boolean' };
-	return typeMap[schema.type] || 'unknown';
-}
-
 function ResponsesView({ responses, schemas, operationId }) {
 	if (!responses) return null;
-	const [copied, setCopied] = useState(null);
-	const toPascalCase = (str) => str ? str.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase()) : 'Response';
-	const copyTs = (code, schema) => {
-		const typeName = toPascalCase(operationId) + (code !== '200' ? code : '');
-		const ts = `type ${typeName} = ${schemaToTs(schema, schemas)};`;
-		navigator.clipboard.writeText(ts).then(() => { setCopied(code); setTimeout(() => setCopied(null), 2000); });
-	};
+	const [expanded, setExpanded] = useState(new Set());
 	const statusColor = (code) => code.startsWith('2') ? '#22c55e' : code.startsWith('4') ? '#f59e0b' : '#ef4444';
 
 	return (
@@ -90,16 +111,22 @@ function ResponsesView({ responses, schemas, operationId }) {
 							<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
 							<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
 							<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
-							{hasSchema && <button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8', textDecoration: 'none' }} onClick={() => copyTs(code, props)}>{copied === code ? 'Copied!' : 'Copy TS'}</button>}
 						</div>
 					);
 					if (properties) {
-						properties.forEach((p, pi) => {
+						const toggle = (key) => setExpanded(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
+						const allRows = renderNestedProps(properties, `p-${code}`, schemas, expanded);
+						allRows.forEach(r => {
+							const indent = r.depth * 1.25;
+							const isNested = r.depth > 1;
 							items.push(
-								<div key={`p-${code}-${pi}`} className="param-row">
-									<span className="param-name" style={{ paddingLeft: '1.25rem' }}>{p.name}</span>
-									<span className="param-type">{p.type || (p.$ref ? p.$ref.replace('#/components/schemas/', '') : '-')}</span>
-									<span className="param-desc">{p.description || '-'}</span>
+								<div key={r.key} className="param-row" style={r.hasChildren ? { cursor: 'pointer' } : {}} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
+									<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}) }}>
+										{r.hasChildren && <span style={{ display: 'inline-block', width: 12, fontSize: '0.625rem', color: '#94a3b8' }}>{r.isOpen ? '▼' : '▶'}</span>}
+										{r.name}
+									</span>
+									<span className="param-type">{r.type}</span>
+									<span className="param-desc" style={isNested ? { color: '#94a3b8' } : {}}>{r.desc}</span>
 								</div>
 							);
 						});
@@ -352,14 +379,10 @@ function Schemas({ selected, onSelect, onClose }) {
 								<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
 									{Object.entries(selected.schema.properties).map(([k, v], i) => {
 										const isRequired = (selected.schema.required || []).includes(k);
-										const refName = v.$ref ? v.$ref.replace('#/components/schemas/', '') : null;
-										const propType = v.type || (refName ? refName.split('\\').pop() : '-');
-										const isArray = v.type === 'array';
-										const arrayRef = isArray && v.items?.$ref ? v.items.$ref.replace('#/components/schemas/', '').split('\\').pop() : null;
 										return (
 											<div key={k} className="param-row">
 												<span className="param-name">{k}{isRequired && <span className="text-danger ms-1">*</span>}</span>
-												<span className="param-type">{isArray ? (arrayRef ? `${arrayRef}[]` : `${v.items?.type || 'any'}[]`) : propType}</span>
+												<span className="param-type">{resolveTypeName(v)}</span>
 												<span className="param-desc">{v.description || '-'}</span>
 											</div>
 										);
