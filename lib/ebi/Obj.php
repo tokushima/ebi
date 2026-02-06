@@ -46,7 +46,7 @@ class Obj implements \IteratorAggregate{
 	public function __construct(){
 		$c = get_class($this);
 		if(!isset(self::$_m[$c])){
-			self::$_m[$c] = \ebi\Annotation::get_class($c,'var',null,__CLASS__);
+			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',null,__CLASS__);
 		}
 	}
 	public function __call($n, $args){

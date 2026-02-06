@@ -598,7 +598,7 @@ class Flow{
 			}
 			foreach($r->getMethods(\ReflectionMethod::IS_PUBLIC) as $m){
 				if(!$m->isStatic() && substr($m->getName(),0,1) != '_'){
-					$auto_anon = \ebi\Annotation::get_method($r->getName(), $m->getName(), 'automap');
+					$auto_anon = \ebi\AttributeReader::get_method($r->getName(), $m->getName(), 'automap');
 					
 					if(is_array($auto_anon)){
 						$base_name = $auto_anon['name'] ?? $m->getName();

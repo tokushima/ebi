@@ -4,15 +4,15 @@ namespace ebi\Dt;
 /**
  * @var string $name
  * @var text $document
- * @var \ebi\Dt\DocParam[] $params
- * @var \ebi\Dt\DocParam $return
+ * @var \ebi\Dt\ParamInfo[] $params
+ * @var \ebi\Dt\ParamInfo $return
  * @var string $version
  */
-class DocInfo extends \ebi\Obj implements \ebi\Dt\DocOptIf{
+class DocInfo extends \ebi\Obj{
 	protected string $name = '';
 	protected string $document = '';
 	protected array $params = [];
-	protected ?\ebi\Dt\DocParam $return = null;
+	protected ?\ebi\Dt\ParamInfo $return = null;
 	protected string $version = '';
 	private array $opt = [];
 	
@@ -31,7 +31,7 @@ class DocInfo extends \ebi\Obj implements \ebi\Dt\DocOptIf{
 		[$summary] = explode(PHP_EOL,trim($this->document()));
 		return $summary;
 	}
-	public function add_params(\ebi\Dt\DocParam $p): void{
+	public function add_params(\ebi\Dt\ParamInfo $p): void{
 		$this->params[] = $p;
 	}
 	public function reset_params(array $new=[]): void{
@@ -40,11 +40,11 @@ class DocInfo extends \ebi\Obj implements \ebi\Dt\DocOptIf{
 	public function has_params(): bool{
 		return !empty($this->params);
 	}
-	public function param(): \ebi\Dt\DocParam{
+	public function param(): \ebi\Dt\ParamInfo{
 		if(!empty($this->params)){
 			return $this->params[0];
 		}
-		return new \ebi\Dt\DocParam('', '');
+		return new \ebi\Dt\ParamInfo('', '');
 	}
 		
 	public static function parse(string $name, string $src, int $docendpos=0): self{
@@ -77,13 +77,13 @@ class DocInfo extends \ebi\Obj implements \ebi\Dt\DocOptIf{
 			$doc = $src;
 		}
 		
-		$params = \ebi\Dt\DocParam::parse('param',$doc);
+		$params = \ebi\Dt\ParamInfo::parse('param',$doc);
 		
 		if(!empty($params)){
 			$info->params($params);
 		}
 		if(preg_match("/@return\s+([^\s]+)(.*)/",$doc,$m)){
-			$info->return(new \ebi\Dt\DocParam(
+			$info->return(new \ebi\Dt\ParamInfo(
 				'return',
 				$m[1],
 				$m[2]

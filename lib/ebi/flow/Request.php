@@ -49,7 +49,7 @@ class Request extends \ebi\Request{
 	protected function request_validation(array $doc_names=[]): array{
 		$doc_names = empty($doc_names) ? ['http_method','request'] : array_merge(['http_method','request'],$doc_names);
 		[,$method] = explode('::',$this->get_selected_pattern()['action']);
-		$ann = \ebi\Annotation::get_method(get_class($this), $method, $doc_names);
+		$ann = \ebi\AttributeReader::get_method(get_class($this), $method, $doc_names);
 		
 		if(isset($ann['http_method']['value']) && strtoupper($ann['http_method']['value']) != \ebi\Request::method()){
 			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
@@ -134,7 +134,7 @@ class Request extends \ebi\Request{
 		$this->_sess = new \ebi\Session($sess_name);
 		$this->_login_id = $sess_name.'_LOGIN_';
 
-		$this->_login_anon = \ebi\Annotation::get_class($this, 'login' ,null, __CLASS__);
+		$this->_login_anon = \ebi\AttributeReader::get_class($this, 'login' ,null, __CLASS__);
 		$this->request_validation();
 
 		if(isset($this->_selected_pattern['auth'])){

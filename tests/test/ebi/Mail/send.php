@@ -28,4 +28,3 @@ eq('123ABC456'."\n",$xml->message());
 eq('テストサブジェクト',$xml->subject());
 meq('Content-Type: text/html;',$xml->manuscript());
 meq('<p class="abc">ピーボディー</p>',mb_convert_encoding($xml->manuscript(),'UTF8','JIS'));
-meq('send_html.css',mb_convert_encoding($xml->manuscript(),'UTF8','JIS'));

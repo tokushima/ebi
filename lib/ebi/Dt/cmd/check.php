@@ -61,7 +61,7 @@ foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 
 $find_defined_classes = [];
 foreach(\ebi\Dt::classes() as $info){
-	$class_info = \ebi\Dt\Man::class_info($info['class']);
+	$class_info = \ebi\Dt\SourceAnalyzer::class_info($info['class']);
 	
 	if($class_info->has_opt('config_list')){
 		foreach($class_info->opt('config_list') as $info){
@@ -85,7 +85,7 @@ foreach(\ebi\Dt::classes() as $info){
 foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 	if(!isset($find_defined_classes[$class])){
 		try{
-			$class_info = \ebi\Dt\Man::class_info($class,true);
+			$class_info = \ebi\Dt\SourceAnalyzer::class_info($class,true);
 			
 			$find_defined_classes[$class] = [];
 			foreach($class_info->opt('config_list') as $info){
@@ -112,7 +112,7 @@ foreach(\ebi\Conf::get_defined_keys() as $class => $keys){
 \cmdman\Std::println_info('Mail:');
 \cmdman\Std::println_info(str_repeat('-',50));
 
-$template_list = \ebi\Dt\Man::mail_template_list();
+$template_list = \ebi\Dt\SourceAnalyzer::mail_template_list();
 $mail_check_result = [];
 $class_name_max_length = 0;
 foreach(\ebi\Dt::classes() as $class){
@@ -120,7 +120,7 @@ foreach(\ebi\Dt::classes() as $class){
 	
 	foreach($template_list as $mail_info){
 		if(preg_match('/[^\w\/_]'.preg_quote($mail_info->name(),'/').'/',$class_src)){
-			if(\ebi\Dt\Man::find_mail_doc($mail_info, $class_src)){
+			if(\ebi\Dt\SourceAnalyzer::find_mail_doc($mail_info, $class_src)){
 				$mail_check_result[] = [
 					$class['class'],
 					'['.$mail_info->opt('x_t_code').'] '.$mail_info->name(),

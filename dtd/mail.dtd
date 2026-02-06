@@ -1,20 +1,42 @@
 <?xml encoding="UTF-8"?>
 
-<!ELEMENT mail (summary?,subject?,(body|signature),html?)>
-<!ATTLIST mail
-  version CDATA #IMPLIED>
+<!ELEMENT mail (summary?,from?,to*,return_path?,reply_to?,subject,body,html?,attach*)>
 
 <!ELEMENT summary (#PCDATA)>
+<!ATTLIST mail version CDATA #IMPLIED>
+
+<!ELEMENT from EMPTY>
+<!ATTLIST from
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
+
+<!ELEMENT to EMPTY>
+<!ATTLIST to
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
+
+<!ELEMENT return_path EMPTY>
+<!ATTLIST return_path address CDATA #REQUIRED>
+
+<!ELEMENT reply_to EMPTY>
+<!ATTLIST reply_to
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
 
 <!ELEMENT subject (#PCDATA)>
 
 <!ELEMENT body (#PCDATA)>
-<!ATTLIST body
-  signature NMTOKEN #IMPLIED>
+<!ATTLIST body signature CDATA #IMPLIED>
 
 <!ELEMENT signature (#PCDATA)>
-  
-<!ELEMENT html EMPTY>
-<!ATTLIST html
-  src NMTOKEN #IMPLIED>
 
+<!ELEMENT html (media*)>
+<!ATTLIST html src CDATA #IMPLIED>
+
+<!ELEMENT media EMPTY>
+<!ATTLIST media src CDATA #REQUIRED>
+
+<!ELEMENT attach EMPTY>
+<!ATTLIST attach
+  src CDATA #REQUIRED
+  name CDATA #IMPLIED>

@@ -101,7 +101,7 @@ abstract class Dao extends \ebi\Obj{
 		if(isset(self::$_dao_[$this->_class_id_])){
 			return;
 		}
-		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);
+		$annotation = \ebi\AttributeReader::get_class($p,['readonly','table']);
 		$anon = [
 			null // con name
 			,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
@@ -936,7 +936,7 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public static function create_table(): bool{
 		$dao = new static();
-		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		$anon = \ebi\AttributeReader::get_class(get_class($dao),['table']);
 		
 		if(!self::$_co_anon_[get_class($dao)][2] && 
 			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)
@@ -957,7 +957,7 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public static function drop_table(): bool{
 		$dao = new static();
-		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		$anon = \ebi\AttributeReader::get_class(get_class($dao),['table']);
 		
 		if(!self::$_co_anon_[get_class($dao)][2] &&
 			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)

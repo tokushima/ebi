@@ -1,29 +1,51 @@
 <?php
 namespace ebi;
 
-class Mail{	
+class Mail{
 	private array $attach = [];
 	private array $media = [];
-	
+
 	private string $from = '';
 	private string $sender_name = '';
 	private string $return_path = '';
+	private string $reply_to = '';
+	private string $reply_to_name = '';
 	private array $to = [];
 	private array $cc = [];
 	private array $bcc = [];
 	private string $unsubscribe = '';
 	private array $header = [];
-	
+
 	private string $subject = '';
 	private string $message = '';
 	private string $html = '';
-	
+
+	private string $message_id = '';
+	private int $priority = 0;
+	private string $charset = 'iso-2022-jp';
+
 	private string $eol = "\n";
 	private array $boundary = ['mixed'=>'mixed','alternative'=>'alternative','related'=>'related'];
 
 	public function __construct(){
 		$this->boundary = ['mixed'=>'----=_Part_'.uniqid('mixed'),'alternative'=>'----=_Part_'.uniqid('alternative'),'related'=>'----=_Part_'.uniqid('related')];
 	}
+
+	/**
+	 * Generate Message-ID (lazy generation using from domain)
+	 */
+	private function generate_message_id(): string{
+		$domain = 'localhost';
+		if(!empty($this->from) && strpos($this->from, '@') !== false){
+			$domain = explode('@', $this->from)[1];
+		}
+		return sprintf('<%s.%s@%s>',
+			base_convert((string)intval(microtime(true) * 1000000), 10, 36),
+			bin2hex(random_bytes(8)),
+			$domain
+		);
+	}
+
 	/**
 	 * Set from address
 	 */
@@ -35,24 +57,36 @@ class Mail{
 			$this->return_path = $address;
 		}
 	}
+
 	/**
-	 * Set from-Address
+	 * Set to-Address
 	 */
 	public function to(string $address, ?string $name=''): void{
 		$this->to[$address] = $this->address($address,$name);
 	}
+
 	/**
-	 * Add to-Address
+	 * Add cc-Address
 	 */
 	public function cc(string $address, ?string $name=''): void{
 		$this->cc[$address] = $this->address($address,$name);
 	}
+
 	/**
 	 * Add bcc-Address
 	 */
 	public function bcc(string $address, ?string $name=''): void{
 		$this->bcc[$address] = $this->address($address,$name);
 	}
+
+	/**
+	 * Set Reply-To address
+	 */
+	public function reply_to(string $address, ?string $name=''): void{
+		$this->reply_to = $address;
+		$this->reply_to_name = $name ?? '';
+	}
+
 	/**
 	 * Set List-Unsubscribe
 	 */
@@ -63,41 +97,75 @@ class Mail{
 			$this->unsubscribe = sprintf('<mailto:%s>', $url);
 		}
 	}
+
 	/**
 	 * Set return-path-Address
 	 */
 	public function return_path(string $address): void{
 		$this->return_path = $address;
 	}
+
+	/**
+	 * Set Message-ID
+	 */
+	public function message_id(string $id): void{
+		if(strpos($id, '<') !== 0){
+			$id = '<'.$id.'>';
+		}
+		$this->message_id = $id;
+	}
+
+	/**
+	 * Set priority (1=High, 3=Normal, 5=Low)
+	 */
+	public function priority(int $level): void{
+		if($level >= 1 && $level <= 5){
+			$this->priority = $level;
+		}
+	}
+
+	/**
+	 * Set charset (iso-2022-jp or utf-8)
+	 */
+	public function charset(string $charset): void{
+		$charset = strtolower($charset);
+		if(in_array($charset, ['iso-2022-jp', 'utf-8'])){
+			$this->charset = $charset;
+		}
+	}
+
 	/**
 	 * Set subject
 	 */
 	public function subject(string $subject): void{
 		$this->subject = str_replace("\n","",str_replace(["\r\n","\r"],"\n",$subject));
 	}
+
 	/**
 	 * Set message body
 	 */
 	public function message(string $message): void{
 		$this->message = $message;
 	}
+
 	/**
 	 * Set HTML message body
 	 */
 	public function html(string $message): void{
 		$this->html = $message;
-		
-		if($this->message === null){
+
+		if($this->message === ''){
 			$this->message(strip_tags($message));
 		}
 	}
+
 	/**
 	 * Add headers
 	 */
 	public function header(string $name, string $val): void{
 		$this->header[$name] = $val;
 	}
-	
+
 	/**
 	 * Get message header
 	 */
@@ -105,12 +173,19 @@ class Mail{
 		if(empty($this->from) || empty($this->to)){
 			throw new \ebi\exception\RequiredException('from and to are required');
 		}
+		if(empty($this->message_id)){
+			$this->message_id = $this->generate_message_id();
+		}
 		$rtn = '';
-		
+
 		$rtn .= $this->line('MIME-Version: 1.0');
+		$rtn .= $this->line('Message-ID: '.$this->message_id);
 		$rtn .= $this->line('To: '.$this->implode_address($this->to));
 		$rtn .= $this->line('From: '.$this->address($this->from, $this->sender_name));
-		
+
+		if(!empty($this->reply_to)){
+			$rtn .= $this->line('Reply-To: '.$this->address($this->reply_to, $this->reply_to_name));
+		}
 		if(!empty($this->cc)){
 			$rtn .= $this->line('Cc: '.$this->implode_address($this->cc));
 		}
@@ -123,12 +198,21 @@ class Mail{
 		if(!empty($this->unsubscribe)){
 			$rtn .= $this->line('List-Unsubscribe: '.$this->unsubscribe);
 		}
+		if($this->priority > 0){
+			$rtn .= $this->line('X-Priority: '.$this->priority);
+			$importance = match($this->priority){
+				1, 2 => 'high',
+				4, 5 => 'low',
+				default => 'normal'
+			};
+			$rtn .= $this->line('Importance: '.$importance);
+		}
 		foreach($this->header as $n => $v){
 			$n = ucwords(str_replace('_','-',$n));
 			$rtn .= $this->line($n.': '.$v);
-		}		
+		}
 		$rtn .= $this->line('Date: '.date('D, d M Y H:i:s O',time()));
-		$rtn .= $this->line('Subject: '.$this->jis($this->subject));
+		$rtn .= $this->line('Subject: '.$this->encode_header($this->subject));
 
 		if(!empty($this->attach)){
 			$rtn .= $this->line(sprintf('Content-Type: multipart/mixed; boundary="%s"',$this->boundary['mixed']));
@@ -153,10 +237,10 @@ class Mail{
 				$send .= $this->line();
 			}
 		}
-		$send .= (!$is_html) ? (($is_attach) ? 
-			$this->meta('plain').$this->line() : '').$this->line($this->enc($this->message)) : 
+		$send .= (!$is_html) ? (($is_attach) ?
+			$this->meta('plain').$this->line() : '').$this->line($this->enc($this->message)) :
 			$this->alternative();
-		
+
 		if($is_attach){
 			foreach($this->attach as $attach){
 				$send .= $this->line('--'.$this->boundary['mixed']);
@@ -174,7 +258,7 @@ class Mail{
 		$send .= $this->line();
 		$send .= $this->line($this->enc($this->message));
 		$send .= $this->line('--'.$this->boundary['alternative']);
-		
+
 		if(empty($this->media)){
 			$send .= $this->meta('html');
 		}
@@ -186,7 +270,7 @@ class Mail{
 	private function related(): string{
 		$send = $this->line().$this->html;
 		$html = $this->html;
-		
+
 		foreach(array_keys($this->media) as $name){
 			$preg = '/(\s)(src|href)\s*=\s*(["\']?)'.preg_quote($name).'\3/';
 			$replace = sprintf('\1\2=\3cid:%s\3', md5($name));
@@ -212,7 +296,7 @@ class Mail{
 		}
 		return $send;
 	}
-	
+
 	/**
 	 * @param mixed $list (string|array)
 	 */
@@ -220,24 +304,38 @@ class Mail{
 		return trim(implode(','.$this->eol.' ',is_array($list) ? $list : [$list]));
 	}
 
-	private function jis(string $str): string{
+	/**
+	 * Encode header value (Subject, Name)
+	 */
+	private function encode_header(string $str): string{
+		if($this->charset === 'utf-8'){
+			return sprintf('=?UTF-8?B?%s?=', base64_encode($str));
+		}
 		return sprintf(
 			'=?ISO-2022-JP?B?%s?=',
 			base64_encode(mb_convert_encoding($str ?? '','JIS',mb_detect_encoding($str ?? '')))
 		);
 	}
 
+	/**
+	 * @deprecated Use encode_header instead
+	 */
+	private function jis(string $str): string{
+		return $this->encode_header($str);
+	}
+
 	private function meta(string $type): string{
-		return $this->line(
-			sprintf(
-				'Content-Type: %s; charset="iso-2022-jp"',
-				(($type == 'html') ? 'text/html' : 'text/plain'),
-				(($type == 'html') ? 'text/html' : 'text/plain')
-			)).
-			$this->line('Content-Transfer-Encoding: 7bit');
+		$content_type = ($type == 'html') ? 'text/html' : 'text/plain';
+		$transfer_encoding = ($this->charset === 'utf-8') ? 'base64' : '7bit';
+
+		return $this->line(sprintf('Content-Type: %s; charset="%s"', $content_type, $this->charset)).
+			$this->line('Content-Transfer-Encoding: '.$transfer_encoding);
 	}
 
 	private function enc(string $message): string{
+		if($this->charset === 'utf-8'){
+			return base64_encode($message);
+		}
 		return mb_convert_encoding($message ?? '','JIS',mb_detect_encoding($message ?? ''));
 	}
 
@@ -248,14 +346,16 @@ class Mail{
 	private function attach_string(array $list, string $id=''): string{
 		[$filename, $src, $type] = $list;
 		$send = '';
-		$send .= $this->line(sprintf('Content-Type: %s; name="%s"',(empty($type) ? 'application/octet-stream' : $type),$filename));
-		$send .= $this->line(sprintf('Content-Transfer-Encoding: base64'));
+		$encoded_filename = $this->encode_header($filename);
+		$send .= $this->line(sprintf('Content-Type: %s; name="%s"',(empty($type) ? 'application/octet-stream' : $type),$encoded_filename));
+		$send .= $this->line('Content-Transfer-Encoding: base64');
+		$send .= $this->line(sprintf('Content-Disposition: attachment; filename="%s"', $encoded_filename));
 		if(!empty($id)){
 			$send .= $this->line(sprintf('Content-ID: <%s>', $id));
 		}
 		$send .= $this->line();
 		$src = (string)$src;
-		
+
 		if(substr($src,0,1) == '@' && is_file(substr($src,1))){
 			$src = file_get_contents(substr($src,1));
 		}
@@ -264,7 +364,7 @@ class Mail{
 	}
 
 	private function address(string $address, ?string $name): string{
-		return '"'.(empty($name) ? $address : $this->jis($name)).'" <'.$address.'>';
+		return '"'.(empty($name) ? $address : $this->encode_header($name)).'" <'.$address.'>';
 	}
 
 	/**
@@ -275,9 +375,9 @@ class Mail{
 		unset($result['eol'], $result['boundary']);
 		return $result;
 	}
-	
+
 	/**
-	 * Get message 
+	 * Get message
 	 */
 	public function manuscript(bool $eol=true): string{
 		$pre = $this->eol;
@@ -287,7 +387,7 @@ class Mail{
 		$send = $this->message_header().$this->line().$this->body();
 		$this->bcc = $bcc;
 		$this->eol = $pre;
-		
+
 		return $send;
 	}
 
@@ -313,7 +413,7 @@ class Mail{
 			$header = $this->message_header();
 			$header = preg_replace('/'.$this->eol.'Subject: .+'.$this->eol.'/',"\n",$header);
 			$header = preg_replace('/'.$this->eol.'To: .+'.$this->eol.'/',"\n",$header);
-			mail($this->implode_address($this->to),$this->jis($this->subject),$this->body(),trim($header),'-f'.$this->from);
+			mail($this->implode_address($this->to),$this->encode_header($this->subject),$this->body(),trim($header),'-f'.$this->from);
 		}
 	}
 
@@ -333,12 +433,12 @@ class Mail{
 		 */
 		$resource_path = \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail'));
 		$path = \ebi\Util::path_absolute($resource_path,$template_path);
-		
+
 		if(!is_file($path)){
 			throw new \ebi\exception\InvalidArgumentException($template_path.' not found');
 		}
 		$xml = \ebi\Xml::extract(file_get_contents($path),'mail');
-		
+
 		try{
 			try{
 				$from = $xml->find_get('from');
@@ -352,20 +452,25 @@ class Mail{
 				$this->return_path($xml->find_get('return_path')->in_attr('address'));
 			}catch(\ebi\exception\NotFoundException $e){
 			}
-			
+			try{
+				$reply = $xml->find_get('reply_to');
+				$this->reply_to($reply->in_attr('address'), $reply->in_attr('name', ''));
+			}catch(\ebi\exception\NotFoundException $e){
+			}
+
 			/**
 			 * @param string $xtc_name xtc(x-template-code) query key
 			 */
 			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
 			$xtc = self::xtc($template_path);
 			$this->header['X-T-Code'] = $xtc;
-			
+
 			$bind_vars['t'] = new \ebi\FlowHelper();
 			$bind_vars['xtc'] = [$xtc_name=>$xtc];
-			
+
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
 			$template = new \ebi\Template();
-			
+
 			if(is_array($bind_vars) || is_object($bind_vars)){
 				foreach($bind_vars as $k => $v){
 					$template->vars($k,$v);
@@ -374,10 +479,10 @@ class Mail{
 			$body_xml = $xml->find_get('body');
 			$signature = $body_xml->in_attr('signature');
 			$signature_text = '';
-			
+
 			if(!empty($signature)){
 				$sig_path = \ebi\Util::path_absolute($resource_path,$signature);
-				
+
 				if(!is_file($sig_path)){
 					throw new \ebi\exception\InvalidArgumentException($signature.' not found');
 				}
@@ -387,7 +492,7 @@ class Mail{
 			$message = $template->get(\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text,$resource_path);
 			$this->message($message);
 			$this->subject($template->get($subject,$resource_path));
-			
+
 			try{
 				$html = $xml->find_get('html');
 				$html_path = \ebi\Util::path_absolute(
@@ -409,7 +514,7 @@ class Mail{
 				if(!is_file($file)){
 					throw new \ebi\exception\InvalidArgumentException($attach->in_attr('src').' invalid media');
 				}
-				$this->attach($attach->in_attr('name',$attach->in_attr('src')),file_get_contents($file));				
+				$this->attach($attach->in_attr('name',$attach->in_attr('src')),file_get_contents($file));
 			}
 			return $this;
 		}catch(\ebi\exception\NotFoundException $e){
