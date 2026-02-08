@@ -315,7 +315,7 @@ function Endpoints({ onSelect }) {
 							<div key={i} className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${e.op.deprecated ? 'opacity-50' : ''}`} onClick={() => onSelect(e)}>
 								<span className={`method-badge ${methodColors[e.method]}`}>{e.method}</span>
 								<code className="flex-grow-1">{e.path}</code>
-								<span className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>{e.op.summary}</span>
+								<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{e.op.summary}</span>
 								{e.op.deprecated && <span className="badge bg-danger">deprecated</span>}
 							</div>
 						))}
