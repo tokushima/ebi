@@ -216,6 +216,11 @@ HTML;
 
 		// ビルド済みのapp.jsを読み込む
 		$app_js = file_get_contents(__DIR__.'/Dt/assets/app.js');
+		$app_css = '';
+		if(is_file(__DIR__.'/Dt/assets/app.css')){
+			// ビルド済みのapp.cssを読み込む
+			$app_css = file_get_contents(__DIR__.'/Dt/assets/app.css');
+		}
 
 		echo <<<HTML
 <!DOCTYPE html>
@@ -273,6 +278,7 @@ HTML;
 		.hint-popup { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #1e293b; color: #f1f5f9; font-size: 0.6875rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 0.375rem; white-space: nowrap; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 		.hint-popup::before { content: ''; position: absolute; top: -4px; right: 10px; width: 8px; height: 8px; background: #1e293b; transform: rotate(45deg); }
 		.hint-wrap:hover .hint-popup { display: block; }
+		{$app_css}
 	</style>
 </head>
 <body class="bg-light">

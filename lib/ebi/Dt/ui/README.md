@@ -2,6 +2,11 @@
 
 Developer Tools の React UI コンポーネント。
 
+## 注意
+
+- `lib/ebi/Dt/assets/app.js` はビルド成果物です。直接編集しないでください。
+- 変更は `lib/ebi/Dt/ui/src/` 配下の TypeScript ソースを修正し、`npm run build` で反映します。
+
 ## 必要環境
 
 - Node.js 18+
@@ -22,4 +27,3 @@ npm run build
 ```
 
 ビルドが完了すると `../assets/app.js` が生成されます。
-
