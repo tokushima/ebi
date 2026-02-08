@@ -6,3 +6,4 @@ testman.phar
 /tests/work
 /tests/vendor
 node_modules
+data.sqlite3

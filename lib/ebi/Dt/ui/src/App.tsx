@@ -397,7 +397,7 @@ function Dashboard({ spec, onSelect }: { spec: OpenApiSpec; onSelect: (e: Endpoi
               >
                 <span className={`method-badge method-${e.method.toLowerCase()}`}>{e.method}</span>
                 <code className="flex-grow-1">{e.path}</code>
-                <span className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>{e.op.summary}</span>
+                <span className="text-muted small" style={{ whiteSpace: 'normal' }}>{e.op.summary}</span>
                 {e.op.deprecated && <span className="badge bg-danger">deprecated</span>}
               </div>
             ))}
