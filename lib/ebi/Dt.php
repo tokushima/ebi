@@ -181,8 +181,15 @@ HTML;
 	// === Render Methods ===
 
 	private function render_react_app(): void{
-		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec();
+		$openapi = new \ebi\Dt\OpenApi($this->entry);
+		$spec = $openapi->generate_spec(include_dev: true);
 		$spec_json = json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+		$webhooks = $openapi->get_webhooks();
+		$webhooks_json = json_encode($webhooks, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+		$all_tags = $openapi->get_all_tags();
+		$all_tags_json = json_encode($all_tags, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
 		$mail_templates = [];
 		foreach(\ebi\Dt\SourceAnalyzer::mail_template_list() as $info){
@@ -285,6 +292,8 @@ HTML;
 	<div id="root"></div>
 	<script>
 		window.spec = {$spec_json};
+		window.webhooks = {$webhooks_json};
+		window.allTags = {$all_tags_json};
 		window.mailTemplates = {$mail_json};
 		window.apiUrls = {$urls};
 		window.hasSmtpBlackhole = {$has_smtp_blackhole_json};

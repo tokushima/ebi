@@ -56,6 +56,16 @@ class SourceAnalyzer{
 		$info->set_opt('abstract',$r->isAbstract());
 		$info->set_opt('see_list',self::find_see($document));
 
+		// サーバー間通信エンドポイント（クラスレベル: DocBlockまたはAttribute）
+		if(preg_match('/@s2s/',$document)){
+			$info->set_opt('s2s',true);
+		}else{
+			$s2s_attr = \ebi\AttributeReader::get_class($r->getName(), 's2s');
+			if($s2s_attr !== null){
+				$info->set_opt('s2s',true);
+			}
+		}
+
 		self::find_merge_deprecate($info,$document);
 
 		$methods = $static_methods = [];
@@ -148,6 +158,10 @@ class SourceAnalyzer{
 						'hash',
 						($prop->isPublic() || !($anon[$name]['hash'] ?? true) === false)
 					);
+
+					if(!empty($anon[$name]['cond'])){
+						$properties[$name]->set_opt('cond', $anon[$name]['cond']);
+					}
 				}
 			}
 		}
@@ -368,12 +382,14 @@ class SourceAnalyzer{
 	private static function find_see(string $document): array{
 		$see = [];
 
-		if(preg_match_all("/@see\s+([\w\.\:\\\\]+.+)/",$document,$m)){
+		if(preg_match_all("/@see\s+(\S+)/",$document,$m)){
 			foreach($m[1] as $v){
 				$v = trim($v);
 
 				if(strpos($v,'://') !== false){
 					$see[$v] = ['type'=>'url','url'=>$v];
+				}else if($v[0] === '/'){
+					$see[$v] = ['type'=>'endpoint','path'=>$v];
 				}else if(strpos($v,'::') !== false){
 					[$see_class, $see_method] = explode('::',$v,2);
 					$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
@@ -426,6 +442,16 @@ class SourceAnalyzer{
 
 		if(!$info->is_version()){
 			$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
+		}
+
+		// サーバー間通信エンドポイント
+		if(preg_match('/@s2s/',$document)){
+			$info->set_opt('s2s',true);
+		}
+
+		// ログイン要件（表示用）
+		if(preg_match('/@login_required/',$document)){
+			$info->set_opt('login',true);
 		}
 
 		// HTTPメソッドの検出

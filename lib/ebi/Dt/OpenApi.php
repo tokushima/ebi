@@ -40,9 +40,12 @@ class OpenApi extends \ebi\flow\Request{
 	 * OpenAPI仕様を生成する
 	 */
 	private bool $envelope = false;
+	private array $webhooks = [];
+	private array $all_tags = [];
 
-	public function generate_spec(bool $envelope=false): array{
+	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
 		$this->envelope = $envelope;
+		$this->webhooks = [];
 		$map = \ebi\Flow::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
@@ -157,6 +160,32 @@ class OpenApi extends \ebi\flow\Request{
 						continue;
 					}
 
+					// @devエンドポイントの処理
+					if($m['mode'] === '@dev' && !$include_dev){
+						continue;
+					}
+
+					// @s2sエンドポイントはwebhookとして収集（メソッドまたはクラスのDocBlock）
+					$is_s2s = (isset($info) && $info->opt('s2s'));
+					if(!$is_s2s && isset($m['class'])){
+						try{
+							$class_info = \ebi\Dt\SourceAnalyzer::class_info($m['class']);
+							$is_s2s = !!$class_info->opt('s2s');
+						}catch(\Exception $e){
+						}
+					}
+					if($is_s2s){
+						$path = $this->convert_to_openapi_path($url_pattern);
+						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
+
+						$this->webhooks[] = [
+							'path' => $path,
+							'method' => strtoupper($http_method),
+							'op' => $operation,
+						];
+						continue;
+					}
+
 					$path = $this->convert_to_openapi_path($url_pattern);
 					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
 
@@ -176,15 +205,41 @@ class OpenApi extends \ebi\flow\Request{
 			$this->build_model_schema($class_info['class'], $schemas);
 		}
 
-		if(!empty($tags)){
-			$spec['tags'] = array_values($tags);
+		// 全タグを保存（DevTools UI用）
+		$this->all_tags = array_values($tags);
+
+		// pathsで使用されているタグのみを含める
+		$used_tags = [];
+		foreach($spec['paths'] as $methods){
+			foreach($methods as $op){
+				foreach($op['tags'] ?? [] as $tag_name){
+					$used_tags[$tag_name] = true;
+				}
+			}
+		}
+		if(!empty($used_tags)){
+			$spec['tags'] = array_values(array_filter($tags, fn($t) => isset($used_tags[$t['name']])));
+		}
+
+		// pathsから参照されているスキーマのみを含める
+		$used_refs = [];
+		$this->collect_refs($spec['paths'], $used_refs);
+		$resolved = [];
+		foreach($used_refs as $ref => $_){
+			$this->resolve_transitive_refs($ref, $schemas, $resolved);
+		}
+		$filtered_schemas = [];
+		foreach($schemas as $name => $schema){
+			if(isset($resolved[$name])){
+				$filtered_schemas[$name] = $schema;
+			}
 		}
 
 		// スキーマ名でソート
-		ksort($schemas);
+		ksort($filtered_schemas);
 
-		if(!empty($schemas)){
-			$spec['components']['schemas'] = $schemas;
+		if(!empty($filtered_schemas)){
+			$spec['components']['schemas'] = $filtered_schemas;
 		}
 
 		if($has_security){
@@ -203,6 +258,58 @@ class OpenApi extends \ebi\flow\Request{
 		}
 
 		return $spec;
+	}
+
+	/**
+	 * 配列内の$refを再帰的に収集
+	 */
+	private function collect_refs($data, array &$refs): void{
+		if(!is_array($data)){
+			return;
+		}
+		foreach($data as $key => $value){
+			if($key === '$ref' && is_string($value)){
+				$schema_name = str_replace('#/components/schemas/', '', $value);
+				$refs[$schema_name] = true;
+			}else if(is_array($value)){
+				$this->collect_refs($value, $refs);
+			}
+		}
+	}
+
+	/**
+	 * スキーマの依存を再帰的に解決
+	 */
+	private function resolve_transitive_refs(string $name, array &$schemas, array &$resolved): void{
+		if(isset($resolved[$name])){
+			return;
+		}
+		if(!isset($schemas[$name])){
+			return;
+		}
+		$resolved[$name] = true;
+
+		$child_refs = [];
+		$this->collect_refs($schemas[$name], $child_refs);
+		foreach($child_refs as $ref => $_){
+			$this->resolve_transitive_refs($ref, $schemas, $resolved);
+		}
+	}
+
+	/**
+	 * @s2sエンドポイント（Webhook）一覧を取得
+	 * generate_spec()を呼び出した後に使用する
+	 */
+	public function get_webhooks(): array{
+		return $this->webhooks;
+	}
+
+	/**
+	 * 全タグ一覧を取得（webhook含む）
+	 * generate_spec()を呼び出した後に使用する
+	 */
+	public function get_all_tags(): array{
+		return $this->all_tags;
 	}
 
 	/**
@@ -331,9 +438,24 @@ class OpenApi extends \ebi\flow\Request{
 		}
 
 		// authクラスのlogin_conditionメソッドからパラメータを取得
-		if(isset($m['auth'])){
+		$auth_class = $m['auth'] ?? null;
+
+		// set_auth_objectからauthクラスを検出
+		if(empty($auth_class) && isset($m['class'])){
 			try{
-				$auth_info = \ebi\Dt\SourceAnalyzer::method_info($m['auth'], 'login_condition', true, false);
+				$ref = new \ReflectionMethod($m['class'], '__construct');
+				$src = \ebi\Dt\SourceAnalyzer::method_src($ref);
+
+				if(preg_match('/set_auth_object\(\s*new\s+([\\\\\w]+)/', $src, $auth_match)){
+					$auth_class = $auth_match[1];
+				}
+			}catch(\ReflectionException $e){
+			}
+		}
+
+		if(!empty($auth_class)){
+			try{
+				$auth_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, 'login_condition', true, false);
 
 				if($auth_info->has_opt('requests')){
 					foreach($auth_info->opt('requests') as $param){
@@ -354,20 +476,46 @@ class OpenApi extends \ebi\flow\Request{
 		// レスポンス
 		$operation['responses'] = $this->build_responses($m, $info, $schemas);
 
-		// ログイン要件のチェック
-		if(isset($m['class'])){
-			$login_anon = \ebi\AttributeReader::get_class($m['class'], 'login');
-			if(!empty($login_anon)){
-				$has_security = true;
-				$operation['security'] = [['sessionAuth' => []]];
-
-				// 401レスポンスを追加
-				if(!isset($operation['responses']['401'])){
-					$operation['responses']['401'] = [
-						'description' => 'Unauthorized - Login required',
-					];
+		// ログイン要件のチェック（クラスのAttribute または メソッドの@login_required）
+		// do_loginはログイン処理自体なのでsecurity対象外
+		$is_login = false;
+		if(($m['method'] ?? '') !== 'do_login'){
+			if(isset($m['class'])){
+				$login_anon = \ebi\AttributeReader::get_class($m['class'], 'login');
+				if(!empty($login_anon)){
+					$is_login = true;
 				}
 			}
+			if(!$is_login && isset($info) && $info->opt('login')){
+				$is_login = true;
+			}
+		}
+		if($is_login){
+			$has_security = true;
+			$operation['security'] = [['sessionAuth' => []]];
+
+			// 401レスポンスを追加
+			if(!isset($operation['responses']['401'])){
+				$operation['responses']['401'] = [
+					'description' => 'Unauthorized - Login required',
+				];
+			}
+		}
+
+		// @see リンク
+		if(isset($info) && !empty($info->opt('see_list'))){
+			$see_list = [];
+			foreach($info->opt('see_list') as $key => $see){
+				$see_list[] = $see;
+			}
+			if(!empty($see_list)){
+				$operation['x-see'] = $see_list;
+			}
+		}
+
+		// mode
+		if(!empty($m['mode'])){
+			$operation['x-mode'] = $m['mode'];
 		}
 
 		// nullを除去
@@ -476,6 +624,7 @@ class OpenApi extends \ebi\flow\Request{
 			$schemas[$schema_name] = ['type' => 'object'];
 
 			$properties = [];
+			$join_tables = [];
 			if($class_info->has_opt('properties')){
 				foreach($class_info->opt('properties') as $prop){
 					// hash=>false のプロパティはスキップ
@@ -521,6 +670,38 @@ class OpenApi extends \ebi\flow\Request{
 
 					$properties[$prop->name()] = $prop_schema;
 				}
+
+				// cond（外部結合テーブル）- @参照を解決するため2パスで処理
+				$cond_map = [];
+				foreach($class_info->opt('properties') as $prop){
+					$cond = $prop->opt('cond');
+					if(!empty($cond)){
+						$cond_map[$prop->name()] = $cond;
+					}
+				}
+
+				foreach($cond_map as $prop_name => $cond){
+					// @参照を解決
+					$resolved = $cond;
+					if(str_starts_with($cond, '@')){
+						$ref_name = substr($cond, 1);
+						$resolved = $cond_map[$ref_name] ?? $cond;
+					}
+
+					if(preg_match('/\((.+)\)/', $resolved, $cond_match)){
+						$cond_tables = [];
+						foreach(explode(',', $cond_match[1]) as $cond_part){
+							$parts = explode('.', $cond_part, 3);
+							if(count($parts) >= 2){
+								$cond_tables[] = $parts[0];
+							}
+						}
+						if(!empty($cond_tables) && isset($properties[$prop_name])){
+							$properties[$prop_name]['x-join'] = implode(', ', $cond_tables);
+							$join_tables = array_merge($join_tables, $cond_tables);
+						}
+					}
+				}
 			}
 
 			$model_schema = ['type' => 'object'];
@@ -536,6 +717,30 @@ class OpenApi extends \ebi\flow\Request{
 			// Daoクラスかどうかを示すカスタムプロパティ
 			if(is_subclass_of($full_class_name, \ebi\Dao::class)){
 				$model_schema['x-dao'] = true;
+
+				$table_annotation = \ebi\AttributeReader::get_class($full_class_name, 'table');
+				if(!empty($table_annotation['name'])){
+					$model_schema['x-table'] = $table_annotation['name'];
+				}else{
+					// 親Daoクラスのテーブル名を探す（Dao.phpと同じロジック）
+					$table_class = $full_class_name;
+					$parent_class = get_parent_class($full_class_name);
+
+					while(true){
+						$ref = new \ReflectionClass($parent_class);
+						if(\ebi\Dao::class === $parent_class || $ref->isAbstract()){
+							break;
+						}
+						$table_class = $parent_class;
+						$parent_class = get_parent_class($parent_class);
+					}
+					$model_schema['x-table'] = \ebi\Util::camel2snake($table_class);
+				}
+
+				// 外部結合テーブル一覧
+				if(!empty($join_tables)){
+					$model_schema['x-joins'] = array_values(array_unique($join_tables));
+				}
 			}
 
 			$schemas[$schema_name] = $model_schema;
@@ -693,6 +898,12 @@ class OpenApi extends \ebi\flow\Request{
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
+
+					if(($data['attr'] ?? null) === 'a'){
+						$prop_schema = ['type' => 'array', 'items' => $prop_schema];
+					}else if(($data['attr'] ?? null) === 'h'){
+						$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];
+					}
 
 					if(!empty($data['summary'])){
 						if(isset($prop_schema['$ref'])){

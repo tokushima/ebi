@@ -4,12 +4,20 @@ import './index.css';
 
 // PHPから渡されるグローバル変数
 const spec = window.spec || {};
+const webhooks = window.webhooks || [];
+const allTagDefs = window.allTags || [];
 const mailTemplates = window.mailTemplates || [];
 const apiUrls = window.apiUrls || {};
 const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
 const appmode = window.appmode || '';
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
+
+const LockIcon = ({ size = 14 }) => (
+	<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Login required">
+		<rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+	</svg>
+);
 
 function resolveTypeName(v) {
 	if (!v) return '-';
@@ -93,48 +101,143 @@ function SchemaView({ schema, schemas, name }) {
 	return <span className="text-muted">{schema.type || name || 'object'}</span>;
 }
 
+function refToShortName(refName) {
+	return refName.replace('#/components/schemas/', '').split('\\').pop();
+}
+
+function schemaToTs(schema, schemas, indent = '\t', refs = new Set()) {
+	if (!schema) return 'unknown';
+	if (schema.type === 'array' && schema.items) return schemaToTs(schema.items, schemas, indent, refs) + '[]';
+	if (schema.$ref) {
+		const name = refToShortName(schema.$ref);
+		refs.add(schema.$ref.replace('#/components/schemas/', ''));
+		return name;
+	}
+	if (schema.allOf?.[0]?.$ref) {
+		const name = refToShortName(schema.allOf[0].$ref);
+		refs.add(schema.allOf[0].$ref.replace('#/components/schemas/', ''));
+		return name;
+	}
+	if (schema.properties) {
+		const required = schema.required || [];
+		const lines = Object.entries(schema.properties).map(([key, prop]) => {
+			const opt = required.includes(key) ? '' : '?';
+			const type = schemaToTs(prop, schemas, indent + '\t', refs);
+			return `${indent}${key}${opt}: ${type};`;
+		});
+		return `{\n${lines.join('\n')}\n${indent.slice(1)}}`;
+	}
+	if (schema.additionalProperties) return `Record<string, ${schemaToTs(schema.additionalProperties, schemas, indent, refs)}>`;
+	if (schema.enum) return schema.enum.map(e => typeof e === 'string' ? `'${e}'` : e).join(' | ');
+	switch (schema.type) {
+		case 'string': return 'string';
+		case 'integer': case 'number': return 'number';
+		case 'boolean': return 'boolean';
+		default: return 'unknown';
+	}
+}
+
+function generateRefType(refKey, schemas, generated = new Set()) {
+	if (generated.has(refKey)) return '';
+	generated.add(refKey);
+	const schema = schemas?.[refKey];
+	if (!schema?.properties) return '';
+	const name = refKey.split('\\').pop();
+	const refs = new Set();
+	const required = schema.required || [];
+	const lines = Object.entries(schema.properties).map(([key, prop]) => {
+		const opt = required.includes(key) ? '' : '?';
+		const type = schemaToTs(prop, schemas, '\t', refs);
+		return `\t${key}${opt}: ${type};`;
+	});
+	let result = `type ${name} = {\n${lines.join('\n')}\n};`;
+	for (const dep of refs) {
+		const depType = generateRefType(dep, schemas, generated);
+		if (depType) result += '\n\n' + depType;
+	}
+	return result;
+}
+
+function generateResponseTypes(responses, schemas, operationId) {
+	const lines = [];
+	const typeName = operationId ? operationId.charAt(0).toUpperCase() + operationId.slice(1) : 'Response';
+	const allRefs = new Set();
+	Object.entries(responses).forEach(([code, resp]) => {
+		const schema = resp.content?.['application/json']?.schema;
+		if (!schema) return;
+		const suffix = code.startsWith('2') ? '' : `_${code}`;
+		const refs = new Set();
+		const ts = schemaToTs(schema, schemas, '\t', refs);
+		lines.push(`type ${typeName}${suffix} = ${ts};`);
+		refs.forEach(r => allRefs.add(r));
+	});
+	const generated = new Set();
+	for (const ref of allRefs) {
+		const refType = generateRefType(ref, schemas, generated);
+		if (refType) lines.push(refType);
+	}
+	return lines.join('\n\n');
+}
+
 function ResponsesView({ responses, schemas, operationId }) {
 	if (!responses) return null;
 	const [expanded, setExpanded] = useState(new Set());
+	const [showTs, setShowTs] = useState(false);
+	const [copied, setCopied] = useState(false);
 	const statusColor = (code) => code.startsWith('2') ? '#22c55e' : code.startsWith('4') ? '#f59e0b' : '#ef4444';
+	const tsCode = useMemo(() => generateResponseTypes(responses, schemas, operationId), [responses, schemas, operationId]);
+
+	const handleCopy = () => {
+		navigator.clipboard.writeText(tsCode).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
+	};
 
 	return (
 		<section>
-			<div className="section-label">Responses</div>
-			<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-				{Object.entries(responses).flatMap(([code, resp], idx) => {
-					const hasSchema = !!resp.content?.['application/json']?.schema;
-					const props = hasSchema ? resp.content['application/json'].schema : null;
-					const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
-					const items = [];
-					items.push(
-						<div key={`h-${code}`} className="resp-header" style={{ gridColumn: '1 / -1', borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
-							<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
-							<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
-							<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
-						</div>
-					);
-					if (properties) {
-						const toggle = (key) => setExpanded(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
-						const allRows = renderNestedProps(properties, `p-${code}`, schemas, expanded);
-						allRows.forEach(r => {
-							const indent = r.depth * 1.25;
-							const isNested = r.depth > 1;
-							items.push(
-								<div key={r.key} className="param-row" style={r.hasChildren ? { cursor: 'pointer' } : {}} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
-									<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}) }}>
-										{r.hasChildren && <span style={{ display: 'inline-block', width: 12, fontSize: '0.625rem', color: '#94a3b8' }}>{r.isOpen ? '▼' : '▶'}</span>}
-										{r.name}
-									</span>
-									<span className="param-type">{r.type}</span>
-									<span className="param-desc" style={isNested ? { color: '#94a3b8' } : {}}>{r.desc}</span>
-								</div>
-							);
-						});
-					}
-					return items;
-				})}
+			<div className="d-flex align-items-center gap-2">
+				<div className="section-label" style={{ marginBottom: 0 }}>Responses</div>
+				{tsCode && <button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem' }} onClick={() => setShowTs(!showTs)}>{showTs ? 'Schema' : 'TypeScript'}</button>}
 			</div>
+			{showTs ? (
+				<div className="mt-2" style={{ position: 'relative' }}>
+					<button className="btn btn-sm" style={{ position: 'absolute', top: 8, right: 8, fontSize: '0.6875rem', color: '#94a3b8', background: 'transparent', border: '1px solid #475569', borderRadius: 4, padding: '2px 8px' }} onClick={handleCopy}>{copied ? 'Copied!' : 'Copy'}</button>
+					<pre className="code-block p-3 mb-0" style={{ borderRadius: '0.5rem' }}>{tsCode}</pre>
+				</div>
+			) : (
+				<div className="param-grid mt-2" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+					{Object.entries(responses).flatMap(([code, resp], idx) => {
+						const hasSchema = !!resp.content?.['application/json']?.schema;
+						const props = hasSchema ? resp.content['application/json'].schema : null;
+						const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
+						const items = [];
+						items.push(
+							<div key={`h-${code}`} className="resp-header" style={{ gridColumn: '1 / -1', borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
+								<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
+								<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
+								<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
+							</div>
+						);
+						if (properties) {
+							const toggle = (key) => setExpanded(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
+							const allRows = renderNestedProps(properties, `p-${code}`, schemas, expanded);
+							allRows.forEach(r => {
+								const indent = r.depth * 1.25;
+								const isNested = r.depth > 1;
+								items.push(
+									<div key={r.key} className="param-row" style={r.hasChildren ? { cursor: 'pointer' } : {}} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
+										<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}) }}>
+											{r.hasChildren && <span style={{ display: 'inline-block', width: 12, fontSize: '0.625rem', color: '#94a3b8' }}>{r.isOpen ? '▼' : '▶'}</span>}
+											{r.name}
+										</span>
+										<span className="param-type">{r.type}</span>
+										<span className="param-desc" style={isNested ? { color: '#94a3b8' } : {}}>{r.desc}</span>
+									</div>
+								);
+							});
+						}
+						return items;
+					})}
+				</div>
+			)}
 		</section>
 	);
 }
@@ -223,7 +326,68 @@ function TryItPanel({ endpoint, op, envelope }) {
 	);
 }
 
-function EndpointModal({ endpoint, schemas, envelope, onClose }) {
+function findEndpointByPath(seePath) {
+	const paths = spec.paths || {};
+	const normalized = '/' + seePath.replace(/^\//, '');
+	// パス完全一致
+	for (const [path, methods] of Object.entries(paths)) {
+		if (path === normalized) {
+			const method = Object.keys(methods)[0];
+			return { path, method: method.toUpperCase(), op: methods[method] };
+		}
+	}
+	// operationId（name）一致
+	const name = seePath.replace(/^\//, '');
+	for (const [path, methods] of Object.entries(paths)) {
+		for (const [method, op] of Object.entries(methods)) {
+			if (op.operationId === name) {
+				return { path, method: method.toUpperCase(), op };
+			}
+		}
+	}
+	// 末尾セグメント一致 (例: "auth_token" → "/member/auth_token")
+	for (const [path, methods] of Object.entries(paths)) {
+		if (path.endsWith('/' + name)) {
+			const method = Object.keys(methods)[0];
+			return { path, method: method.toUpperCase(), op: methods[method] };
+		}
+	}
+	return null;
+}
+
+function SeeLinks({ seeList, onNavigate }) {
+	if (!seeList || seeList.length === 0) return null;
+	return (
+		<div className="d-flex align-items-center gap-2 mt-2 flex-wrap">
+			<span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>See:</span>
+			{seeList.map((see, i) => {
+				if (see.type === 'url') {
+					return <a key={i} href={see.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem' }}>{see.url}</a>;
+				}
+				if (see.type === 'endpoint') {
+					const target = findEndpointByPath(see.path);
+					if (target && onNavigate) {
+						return <a key={i} href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.path}</a>;
+					}
+					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.path}</span>;
+				}
+				if (see.type === 'method') {
+					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.class}::{see.method}</span>;
+				}
+				if (see.type === 'class') {
+					const target = findEndpointByPath(see.class);
+					if (target && onNavigate) {
+						return <a key={i} href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.class}</a>;
+					}
+					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.class}</span>;
+				}
+				return null;
+			})}
+		</div>
+	);
+}
+
+function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null }) {
 	const [showTry, setShowTry] = useState(false);
 	const op = endpoint.op;
 	const method = endpoint.method.toUpperCase();
@@ -246,9 +410,12 @@ function EndpointModal({ endpoint, schemas, envelope, onClose }) {
 					</div>}
 					<div className="d-flex align-items-center gap-2 mt-2">
 						{op.tags?.map(t => <span key={t} className="badge" style={{ background: '#e2e8f0', color: '#475569', fontWeight: 500 }}>{t}</span>)}
+						{op.security?.length > 0 && <LockIcon />}
+						{op['x-mode'] === '@dev' && <span className="badge bg-warning text-dark" style={{ fontSize: '0.6rem' }}>DEV</span>}
 						{op.deprecated && <span className="badge bg-danger">deprecated</span>}
 						{op.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8', marginLeft: 'auto' }}>{op.operationId}</code>}
 					</div>
+					<SeeLinks seeList={op['x-see']} onNavigate={onNavigate} />
 				</div>
 				<div className="modal-panel-body">
 					{op.parameters && op.parameters.length > 0 && <section>
@@ -286,21 +453,41 @@ function Endpoints({ onSelect }) {
 	const endpoints = useMemo(() => {
 		const result = [];
 		for (const [path, methods] of Object.entries(spec.paths || {})) {
-			for (const [method, op] of Object.entries(methods)) result.push({ method: method.toUpperCase(), path, op });
+			for (const [method, op] of Object.entries(methods)) {
+				if ((op.tags || []).includes('Dt')) continue;
+				result.push({ method: method.toUpperCase(), path, op });
+			}
 		}
 		return result;
 	}, []);
-	const tags = useMemo(() => (spec.tags || []).map(t => ({ name: t.name, label: t['x-displayName'] || t.name })), []);
+	const tags = useMemo(() => (spec.tags || []).filter(t => t.name !== 'Dt').map(t => ({ name: t.name, label: t['x-displayName'] || t.name })), []);
 	const filtered = endpoints.filter(e => {
 		const s = search.toLowerCase();
 		return (!s || e.path.toLowerCase().includes(s) || (e.op.summary || '').toLowerCase().includes(s)) && (!tagFilter || (e.op.tags || []).includes(tagFilter));
 	});
-	const grouped = filtered.reduce((acc, e) => { const tag = e.op.tags?.[0] || 'Other'; if (!acc[tag]) acc[tag] = []; acc[tag].push(e); return acc; }, {});
+	const normalFiltered = filtered.filter(e => e.op['x-mode'] !== '@dev');
+	const devFiltered = filtered.filter(e => e.op['x-mode'] === '@dev');
+	const grouped = normalFiltered.reduce((acc, e) => { const tag = e.op.tags?.[0] || 'Other'; if (!acc[tag]) acc[tag] = []; acc[tag].push(e); return acc; }, {});
+	const devGrouped = devFiltered.reduce((acc, e) => { const tag = e.op.tags?.[0] || 'Other'; if (!acc[tag]) acc[tag] = []; acc[tag].push(e); return acc; }, {});
+	const methodOrder = (e) => { if (e.op.deprecated) return 3; if (e.method === 'GET') return 0; if (e.method === 'POST') return 1; return 2; };
+	Object.values(grouped).forEach(items => items.sort((a, b) => methodOrder(a) - methodOrder(b)));
+	Object.values(devGrouped).forEach(items => items.sort((a, b) => methodOrder(a) - methodOrder(b)));
+
+	const EndpointRow = ({ e, isDev = false }) => (
+		<div className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${e.op.deprecated ? 'opacity-50' : ''}`} onClick={() => onSelect(e)}>
+			<span className={`method-badge ${methodColors[e.method]}`}>{e.method}</span>
+			<code className="flex-grow-1">{e.path}</code>
+			<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{e.op.summary}</span>
+			{e.op.security?.length > 0 && <LockIcon />}
+			{isDev && <span className="badge bg-warning text-dark" style={{ fontSize: '0.6rem' }}>DEV</span>}
+			{e.op.deprecated && <span className="badge bg-danger">deprecated</span>}
+		</div>
+	);
 
 	return (
 		<div>
 			<div className="mb-4">
-				<h1 className="h3">{spec.info?.title || 'API'}</h1>
+				<h1 className="h3">{spec.info?.title || 'API'} <span className="text-muted fw-normal fs-6">({filtered.length}/{endpoints.length})</span></h1>
 				{spec.info?.description && <p className="text-muted">{spec.info.description}</p>}
 				<span className="badge bg-primary">v{spec.info?.version}</span>
 			</div>
@@ -312,17 +499,24 @@ function Endpoints({ onSelect }) {
 				<div key={tag} className="card mb-4">
 					<div className="card-header fw-semibold">{tags.find(t => t.name === tag)?.label || tag}</div>
 					<div className="list-group list-group-flush">
-						{items.map((e, i) => (
-							<div key={i} className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${e.op.deprecated ? 'opacity-50' : ''}`} onClick={() => onSelect(e)}>
-								<span className={`method-badge ${methodColors[e.method]}`}>{e.method}</span>
-								<code className="flex-grow-1">{e.path}</code>
-								<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{e.op.summary}</span>
-								{e.op.deprecated && <span className="badge bg-danger">deprecated</span>}
-							</div>
-						))}
+						{items.map((e, i) => <EndpointRow key={i} e={e} />)}
 					</div>
 				</div>
 			))}
+			{Object.keys(devGrouped).length > 0 && <>
+				<h2 className="h5 mt-5 mb-3 d-flex align-items-center gap-2">
+					<span className="badge bg-warning text-dark">DEV</span> Development Endpoints
+					<span className="text-muted fw-normal fs-6">({devFiltered.length})</span>
+				</h2>
+				{Object.entries(devGrouped).map(([tag, items]) => (
+					<div key={`dev-${tag}`} className="card mb-4" style={{ borderColor: '#ffc107' }}>
+						<div className="card-header fw-semibold" style={{ background: '#fff8e1' }}>{tags.find(t => t.name === tag)?.label || tag}</div>
+						<div className="list-group list-group-flush">
+							{items.map((e, i) => <EndpointRow key={i} e={e} isDev />)}
+						</div>
+					</div>
+				))}
+			</>}
 		</div>
 	);
 }
@@ -383,6 +577,11 @@ function Schemas({ selected, onSelect, onClose }) {
 							{selected.schema.description && <div className="mt-2" style={{ fontSize: '0.8125rem', color: '#64748b', whiteSpace: 'pre-wrap' }}>{selected.schema.description}</div>}
 						</div>
 						<div className="modal-panel-body">
+							{selected.schema['x-table'] && <section>
+								<div className="section-label">Table</div>
+								<code style={{ fontSize: '0.875rem' }}>{selected.schema['x-table']}</code>
+								{selected.schema['x-joins']?.length > 0 && <div className="mt-1" style={{ fontSize: '0.75rem', color: '#64748b' }}>Joins: {selected.schema['x-joins'].map((t, i) => <code key={i} style={{ fontSize: '0.75rem', marginRight: 4 }}>{t}</code>)}</div>}
+							</section>}
 							{selected.schema.properties && <section>
 								<div className="section-label">Properties</div>
 								<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
@@ -392,7 +591,7 @@ function Schemas({ selected, onSelect, onClose }) {
 											<div key={k} className="param-row">
 												<span className="param-name">{k}{isRequired && <span className="text-danger ms-1">*</span>}</span>
 												<span className="param-type">{resolveTypeName(v)}</span>
-												<span className="param-desc">{v.description || '-'}</span>
+												<span className="param-desc">{v['x-join'] && <span className="badge" style={{ background: '#ede9fe', color: '#7c3aed', fontWeight: 500, fontSize: '0.625rem', marginRight: 4 }}>{v['x-join']}</span>}{v.description || (v['x-join'] ? '' : '-')}</span>
 											</div>
 										);
 									})}
@@ -562,6 +761,55 @@ function MailPage() {
 	);
 }
 
+function WebhooksPage() {
+	const [search, setSearch] = useState('');
+	const [tagFilter, setTagFilter] = useState('');
+	const [selected, setSelected] = useState(null);
+
+	const allTags = useMemo(() => allTagDefs.map(t => ({ name: t.name, label: t['x-displayName'] || t.name })), []);
+	const tags = useMemo(() => {
+		const tagSet = new Set();
+		webhooks.forEach(w => { const tag = w.op?.tags?.[0]; if (tag) tagSet.add(tag); });
+		return allTags.filter(t => tagSet.has(t.name));
+	}, [allTags]);
+
+	const filtered = webhooks.filter(w => {
+		const s = search.toLowerCase();
+		const tag = w.op?.tags?.[0] || '';
+		return (!s || w.path.toLowerCase().includes(s) || (w.op?.summary || '').toLowerCase().includes(s)) && (!tagFilter || tag === tagFilter);
+	});
+
+	const grouped = filtered.reduce((acc, w) => { const tag = w.op?.tags?.[0] || 'Other'; if (!acc[tag]) acc[tag] = []; acc[tag].push(w); return acc; }, {});
+
+	return (
+		<div>
+			<h1 className="h3 mb-4">Webhooks <span className="badge bg-secondary fw-normal" style={{ fontSize: '0.65rem', verticalAlign: 'middle' }}>S2S</span> <span className="text-muted fw-normal fs-6">({filtered.length}/{webhooks.length})</span></h1>
+			<div className="row g-3 mb-4">
+				<div className="col-md-8"><input type="text" className="form-control" placeholder="Search webhooks..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+				<div className="col-md-4"><select className="form-select" value={tagFilter} onChange={e => setTagFilter(e.target.value)}><option value="">All Tags</option>{tags.map(t => <option key={t.name} value={t.name}>{t.label}</option>)}</select></div>
+			</div>
+			{Object.entries(grouped).map(([tag, items]) => (
+				<div key={tag} className="card mb-4">
+					<div className="card-header fw-semibold">{allTags.find(t => t.name === tag)?.label || tag}</div>
+					<div className="list-group list-group-flush">
+						{items.map((w, i) => (
+							<div key={i} className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${w.op?.deprecated ? 'opacity-50' : ''}`} onClick={() => setSelected(w)}>
+								<span className={`method-badge ${methodColors[w.method] || ''}`}>{w.method}</span>
+								<code className="flex-grow-1">{w.path}</code>
+								<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{w.op?.summary}</span>
+								{w.op?.security?.length > 0 && <LockIcon />}
+								{w.op?.deprecated && <span className="badge bg-danger">deprecated</span>}
+							</div>
+						))}
+					</div>
+				</div>
+			))}
+			{filtered.length === 0 && <div className="alert alert-info">No webhooks found.</div>}
+			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={false} onClose={() => setSelected(null)} onNavigate={setSelected} />}
+		</div>
+	);
+}
+
 function ConfigPage() {
 	const [configs, setConfigs] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -681,6 +929,7 @@ function App() {
 					<span className="navbar-brand fw-bold">DevTools</span>{appmode && <span className="badge bg-info text-dark ms-2">{appmode}</span>}
 					<div className="navbar-nav me-auto flex-row gap-2">
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
+						{webhooks.length > 0 && <button className={`nav-link btn btn-link ${page === 'webhooks' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('webhooks')}>Webhooks</button>}
 						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
 						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
@@ -702,11 +951,12 @@ function App() {
 			</nav>
 			<main className="container py-4">
 				{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
+				{page === 'webhooks' && <WebhooksPage />}
 				{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
 				{page === 'config' && <ConfigPage />}
 				{page === 'mail' && <MailPage />}
 			</main>
-			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} />}
+			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />}
 		</div>
 	);
 }

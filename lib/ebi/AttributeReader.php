@@ -119,6 +119,12 @@ class AttributeReader{
 						$result[$name] = array_filter(get_object_vars($inst), fn($v) => $v !== null);
 					}
 					break;
+				case 's2s':
+					$attrs = $r->getAttributes(\ebi\Attribute\S2s::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+					}
+					break;
 			}
 		}
 
