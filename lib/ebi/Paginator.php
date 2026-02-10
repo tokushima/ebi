@@ -15,7 +15,7 @@ class Paginator implements \IteratorAggregate{
 	public function getIterator(): \Traversable{
 		return new \ArrayIterator([
 			'current'=>$this->current(),
-			'pages'=>ceil($this->total() / $this->limit()),
+			'pages'=>$this->pages(),
 			'limit'=>$this->limit(),
 			'offset'=>$this->offset(),
 			'total'=>$this->total(),
@@ -39,7 +39,7 @@ class Paginator implements \IteratorAggregate{
 		$this->vars[$key] = $value;
 	}
 	/**
-	 * 現在位置
+	 * 現在のページ番号
 	 * @return mixed
 	 */
 	public function current(?int $value=null){
@@ -51,7 +51,7 @@ class Paginator implements \IteratorAggregate{
 		return $this->current;
 	}
 	/**
-	 * 終了位置
+	 * １ページの最大件数
 	 */
 	public function limit(?int $value=null): int{
 		if(isset($value)) $this->limit = intval($value);
@@ -65,7 +65,7 @@ class Paginator implements \IteratorAggregate{
 		return $this->offset;
 	}
 	/**
-	 * 最後のソートキー
+	 * ソートキー
 	 * @param mixed $value string|array
 	 */
 	public function order($value=null, bool $asc=true): ?string{
@@ -81,7 +81,14 @@ class Paginator implements \IteratorAggregate{
 		return !empty($this->order);
 	}
 	/**
-	 * 合計
+	 * 合計ページ数
+	 */
+	public function pages(): int{
+		return ceil($this->total() / $this->limit());
+	}
+
+	/**
+	 * 合計件数
 	 */
 	public function total(?int $value=null): int{
 		if(isset($value)){
