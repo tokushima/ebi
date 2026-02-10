@@ -314,14 +314,14 @@ class Xml implements \IteratorAggregate{
 	/**
 	 * タグの検出
 	 */
-	public static function extract(?string $plain=null, ?string $name=null): self{
+	public static function extract(?string $plain=null, ?string $name=null, int $offset=0): self{
 		if(!empty($name)){
 			$names = explode('/',$name,2);
 			$name = $names[0];
 		}
 		
 		$x = null;
-		if(self::find_extract($x,$plain,$name)){
+		if(self::find_extract($x,$plain,$name,null,$offset)){
 			if(isset($names[1])){
 				try{
 					return $x->find_get($names[1]);
@@ -335,47 +335,69 @@ class Xml implements \IteratorAggregate{
 	}
 
 	
-	private static function find_extract(&$x, $plain, $name=null, $v_xml=null): bool{
+	private static function find_extract(&$x, $plain, $name=null, $v_xml=null, int $offset=0): bool{
 		$plain = (string)$plain;
 		$name = (string)$name;
+		$offset = max(0, $offset);
 		$m = [];
 		
-		if(empty($name) && preg_match("/<([\w\:\-]+)[\s][^>]*?>|<([\w\:\-]+)>/is",$plain,$m)){
-			$name = str_replace(["\r\n","\r","\n"],'',(empty($m[1]) ? $m[2] : $m[1]));
+		if(empty($name) && preg_match("/<([\w\:\-]+)[\s][^>]*?>|<([\w\:\-]+)>/is",$plain,$m,PREG_OFFSET_CAPTURE,$offset)){
+			$name = str_replace(["\r\n","\r","\n"],'',(empty($m[1][0]) ? $m[2][0] : $m[1][0]));
+			$offset = $m[0][1];
 		}
 		$q_name = preg_quote($name,'/');
-		$parse = $matches = [];
-		if(!preg_match("/<(".$q_name.")([\s][^>]*?)>|<(".$q_name.")>|<(".$q_name.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
+		$parse = [];
+		if(!preg_match("/<(".$q_name.")(\\s[^>]*?)?\\s*\\/?>/is",$plain,$parse,PREG_OFFSET_CAPTURE,$offset)){
 			return false;
 		}
 		$x = new self();
 		$x->pos = $parse[0][1];
-		$balance = 0;
 		$attrs = '';
 
 		if(substr($parse[0][0],-2) == '/>'){
 			$x->name = $parse[1][0];
 			$x->plain = empty($v_xml) ? $parse[0][0] : preg_replace('/'.preg_quote(substr($v_xml,0,-1).' />','/').'/',$v_xml,$parse[0][0],1);
-			$attrs = $parse[2][0];
-		}else if(preg_match_all("/<[\/]{0,1}".$q_name."[\s][^>]*[^\/]>|<[\/]{0,1}".$q_name."[\s]*>/is",$plain,$matches,PREG_OFFSET_CAPTURE,$x->pos)){
-			foreach($matches[0] as $arg){
-				$balance += (($arg[0][1] == '/') ? -1 : 1);
-				
-				if($balance <= 0 &&
-					preg_match("/^(<(".$q_name.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
-						substr($plain,$x->pos,($arg[1] + strlen($arg[0]) - $x->pos)),
-						$m
-					)
-				){
-					$x->plain = $m[0];
-					$x->name = $m[2];
-					$x->value = ($m[4] === '' || $m[4] === null) ? null : $m[4];
-					$attrs = $m[3];
+			$attrs = $parse[2][0] ?? '';
+		}else{
+			$depth = 0;
+			$search_pos = $x->pos;
+			$re = "/<\\/?".$q_name."(?:\\s[^>]*?)?>/is";
+			$open_len = strlen($parse[0][0]);
+			$open_end = $x->pos + $open_len;
+			$attrs = $parse[2][0] ?? '';
+			$found = false;
+
+			while(preg_match($re,$plain,$m,PREG_OFFSET_CAPTURE,$search_pos)){
+				$tag_text = $m[0][0];
+				$tag_pos = $m[0][1];
+				$search_pos = $tag_pos + strlen($tag_text);
+
+				if($tag_pos === $x->pos){
+					$depth = 1;
+					continue;
+				}
+				if(str_starts_with($tag_text,'</')){
+					$depth--;
+				}else if(substr($tag_text,-2) != '/>'){
+					$depth++;
+				}
+				if($depth === 0){
+					$x->plain = substr($plain,$x->pos,($tag_pos + strlen($tag_text) - $x->pos));
+					$x->name = $parse[1][0];
+					$val = substr($plain,$open_end,$tag_pos - $open_end);
+					$x->value = ($val === '' || $val === null) ? null : $val;
+					$found = true;
 					break;
 				}
 			}
-			if(!isset($x->plain)){
-				return self::find_extract($x,preg_replace('/'.preg_quote($matches[0][0][0],'/').'/',substr($matches[0][0][0],0,-1).' />',$plain,1),$name,$matches[0][0][0]);
+			if(!$found){
+				return self::find_extract(
+					$x,
+					preg_replace('/'.preg_quote($parse[0][0],'/').'/',substr($parse[0][0],0,-1).' />',$plain,1),
+					$name,
+					$parse[0][0],
+					$offset
+				);
 			}
 		}
 		if(!isset($x->plain)){
