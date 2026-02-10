@@ -39,7 +39,7 @@ class Paginator implements \IteratorAggregate{
 		$this->vars[$key] = $value;
 	}
 	/**
-	 * 現在のページ番号
+	 * 現在ページ
 	 * @return mixed
 	 */
 	public function current(?int $value=null){
@@ -81,14 +81,14 @@ class Paginator implements \IteratorAggregate{
 		return !empty($this->order);
 	}
 	/**
-	 * 合計ページ数
+	 * 総ページ数
 	 */
 	public function pages(): int{
 		return ceil($this->total() / $this->limit());
 	}
 
 	/**
-	 * 合計件数
+	 * 総件数
 	 */
 	public function total(?int $value=null): int{
 		if(isset($value)){
