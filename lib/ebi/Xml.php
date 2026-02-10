@@ -174,7 +174,7 @@ class Xml implements \IteratorAggregate{
 		}
 		$attr = '';
 		$value = ($this->value === null || $this->value === '') ? null : (string)$this->value;
-
+		
 		if($format && !empty($value)){
 			$value = "\n".self::format($value,$indent_str,1);
 		}
@@ -199,7 +199,7 @@ class Xml implements \IteratorAggregate{
 	public function find($path=null, int $offset=0, int $length=0): \ebi\XmlIterator{
 		if(is_string($path) && strpos($path,'/') !== false){
 			[$name, $path] = explode('/',$path,2);
-
+			
 			foreach(new \ebi\XmlIterator($name, $this->value(), 0, 0) as $t){
 				try{
 					$it = $t->find($path,$offset,$length);
@@ -222,7 +222,7 @@ class Xml implements \IteratorAggregate{
 	 */
 	public function find_count(string $name, int $offset=0, int $length=0): int{
 		$cnt = 0;
-
+		
 		while($this->find($name,$offset,$length)){
 			$cnt++;
 		}
@@ -251,7 +251,7 @@ class Xml implements \IteratorAggregate{
 		$top = $list[sizeof($list)-1];
 		$child = array_shift($list);
 		$child->escape(false)->value($value);
-
+	
 		if(empty($list)){
 			$parent = $child;
 		}else{
@@ -264,7 +264,7 @@ class Xml implements \IteratorAggregate{
 		$xml->escape(false)->value(str_replace($top->plain(),$parent->get(),$xml->value()));
 		return self::extract($xml->get(),$xml->name());
 	}
-
+	
 	/**
 	 * 子要素を展開する
 	 * @return mixed string|array
@@ -272,14 +272,14 @@ class Xml implements \IteratorAggregate{
 	public function children(){
 		$children = $arr = [];
 		$bool = false;
-
+		
 		foreach($this->find() as $xml){
 			$bool = true;
 			$name = $xml->name();
-
+			
 			if(isset($children[$name])){
 				if(!isset($arr[$name])){
-
+					
 					$children[$name] = [$children[$name]];
 					$arr[$name] = true;
 				}
@@ -300,7 +300,7 @@ class Xml implements \IteratorAggregate{
 		}
 		return $this->value();
 	}
-
+	
 	/**
 	 * 匿名タグとしてインスタンス生成
 	 */
@@ -311,23 +311,17 @@ class Xml implements \IteratorAggregate{
 		$xml->escape(true);
 		return $xml;
 	}
-
 	/**
-	 * タグの検出（SimpleXML使用）
+	 * タグの検出
 	 */
 	public static function extract(?string $plain=null, ?string $name=null): self{
-		if(empty($plain)){
-			throw new \ebi\exception\NotFoundException('empty plain');
-		}
-
 		if(!empty($name)){
 			$names = explode('/',$name,2);
 			$name = $names[0];
 		}
-
-		$x = self::find_extract_simple($plain, $name);
-
-		if($x !== null){
+		
+		$x = null;
+		if(self::find_extract($x,$plain,$name)){
 			if(isset($names[1])){
 				try{
 					return $x->find_get($names[1]);
@@ -337,202 +331,80 @@ class Xml implements \IteratorAggregate{
 				return $x;
 			}
 		}
-		throw new \ebi\exception\NotFoundException(($name ?? 'tag').' not found');
+		throw new \ebi\exception\NotFoundException($name.' not found');
 	}
 
-	/**
-	 * SimpleXMLを使用したタグ検出
-	 */
-	private static function find_extract_simple(string $plain, ?string $name): ?self{
-		// タグ名が未指定の場合、最初のタグを検出
-		if(empty($name)){
-			if(preg_match('/<([\w\:\-]+)[\s>]/s', $plain, $m)){
-				$name = $m[1];
-			}else{
-				return null;
-			}
+	
+	private static function find_extract(&$x, $plain, $name=null, $v_xml=null): bool{
+		$plain = (string)$plain;
+		$name = (string)$name;
+		$m = [];
+		
+		if(empty($name) && preg_match("/<([\w\:\-]+)[\s][^>]*?>|<([\w\:\-]+)>/is",$plain,$m)){
+			$name = str_replace(["\r\n","\r","\n"],'',(empty($m[1]) ? $m[2] : $m[1]));
 		}
-
-		// タグの開始位置を検出（大文字小文字を区別しない）
-		$pattern = '/<'.preg_quote($name, '/').'[\s>\/]/i';
-		if(!preg_match($pattern, $plain, $m, PREG_OFFSET_CAPTURE)){
-			return null;
+		$q_name = preg_quote($name,'/');
+		$parse = $matches = [];
+		if(!preg_match("/<(".$q_name.")([\s][^>]*?)>|<(".$q_name.")>|<(".$q_name.")\/>/is",$plain,$parse,PREG_OFFSET_CAPTURE)){
+			return false;
 		}
-		$pos = $m[0][1];
-
-		// タグ部分を抽出
-		$tag_plain = self::extract_tag_string($plain, $name, $pos);
-		if($tag_plain === null){
-			return null;
-		}
-
-		// SimpleXMLでパース
-		libxml_use_internal_errors(true);
-		$sxml = @simplexml_load_string($tag_plain);
-
-		if($sxml === false){
-			// SimpleXMLで失敗した場合、CDATAや特殊文字の問題の可能性
-			// フォールバックとして正規表現でパース
-			return self::find_extract_regex($name, $pos, $tag_plain);
-		}
-
 		$x = new self();
-		$x->pos = $pos;
-		$x->plain = $tag_plain;
-		$x->name = $sxml->getName();
+		$x->pos = $parse[0][1];
+		$balance = 0;
+		$attrs = '';
 
-		// 属性を設定
-		foreach($sxml->attributes() as $attr_name => $attr_value){
-			$x->attr($attr_name, (string)$attr_value);
-		}
-
-		// 子要素の内容を取得（innerXML）
-		$inner = self::get_inner_xml($sxml);
-		$x->value = ($inner === '') ? null : $inner;
-
-		libxml_clear_errors();
-		return $x;
-	}
-
-	/**
-	 * タグ文字列を抽出
-	 */
-	private static function extract_tag_string(string $plain, string $name, int $start_pos): ?string{
-		$q_name = preg_quote($name, '/');
-
-		// 自己終了タグをチェック（大文字小文字を区別しない）
-		if(preg_match('/<'.$q_name.'(?:\s[^>]*)?\s*\/>/si', $plain, $m, PREG_OFFSET_CAPTURE, $start_pos)){
-			if($m[0][1] === $start_pos){
-				return $m[0][0];
-			}
-		}
-
-		// 開始・終了タグのバランスを追跡（大文字小文字を区別しない）
-		$depth = 0;
-		$offset = $start_pos;
-		$open_tag = null;
-		$pattern = '/<\/?'.$q_name.'(?:\s[^>]*)?(?:\/)?>/si';
-
-		while(preg_match($pattern, $plain, $m, PREG_OFFSET_CAPTURE, $offset)){
-			$tag = $m[0][0];
-			$tag_pos = $m[0][1];
-
-			if(substr($tag, -2) === '/>'){
-				// 自己終了タグ
-				if($depth === 0){
-					return substr($plain, $start_pos, $tag_pos + strlen($tag) - $start_pos);
+		if(substr($parse[0][0],-2) == '/>'){
+			$x->name = $parse[1][0];
+			$x->plain = empty($v_xml) ? $parse[0][0] : preg_replace('/'.preg_quote(substr($v_xml,0,-1).' />','/').'/',$v_xml,$parse[0][0],1);
+			$attrs = $parse[2][0];
+		}else if(preg_match_all("/<[\/]{0,1}".$q_name."[\s][^>]*[^\/]>|<[\/]{0,1}".$q_name."[\s]*>/is",$plain,$matches,PREG_OFFSET_CAPTURE,$x->pos)){
+			foreach($matches[0] as $arg){
+				$balance += (($arg[0][1] == '/') ? -1 : 1);
+				
+				if($balance <= 0 &&
+					preg_match("/^(<(".$q_name.")([\s]*[^>]*)>)(.*)(<\/\\2[\s]*>)$/is",
+						substr($plain,$x->pos,($arg[1] + strlen($arg[0]) - $x->pos)),
+						$m
+					)
+				){
+					$x->plain = $m[0];
+					$x->name = $m[2];
+					$x->value = ($m[4] === '' || $m[4] === null) ? null : $m[4];
+					$attrs = $m[3];
+					break;
 				}
-			}else if($tag[1] === '/'){
-				// 終了タグ
-				$depth--;
-				if($depth === 0){
-					return substr($plain, $start_pos, $tag_pos + strlen($tag) - $start_pos);
+			}
+			if(!isset($x->plain)){
+				return self::find_extract($x,preg_replace('/'.preg_quote($matches[0][0][0],'/').'/',substr($matches[0][0][0],0,-1).' />',$plain,1),$name,$matches[0][0][0]);
+			}
+		}
+		if(!isset($x->plain)){
+			return false;
+		}
+		if(!empty($attrs)){
+			$attr = [];
+			if(preg_match_all("/[\s]+([\w\-\:]+)[\s]*=[\s]*([\"\'])([^\\2]*?)\\2/ms",$attrs,$attr)){
+				foreach($attr[0] as $id => $value){
+					$x->attr($attr[1][$id],$attr[3][$id]);
+					$attrs = str_replace($value,'',$attrs);
 				}
-			}else{
-				// 開始タグ
-				if($depth === 0){
-					$open_tag = $tag;
-				}
-				$depth++;
 			}
-
-			$offset = $tag_pos + strlen($tag);
-		}
-
-		// 閉じタグが見つからない場合、開始タグを自己終了タグとして返す
-		if($open_tag !== null){
-			return preg_replace('/\s*>$/', ' />', $open_tag);
-		}
-
-		return null;
-	}
-
-	/**
-	 * SimpleXMLからinnerXMLを取得
-	 */
-	private static function get_inner_xml(\SimpleXMLElement $sxml): string{
-		$dom = dom_import_simplexml($sxml);
-		$inner = '';
-
-		foreach($dom->childNodes as $child){
-			if($child->nodeType === XML_TEXT_NODE){
-				// テキストノードはエンコードせずそのまま取得
-				$inner .= $child->nodeValue;
-			}else{
-				$inner .= $dom->ownerDocument->saveXML($child);
+			if(preg_match_all("/([\w\-]+)/",$attrs,$attr)){
+				foreach($attr[1] as $v) $x->attr($v,$v);
 			}
 		}
-
-		return $inner;
-	}
-
-	/**
-	 * 正規表現によるフォールバックパース
-	 */
-	private static function find_extract_regex(string $name, int $pos, string $tag_plain): ?self{
-		$x = new self();
-		$x->pos = $pos;
-		$x->plain = $tag_plain;
-		$x->name = $name;
-
-		$q_name = preg_quote($name, '/');
-
-		// 自己終了タグ（大文字小文字を区別しない）
-		if(preg_match('/^<'.$q_name.'(\s[^>]*)?\s*\/>$/si', $tag_plain, $m)){
-			$x->value = null;
-			if(!empty($m[1])){
-				self::parse_attributes($x, $m[1]);
-			}
-			return $x;
-		}
-
-		// 開始・終了タグ（大文字小文字を区別しない）
-		if(preg_match('/^<'.$q_name.'(\s[^>]*)?>(.*)(<\/'.$q_name.'\s*>)$/si', $tag_plain, $m)){
-			if(!empty($m[1])){
-				self::parse_attributes($x, $m[1]);
-			}
-			$x->value = ($m[2] === '') ? null : $m[2];
-			return $x;
-		}
-
-		return null;
-	}
-
-	/**
-	 * 属性文字列をパース
-	 */
-	private static function parse_attributes(self $x, string $attr_str): void{
-		if(preg_match_all('/\s+([\w\-\:]+)\s*=\s*(["\'])([^\\2]*?)\\2/s', $attr_str, $matches, PREG_SET_ORDER)){
-			foreach($matches as $m){
-				$x->attr($m[1], $m[3]);
-			}
-		}
-		// 値なし属性
-		$cleaned = preg_replace('/\s+[\w\-\:]+\s*=\s*["\'][^"\']*["\']/', '', $attr_str);
-		if(preg_match_all('/([\w\-]+)/', $cleaned, $matches)){
-			foreach($matches[1] as $v){
-				$x->attr($v, $v);
-			}
-		}
+		return true;
 	}
 
 	/**
 	 * 整形する
 	 */
 	public static function format(string $src, string $indent_str="\t", int $depth=0): string{
-		// 従来の整形処理を使用（DOMDocumentは空要素の扱いが異なるため）
-		return self::format_legacy($src, $indent_str, $depth);
-	}
-
-	/**
-	 * 従来の整形処理（フォールバック）
-	 */
-	private static function format_legacy(string $src, string $indent_str="\t", int $depth=0): string{
 		$rtn = '';
 		$i = 0;
 		$c = md5(__FILE__);
 		$m = [];
-
+		
 		if(preg_match_all('/<([\w_]+?)[^><]*><\/\\1>/', $src,$m)){
 			foreach($m[0] as $s){
 				$src = str_replace($s,str_replace('><','>'.$c.'<',$s),$src);
@@ -541,7 +413,7 @@ class Xml implements \IteratorAggregate{
 		foreach(explode("\n",preg_replace('/>\s*</','>'."\n".'<',$src)) as $line){
 			$indent = 0;
 			$lc = substr_count($line,'<');
-
+		
 			if($lc == 1){
 				if(strpos($line,'<?') === false && strpos($line,'/>') === false){
 					if(($p = strpos(trim($line),'</')) !== false){
@@ -557,13 +429,13 @@ class Xml implements \IteratorAggregate{
 				$indent = 2;
 			}
 			$rtn .= (($indent != 2 && ($i+$depth) > 0) ? str_repeat($indent_str,$i+$depth) : '').$line."\n";
-
+		
 			if($indent == 1){
 				$i++;
 			}
 		}
 		$rtn = str_replace($c,'',$rtn);
-
+		
 		if(preg_match_all('/\s+<!\[CDATA\[(.+)\]\]>\s+/s',$rtn,$m)){
 			foreach($m[0] as $s){
 				$rtn = str_replace($s,trim($s),$rtn);
@@ -587,7 +459,7 @@ class Xml implements \IteratorAggregate{
 		}
 		return $src;
 	}
-
+	
 	/**
 	 * $srcから対象のXMLをすべて置換した文字列を返す
 	 */
@@ -597,16 +469,16 @@ class Xml implements \IteratorAggregate{
 				throw new \ebi\exception\InvalidArgumentException('invalid function');
 			}
 			$i = 0;
-
+	
 			while(true){
 				$xml = self::extract($src,$name);
 				$replace = call_user_func_array($func,[$xml]);
-
+				
 				if(!is_null($replace)){
 					$src = str_replace($xml->plain(),(($replace instanceof self) ? $replace->get() : $replace),$src);
 				}
 				if($i++ > 100){
-					throw new \ebi\exception\RetryLimitOverException('Maximum function nesting level of 100');
+					throw new \ebi\exception\RetryLimitOverException('Maximum function nesting level of ’100');
 				}
 			}
 		}catch(\ebi\exception\NotFoundException $e){
