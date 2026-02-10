@@ -85,11 +85,12 @@ class OpenApi extends \ebi\flow\Request{
 			],
 		];
 
-		$accept_desc = 'All endpoints return `application/json`. Please set `Accept: application/json` in your request headers.';
+		if(preg_match('/@accept\s+(\S+)/',$entry_desc,$accept_m)){
+			$spec['x-accept'] = $accept_m[1];
+			$entry_desc = trim(preg_replace('/@accept\s+\S+/','',$entry_desc));
+		}
 		if(!empty($entry_desc)){
-			$spec['info']['description'] = $entry_desc."\n\n".$accept_desc;
-		}else{
-			$spec['info']['description'] = $accept_desc;
+			$spec['info']['description'] = $entry_desc;
 		}
 
 		/**
