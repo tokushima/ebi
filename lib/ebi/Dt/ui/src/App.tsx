@@ -946,7 +946,7 @@ function App() {
 							<span style={{ color: '#94a3b8', fontSize: '0.625rem' }}>Accept: application/json; envelope=false と同等</span>
 						</span>
 					</span>
-					<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
+					<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>
 			</nav>
 			<main className="container py-4">

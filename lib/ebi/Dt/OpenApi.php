@@ -753,6 +753,17 @@ class OpenApi extends \ebi\flow\Request{
 				}
 			}
 
+			// IteratorAggregateを実装するクラスの場合、getIterator()のプロパティを展開
+			if(empty($properties)){
+				foreach(\ebi\Dt\SourceAnalyzer::iterator_properties($full_class_name) as $prop){
+					$prop_schema = $this->get_schema_type($prop->type(), $schemas);
+					if(!empty($prop->summary())){
+						$prop_schema['description'] = $prop->summary();
+					}
+					$properties[$prop->name()] = $prop_schema;
+				}
+			}
+
 			$model_schema = ['type' => 'object'];
 
 			if(!empty($properties)){

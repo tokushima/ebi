@@ -388,6 +388,81 @@ class SourceAnalyzer{
 		return false;
 	}
 
+	/**
+	 * IteratorAggregateを実装するクラスのgetIterator()からプロパティを抽出
+	 * @return ParamInfo[]
+	 */
+	public static function iterator_properties(string $class): array{
+		$class_name = self::get_class_name($class);
+		if(empty($class_name)){
+			return [];
+		}
+		$ref = new \ReflectionClass($class_name);
+		if(!$ref->implementsInterface(\IteratorAggregate::class)){
+			return [];
+		}
+		try{
+			$method = $ref->getMethod('getIterator');
+			$src = self::method_src($method);
+
+			$properties = [];
+			if(preg_match_all("/'(\w+)'\s*=>\s*(.+)/", $src, $m)){
+				foreach($m[1] as $k => $key){
+					$expr = trim($m[2][$k], ", \t\r\n");
+					$type = 'mixed';
+
+					// $this->methodName() パターンの場合、メソッドの返り値型・説明を取得
+					$summary = '';
+					if(preg_match('/\$this->(\w+)\(/', $expr, $em)){
+						try{
+							$called = $ref->getMethod($em[1]);
+							$ret = $called->getReturnType();
+							if($ret instanceof \ReflectionNamedType){
+								$type = $ret->getName();
+							}
+							$doc = $called->getDocComment();
+							if($doc !== false){
+								// リフレクション型がない場合、DocBlockの@returnから取得
+								if($type === 'mixed' && preg_match('/@return\s+(\S+)/', $doc, $dm)){
+									$doc_type = ltrim(trim($dm[1]), '?');
+									if($doc_type !== 'mixed' && $doc_type !== ''){
+										$type = $doc_type;
+									}
+								}
+								// メソッドのサマリーを説明として取得
+								$trimmed = self::trim_doc($doc);
+								[$summary] = explode(PHP_EOL, trim(preg_replace('/@.+/', '', $trimmed)));
+							}
+						}catch(\ReflectionException $e){
+						}
+						// それでも取れない場合、同名プロパティの型をフォールバック
+						if($type === 'mixed'){
+							try{
+								$prop_type = $ref->getProperty($em[1])->getType();
+								if($prop_type instanceof \ReflectionNamedType){
+									$type = $prop_type->getName();
+								}
+							}catch(\ReflectionException $e){
+							}
+						}
+					}
+					// ceil/floor/round等の数学関数の場合はinteger
+					if($type === 'mixed' && preg_match('/\b(ceil|floor|round|intval)\b/', $expr)){
+						$type = 'integer';
+					}
+
+					$properties[$key] = new ParamInfo($key, $type);
+					if(!empty($summary)){
+						$properties[$key]->summary($summary);
+					}
+				}
+			}
+			return $properties;
+		}catch(\ReflectionException $e){
+			return [];
+		}
+	}
+
 	public static function classify_see(string $v): ?array{
 		if(strpos($v,'://') !== false){
 			return ['type'=>'url','url'=>$v];
