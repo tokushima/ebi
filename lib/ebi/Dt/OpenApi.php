@@ -107,6 +107,13 @@ class OpenApi extends \ebi\flow\Request{
 		$has_security = false;
 		$tags = [];
 
+		$name_to_path = [];
+		foreach($patterns as $url_pattern => $p){
+			if(isset($p['name'])){
+				$name_to_path[$p['name']] = $this->convert_to_openapi_path($url_pattern);
+			}
+		}
+
 		foreach($patterns as $url_pattern => $m){
 			foreach([
 				'deprecated' => false,
@@ -204,7 +211,7 @@ class OpenApi extends \ebi\flow\Request{
 					}
 					if($is_s2s){
 						$path = $this->convert_to_openapi_path($url_pattern);
-						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
+						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
 
 						$this->webhooks[] = [
 							'path' => $path,
@@ -215,7 +222,7 @@ class OpenApi extends \ebi\flow\Request{
 					}
 
 					$path = $this->convert_to_openapi_path($url_pattern);
-					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags);
+					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
 
 					if(!isset($spec['paths'][$path])){
 						$spec['paths'][$path] = [];
@@ -358,7 +365,7 @@ class OpenApi extends \ebi\flow\Request{
 	/**
 	 * オペレーション（エンドポイント定義）を構築
 	 */
-	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags): array{
+	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags, array $name_to_path=[]): array{
 		$operation = [];
 
 		if(!empty($m['summary'])){
@@ -378,8 +385,21 @@ class OpenApi extends \ebi\flow\Request{
 
 		$operation['operationId'] = $m['name'] ?? null;
 
+		$deprecated_see = isset($info) ? $info->opt('deprecated_see') : null;
+		if(empty($deprecated_see) && isset($m['deprecated_see'])){
+			$deprecated_see = \ebi\Dt\SourceAnalyzer::classify_see($m['deprecated_see']);
+		}
+
+		if(!empty($deprecated_see)){
+			$m['deprecated'] = true;
+		}
+
 		if($m['deprecated'] ?? false){
 			$operation['deprecated'] = true;
+
+			if(!empty($deprecated_see)){
+				$operation['x-deprecated-see'] = $deprecated_see;
+			}
 		}
 
 		// タグ（クラス名をname、クラスの説明をx-displayNameに設定）

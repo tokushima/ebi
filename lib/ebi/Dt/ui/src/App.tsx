@@ -355,11 +355,11 @@ function findEndpointByPath(seePath) {
 	return null;
 }
 
-function SeeLinks({ seeList, onNavigate }) {
+function SeeLinks({ seeList, onNavigate, label = 'See:' }) {
 	if (!seeList || seeList.length === 0) return null;
 	return (
 		<div className="d-flex align-items-center gap-2 mt-2 flex-wrap">
-			<span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>See:</span>
+			<span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>{label}</span>
 			{seeList.map((see, i) => {
 				if (see.type === 'url') {
 					return <a key={i} href={see.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem' }}>{see.url}</a>;
@@ -416,6 +416,7 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 						{op.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8', marginLeft: 'auto' }}>{op.operationId}</code>}
 					</div>
 					<SeeLinks seeList={op['x-see']} onNavigate={onNavigate} />
+					{op['x-deprecated-see'] && <SeeLinks seeList={[op['x-deprecated-see']]} onNavigate={onNavigate} label="Deprecated, see:" />}
 				</div>
 				<div className="modal-panel-body">
 					{op.parameters && op.parameters.length > 0 && <section>

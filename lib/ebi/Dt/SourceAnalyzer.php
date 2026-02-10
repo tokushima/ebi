@@ -270,6 +270,15 @@ class SourceAnalyzer{
 				$root_obj->set_opt('first_deprecated_date',$d);
 			}
 		}
+		if(preg_match('/@deprecated_see\s+(\S+)/',$summary,$m)){
+			$see = self::classify_see(trim($m[1]));
+			if(!empty($see)){
+				$info->set_opt('deprecated_see', $see);
+			}
+			if(empty($info->opt('deprecated'))){
+				$info->set_opt('deprecated', time());
+			}
+		}
 		return trim(preg_replace('/@.+/','',$summary));
 	}
 
@@ -379,22 +388,28 @@ class SourceAnalyzer{
 		return false;
 	}
 
+	public static function classify_see(string $v): ?array{
+		if(strpos($v,'://') !== false){
+			return ['type'=>'url','url'=>$v];
+		}else if($v[0] === '/'){
+			return ['type'=>'endpoint','path'=>$v];
+		}else if(strpos($v,'::') !== false){
+			[$see_class, $see_method] = explode('::',$v,2);
+			return ['type'=>'method','class'=>$see_class,'method'=>$see_method];
+		}else if(substr($v,-1) != ':'){
+			return ['type'=>'class','class'=>$v];
+		}
+		return null;
+	}
+
 	private static function find_see(string $document): array{
 		$see = [];
 
 		if(preg_match_all("/@see\s+(\S+)/",$document,$m)){
 			foreach($m[1] as $v){
-				$v = trim($v);
-
-				if(strpos($v,'://') !== false){
-					$see[$v] = ['type'=>'url','url'=>$v];
-				}else if($v[0] === '/'){
-					$see[$v] = ['type'=>'endpoint','path'=>$v];
-				}else if(strpos($v,'::') !== false){
-					[$see_class, $see_method] = explode('::',$v,2);
-					$see[$v] = ['type'=>'method','class'=>$see_class,'method'=>$see_method];
-				}else if(substr($v,-1) != ':'){
-					$see[$v] = ['type'=>'class','class'=>$v];
+				$result = self::classify_see(trim($v));
+				if(!empty($result)){
+					$see[$v] = $result;
 				}
 			}
 		}
