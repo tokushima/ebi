@@ -85,8 +85,11 @@ class OpenApi extends \ebi\flow\Request{
 			],
 		];
 
+		$accept_desc = 'All endpoints return `application/json`. Please set `Accept: application/json` in your request headers.';
 		if(!empty($entry_desc)){
-			$spec['info']['description'] = $entry_desc;
+			$spec['info']['description'] = $entry_desc."\n\n".$accept_desc;
+		}else{
+			$spec['info']['description'] = $accept_desc;
 		}
 
 		/**
@@ -149,6 +152,31 @@ class OpenApi extends \ebi\flow\Request{
 						}
 						if(empty(trim($http_method))){
 							$http_method = 'get';
+						}
+
+						// do_loginの場合、authクラスのlogin_conditionの@http_methodを参照
+						if($m['method'] === 'do_login' && $http_method === 'get'){
+							$login_auth_class = $m['auth'] ?? null;
+							if(empty($login_auth_class) && isset($m['class'])){
+								try{
+									$ref = new \ReflectionMethod($m['class'], '__construct');
+									$src = \ebi\Dt\SourceAnalyzer::method_src($ref);
+									if(preg_match('/set_auth_object\(\s*new\s+([\\\\\w]+)/', $src, $auth_match)){
+										$login_auth_class = $auth_match[1];
+									}
+								}catch(\ReflectionException $e){
+								}
+							}
+							if(!empty($login_auth_class)){
+								try{
+									$auth_method_info = \ebi\Dt\SourceAnalyzer::method_info($login_auth_class, 'login_condition', true, false);
+									$auth_http_method = $auth_method_info->opt('http_method');
+									if(!empty($auth_http_method)){
+										$http_method = strtolower($auth_http_method);
+									}
+								}catch(\Exception $e){
+								}
+							}
 						}
 					}
 
