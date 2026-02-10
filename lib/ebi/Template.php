@@ -22,6 +22,7 @@ class Template{
 		'from' => [' ?>', '<?php ', '->'],
 		'to' => ['__PHP_TAG_END__', '__PHP_TAG_START__', '__PHP_ARROW__']
 	];
+	private static array $compiled_cache = [];
 
 	/**
 	 * メディアURLをhttpsにする
@@ -53,10 +54,27 @@ class Template{
 	 * @param mixed $base_dir string|array
 	 */
 	public function read(string $filename, $base_dir=null): string{
-		$this->base_dir = $base_dir ?? dirname(realpath($filename));
-		$src = $this->read_src($filename);
-
-		return $this->get($src, $base_dir);
+		if(preg_match('/^http[s]*\:\/\//', $filename)){
+			$this->base_dir = $base_dir ?? dirname($filename);
+			$src = $this->read_src($filename);
+			return $this->get($src, $base_dir);
+		}
+		$base_dir = $base_dir ?? dirname(realpath($filename));
+		$path = $this->resolve_file($filename, $base_dir);
+		$this->base_dir = $base_dir ?? dirname($path);
+		$cache_key = $path.'|'.($this->media_url ?? '').'|'.($this->secure ? '1' : '0');
+		$mtime = @filemtime($path) ?: 0;
+		if(isset(self::$compiled_cache[$cache_key]) && self::$compiled_cache[$cache_key]['mtime'] === $mtime){
+			$parsed = self::$compiled_cache[$cache_key]['parsed'];
+		}else{
+			$raw = file_get_contents($path);
+			$parsed = $this->replace($raw);
+			self::$compiled_cache[$cache_key] = [
+				'mtime' => $mtime,
+				'parsed' => $parsed,
+			];
+		}
+		return $this->render_parsed($parsed);
 	}
 
 	/**
@@ -65,15 +83,8 @@ class Template{
 	 */
 	public function get(string $src, $base_dir=null): string{
 		$this->base_dir = $base_dir ?? getcwd();
-
-		$src = $this->replace($src);
-		$src = $this->exec($src);
-
-		if(strpos($src, 'rt:ref') !== false){
-			$src = str_replace(['#PS#', '#PE#'], ['<?', '?>'], $this->html_form($src));
-			$src = $this->exec($this->parse_print_variable($this->html_input($src)));
-		}
-		return $src;
+		$parsed = $this->replace($src);
+		return $this->render_parsed($parsed);
 	}
 
 	/**
@@ -114,6 +125,15 @@ class Template{
 		return $src;
 	}
 
+	private function render_parsed(string $parsed): string{
+		$out = $this->exec($parsed);
+		if(strpos($out, 'rt:ref') !== false){
+			$out = str_replace(['#PS#', '#PE#'], ['<?', '?>'], $this->html_form($out));
+			$out = $this->exec($this->parse_print_variable($this->html_input($out)));
+		}
+		return $out;
+	}
+
 	private function exec(string $_src_): string{
 		foreach($this->default_vars() as $k => $v){
 			$this->vars($k, $v);
@@ -142,6 +162,14 @@ class Template{
 	}
 
 	private function parse_url(string $src, ?string $media): string{
+		if(
+			strpos($src, 'src=') === false &&
+			strpos($src, 'href=') === false &&
+			strpos($src, 'background=') === false &&
+			strpos($src, 'url(') === false
+		){
+			return $src;
+		}
 		if(!empty($media) && substr($media, -1) !== '/'){
 			$media .= '/';
 		}
@@ -196,11 +224,16 @@ class Template{
 		if(preg_match('/^http[s]*\:\/\//', $filename)){
 			return $this->parse_url(file_get_contents($filename), dirname($filename));
 		}
-		$dirs = is_array($this->base_dir) ? $this->base_dir : [$this->base_dir];
+		$path = $this->resolve_file($filename);
+		return file_get_contents($path);
+	}
+
+	private function resolve_file(string $filename, $base_dir=null): string{
+		$dirs = is_array($base_dir ?? $this->base_dir) ? ($base_dir ?? $this->base_dir) : [$base_dir ?? $this->base_dir];
 		foreach($dirs as $d){
 			$f = \ebi\Util::path_absolute($d, $filename);
 			if(is_file($f)){
-				return file_get_contents($f);
+				return $f;
 			}
 		}
 		throw new \ebi\exception\AccessDeniedException(sprintf('permission denied `%s`', $filename));

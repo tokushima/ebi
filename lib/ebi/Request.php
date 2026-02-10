@@ -8,6 +8,45 @@ class Request implements \IteratorAggregate{
 	private array $files = [];
 	private ?string $args = null;
 	private ?string $_method = null;
+
+	/**
+	 * $_FILES の多次元配列から目的のパスを取得
+	 */
+	private static function get_nested(array $arr, array $path){
+		foreach($path as $p){
+			if(!is_array($arr) || !array_key_exists($p, $arr)){
+				return null;
+			}
+			$arr = $arr[$p];
+		}
+		return $arr;
+	}
+
+	/**
+	 * 多次元の$_FILESをフラットなマップへ展開
+	 */
+	private static function build_files_map($node, array $path, array $files, array &$map): void{
+		if(is_array($node)){
+			foreach($node as $k => $v){
+				self::build_files_map($v, array_merge($path, [$k]), $files, $map);
+			}
+			return;
+		}
+		$name = self::get_nested($files['name'], $path);
+		if(empty($name)){
+			return;
+		}
+		$ref =& $map;
+		foreach($path as $k){
+			if(!isset($ref[$k]) || !is_array($ref[$k])){
+				$ref[$k] = [];
+			}
+			$ref =& $ref[$k];
+		}
+		foreach(['name','tmp_name','size','error','full_path'] as $k){
+			$ref[$k] = self::get_nested($files[$k] ?? [], $path) ?? '';
+		}
+	}
 	
 	public function __construct(){
 		if('' != ($pathinfo = array_key_exists('PATH_INFO',$_SERVER) ? $_SERVER['PATH_INFO'] : '')){
@@ -22,25 +61,10 @@ class Request implements \IteratorAggregate{
 					$this->vars = array_merge($this->vars,$_POST);
 				}
 				if(isset($_FILES) && is_array($_FILES)){
-					$marge_func = null;
-					$marge_func = function($arr,$pk,$files,&$map) use(&$marge_func){
-						if(is_array($arr)){
-							foreach($arr as $k => $v){
-								$marge_func($v,array_merge($pk,[$k]),$files,$map);
-							}
-						}else{
-							$ks = implode('',array_map(function($v){ return '[\''.$v.'\']';},$pk));
-							$eval = 'if(isset($files[\'name\']'.$ks.') && !empty($files[\'name\']'.$ks.')){ ';
-								foreach(['name','tmp_name','size','error','full_path'] as $k){
-									$eval .= '$map'.$ks.'[\''.$k.'\']=$files[\''.$k.'\']'.$ks.' ?? \'\';';
-								}
-							eval($eval.'}');
-						}
-					};
 					foreach($_FILES as $k => $v){
 						if(is_array($v['name'])){
 							$this->files[$k] = [];
-							$marge_func($v['name'],[],$v,$this->files[$k]);
+							self::build_files_map($v['name'], [], $v, $this->files[$k]);
 						}else if(array_key_exists('name',$v) && !empty($v['name'])){
 							$this->files[$k] = $v;
 						}
