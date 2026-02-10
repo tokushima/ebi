@@ -474,13 +474,12 @@ function Endpoints({ onSelect }) {
 	Object.values(grouped).forEach(items => items.sort((a, b) => methodOrder(a) - methodOrder(b)));
 	Object.values(devGrouped).forEach(items => items.sort((a, b) => methodOrder(a) - methodOrder(b)));
 
-	const EndpointRow = ({ e, isDev = false }) => (
+	const EndpointRow = ({ e }) => (
 		<div className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${e.op.deprecated ? 'opacity-50' : ''}`} onClick={() => onSelect(e)}>
 			<span className={`method-badge ${methodColors[e.method]}`}>{e.method}</span>
 			<code className="flex-grow-1">{e.path}</code>
 			<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{e.op.summary}</span>
 			{e.op.security?.length > 0 && <LockIcon />}
-			{isDev && <span className="badge bg-warning text-dark" style={{ fontSize: '0.6rem' }}>DEV</span>}
 			{e.op.deprecated && <span className="badge bg-danger">deprecated</span>}
 		</div>
 	);
@@ -513,7 +512,7 @@ function Endpoints({ onSelect }) {
 					<div key={`dev-${tag}`} className="card mb-4" style={{ borderColor: '#ffc107' }}>
 						<div className="card-header fw-semibold" style={{ background: '#fff8e1' }}>{tags.find(t => t.name === tag)?.label || tag}</div>
 						<div className="list-group list-group-flush">
-							{items.map((e, i) => <EndpointRow key={i} e={e} isDev />)}
+							{items.map((e, i) => <EndpointRow key={i} e={e} />)}
 						</div>
 					</div>
 				))}
