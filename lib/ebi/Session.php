@@ -52,7 +52,8 @@ class Session implements \SessionHandlerInterface{
 				}
 			});
 			
-			if(isset($_SESSION[session_name()])){
+			// 新規開始時のみセッションIDをローテーションする
+			if(!isset($_SESSION[$this->ses_n])){
 				session_regenerate_id(true);
 			}
 		}
@@ -126,7 +127,7 @@ class Session implements \SessionHandlerInterface{
 	 * @return mixed
 	 */
 	public function read(string $id): string{
-		return \ebi\Conf::handle('session_read', $id);
+		return (string)(\ebi\Conf::handle('session_read', $id) ?? '');
 	}
 	
 	/**
