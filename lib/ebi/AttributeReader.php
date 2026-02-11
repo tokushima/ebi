@@ -144,7 +144,7 @@ class AttributeReader{
 
 			switch($name){
 				case 'automap':
-					$attrs = $r->getAttributes(\ebi\Attribute\Automap::class);
+					$attrs = $r->getAttributes(\ebi\Attribute\Route::class);
 					if(!empty($attrs)){
 						$inst = $attrs[0]->newInstance();
 						$result[$name] = array_filter(get_object_vars($inst), fn($v) => $v !== null);

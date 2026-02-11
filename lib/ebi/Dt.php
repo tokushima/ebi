@@ -31,7 +31,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * Developer Tools Endpoints
 	 */
-	#[Automap]
+	#[Route]
 	public function index(): void{
 		$this->render_react_app();
 	}
@@ -39,7 +39,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * OpenAPI Specification (JSON)
 	 */
-	#[Automap(suffix: '.json')]
+	#[Route(suffix: '.json')]
 	public function openapi(): void{
 		$envelope = ($this->in_vars('envelope', '') === 'true');
 		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
@@ -53,7 +53,7 @@ class Dt extends \ebi\flow\Request{
 	/**
 	 * Redoc API Documentation
 	 */
-	#[Automap]
+	#[Route]
 	public function redoc(): void{
 		$envelope = ($this->in_vars('envelope', '') === 'true');
 		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
@@ -86,7 +86,7 @@ HTML;
 	/**
 	 * Sent Mails API (SmtpBlackholeDao)
 	 */
-	#[Automap(suffix: '.json')]
+	#[Route(suffix: '.json')]
 	public function sent_mails(): void{
 		$mails = [];
 		$pagination = null;
@@ -141,7 +141,7 @@ HTML;
 	/**
 	 * Configs API - List all Conf::get/gets definitions
 	 */
-	#[Automap(suffix: '.json')]
+	#[Route(suffix: '.json')]
 	public function configs(): void{
 		$configs = [];
 
