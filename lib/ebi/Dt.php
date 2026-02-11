@@ -1,7 +1,7 @@
 <?php
 namespace ebi;
 
-use ebi\Attribute\Automap;
+use ebi\Attribute\Route;
 use ebi\Attribute\Parameter;
 
 /**
