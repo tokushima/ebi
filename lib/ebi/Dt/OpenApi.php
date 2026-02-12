@@ -3,7 +3,7 @@ namespace ebi\Dt;
 /**
  * OpenAPI仕様を生成する
  */
-class OpenApi extends \ebi\flow\Request{
+class OpenApi extends \ebi\app\Request{
 	private string $entry;
 
 	public function __construct(?string $entryfile=null){
@@ -12,7 +12,7 @@ class OpenApi extends \ebi\flow\Request{
 			krsort($trace);
 
 			foreach($trace as $t){
-				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+				if(isset($t['class']) && ($t['class'] == 'ebi\App' || $t['class'] == 'ebi\Flow')){
 					$this->entry = $t['file'];
 					break;
 				}
@@ -46,7 +46,7 @@ class OpenApi extends \ebi\flow\Request{
 	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
 		$this->envelope = $envelope;
 		$this->webhooks = [];
-		$map = \ebi\Flow::get_map($this->entry);
+		$map = \ebi\App::get_map($this->entry);
 		$patterns = $map['patterns'];
 		unset($map['patterns']);
 

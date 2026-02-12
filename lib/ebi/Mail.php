@@ -465,7 +465,7 @@ class Mail{
 			$xtc = self::xtc($template_path);
 			$this->header['X-T-Code'] = $xtc;
 
-			$bind_vars['t'] = new \ebi\FlowHelper();
+			$bind_vars['t'] = new \ebi\AppHelper();
 			$bind_vars['xtc'] = [$xtc_name=>$xtc];
 
 			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));

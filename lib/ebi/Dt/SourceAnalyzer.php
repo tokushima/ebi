@@ -76,7 +76,7 @@ class SourceAnalyzer{
 				if(!in_array($method->getName(),$ignore)){
 					$bool = true;
 
-					foreach([\ebi\Obj::class,\ebi\Dao::class,\ebi\flow\Request::class,\ebi\Request::class] as $ignore_class){
+					foreach([\ebi\Obj::class,\ebi\Dao::class,\ebi\app\Request::class,\ebi\Request::class] as $ignore_class){
 						if($r->getName() != $ignore_class && $method->getDeclaringClass()->getName() == $ignore_class){
 							$bool = false;
 						}
@@ -359,7 +359,7 @@ class SourceAnalyzer{
 				$mail_info->add_params($p);
 			}
 
-			$mail_info->add_params(new ParamInfo('t', '\ebi\FlowHelper','Helper'));
+			$mail_info->add_params(new ParamInfo('t', '\ebi\AppHelper','Helper'));
 			$mail_info->add_params(new ParamInfo('xtc', 'string{}','Template Code'));
 
 			$mail_src = \ebi\Util::file_read(self::mail_template_path($mail_info->name()));
@@ -496,7 +496,7 @@ class SourceAnalyzer{
 	 */
 	public static function method_info(string $class, string $method, bool $detail=false, bool $deep=false): DocInfo{
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
-		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\flow\Request::class);
+		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\app\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
 
 		if(!is_file($ref->getDeclaringClass()->getFileName())){

@@ -603,7 +603,7 @@ class Template{
 				);
 			}
 			return sprintf(
-				'<?php if(\ebi\FlowInvalid::has(%s,%s)){ ?><?php $%s = \ebi\FlowInvalid::get(%s,%s); ?>%s<?php } ?>',
+				'<?php if(\ebi\AppInvalid::has(%s,%s)){ ?><?php $%s = \ebi\AppInvalid::get(%s,%s); ?>%s<?php } ?>',
 				$group, $type, $var, $group, $type,
 				preg_replace("/<rt\:else[\s]*.*?>/i", "<?php }else{ ?>", $value)
 			);

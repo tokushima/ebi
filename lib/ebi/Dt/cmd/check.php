@@ -33,8 +33,8 @@ foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
 foreach(\ebi\Util::ls(getcwd(),false,'/\.php$/') as $f){
 	$src = file_get_contents($f->getPathname());
 	
-	if(strpos($src,'\ebi\Flow::app(') !== false){
-		$map = \ebi\Flow::get_map($f->getPathname());
+	if(strpos($src,'\ebi\Flow::app(') !== false || strpos($src,'\ebi\App::app(') !== false || strpos($src,'\ebi\App::run(') !== false){
+		$map = \ebi\App::get_map($f->getPathname());
 		$entry = str_replace(getcwd(),'',$f->getPathname());
 		
 		foreach($map['patterns'] as $p){

@@ -6,7 +6,7 @@ namespace ebi\Attribute;
  *
  * @example
  * #[S2s]
- * class PaymentWebhook extends \ebi\flow\Request {}
+ * class PaymentWebhook extends \ebi\app\Request {}
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
 class S2s{

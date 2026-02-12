@@ -56,10 +56,25 @@ class Conf{
 	}
 
 	private static function exists(string $class_name, string $key): bool{
+		if(!array_key_exists($class_name, self::$value)){
+			self::resolve_class_alias($class_name);
+		}
 		return (
 			array_key_exists($class_name,self::$value) &&
 			array_key_exists($key,self::$value[$class_name])
 		);
+	}
+
+	/**
+	 * class_aliasで登録されたクラス名を解決する
+	 */
+	private static function resolve_class_alias(string $class_name): void{
+		foreach(array_keys(self::$value) as $c){
+			if(class_exists($c, true) && (new \ReflectionClass($c))->getName() === $class_name){
+				self::$value[$class_name] = self::$value[$c];
+				return;
+			}
+		}
 	}
 
 	/**

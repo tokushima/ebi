@@ -7,7 +7,7 @@ use ebi\Attribute\Parameter;
 /**
  * Developer Tools - OpenAPI-based API Documentation & Development Support
  */
-class Dt extends \ebi\flow\Request{
+class Dt extends \ebi\app\Request{
 	private string $entry;
 	private static array $mock = [];
 
@@ -17,7 +17,7 @@ class Dt extends \ebi\flow\Request{
 			krsort($trace);
 
 			foreach($trace as $t){
-				if(isset($t['class']) && $t['class'] == 'ebi\Flow'){
+				if(isset($t['class']) && ($t['class'] == 'ebi\App' || $t['class'] == 'ebi\Flow')){
 					$this->entry = $t['file'];
 					break;
 				}
@@ -210,8 +210,8 @@ HTML;
 		}
 		$has_smtp_blackhole_json = $has_smtp_blackhole ? 'true' : 'false';
 
-		// FlowHelperでURLを生成
-		$helper = new \ebi\FlowHelper();
+		// AppHelperでURLを生成
+		$helper = new \ebi\AppHelper();
 		$urls = json_encode([
 			'openapi' => $helper->package_method_url('openapi'),
 			'redoc' => $helper->package_method_url('redoc'),
@@ -308,7 +308,7 @@ HTML;
 
 	private function get_schema_type(string $class): string{
 		if(is_subclass_of($class, \ebi\Dao::class)) return 'model';
-		if(is_subclass_of($class, \ebi\flow\Request::class)) return 'request';
+		if(is_subclass_of($class, \ebi\app\Request::class)) return 'request';
 		return 'other';
 	}
 
@@ -485,9 +485,9 @@ HTML;
 		) as $f){
 			if(substr($f->getFilename(), -4) === '.php' && !preg_match('/\/[\._]/', $f->getPathname())){
 				$src = file_get_contents($f->getPathname());
-				if(strpos($src, 'Flow') !== false){
+				if(strpos($src, 'ebi\\Flow') !== false || strpos($src, 'ebi\\App') !== false){
 					$entry_name = substr($f->getFilename(), 0, -4);
-					$map = \ebi\Flow::get_map($f->getPathname());
+					$map = \ebi\App::get_map($f->getPathname());
 					foreach($map['patterns'] as $m){
 						$urls[$entry_name.'::'.$m['name']] = $m['format'];
 					}

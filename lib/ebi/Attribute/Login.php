@@ -6,7 +6,7 @@ namespace ebi\Attribute;
  *
  * @example
  * #[Login(type: 'ebi\User')]
- * class UserApi extends \ebi\flow\Request {}
+ * class UserApi extends \ebi\app\Request {}
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
 class Login{
