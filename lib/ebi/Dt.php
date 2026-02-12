@@ -379,17 +379,21 @@ HTML;
 			}
 		}
 
+		$yielded = [];
 		foreach(get_declared_classes() as $class){
 			$r = new \ReflectionClass($class);
+			$real_name = $r->getName();
 			if(!$r->isInterface()
-				&& (empty($parent_class) || is_subclass_of($r->getName(), $parent_class))
+				&& !isset($yielded[$real_name])
+				&& (empty($parent_class) || is_subclass_of($real_name, $parent_class))
 				&& $r->getFileName() !== false
-				&& strpos($r->getName(), '_') === false
-				&& strpos($r->getName(), 'Composer') === false
-				&& strpos($r->getName(), 'cmdman') === false
-				&& strpos($r->getName(), 'testman') === false
+				&& strpos($real_name, '_') === false
+				&& strpos($real_name, 'Composer') === false
+				&& strpos($real_name, 'cmdman') === false
+				&& strpos($real_name, 'testman') === false
 			){
-				yield ['filename' => $r->getFileName(), 'class' => '\\'.$r->getName()];
+				$yielded[$real_name] = true;
+				yield ['filename' => $r->getFileName(), 'class' => '\\'.$real_name];
 			}
 		}
 	}
