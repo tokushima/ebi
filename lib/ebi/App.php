@@ -169,7 +169,8 @@ class App{
 		}
 
 		/**
-		 * @param string $val アプリケーションURL、末尾が * = 実行エントリ, ** = エントリファイル名(*.php)
+		 * @var string
+		 * アプリケーションURL、末尾が * = 実行エントリ, ** = エントリファイル名(*.php)
 		 */
 		$app_url = \ebi\Conf::get('app_url');
 
@@ -185,7 +186,8 @@ class App{
 		self::$app_url = $app_url;
 
 		/**
-		 * @param string $val メディアファイルのベースURL
+		 * @var string
+		 * メディアファイルのベースURL
 		 * http://localhost:8000/resources/media
 		 */
 		self::$media_url = \ebi\Conf::get('media_url');
@@ -207,7 +209,8 @@ class App{
 		}
 		self::$media_url = \ebi\Util::path_slash(self::$media_url,null,true);
 		/**
-		 * @param string $val テンプレートファイルのディレクトリ
+		 * @var string
+		 * テンプレートファイルのディレクトリ
 		 */
 		self::$template_dir = \ebi\Util::path_slash(\ebi\Conf::get('template_path',\ebi\Conf::resource_path('templates')),null,true);
 
@@ -218,7 +221,8 @@ class App{
 		self::$workgroup = (array_key_exists('workgroup',$self_map)) ? $self_map['workgroup'] : basename($entry_file,'.php');
 
 		/**
-		 * @param bool $val HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
+		 * @var bool
+		 * HTTPSを有効にするか,falseの場合、mapのsecureフラグもすべてfalseとなる
 		 */
 		$conf_secure = \ebi\Conf::get('secure');
 		$map_secure = (array_key_exists('secure',$self_map) && $self_map['secure'] === true);
@@ -296,7 +300,8 @@ class App{
 				$map_output = $self_map['output'] ?? 'json';
 				$accept_debug = (
 					/**
-					 * @param bool $val Accept: application/debug を有効にする
+					 * @var bool
+					 * Accept: application/debug を有効にする
 					 * ヘッダにAcceptを指定した場合に出力を標準(JSON)とする
 					 * テンプレートやリダイレクト、出力プラグインを無視する
 					 */

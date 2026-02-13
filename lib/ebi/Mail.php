@@ -429,7 +429,8 @@ class Mail{
 	 */
 	public function set_template(string $template_path, array $bind_vars=[]): self{
 		/**
-		 * @param string $path Email template resources root
+		 * @var string
+		 * Email template resources root
 		 */
 		$resource_path = \ebi\Conf::get('resource_path',\ebi\Conf::resource_path('mail'));
 		$path = \ebi\Util::path_absolute($resource_path,$template_path);
@@ -459,7 +460,8 @@ class Mail{
 			}
 
 			/**
-			 * @param string $xtc_name xtc(x-template-code) query key
+			 * @var string
+			 * xtc(x-template-code) query key
 			 */
 			$xtc_name = \ebi\Conf::get('xtc_name','xtc');
 			$xtc = self::xtc($template_path);
@@ -541,7 +543,8 @@ class Mail{
 	 */
 	public static function xtc(string $template_path): string{
 		/**
-		 * @param string $xtc_length Template Code length
+		 * @var string
+		 * Template Code length
 		 */
 		$length = \ebi\Conf::get('xtc_length',5);
 		return strtoupper(substr(sha1(md5(str_repeat($template_path,5))),0,$length));

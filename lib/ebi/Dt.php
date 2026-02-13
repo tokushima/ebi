@@ -5,7 +5,8 @@ use ebi\Attribute\Route;
 use ebi\Attribute\Parameter;
 
 /**
- * Developer Tools - OpenAPI-based API Documentation & Development Support
+ * 開発支援ツール
+ * APIドキュメント生成(OpenAPI/Redoc)、設定一覧、送信メール確認、モックサーバーなどの機能を提供する
  */
 class Dt extends \ebi\app\Request{
 	private string $entry;
@@ -159,10 +160,19 @@ HTML;
 							'summary' => $p->summary(),
 						];
 					}
+					$document = trim($conf_info->document());
+					$summary = $conf_info->summary();
+					if(empty($summary) && $conf_info->has_params()){
+						$summary = $conf_info->param()->summary();
+						if(!empty($summary)){
+							$document = $summary;
+						}
+					}
 					$configs[] = [
 						'class' => $info->name(),
 						'name' => $name,
-						'summary' => $conf_info->summary(),
+						'summary' => $summary,
+						'document' => $document,
 						'params' => $params,
 						'defined' => $conf_info->opt('def', false),
 					];
@@ -358,7 +368,16 @@ HTML;
 			}
 		}
 
+		/**
+		 * @var array
+		 * スキャン対象に含めるvendorクラス
+		 * 末尾に*を付けるとそのパッケージ配下を全て読み込む
+		 */
 		$use_vendor = \ebi\Conf::gets('use_vendor');
+		/**
+		 * @var string
+		 * スキャン対象のvendorクラスを返すコールバック関数
+		 */
 		$use_vendor_callback = \ebi\Conf::get('use_vendor_callback');
 
 		if(!empty($use_vendor_callback)){
@@ -469,7 +488,15 @@ HTML;
 	}
 
 	private static function get_url_rewrite(): array{
+		/**
+		 * @var array
+		 * URLリライトルール [ 正規表現パターン => 置換先 ]
+		 */
 		$patterns = \ebi\Conf::get('url_rewrite', []);
+		/**
+		 * @var string
+		 * モックURLを生成する際のエントリ名、デフォルトは mock
+		 */
 		$entry = \ebi\Conf::get('mock_entry_name', 'mock');
 		foreach(self::$mock as $class_name){
 			$inst = (new \ReflectionClass($class_name))->newInstance();

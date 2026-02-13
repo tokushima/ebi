@@ -43,6 +43,25 @@ class ParamInfo extends \ebi\Obj{
 	}
 
 	/**
+	 * @var type description 形式のDocBlockをパース
+	 */
+	public static function parse_var(string $doc): array{
+		$result = [];
+		$m = [];
+
+		if(preg_match_all("/@var\s+([^\s]+)(?:\s+(.*))?/", $doc, $m)){
+			foreach(array_keys($m[1]) as $n){
+				$result[] = new static(
+					'val',
+					$m[1][$n],
+					trim($m[2][$n])
+				);
+			}
+		}
+		return $result;
+	}
+
+	/**
 	 * DocBlockからパラメータをパース
 	 */
 	public static function parse(string $varname, string $doc): array{

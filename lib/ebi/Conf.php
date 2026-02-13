@@ -150,9 +150,9 @@ class Conf{
 	 */
 	public static function in_mode(string $mode): bool{
 		/**
+		 * @var array
+		 * アプリケーションモードのグループ 
 		 * [ グループ名 => [モード,モード] ]
-		 * 
-		 * @param string{} $group アプリケーションモードのグループ 
 		 */
 		$group = self::get_self_conf_get('appmode_group',['dev'=>['local', 'development']]);
 
@@ -178,7 +178,8 @@ class Conf{
 	 */
 	public static function work_path(?string $path=null): string{
 		/**
-		 * @param string $val ワーキングディレクトリ
+		 * @var string 
+		 * ワーキングディレクトリ
 		 */
 		$dir = self::get_self_conf_get('work_dir');
 		
@@ -197,7 +198,8 @@ class Conf{
 	 */
 	public static function resource_path(?string $path=null): string{
 		/**
-		 * @param string $val リソースファイルのディレクトリ
+		 * @var string
+		 * リソースファイルのディレクトリ
 		 */
 		$dir = self::get_self_conf_get('resource_dir', '');
 		
@@ -216,53 +218,53 @@ class Conf{
 	 */
 	public static function cookie_params(): array{
 		/**
-		 * @param int $val ブラウザに送信するクッキーの有効期間(秒)
+		 * @var int
+		 * ブラウザに送信するクッキーの有効期間(秒)、デフォルトは、0 です
 		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
-		 * デフォルトは、0 です
 		 */
 		$cookie_lifetime = self::get_self_conf_get('cookie_lifetime',0);
 		
 		/**
-		 * @param string $val クッキーで設定するパス
-		 * デフォルトは、/ です
+		 * @var string
+		 * クッキーで設定するパス、デフォルトは、/ です
 		 */
 		$cookie_path = self::get_self_conf_get('cookie_path','/');
 		
 		/**
-		 * @param string $val クッキーで指定するドメイン
+		 * @var string
+		 * クッキーで指定するドメイン
 		 */
 		$cookie_domain = self::get_self_conf_get('cookie_domain');
 		
 		/**
-		 * デフォルトは、false です
-		 * @param bool $val セキュアな接続を通じてのみCookieを送信できるか
+		 * @var bool
+		 * セキュアな接続を通じてのみCookieを送信できるか、デフォルトは、false です
 		 */
 		$cookie_secure = self::get_self_conf_get('cookie_secure',false);
 		
 		/**
-		 * デフォルトは、空 です
-		 * @param strig $val クロスサイトリクエスト設定 ( Strict, Lax, None )
+		 * @var string
+		 * クロスサイトリクエスト設定 ( Strict, Lax, None )、デフォルトは、空 です
 		 */
 		$cookie_samesite = self::get_self_conf_get('cookie_samesite','');
 		
 		/**
-		 * デフォルトは、SID です
-		 * @param string $val セッション名
+		 * @var string
+		 * セッション名、デフォルトは、SID です
 		 */
 		$session_name = self::get_self_conf_get('session_name','SID');
 		
 		/**
-		 * @param int $val ブラウザに送信するセッションIDの有効期間(秒)
-		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります
-		 * デフォルトは、0 です
+		 * @var int
+		 * ブラウザに送信するセッションIDの有効期間(秒)
+		 * 0 を指定すると "ブラウザを閉じるまで" という意味になります、デフォルトは、0 です
 		 */
 		$session_lifetime = self::get_self_conf_get('session_lifetime',0);
 		
 		/**
-		 * 生存期間、デフォルトは1440です
+		 * セッション生存期間、デフォルトは1440です
 		 * cookie_lifetimeが大きい場合、cookie_lifetimeで上書きされます
-		 * セッション開始時にガベージコレクションが実行されるのでアプリが共存している場合は注意が必要です
-		 * @param string $val 消去されるまでの秒数を指定します。
+		 * @var int 
 		 */
 		$session_maxlifetime = self::get_self_conf_get('session_maxlifetime',1440);
 		
@@ -271,7 +273,8 @@ class Conf{
 		}
 		
 		/**
-		 * @param int $val セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
+		 * @var int
+		 * セッション ID 文字列の長さを指定します。 22 から 256 までの値が使えます。
 		 */
 		$session_sid_length = self::get_self_conf_get('session_sid_length');
 		
@@ -300,8 +303,8 @@ class Conf{
 	 */
 	public static function timestamp_format(): string{
 		/**
-		 * timestamp型の書式
-		 * @param string $val Y-m-d H:i:s
+		 * @var string
+		 * timestamp型の表現書式
 		 * @see http://php.net/manual/ja/function.date.php
 		 */
 		return self::get_self_conf_get('timestamp_format','c');
@@ -312,8 +315,8 @@ class Conf{
 	 */
 	public static function date_format(): string{
 		/**
-		 * date型の書式
-		 * @param string $val Y-m-d
+		 * @var string
+		 * date型の表現書式
 		 * @see http://php.net/manual/ja/function.date.php
 		 */
 		return self::get_self_conf_get('date_format','Y-m-d');

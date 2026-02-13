@@ -78,7 +78,10 @@ class DocInfo extends \ebi\Obj{
 		}
 		
 		$params = \ebi\Dt\ParamInfo::parse('param',$doc);
-		
+
+		if(empty($params)){
+			$params = \ebi\Dt\ParamInfo::parse_var($doc);
+		}
 		if(!empty($params)){
 			$info->params($params);
 		}

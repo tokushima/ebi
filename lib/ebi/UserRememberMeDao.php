@@ -17,7 +17,8 @@ class UserRememberMeDao extends \ebi\Dao{
 	
 	private static function crypt(string $user_id): string{
 		/**
-		 * @param string $salt user_idのハッシュ用salt
+		 * @var string
+		 * user_idのハッシュ用salt
 		 */
 		return sha1(\ebi\Conf::get('salt',__FILE__).$user_id);
 	}
@@ -37,7 +38,8 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->user_id($req->user()->id());
 			}
 			/**
-			 * @param int $lifetime クッキーの保存期間
+			 * @var int
+			 * クッキーの保存期間
 			 */
 			$expire = time() + \ebi\Conf::get('lifetime',5184000); // 60day
 			$codebase = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#%&@.';

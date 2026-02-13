@@ -810,10 +810,10 @@ function WebhooksPage() {
 	);
 }
 
-function ConfigPage() {
+function ConfigPage({ initialClass = '' }) {
 	const [configs, setConfigs] = useState([]);
 	const [loading, setLoading] = useState(true);
-	const [search, setSearch] = useState('');
+	const [search, setSearch] = useState(initialClass);
 	const [filterDefined, setFilterDefined] = useState('');
 
 	useEffect(() => {
@@ -842,14 +842,19 @@ function ConfigPage() {
 			{loading ? <div className="text-center py-4"><div className="spinner-border text-primary" /></div> : Object.keys(grouped).length === 0 ? <div className="alert alert-info">No configs found.</div> : (
 				Object.entries(grouped).map(([className, items]) => (
 					<div key={className} className="card mb-4">
-						<div className="card-header fw-semibold"><code>{className}</code></div>
+						<div className="card-header fw-semibold"><code>{className}</code> <a href={`#config=${encodeURIComponent(className)}`} style={{ color: '#94a3b8', fontSize: '0.75rem', textDecoration: 'none' }} title={className}>#</a></div>
 						<table className="table table-hover mb-0">
-							<thead className="table-light"><tr><th style={{width:'250px'}}>Name</th><th>Type</th><th>Description</th><th style={{width:'80px'}}>Status</th></tr></thead>
+							<thead className="table-light"><tr><th style={{width:'250px'}}>Name</th><th style={{width:'100px'}}>Type</th><th>Description</th><th style={{width:'80px'}}>Status</th></tr></thead>
 							<tbody>{items.map((c, i) => (
 								<tr key={i}>
 									<td><code className="text-primary">{c.name}</code></td>
 									<td className="text-muted small">{c.params.map(p => p.type).join(', ') || '-'}</td>
-									<td className="small">{c.summary || '-'}</td>
+									<td className="small" style={{whiteSpace:'pre-wrap'}}>{(() => {
+									const doc = c.document || c.summary || '';
+									if (!doc) return '-';
+									const lines = doc.split('\n');
+									return <>{lines[0]}{lines.length > 1 && <span className="text-muted" style={{fontSize:'0.75em'}}>{'\n' + lines.slice(1).join('\n')}</span>}</>;
+								})()}</td>
 									<td>{c.defined ? <span className="badge bg-success">Defined</span> : <span className="badge bg-secondary">-</span>}</td>
 								</tr>
 							))}</tbody>
@@ -875,13 +880,14 @@ function App() {
 	const [selected, setSelected] = useState(null);
 	const [selectedSchema, setSelectedSchema] = useState(null);
 	const [envelope, setEnvelope] = useState(true);
+	const [configClass, setConfigClass] = useState(initial.page === 'config' ? (initial.detail || '') : '');
 
 	const updateHash = (p, detail = null) => {
 		const hash = detail ? `${p}=${encodeURIComponent(detail)}` : p;
 		window.history.replaceState(null, '', '#' + hash);
 	};
 
-	const handlePageChange = (p) => { setPage(p); setSelected(null); setSelectedSchema(null); updateHash(p); };
+	const handlePageChange = (p) => { setPage(p); setSelected(null); setSelectedSchema(null); setConfigClass(''); updateHash(p); };
 
 	const handleSelectEndpoint = (e) => { setSelected(e); updateHash('endpoints', e.path); };
 	const handleCloseEndpoint = () => { setSelected(null); updateHash('endpoints'); };
@@ -904,6 +910,8 @@ function App() {
 		} else if (initPage === 'schemas' && detail) {
 			const schemas = spec.components?.schemas || {};
 			if (schemas[detail]) setSelectedSchema({ name: detail, schema: schemas[detail] });
+		} else if (initPage === 'config' && detail) {
+			setConfigClass(detail);
 		}
 		const onHashChange = () => {
 			const { page: p, detail: d } = parseHash();
@@ -916,6 +924,8 @@ function App() {
 			} else if (p === 'schemas' && d) {
 				const schemas = spec.components?.schemas || {};
 				if (schemas[d]) setSelectedSchema({ name: d, schema: schemas[d] });
+			} else if (p === 'config') {
+				setConfigClass(d || '');
 			}
 		};
 		window.addEventListener('hashchange', onHashChange);
@@ -953,7 +963,7 @@ function App() {
 				{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
 				{page === 'webhooks' && <WebhooksPage />}
 				{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
-				{page === 'config' && <ConfigPage />}
+				{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
 				{page === 'mail' && <MailPage />}
 			</main>
 			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />}

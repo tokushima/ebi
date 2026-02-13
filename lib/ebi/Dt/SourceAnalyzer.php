@@ -209,6 +209,10 @@ class SourceAnalyzer{
 		] as $preg => $default_type){
 			if(preg_match_all($preg,$src,$m,PREG_OFFSET_CAPTURE)){
 				foreach($m[2] as $k => $v){
+					if(strpos($v[0],'@') !== false){
+						// 他クラスのConfを直接参照しているものは無視
+						continue;
+					}
 					if(!array_key_exists($v[0],$config_list) || !$config_list[$v[0]]->has_params()){
 						$conf_info = DocInfo::parse($v[0],$src,$m[0][$k][1]);
 						$conf_info->set_opt('def',\ebi\Conf::defined($r->getName().'@'.$v[0]));

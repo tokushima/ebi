@@ -352,42 +352,48 @@ class Request extends \ebi\Request{
 
 		if(!empty($request_origin)){
 			/**
-			 * @param string[] $cors_origin 許可するURL
+			 * @var array
+			 * CORSで許可するオリジン
 			 */
 			$origin = \ebi\Conf::get('cors_origin');
 
 			/**
-			 * @param bool $cors_debug ORIGINを常に許可する
+			 * @var bool
+			 * 全てのオリジンを許可する（開発用）
 			 */
 			if(empty($origin) && \ebi\Conf::get('cors_debug',false) === true){
 				$origin = [$request_origin];
 			}
-			if(!is_array($origin)){
-				$origin = [$origin];
-			}
-			if(in_array($request_origin, $origin)){
-				\ebi\HttpHeader::send('Access-Control-Allow-Origin', $request_origin);
-				\ebi\HttpHeader::send('Access-Control-Allow-Credentials','true');
+			if(!empty($origin)){
+				if(!is_array($origin)){
+					$origin = [$origin];
+				}
+				if(in_array($request_origin, $origin)){
+					\ebi\HttpHeader::send('Access-Control-Allow-Origin', $request_origin);
+					\ebi\HttpHeader::send('Access-Control-Allow-Credentials','true');
+					\ebi\HttpHeader::send('Vary', 'Origin');
 
-				if(\ebi\Request::method() == 'OPTIONS' && $request_origin != '*'){
-					$request_method = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? '';
-					$request_header = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? '';
+					if(\ebi\Request::method() == 'OPTIONS'){
+						$request_method = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? '';
+						$request_header = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? '';
 
-					/**
-					 * @param int $cors_max_age プリフライトの応答をキャッシュする秒数
-					 */
-					$max_age = (int)\ebi\Conf::get('cors_max_age',0);
+						/**
+						 * @var int
+						 * プリフライトの応答をキャッシュする秒数
+						 */
+						$max_age = (int)\ebi\Conf::get('cors_max_age',0);
 
-					if(!empty($request_method)){
-						\ebi\HttpHeader::send('Access-Control-Allow-Methods', $request_method);
+						if(!empty($request_method)){
+							\ebi\HttpHeader::send('Access-Control-Allow-Methods', $request_method);
+						}
+						if(!empty($request_header)){
+							\ebi\HttpHeader::send('Access-Control-Allow-Headers', $request_header);
+						}
+						if($max_age > 0){
+							\ebi\HttpHeader::send('Access-Control-Max-Age', $max_age);
+						}
+						exit;
 					}
-					if(!empty($request_header)){
-						\ebi\HttpHeader::send('Access-Control-Allow-Headers', $request_header);
-					}
-					if($max_age > 0){
-						\ebi\HttpHeader::send('Access-Control-Max-Age', $max_age);
-					}
-					exit;
 				}
 			}
 		}
