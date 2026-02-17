@@ -201,6 +201,14 @@ class OpenApi extends \ebi\app\Request{
 						continue;
 					}
 
+					// パラメータ名を抽出（正規表現グループの変換用）
+					$param_names = [];
+					if(isset($info)){
+						foreach($info->params() as $param){
+							$param_names[] = $param->name();
+						}
+					}
+
 					// @s2sエンドポイントはwebhookとして収集（メソッドまたはクラスのDocBlock）
 					$is_s2s = (isset($info) && $info->opt('s2s'));
 					if(!$is_s2s && isset($m['class'])){
@@ -211,7 +219,7 @@ class OpenApi extends \ebi\app\Request{
 						}
 					}
 					if($is_s2s){
-						$path = $this->convert_to_openapi_path($url_pattern);
+						$path = $this->convert_to_openapi_path($url_pattern, $param_names);
 						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
 
 						$this->webhooks[] = [
@@ -222,7 +230,7 @@ class OpenApi extends \ebi\app\Request{
 						continue;
 					}
 
-					$path = $this->convert_to_openapi_path($url_pattern);
+					$path = $this->convert_to_openapi_path($url_pattern, $param_names);
 					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
 
 					if(!isset($spec['paths'][$path])){
@@ -351,9 +359,24 @@ class OpenApi extends \ebi\app\Request{
 	/**
 	 * URLパターンをOpenAPIパス形式に変換
 	 */
-	private function convert_to_openapi_path(string $url_pattern): string{
+	private function convert_to_openapi_path(string $url_pattern, array $param_names = []): string{
 		// :param 形式を {param} 形式に変換
 		$path = preg_replace('/:([a-zA-Z_][a-zA-Z0-9_]*)/', '{$1}', $url_pattern);
+
+		// 正規表現グループ (...) を {paramName} 形式に変換
+		$idx = 0;
+		$path = substr(preg_replace_callback(
+			"/([^\\\\])(\(.*?[^\\\\]\))/",
+			function($m) use ($param_names, &$idx){
+				$name = $param_names[$idx] ?? 'param'.($idx + 1);
+				$idx++;
+				return $m[1].'{'.$name.'}';
+			},
+			' '.$path
+		), 1);
+
+		// 正規表現エスケープを解除 (\. → . など)
+		$path = preg_replace('/\\\\(.)/', '$1', $path);
 
 		// 先頭にスラッシュがない場合は追加
 		if(empty($path) || $path[0] !== '/'){
