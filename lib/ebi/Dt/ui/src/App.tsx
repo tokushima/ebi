@@ -56,7 +56,7 @@ function renderNestedProps(items, parentKey, schemas, expanded, depth = 1) {
 		const hasChildren = !!(nested?.properties) && depth < 3;
 		const isOpen = expanded.has(key);
 		rows.push(
-			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', depth, hasChildren, isOpen }
+			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', deprecated: !!p.deprecated, depth, hasChildren, isOpen }
 		);
 		if (hasChildren && isOpen) {
 			const children = Object.entries(nested.properties).map(([k, v]) => ({ name: k, ...v }));
@@ -223,13 +223,13 @@ function ResponsesView({ responses, schemas, operationId }) {
 								const indent = r.depth * 1.25;
 								const isNested = r.depth > 1;
 								items.push(
-									<div key={r.key} className="param-row" style={r.hasChildren ? { cursor: 'pointer' } : {}} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
-										<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}) }}>
+									<div key={r.key} className="param-row" style={{ ...(r.hasChildren ? { cursor: 'pointer' } : {}), ...(r.deprecated ? { opacity: 0.5 } : {}) }} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
+										<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>
 											{r.hasChildren && <span style={{ display: 'inline-block', width: 12, fontSize: '0.625rem', color: '#94a3b8' }}>{r.isOpen ? '▼' : '▶'}</span>}
 											{r.name}
 										</span>
-										<span className="param-type">{r.type}</span>
-										<span className="param-desc" style={isNested ? { color: '#94a3b8' } : {}}>{r.desc}</span>
+										<span className="param-type" style={r.deprecated ? { textDecoration: 'line-through' } : {}}>{r.type}</span>
+										<span className="param-desc" style={{ ...(isNested ? { color: '#94a3b8' } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>{r.desc}</span>
 									</div>
 								);
 							});

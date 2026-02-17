@@ -988,15 +988,26 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];
 					}
 
-					if(!empty($data['summary'])){
+					$summary = $data['summary'] ?? '';
+					$is_deprecated = false;
+					if(preg_match('/@deprecated/', $summary)){
+						$is_deprecated = true;
+						$summary = trim(preg_replace('/@deprecated.*/', '', $summary));
+					}
+
+					if(!empty($summary)){
 						if(isset($prop_schema['$ref'])){
 							$prop_schema = [
 								'allOf' => [$prop_schema],
-								'description' => $data['summary'],
+								'description' => $summary,
 							];
 						}else{
-							$prop_schema['description'] = $data['summary'];
+							$prop_schema['description'] = $summary;
 						}
+					}
+
+					if($is_deprecated){
+						$prop_schema['deprecated'] = true;
 					}
 
 					$properties[$name] = $prop_schema;
@@ -1020,6 +1031,10 @@ class OpenApi extends \ebi\app\Request{
 						}else{
 							$prop_schema['description'] = $context->summary();
 						}
+					}
+
+					if($context->opt('deprecated')){
+						$prop_schema['deprecated'] = true;
 					}
 
 					$properties[$context->name()] = $prop_schema;
