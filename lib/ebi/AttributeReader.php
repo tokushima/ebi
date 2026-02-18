@@ -185,6 +185,32 @@ class AttributeReader{
 						}
 					}
 					break;
+				case 'error_response':
+					$attrs = $r->getAttributes(\ebi\Attribute\ErrorResponse::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$result[$name][] = [
+								'status' => $inst->status,
+								'description' => $inst->description,
+							];
+						}
+					}
+					break;
+				case 'attr_throws':
+					$attrs = $r->getAttributes(\ebi\Attribute\Throws::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$result[$name][] = [
+								'exception' => $inst->exception,
+								'summary' => $inst->summary ?? '',
+							];
+						}
+					}
+					break;
 			}
 		}
 		return $result;

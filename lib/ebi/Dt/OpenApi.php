@@ -546,7 +546,12 @@ class OpenApi extends \ebi\app\Request{
 		}
 
 		// レスポンス
-		$operation['responses'] = $this->build_responses($m, $info, $schemas);
+		$x_throws = [];
+		$operation['responses'] = $this->build_responses($m, $info, $schemas, $x_throws);
+
+		if(!empty($x_throws)){
+			$operation['x-throws'] = $x_throws;
+		}
 
 		// ログイン要件のチェック（クラスのAttribute または メソッドの@login_required）
 		// do_loginはログイン処理自体なのでsecurity対象外
@@ -954,9 +959,30 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
+	 * 例外クラス名からHTTPステータスコードを推定
+	 */
+	private function exception_to_status(string $exception_name): int{
+		$name = strtolower($exception_name);
+
+		if(str_contains($name, 'unauthorizedexception')){
+			return 401;
+		}
+		if(str_contains($name, 'accessdeniedexception')){
+			return 403;
+		}
+		if(str_contains($name, 'notfoundexception')){
+			return 404;
+		}
+		if(str_contains($name, 'duplicatekeyexception') || str_contains($name, 'uniqueexception') || str_contains($name, 'alreadyexception') || str_contains($name, 'already')){
+			return 409;
+		}
+		return 422;
+	}
+
+	/**
 	 * レスポンス定義を構築
 	 */
-	private function build_responses(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas): array{
+	private function build_responses(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, array &$x_throws=[]): array{
 		$responses = [];
 
 		// OA\Response属性からレスポンスを取得（優先）
@@ -1066,16 +1092,92 @@ class OpenApi extends \ebi\app\Request{
 
 		$responses['200'] = $success_response;
 
-		// エラーレスポンス（throws情報から）
-		if(isset($info) && $info->has_opt('throws')){
-			foreach($info->opt('throws') as $throw){
-				$exception_name = $throw->name();
+		// #[ErrorResponse]属性からエラーレスポンスを取得
+		if(isset($m['class'], $m['method'])){
+			$attr_errors = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'error_response');
+			if(!empty($attr_errors)){
+				foreach($attr_errors as $err){
+					$status = (string)$err['status'];
 
-				if(strpos($exception_name, 'UnauthorizedException') !== false){
-					$responses['401'] = [
-						'description' => $throw->summary() ?: 'Unauthorized',
+					if(isset($responses[$status])){
+						$responses[$status]['description'] .= "\n".$err['description'];
+					}else{
+						$responses[$status] = ['description' => $err['description']];
+					}
+
+					// x-throwsにも収集（UI側でenvelope時の表示切替に使用）
+					if($status !== '401'){
+						$x_throws[] = [
+							'status' => (int)$status,
+							'description' => $err['description'],
+						];
+					}
+				}
+			}
+		}
+
+		// #[Throws]属性からエラーレスポンスを取得
+		if(isset($m['class'], $m['method'])){
+			$attr_throws = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'attr_throws');
+			if(!empty($attr_throws)){
+				foreach($attr_throws as $t){
+					$exception_name = $t['exception'];
+					$short_name = (($pos = strrpos($exception_name, '\\')) !== false) ? substr($exception_name, $pos + 1) : $exception_name;
+					$status = (string)$this->exception_to_status($exception_name);
+
+					$desc = trim($t['summary']);
+					$label = empty($desc) ? $short_name : $short_name.' - '.$desc;
+
+					if(isset($responses[$status])){
+						$responses[$status]['description'] .= "\n".$label;
+					}else{
+						$responses[$status] = ['description' => $label];
+					}
+
+					// x-throwsにも収集
+					if($status !== '401'){
+						$x_throws[] = [
+							'status' => (int)$status,
+							'exception' => $short_name,
+							'description' => $desc,
+						];
+					}
+				}
+			}
+		}
+
+		// エラーレスポンス（@throws DocBlockから、明示的に記述されたもののみ）
+		if(isset($info) && $info->has_opt('throws')){
+			$error_groups = [];
+
+			foreach($info->opt('throws') as $throw){
+				// ソースコードのthrow new文から自動検出されたものはスキップ
+				if($throw->opt('auto')){
+					continue;
+				}
+				$exception_name = $throw->name();
+				$short_name = (($pos = strrpos($exception_name, '\\')) !== false) ? substr($exception_name, $pos + 1) : $exception_name;
+				$status = $this->exception_to_status($exception_name);
+
+				$desc = trim($throw->summary());
+				$label = empty($desc) ? $short_name : $short_name.' - '.$desc;
+
+				$error_groups[$status][] = $label;
+
+				// x-throwsにも収集
+				if($status !== 401){
+					$x_throws[] = [
+						'status' => $status,
+						'exception' => $short_name,
+						'description' => $desc,
 					];
 				}
+			}
+
+			foreach($error_groups as $status => $labels){
+				$responses[(string)$status] = [
+					'description' => implode("\n", $labels),
+				];
 			}
 		}
 

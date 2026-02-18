@@ -179,13 +179,18 @@ function generateResponseTypes(responses, schemas, operationId) {
 	return lines.join('\n\n');
 }
 
-function ResponsesView({ responses, schemas, operationId }) {
+function ResponsesView({ responses, schemas, operationId, envelope = false }) {
 	if (!responses) return null;
 	const [expanded, setExpanded] = useState(new Set());
 	const [showTs, setShowTs] = useState(false);
 	const [copied, setCopied] = useState(false);
 	const statusColor = (code) => code.startsWith('2') ? '#22c55e' : code.startsWith('4') ? '#f59e0b' : '#ef4444';
 	const tsCode = useMemo(() => generateResponseTypes(responses, schemas, operationId), [responses, schemas, operationId]);
+
+	// envelope時は401以外のエラーステータスを非表示
+	const filteredResponses = envelope
+		? Object.fromEntries(Object.entries(responses).filter(([code]) => code.startsWith('2') || code === '401'))
+		: responses;
 
 	const handleCopy = () => {
 		navigator.clipboard.writeText(tsCode).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
@@ -204,7 +209,7 @@ function ResponsesView({ responses, schemas, operationId }) {
 				</div>
 			) : (
 				<div className="param-grid mt-2" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-					{Object.entries(responses).flatMap(([code, resp], idx) => {
+					{Object.entries(filteredResponses).flatMap(([code, resp], idx) => {
 						const hasSchema = !!resp.content?.['application/json']?.schema;
 						const props = hasSchema ? resp.content['application/json'].schema : null;
 						const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
@@ -437,7 +442,21 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 							<div className="card-body py-2">{Object.entries(op.requestBody.content).map(([ct, c]) => <div key={ct}>{c.schema && <SchemaView schema={c.schema} schemas={schemas} />}</div>)}</div>
 						</div>
 					</section>}
-					<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} />
+					<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} envelope={envelope} />
+					{envelope && op['x-throws'] && op['x-throws'].length > 0 && <section>
+						<div className="section-label">Throws <span style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 400 }}>(HTTP 200)</span></div>
+						<div className="mt-2" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+							{op['x-throws'].map((t, i) => (
+								<div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 0.75rem', fontSize: '0.8125rem', gap: '0.75rem', borderTop: i > 0 ? '1px solid #e2e8f0' : 'none', background: i % 2 === 0 ? '#f8fafc' : 'transparent' }}>
+									<span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', fontFamily: "'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,monospace", fontWeight: 500, color: '#1e293b' }}>
+										<span style={{ display: 'inline-block', minWidth: 28, padding: '1px 6px', borderRadius: 4, fontSize: '0.625rem', fontWeight: 600, textAlign: 'center', background: '#fee2e2', color: '#991b1b', marginRight: 6 }}>200</span>
+										{t.exception || ''}
+									</span>
+									<span style={{ color: '#64748b', flex: 1 }}>{t.description}</span>
+								</div>
+							))}
+						</div>
+					</section>}
 					<section>
 						<button className={`btn btn-sm px-4 ${showTry ? 'btn-outline-danger' : 'btn-dark'}`} onClick={() => setShowTry(!showTry)}>{showTry ? 'Close' : 'Try It'}</button>
 						{showTry && <div className="mt-3"><TryItPanel endpoint={endpoint} op={op} envelope={envelope} /></div>}
@@ -464,7 +483,7 @@ function Endpoints({ onSelect }) {
 	const tags = useMemo(() => (spec.tags || []).filter(t => t.name !== 'Dt').map(t => ({ name: t.name, label: t['x-displayName'] || t.name })), []);
 	const filtered = endpoints.filter(e => {
 		const s = search.toLowerCase();
-		return (!s || e.path.toLowerCase().includes(s) || (e.op.summary || '').toLowerCase().includes(s)) && (!tagFilter || (e.op.tags || []).includes(tagFilter));
+		return (!s || e.path.toLowerCase().includes(s) || (e.op.summary || '').toLowerCase().includes(s) || (e.op.operationId || '').toLowerCase().includes(s)) && (!tagFilter || (e.op.tags || []).includes(tagFilter));
 	});
 	const normalFiltered = filtered.filter(e => e.op['x-mode'] !== '@dev');
 	const devFiltered = filtered.filter(e => e.op['x-mode'] === '@dev');

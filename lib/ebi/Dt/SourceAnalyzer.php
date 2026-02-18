@@ -336,8 +336,10 @@ class SourceAnalyzer{
 		foreach($throws as $n => $t){
 			try{
 				$ref = new \ReflectionClass($n);
-				$doc = empty($t[1]) ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
+				$is_auto = empty($t[1]);
+				$doc = $is_auto ? trim(preg_replace('/@.+/','',self::trim_doc($ref->getDocComment()))) : $t[1];
 				$throw_param[$n] = new ParamInfo($ref->getName(),$ref->getName(),trim($doc));
+				$throw_param[$n]->set_opt('auto', $is_auto);
 			}catch(\ReflectionException){
 			}
 		}
