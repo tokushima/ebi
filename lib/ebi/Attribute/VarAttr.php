@@ -12,6 +12,7 @@ namespace ebi\Attribute;
 class VarAttr{
 	public function __construct(
 		public string $type='string',
+		public ?string $items=null,
 		public ?string $summary=null,
 		public bool $primary=false,
 		public bool $auto_now=false,

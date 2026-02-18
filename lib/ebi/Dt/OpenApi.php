@@ -1008,7 +1008,9 @@ class OpenApi extends \ebi\app\Request{
 				foreach($attr_contexts as $name => $data){
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
 
-					if(($data['attr'] ?? null) === 'a'){
+					if($data['type'] === 'array' && !empty($data['items'])){
+						$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+					}else if(($data['attr'] ?? null) === 'a'){
 						$prop_schema = ['type' => 'array', 'items' => $prop_schema];
 					}else if(($data['attr'] ?? null) === 'h'){
 						$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];

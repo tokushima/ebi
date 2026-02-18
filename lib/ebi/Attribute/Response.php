@@ -13,6 +13,7 @@ class Response{
 	public function __construct(
 		public string $name,
 		public string $type='mixed',
+		public ?string $items=null,
 		public ?string $summary=null,
 	){}
 }

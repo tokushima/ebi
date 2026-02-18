@@ -261,7 +261,10 @@ class AttributeReader{
 				$attr_type = null;
 
 				// 配列/ハッシュ型の処理
-				if(str_ends_with($type, '[]')){
+				if($type === 'array' && $inst->items !== null){
+					$attr_type = 'a';
+					$type = $inst->items;
+				}else if(str_ends_with($type, '[]')){
 					$attr_type = 'a';
 					$type = substr($type, 0, -2);
 				}else if(str_ends_with($type, '{}')){
