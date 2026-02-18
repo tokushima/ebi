@@ -4,7 +4,25 @@ namespace ebi;
 #[\AllowDynamicProperties]
 class Obj implements \IteratorAggregate{
 	private static array $_m = [];
+	private static array $_props = [];
 	protected string $_;
+
+	private function init_obj_meta(): void{
+		$c = get_class($this);
+		if(!isset(self::$_m[$c])){
+			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',null,__CLASS__) ?? [];
+		}
+		if(!isset(self::$_props[$c])){
+			self::$_props[$c] = [];
+			foreach((new \ReflectionClass($this))->getProperties(\ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PUBLIC) as $rp){
+				$n = $rp->getName();
+				if($rp->isStatic() || $n[0] === '_'){
+					continue;
+				}
+				self::$_props[$c][$n] = true;
+			}
+		}
+	}
 
 	/**
 	 * プロパティのアノテーションを取得する
@@ -15,6 +33,7 @@ class Obj implements \IteratorAggregate{
 	 * @return mixed
 	 */
 	public function prop_anon(string $p, ?string $n=null, $d=null, bool $f=false){
+		$this->init_obj_meta();
 		if($f){
 			self::$_m[get_class($this)][$p][$n] = $d;
 		}
@@ -44,15 +63,13 @@ class Obj implements \IteratorAggregate{
 		return new \ArrayIterator($r);
 	}
 	public function __construct(){
-		$c = get_class($this);
-		if(!isset(self::$_m[$c])){
-			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',null,__CLASS__);
-		}
+		$this->init_obj_meta();
 	}
 	public function __call($n, $args){
+		$this->init_obj_meta();
 		if($n[0] != '_'){
 			$m = [];
-			[$c, $p] = (in_array($n,array_keys(get_object_vars($this)))) ? 
+			[$c, $p] = (isset(self::$_props[get_class($this)][$n])) ?
 				[(empty($args) ? 'get' : 'set'),$n] : 
 				(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
 					[$m[1],$m[2]] : 
@@ -82,10 +99,11 @@ class Obj implements \IteratorAggregate{
 		if($this->prop_anon($this->_,'get') === false){
 			throw new \ebi\exception\InvalidArgumentException('not permitted');
 		}
+		$v = $this->property_value($this->_);
 		if($this->prop_anon($this->_,'attr') !== null){
-			return (is_array($this->{$this->_})) ? $this->{$this->_} : (is_null($this->{$this->_}) ? [] : [$this->{$this->_}]);
+			return is_array($v) ? $v : (is_null($v) ? [] : [$v]);
 		}
-		return $this->{$this->_};
+		return $v;
 	}
 	private function ___set___($v){
 		if($this->prop_anon($this->_,'set') === false){
@@ -95,12 +113,14 @@ class Obj implements \IteratorAggregate{
 		switch($this->prop_anon($this->_,'attr')){
 			case 'a':
 				$v = (func_num_args() > 1) ? func_get_args() : (is_array($v) ? $v : [$v]);
+				$this->ensure_array_property($this->_);
 				foreach($v as $a){
 					$this->{$this->_}[] = \ebi\Validator::type($this->_,$a,$anon);
 				}
 				break;
 			case 'h':
 				$v = (func_num_args() === 2) ? [func_get_arg(0)=>func_get_arg(1)] : (is_array($v) ? $v : [(string)$v=>$v]);
+				$this->ensure_array_property($this->_);
 				foreach($v as $k => $a){
 					$this->{$this->_}[$k] = \ebi\Validator::type($this->_,$a,$anon);
 				}
@@ -187,5 +207,17 @@ class Obj implements \IteratorAggregate{
 				return (bool)$v;
 		}
 		return isset($v);
+	}
+	private function property_value(string $name){
+		try{
+			return $this->{$name};
+		}catch(\Error $e){
+			return null;
+		}
+	}
+	private function ensure_array_property(string $name): void{
+		if(!is_array($this->property_value($name))){
+			$this->{$name} = [];
+		}
 	}
 }
