@@ -188,6 +188,61 @@ HTML;
 		exit;
 	}
 
+	/**
+	 * Scanned Classes API - List all auto-scanned classes
+	 */
+	#[Route(suffix: '.json')]
+	public function scanned_classes(): void{
+		$classes = [];
+
+		foreach(self::classes() as $class_info){
+			$classes[] = [
+				'class' => ltrim($class_info['class'], '\\'),
+				'filename' => $class_info['filename'],
+			];
+		}
+
+		usort($classes, fn($a, $b) => strcmp($a['class'], $b['class']));
+
+		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
+		echo json_encode(['classes' => $classes, 'total' => count($classes)], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+		exit;
+	}
+
+	/**
+	 * Mocks API - List all registered mock classes
+	 */
+	#[Route(suffix: '.json')]
+	public function mocks(): void{
+		$mocks = [];
+
+		foreach(self::$mock as $class_name){
+			$mock_info = [
+				'class' => $class_name,
+			];
+			try{
+				$inst = (new \ReflectionClass($class_name))->newInstance();
+				$mock_info['rewrite_map'] = $inst->rewrite_map();
+			}catch(\Exception){
+				$mock_info['rewrite_map'] = [];
+			}
+			$mocks[] = $mock_info;
+		}
+
+		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
+		echo json_encode(['mocks' => $mocks, 'total' => count($mocks)], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+		exit;
+	}
+
+	/**
+	 * phpinfo
+	 */
+	#[Route]
+	public function phpinfo(): void{
+		phpinfo();
+		exit;
+	}
+
 	// === Render Methods ===
 
 	private function render_react_app(): void{
@@ -227,6 +282,9 @@ HTML;
 			'redoc' => $helper->package_method_url('redoc'),
 			'sent_mails' => $helper->package_method_url('sent_mails'),
 			'configs' => $helper->package_method_url('configs'),
+			'scanned_classes' => $helper->package_method_url('scanned_classes'),
+			'mocks' => $helper->package_method_url('mocks'),
+			'phpinfo' => $helper->package_method_url('phpinfo'),
 		], JSON_UNESCAPED_SLASHES);
 
 		$appmode = \ebi\Conf::appmode();
@@ -406,7 +464,7 @@ HTML;
 				&& !isset($yielded[$real_name])
 				&& (empty($parent_class) || is_subclass_of($real_name, $parent_class))
 				&& $r->getFileName() !== false
-				&& strpos($real_name, '_') === false
+				&& $real_name[0] !== '_' && strpos($real_name, '\\_') === false
 				&& strpos($real_name, 'Composer') === false
 				&& strpos($real_name, 'cmdman') === false
 				&& strpos($real_name, 'testman') === false

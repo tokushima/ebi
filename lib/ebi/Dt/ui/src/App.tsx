@@ -829,11 +829,117 @@ function WebhooksPage() {
 	);
 }
 
+function ScannedClassesModal({ onClose }) {
+	const [classes, setClasses] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [search, setSearch] = useState('');
+
+	useEffect(() => {
+		fetch(apiUrls.scanned_classes)
+			.then(res => res.json())
+			.then(data => { setClasses(data.classes || []); setLoading(false); })
+			.catch(() => setLoading(false));
+	}, []);
+
+	const filtered = classes.filter(c => {
+		const s = search.toLowerCase();
+		return !s || c.class.toLowerCase().includes(s) || c.filename.toLowerCase().includes(s);
+	});
+	const grouped = filtered.reduce((acc, c) => {
+		const ns = c.class.substring(0, c.class.lastIndexOf('\\')) || '(root)';
+		if (!acc[ns]) acc[ns] = [];
+		acc[ns].push(c);
+		return acc;
+	}, {});
+
+	return (
+		<div className="modal-backdrop-custom" onClick={onClose}>
+			<div className="modal-panel" style={{ maxWidth: 1000 }} onClick={e => e.stopPropagation()}>
+				<div className="modal-panel-header">
+					<div className="d-flex align-items-center justify-content-between">
+						<div className="d-flex align-items-center gap-2">
+							<h5 className="mb-0">Scanned Classes</h5>
+							{!loading && <span className="text-muted" style={{ fontSize: '0.8125rem' }}>({filtered.length}/{classes.length})</span>}
+						</div>
+						<button type="button" className="btn-close" onClick={onClose} />
+					</div>
+					<div className="mt-2"><input type="text" className="form-control form-control-sm" placeholder="Search classes..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+				</div>
+				<div className="modal-panel-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+					{loading ? <div className="text-center py-4"><div className="spinner-border text-primary" /></div> : Object.keys(grouped).length === 0 ? <div className="text-muted">No classes found.</div> : (
+						Object.entries(grouped).map(([ns, items]) => (
+							<div key={ns} className="mb-3">
+								<div className="fw-semibold small text-muted mb-1">{ns} <span style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>({items.length})</span></div>
+								{items.map((c, i) => (
+									<div key={i} className="d-flex align-items-center gap-2 py-1 px-2" style={{ fontSize: '0.8125rem', background: i % 2 === 0 ? '#f8fafc' : 'transparent', borderRadius: 4 }}>
+										<code className="text-primary" style={{ flex: '0 0 auto' }}>{c.class.substring(c.class.lastIndexOf('\\') + 1)}</code>
+										<span className="text-muted text-truncate" style={{ fontSize: '0.6875rem' }} title={c.filename}>{c.filename}</span>
+									</div>
+								))}
+							</div>
+						))
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function MocksModal({ onClose }) {
+	const [mocks, setMocks] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetch(apiUrls.mocks)
+			.then(res => res.json())
+			.then(data => { setMocks(data.mocks || []); setLoading(false); })
+			.catch(() => setLoading(false));
+	}, []);
+
+	return (
+		<div className="modal-backdrop-custom" onClick={onClose}>
+			<div className="modal-panel" style={{ maxWidth: 800 }} onClick={e => e.stopPropagation()}>
+				<div className="modal-panel-header">
+					<div className="d-flex align-items-center justify-content-between">
+						<div className="d-flex align-items-center gap-2">
+							<h5 className="mb-0">Registered Mocks</h5>
+							{!loading && <span className="text-muted" style={{ fontSize: '0.8125rem' }}>({mocks.length})</span>}
+						</div>
+						<button type="button" className="btn-close" onClick={onClose} />
+					</div>
+				</div>
+				<div className="modal-panel-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+					{loading ? <div className="text-center py-4"><div className="spinner-border text-primary" /></div> : mocks.length === 0 ? <div className="text-muted">No mocks registered.</div> : (
+						mocks.map((m, i) => (
+							<div key={i} className="mb-3">
+								<div className="fw-semibold small mb-1"><code className="text-primary">{m.class}</code></div>
+								{Object.keys(m.rewrite_map || {}).length > 0 ? (
+									<div style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+										{Object.entries(m.rewrite_map).map(([pattern, replacement], j) => (
+											<div key={j} className="d-flex align-items-center gap-2 py-1 px-2" style={{ fontSize: '0.8125rem', background: j % 2 === 0 ? '#f8fafc' : 'transparent' }}>
+												<code style={{ color: '#64748b', flex: '0 0 auto' }}>{pattern}</code>
+												<span style={{ color: '#94a3b8' }}>&rarr;</span>
+												<code style={{ color: '#059669' }}>{replacement}</code>
+											</div>
+										))}
+									</div>
+								) : <div className="text-muted small" style={{ fontSize: '0.75rem' }}>No rewrite rules</div>}
+							</div>
+						))
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function ConfigPage({ initialClass = '' }) {
 	const [configs, setConfigs] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [search, setSearch] = useState(initialClass);
 	const [filterDefined, setFilterDefined] = useState('');
+	const [showScanned, setShowScanned] = useState(false);
+	const [showMocks, setShowMocks] = useState(false);
 
 	useEffect(() => {
 		fetch(apiUrls.configs)
@@ -853,7 +959,14 @@ function ConfigPage({ initialClass = '' }) {
 
 	return (
 		<div>
-			<h1 className="h3 mb-4">Configurations</h1>
+			<div className="d-flex align-items-center gap-3 mb-4">
+				<h1 className="h3 mb-0">Configurations</h1>
+				<button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8' }} onClick={() => setShowScanned(true)}>Scanned Classes</button>
+				<button className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8' }} onClick={() => setShowMocks(true)}>Mocks</button>
+				<a href={apiUrls.phpinfo} target="_blank" rel="noopener noreferrer" className="btn btn-link btn-sm p-0" style={{ fontSize: '0.6875rem', color: '#94a3b8', textDecoration: 'none' }}>phpinfo</a>
+			</div>
+			{showScanned && <ScannedClassesModal onClose={() => setShowScanned(false)} />}
+			{showMocks && <MocksModal onClose={() => setShowMocks(false)} />}
 			<div className="row g-3 mb-4">
 				<div className="col-md-8"><input type="text" className="form-control" placeholder="Search configs..." value={search} onChange={e => setSearch(e.target.value)} /></div>
 				<div className="col-md-4"><select className="form-select" value={filterDefined} onChange={e => setFilterDefined(e.target.value)}><option value="">All</option><option value="defined">Defined</option><option value="undefined">Undefined</option></select></div>
