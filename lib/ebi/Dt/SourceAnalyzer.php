@@ -149,7 +149,7 @@ class SourceAnalyzer{
 					$properties[$name]->summary(
 						self::find_merge_deprecate(
 							$properties[$name],
-							$anon[$name]['summary'] ?? '',
+							self::property_summary($prop, $anon[$name]['summary'] ?? ''),
 							$info,
 							true
 						)
@@ -653,6 +653,21 @@ class SourceAnalyzer{
 	public static function method_src(\ReflectionMethod $ref): string{
 		if(is_file($ref->getDeclaringClass()->getFileName())){
 			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
+		}
+		return '';
+	}
+
+	private static function property_summary(\ReflectionProperty $prop, string $anon_summary): string{
+		if(!empty($anon_summary)){
+			return $anon_summary;
+		}
+		$doc = $prop->getDocComment();
+		if($doc !== false){
+			$text = trim(preg_replace('/@.+/', '', self::trim_doc($doc)));
+			if(!empty($text)){
+				[$line] = explode(PHP_EOL, $text);
+				return $line;
+			}
 		}
 		return '';
 	}
