@@ -10,6 +10,7 @@ class App{
 	private static array $url_pattern = [];
 	private static array $selected_class_pattern = [];
 	private static string $workgroup;
+	private static int $error_http_status = 500;
 
 	private static bool $is_get_map = false;
 	private static array $map = [];
@@ -167,6 +168,12 @@ class App{
 				break;
 			}
 		}
+
+		/**
+		 * @var int
+		 * エラー発生時のHTTPステータスコード
+		 */
+		self::$error_http_status = \ebi\Conf::get('error_http_status', 500);
 
 		/**
 		 * @var string
@@ -513,7 +520,11 @@ class App{
 
 					$is_plain_json = (strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'envelope=false') !== false);
 					if($is_plain_json){
-						\ebi\HttpHeader::send_status(422);
+						if($exception instanceof \ebi\Exception && $exception->http_status() !== null){
+							\ebi\HttpHeader::send_status($exception->http_status());
+						}else{
+							\ebi\HttpHeader::send_status(self::$error_http_status);
+						}
 					}
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));

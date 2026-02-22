@@ -5,4 +5,5 @@ namespace ebi\exception;
  */
 class ContentLengthException extends \ebi\Exception{
 	public $message = 'Content-Length has exceeded the limit';
+	protected ?int $http_status = 413;
 }

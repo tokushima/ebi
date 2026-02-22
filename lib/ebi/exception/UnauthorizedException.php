@@ -5,4 +5,5 @@ namespace ebi\exception;
  */
 class UnauthorizedException extends \ebi\Exception{
 	protected $message = 'Unauthorized';
+	protected ?int $http_status = 401;
 }
