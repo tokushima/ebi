@@ -43,13 +43,13 @@ class Obj implements \IteratorAggregate{
 		return (isset(self::$_m[get_class($this)][$p][$n])) ? self::$_m[get_class($this)][$p][$n] : $d;
 	}
 	/**
-	 * プロパティの一覧を取得する、アノテーション hash=false のものは含まない
+	 * プロパティの一覧を取得する、アノテーション expose=false (hash=false) のものは含まない
 	 * @see \IteratorAggregate::getIterator()
 	 */
 	public function getIterator(): \Traversable{
 		$r = [];
 		foreach(array_keys($this->props()) as $n){
-			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false){
+			if($this->prop_anon($n,'get') !== false && $this->prop_anon($n,'hash') !== false && $this->prop_anon($n,'expose') !== false){
 				switch($this->prop_anon($n,'type')){
 					case 'bool':
 					case 'boolean':

@@ -18,7 +18,7 @@ class VarAttr{
 		public bool $auto_now=false,
 		public bool $auto_now_add=false,
 		public bool $auto_code_add=false,
-		public bool $hash=true,
+		public bool $expose=true,
 		public bool $get=true,
 		public bool $set=true,
 		public bool $unique=false,

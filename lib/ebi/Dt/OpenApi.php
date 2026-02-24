@@ -704,8 +704,8 @@ class OpenApi extends \ebi\app\Request{
 			$join_tables = [];
 			if($class_info->has_opt('properties')){
 				foreach($class_info->opt('properties') as $prop){
-					// hash=>false のプロパティはスキップ
-					if($prop->opt('hash') === false){
+					// expose=>false (hash=>false) のプロパティはスキップ
+					if($prop->opt('hash') === false || $prop->opt('expose') === false){
 						continue;
 					}
 

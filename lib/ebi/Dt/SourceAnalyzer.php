@@ -156,7 +156,7 @@ class SourceAnalyzer{
 					);
 					$properties[$name]->set_opt(
 						'hash',
-						($prop->isPublic() || !($anon[$name]['hash'] ?? true) === false)
+						($prop->isPublic() || !(($anon[$name]['hash'] ?? true) && ($anon[$name]['expose'] ?? true)) === false)
 					);
 
 					if(!empty($anon[$name]['cond'])){

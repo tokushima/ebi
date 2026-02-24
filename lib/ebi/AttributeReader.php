@@ -294,7 +294,7 @@ class AttributeReader{
 				if($inst->auto_code_add){
 					$data['auto_code_add'] = true;
 				}
-				if(!$inst->hash){
+				if(!$inst->expose){
 					$data['hash'] = false;
 				}
 				if(!$inst->get){
