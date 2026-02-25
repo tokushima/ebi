@@ -110,7 +110,7 @@ class SourceAnalyzer{
 		// traitのDocBlockからも@varアノテーションを取得
 		foreach($r->getTraits() as $trait){
 			$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var','summary');
-			foreach($trait_anon as $name => $val){
+			foreach(($trait_anon ?? []) as $name => $val){
 				if(!isset($anon[$name])){
 					$anon[$name] = $val;
 				}
