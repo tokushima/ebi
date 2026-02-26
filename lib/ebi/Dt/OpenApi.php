@@ -265,25 +265,11 @@ class OpenApi extends \ebi\app\Request{
 			$spec['tags'] = array_values(array_filter($tags, fn($t) => isset($used_tags[$t['name']])));
 		}
 
-		// pathsから参照されているスキーマのみを含める
-		$used_refs = [];
-		$this->collect_refs($spec['paths'], $used_refs);
-		$resolved = [];
-		foreach($used_refs as $ref => $_){
-			$this->resolve_transitive_refs($ref, $schemas, $resolved);
-		}
-		$filtered_schemas = [];
-		foreach($schemas as $name => $schema){
-			if(isset($resolved[$name])){
-				$filtered_schemas[$name] = $schema;
-			}
-		}
-
 		// スキーマ名でソート
-		ksort($filtered_schemas);
+		ksort($schemas);
 
-		if(!empty($filtered_schemas)){
-			$spec['components']['schemas'] = $filtered_schemas;
+		if(!empty($schemas)){
+			$spec['components']['schemas'] = $schemas;
 		}
 
 		if($has_security){

@@ -117,6 +117,27 @@ class SourceAnalyzer{
 			}
 		}
 
+		// 親クラスのDocBlockからも@varアノテーションを取得
+		$parent = $r->getParentClass();
+		while($parent && $parent->getName() !== 'ebi\\Dao' && $parent->getName() !== 'ebi\\Obj'){
+			$parent_anon = \ebi\AttributeReader::get_class($parent->getName(),'var','summary');
+			foreach(($parent_anon ?? []) as $name => $val){
+				if(!isset($anon[$name])){
+					$anon[$name] = $val;
+				}
+			}
+			// 親クラスのtraitも取得
+			foreach($parent->getTraits() as $trait){
+				$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var','summary');
+				foreach(($trait_anon ?? []) as $name => $val){
+					if(!isset($anon[$name])){
+						$anon[$name] = $val;
+					}
+				}
+			}
+			$parent = $parent->getParentClass();
+		}
+
 		$is_obj = $r->isSubclassOf(\ebi\Obj::class);
 
 		$get_type_format = function($arr){

@@ -602,6 +602,10 @@ HTML;
 
 	public static function reset_tables(): void{
 		foreach(self::classes(\ebi\Dao::class) as $class_info){
+			$r = new \ReflectionClass($class_info['class']);
+			if($r->isAbstract()){
+				continue;
+			}
 			$class = \ebi\Util::get_class_name($class_info['class']);
 			call_user_func([$class, 'drop_table']);
 			call_user_func([$class, 'create_table']);
