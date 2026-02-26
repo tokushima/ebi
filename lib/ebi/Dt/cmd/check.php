@@ -10,6 +10,10 @@ $failure = ['db'=>0,'entry'=>0,'mail'=>0,'conf'=>0];
 $db_passed = [];
 $db_errors = [];
 foreach(\ebi\Dt::classes(\ebi\Dao::class) as $class_info){
+	$r = new \ReflectionClass($class_info['class']);
+	if($r->isAbstract()){
+		continue;
+	}
 	$class_name = \ebi\Util::get_class_name($class_info['class']);
 	try{
 		call_user_func([$class_name,'find_get']);
