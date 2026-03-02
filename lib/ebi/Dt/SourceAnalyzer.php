@@ -277,7 +277,11 @@ class SourceAnalyzer{
 				}
 			}
 			if(!$has){
-				$info->add_params(new ParamInfo($param->getName(),'mixed'));
+				$php_type = 'mixed';
+				if($param->hasType() && $param->getType() instanceof \ReflectionNamedType){
+					$php_type = $param->getType()->getName();
+				}
+				$info->add_params(new ParamInfo($param->getName(), $php_type));
 			}
 		}
 	}
