@@ -220,7 +220,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 					if($is_s2s){
 						$path = $this->convert_to_openapi_path($url_pattern, $param_names);
-						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
+						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path, $http_method);
 
 						$this->webhooks[] = [
 							'path' => $path,
@@ -231,7 +231,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 
 					$path = $this->convert_to_openapi_path($url_pattern, $param_names);
-					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path);
+					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path, $http_method);
 
 					if(!isset($spec['paths'][$path])){
 						$spec['paths'][$path] = [];
@@ -375,7 +375,7 @@ class OpenApi extends \ebi\app\Request{
 	/**
 	 * オペレーション（エンドポイント定義）を構築
 	 */
-	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags, array $name_to_path=[]): array{
+	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags, array $name_to_path=[], string $http_method='get'): array{
 		$operation = [];
 
 		if(!empty($m['summary'])){
@@ -441,6 +441,9 @@ class OpenApi extends \ebi\app\Request{
 		// パラメータ
 		$parameters = [];
 		$added_params = [];
+		$has_body = in_array($http_method, ['post', 'put', 'patch']);
+		$body_properties = [];
+		$body_required = [];
 
 		// URLパスパラメータ
 		if(isset($info)){
@@ -462,11 +465,19 @@ class OpenApi extends \ebi\app\Request{
 							$data['summary'] ?? ''
 						);
 						$in = ($data['in'] ?? 'query');
-						$p = $this->build_parameter($param, $in);
-						if(!empty($data['require'])){
-							$p['required'] = true;
+
+						if($has_body && $in !== 'path'){
+							$body_properties[$name] = $this->build_body_property($param);
+							if(!empty($data['require'])){
+								$body_required[] = $name;
+							}
+						}else{
+							$p = $this->build_parameter($param, $in);
+							if(!empty($data['require'])){
+								$p['required'] = true;
+							}
+							$parameters[] = $p;
 						}
-						$parameters[] = $p;
 						$added_params[$name] = true;
 					}
 				}
@@ -477,8 +488,14 @@ class OpenApi extends \ebi\app\Request{
 		if(isset($info) && $info->has_opt('requests')){
 			foreach($info->opt('requests') as $param){
 				if(!isset($added_params[$param->name()])){
-					$in = 'query';
-					$parameters[] = $this->build_parameter($param, $in);
+					if($has_body){
+						$body_properties[$param->name()] = $this->build_body_property($param);
+						if($param->opt('require')){
+							$body_required[] = $param->name();
+						}
+					}else{
+						$parameters[] = $this->build_parameter($param, 'query');
+					}
 					$added_params[$param->name()] = true;
 				}
 			}
@@ -518,7 +535,14 @@ class OpenApi extends \ebi\app\Request{
 				if($auth_info->has_opt('requests')){
 					foreach($auth_info->opt('requests') as $param){
 						if(!isset($added_params[$param->name()])){
-							$parameters[] = $this->build_parameter($param, 'query');
+							if($has_body){
+								$body_properties[$param->name()] = $this->build_body_property($param);
+								if($param->opt('require')){
+									$body_required[] = $param->name();
+								}
+							}else{
+								$parameters[] = $this->build_parameter($param, 'query');
+							}
 							$added_params[$param->name()] = true;
 						}
 					}
@@ -529,6 +553,25 @@ class OpenApi extends \ebi\app\Request{
 
 		if(!empty($parameters)){
 			$operation['parameters'] = $parameters;
+		}
+
+		// requestBody（POST/PUT/PATCHの場合）
+		if($has_body && !empty($body_properties)){
+			$body_schema = [
+				'type' => 'object',
+				'properties' => $body_properties,
+			];
+			if(!empty($body_required)){
+				$body_schema['required'] = $body_required;
+			}
+			$operation['requestBody'] = [
+				'required' => true,
+				'content' => [
+					'application/json' => [
+						'schema' => $body_schema,
+					],
+				],
+			];
 		}
 
 		// レスポンス
@@ -612,6 +655,19 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
+	 * requestBodyプロパティを構築
+	 */
+	private function build_body_property(\ebi\Dt\ParamInfo $param): array{
+		$prop_schema = $this->get_schema_type($param->type());
+
+		if(!empty($param->summary())){
+			$prop_schema['description'] = $param->summary();
+		}
+
+		return $prop_schema;
+	}
+
+	/**
 	 * PHPの型をOpenAPIスキーマ型に変換
 	 */
 	private function get_schema_type(string $php_type, array &$schemas = []): array{
@@ -629,7 +685,7 @@ class OpenApi extends \ebi\app\Request{
 		}else{
 			$schema = match(strtolower($type)){
 				'int', 'integer' => ['type' => 'integer'],
-				'float', 'double' => ['type' => 'number'],
+				'number', 'float', 'double' => ['type' => 'number'],
 				'bool', 'boolean' => ['type' => 'boolean'],
 				'string', 'text' => ['type' => 'string'],
 				'serial' => ['type' => 'integer', 'format' => 'serial'],
@@ -639,7 +695,7 @@ class OpenApi extends \ebi\app\Request{
 				'time' => ['type' => 'string', 'format' => 'time'],
 				'timestamp' => ['type' => 'integer', 'format' => 'unix-timestamp'],
 				'array' => ['type' => 'array', 'items' => ['type' => 'string']],
-				'mixed' => ['type' => 'object'],
+				'mixed' => [],
 				default => ['type' => 'object'],
 			};
 		}

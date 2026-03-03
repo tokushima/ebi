@@ -436,12 +436,25 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 							))}
 						</div>
 					</section>}
-					{op.requestBody?.content && <section>
-						<div className="section-label">Request Body</div>
-						<div className="card border-0" style={{ background: '#f8fafc' }}>
-							<div className="card-body py-2">{Object.entries(op.requestBody.content).map(([ct, c]) => <div key={ct}>{c.schema && <SchemaView schema={c.schema} schemas={schemas} />}</div>)}</div>
-						</div>
-					</section>}
+					{op.requestBody?.content && (() => {
+						const bodyProps = Object.entries(op.requestBody.content).flatMap(([, c]) => {
+							const s = c.schema;
+							if (!s || !s.properties) return [];
+							return Object.entries(s.properties).map(([k, v]) => ({ name: k, ...v, required: (s.required || []).includes(k) }));
+						});
+						return bodyProps.length > 0 ? <section>
+							<div className="section-label">Request Body</div>
+							<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+								{bodyProps.map((p, i) => (
+									<div key={i} className="param-row">
+										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
+										<span className="param-type">{p.type || '-'}</span>
+										<span className="param-desc">{p.description || '-'}</span>
+									</div>
+								))}
+							</div>
+						</section> : null;
+					})()}
 					<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} envelope={envelope} />
 					{envelope && op['x-throws'] && op['x-throws'].length > 0 && <section>
 						<div className="section-label">Throws <span style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 400 }}>(HTTP 200)</span></div>
