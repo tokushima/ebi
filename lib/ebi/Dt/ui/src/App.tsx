@@ -29,6 +29,10 @@ function resolveTypeName(v) {
 		if (v.items.allOf?.[0]?.$ref) return refToName(v.items.allOf[0].$ref) + '[]';
 		return (v.items.type || 'any') + '[]';
 	}
+	if (v.type === 'object' && v.additionalProperties) {
+		const valType = v.additionalProperties.$ref ? refToName(v.additionalProperties.$ref) : (v.additionalProperties.type || 'any');
+		return `array<string, ${valType}>`;
+	}
 	return v.type || '-';
 }
 
