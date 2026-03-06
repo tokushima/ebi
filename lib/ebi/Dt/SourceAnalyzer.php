@@ -345,10 +345,14 @@ class SourceAnalyzer{
 				}
 			}
 		}
-		if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)/",$src,$m)){
-			foreach($m[1] as $n){
+		if(preg_match_all("/catch\s*\(\s*([\w\\\\]+)\s*\\$(\w+)\s*\)\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)}/s",$src,$m)){
+			foreach($m[1] as $k => $n){
 				if(($class_name = self::get_class_name($n)) !== ''){
-					unset($throws[$class_name]);
+					$catch_body = $m[3][$k];
+					$var_name = $m[2][$k];
+					if(!preg_match('/throw\s+\$'.$var_name.'/',$catch_body) && !preg_match('/throw\s+new\s+'.preg_quote($n,'/').'/',$catch_body)){
+						unset($throws[$class_name]);
+					}
 				}
 			}
 		}

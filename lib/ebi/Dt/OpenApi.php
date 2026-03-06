@@ -448,8 +448,18 @@ class OpenApi extends \ebi\app\Request{
 		// URLパスパラメータ
 		if(isset($info)){
 			foreach($info->params() as $param){
-				$parameters[] = $this->build_parameter($param, 'path');
-				$added_params[$param->name()] = true;
+				$built = $this->build_parameter($param, 'path');
+				$is_deprecated_param = str_contains($param->summary() ?? '', '@deprecated');
+
+				if($is_deprecated_param){
+					$built['deprecated'] = true;
+				}
+				$parameters[] = $built;
+
+				// deprecatedなパラメータはrequestBodyへの追加をブロックしない
+				if(!$is_deprecated_param){
+					$added_params[$param->name()] = true;
+				}
 			}
 		}
 
@@ -549,6 +559,16 @@ class OpenApi extends \ebi\app\Request{
 				}
 			}catch(\Exception $e){
 			}
+		}
+
+		// deprecatedのパラメータがrequestBodyにも存在する場合はparametersから除外
+		if(!empty($body_properties)){
+			$parameters = array_values(array_filter($parameters, function($p) use ($body_properties){
+				if(isset($body_properties[$p['name']]) && ($p['deprecated'] ?? false)){
+					return false;
+				}
+				return true;
+			}));
 		}
 
 		if(!empty($parameters)){
