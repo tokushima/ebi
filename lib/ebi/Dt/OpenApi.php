@@ -1109,28 +1109,55 @@ class OpenApi extends \ebi\app\Request{
 		}
 
 		// @contextアノテーション（DocBlock）からレスポンススキーマを構築（後方互換）
+		$context_list = [];
 		if(isset($info) && $info->has_opt('contexts')){
-			foreach($info->opt('contexts') as $context){
-				if(!isset($added_props[$context->name()])){
-					$prop_schema = $this->get_schema_type($context->type(), $schemas);
+			$context_list = $info->opt('contexts');
+		}
 
-					if(!empty($context->summary())){
-						if(isset($prop_schema['$ref'])){
-							$prop_schema = [
-								'allOf' => [$prop_schema],
-								'description' => $context->summary(),
-							];
-						}else{
-							$prop_schema['description'] = $context->summary();
-						}
+		// do_loginの場合、authクラスのget_after_vars_loginの@contextをマージ
+		if(($m['method'] ?? '') === 'do_login'){
+			$auth_class = $m['auth'] ?? null;
+			if(empty($auth_class) && isset($m['class'])){
+				try{
+					$ref = new \ReflectionMethod($m['class'], '__construct');
+					$src = \ebi\Dt\SourceAnalyzer::method_src($ref);
+					if(preg_match('/set_auth_object\s*\(\s*new\s+([\w\\\\]+)/',$src,$am)){
+						$auth_class = $am[1];
 					}
-
-					if($context->opt('deprecated')){
-						$prop_schema['deprecated'] = true;
-					}
-
-					$properties[$context->name()] = $prop_schema;
+				}catch(\ReflectionException $e){
 				}
+			}
+			if(!empty($auth_class)){
+				try{
+					$auth_login_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, 'get_after_vars_login', true, false);
+					if($auth_login_info->has_opt('contexts')){
+						$context_list = array_merge($context_list, $auth_login_info->opt('contexts'));
+					}
+				}catch(\Exception $e){
+				}
+			}
+		}
+
+		foreach($context_list as $context){
+			if(!isset($added_props[$context->name()])){
+				$prop_schema = $this->get_schema_type($context->type(), $schemas);
+
+				if(!empty($context->summary())){
+					if(isset($prop_schema['$ref'])){
+						$prop_schema = [
+							'allOf' => [$prop_schema],
+							'description' => $context->summary(),
+						];
+					}else{
+						$prop_schema['description'] = $context->summary();
+					}
+				}
+
+				if($context->opt('deprecated')){
+					$prop_schema['deprecated'] = true;
+				}
+
+				$properties[$context->name()] = $prop_schema;
 			}
 		}
 
