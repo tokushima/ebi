@@ -51,11 +51,6 @@ class Session implements \SessionHandlerInterface{
 					}catch(\Exception $e){}
 				}
 			});
-			
-			// 新規開始時のみセッションIDをローテーションする
-			if(!isset($_SESSION[$this->ses_n])){
-				session_regenerate_id(true);
-			}
 		}
 	}
 	
