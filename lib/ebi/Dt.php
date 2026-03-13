@@ -456,6 +456,17 @@ HTML;
 			}
 		}
 
+		// ebi内部のユーティリティDaoはuse_vendorで明示的に追加された場合のみ含める
+		$internal_dao_classes = [
+			'ebi\\SmtpBlackholeDao',
+			'ebi\\SessionDao',
+			'ebi\\UserRememberMeDao',
+		];
+		$use_vendor_set = [];
+		foreach($use_vendor as $v){
+			$use_vendor_set[ltrim(str_replace('*', '', $v), '\\')] = true;
+		}
+
 		$yielded = [];
 		foreach(get_declared_classes() as $class){
 			$r = new \ReflectionClass($class);
@@ -468,6 +479,7 @@ HTML;
 				&& strpos($real_name, 'Composer') === false
 				&& strpos($real_name, 'cmdman') === false
 				&& strpos($real_name, 'testman') === false
+				&& (!in_array($real_name, $internal_dao_classes) || isset($use_vendor_set[$real_name]))
 			){
 				$yielded[$real_name] = true;
 				yield ['filename' => $r->getFileName(), 'class' => '\\'.$real_name];

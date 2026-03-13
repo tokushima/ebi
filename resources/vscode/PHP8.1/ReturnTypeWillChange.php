@@ -1,6 +1,0 @@
-<?php
-/**
- * #[\ReturnTypeWillChange]
- */
-class ReturnTypeWillChange{
-}
