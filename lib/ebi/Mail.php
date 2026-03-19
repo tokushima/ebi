@@ -20,7 +20,6 @@ class Mail{
 	private string $message = '';
 	private string $html = '';
 
-	private string $message_id = '';
 	private int $priority = 0;
 	private string $charset = 'iso-2022-jp';
 
@@ -106,16 +105,6 @@ class Mail{
 	}
 
 	/**
-	 * Set Message-ID
-	 */
-	public function message_id(string $id): void{
-		if(strpos($id, '<') !== 0){
-			$id = '<'.$id.'>';
-		}
-		$this->message_id = $id;
-	}
-
-	/**
 	 * Set priority (1=High, 3=Normal, 5=Low)
 	 */
 	public function priority(int $level): void{
@@ -173,13 +162,10 @@ class Mail{
 		if(empty($this->from) || empty($this->to)){
 			throw new \ebi\exception\RequiredException('from and to are required');
 		}
-		if(empty($this->message_id)){
-			$this->message_id = $this->generate_message_id();
-		}
 		$rtn = '';
 
 		$rtn .= $this->line('MIME-Version: 1.0');
-		$rtn .= $this->line('Message-ID: '.$this->message_id);
+		$rtn .= $this->line('Message-ID: '.$this->generate_message_id());
 		$rtn .= $this->line('To: '.$this->implode_address($this->to));
 		$rtn .= $this->line('From: '.$this->address($this->from, $this->sender_name));
 
