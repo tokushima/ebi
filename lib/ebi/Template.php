@@ -281,7 +281,7 @@ class Template{
 	private function rtloop(string $src): string{
 		return \ebi\Xml::find_replace_all($src, 'rt:loop', function($tag){
 			$tag->escape(false);
-			$value = $tag->value();
+			$value = $tag->value() ?? '';
 
 			// ネストされたrt:loopを再帰処理
 			if(strpos($value, 'rt:loop') !== false){
@@ -351,14 +351,14 @@ class Template{
 				$obj->attr('rt:ref', 'true');
 
 				if($obj->is_attr('rt:param')){
-					$obj->attr('rt:param', str_replace('{$', '{#', $obj->in_attr('rt:param')));
+					$obj->attr('rt:param', str_replace('{$', '{#', $obj->in_attr('rt:param') ?? ''));
 				}
 				$src = str_replace($obj->plain(), $obj->get(), $src);
 			}else if($this->is_reference($obj)){
 				$obj->escape(false);
 
 				if($obj->is_attr('rt:param')){
-					$param = $this->variable_string($this->parse_plain_variable(str_replace('{#', '{$', $obj->in_attr('rt:param'))));
+					$param = $this->variable_string($this->parse_plain_variable(str_replace('{#', '{$', $obj->in_attr('rt:param') ?? '')));
 					$uniq = uniqid('');
 					$var = '$__form_var__' . $uniq;
 					$k = '$__form_k__' . $uniq;
@@ -371,7 +371,7 @@ class Template{
 						$k, $k, $k, $v
 					)) . PHP_EOL;
 					$obj->rm_attr('rt:param');
-					$obj->value($tag . $obj->value());
+					$obj->value($tag . ($obj->value() ?? ''));
 				}
 				foreach($obj->find('input|select|textarea') as $tag){
 					if(!$tag->is_attr('rt:ref') && ($tag->is_attr('name') || $tag->is_attr('id'))){
@@ -382,7 +382,7 @@ class Template{
 								$obj->attr('method', 'post');
 							}else{
 								$tag->attr('rt:ref', 'true');
-								$obj->value(str_replace($tag->plain(), $tag->get(), $obj->value()));
+								$obj->value(str_replace($tag->plain(), $tag->get(), $obj->value() ?? ''));
 							}
 						}
 					}
@@ -426,7 +426,7 @@ class Template{
 			}
 
 			if($obj->is_attr('rt:param') && $tagname === 'select'){
-				$value = $obj->value();
+				$value = $obj->value() ?? '';
 				$varName = $obj->in_attr('rt:var', 'loop_var' . $uid);
 				$keyName = $obj->in_attr('rt:key', 'loop_key' . $uid);
 				$value = sprintf(
@@ -438,7 +438,7 @@ class Template{
 				);
 				$obj->value($this->rtloop($value));
 				if($obj->is_attr('rt:null')){
-					$obj->value('<option value="">' . $obj->in_attr('rt:null') . '</option>' . $obj->value());
+					$obj->value('<option value="">' . ($obj->in_attr('rt:null') ?? '') . '</option>' . ($obj->value() ?? ''));
 				}
 				$obj->rm_attr('rt:param', 'rt:key', 'rt:var', 'rt:null');
 				$change = true;
@@ -475,13 +475,13 @@ class Template{
 				}
 			}else if($tagname === 'select'){
 				if($this->is_reference($obj) || $obj->is_attr('value')){
-					$select = $obj->value();
+					$select = $obj->value() ?? '';
 					$name = $this->parse_plain_variable($obj->in_attr('value', $name));
 					$obj->rm_attr('value');
 
 					foreach($obj->find('option') as $option){
 						$option->escape(false);
-						$value = $this->parse_plain_variable($option->in_attr('value'));
+						$value = $this->parse_plain_variable($option->in_attr('value') ?? '');
 
 						if(empty($value) || $value[0] !== '$'){
 							$value = sprintf("'%s'", $value);
@@ -540,13 +540,13 @@ class Template{
 				$obj->in_attr('rt:counter', 'loop_counter'),
 				$obj->in_attr('rt:key', 'loop_key')
 			);
-			$rawvalue = $obj->value();
+			$rawvalue = $obj->value() ?? '';
 
 			if($name === 'table'){
 				try{
 					$t = \ebi\Xml::extract($rawvalue, 'tbody');
 					$t->escape(false);
-					$t->value($loopStart . $t->value() . '</rt:loop>');
+					$t->value($loopStart . ($t->value() ?? '') . '</rt:loop>');
 					$value = str_replace($t->plain(), $t->get(), $rawvalue);
 				}catch(\ebi\exception\NotFoundException $e){
 					$value = $loopStart . $rawvalue . '</rt:loop>';
@@ -586,14 +586,14 @@ class Template{
 
 	private function rtinvalid(string $src): string{
 		return \ebi\Xml::find_replace_all($src, 'rt:invalid', function($xml){
-			$group = $xml->in_attr('group');
-			$type = $xml->in_attr('type');
+			$group = $xml->in_attr('group') ?? '';
+			$type = $xml->in_attr('type') ?? '';
 			$var = $xml->in_attr('var', 'rtinvalid_var' . uniqid(''));
 
 			$group = (!isset($group[0]) || $group[0] !== '$') ? '"' . $group . '"' : $group;
 			$type = (!isset($type[0]) || $type[0] !== '$') ? '"' . $type . '"' : $type;
 
-			$value = $xml->value();
+			$value = $xml->value() ?? '';
 			if(empty($value)){
 				$varnm = 'rtinvalid_varnm' . uniqid('');
 				$value = sprintf(
