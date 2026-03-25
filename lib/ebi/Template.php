@@ -59,7 +59,7 @@ class Template{
 			$src = $this->read_src($filename);
 			return $this->get($src, $base_dir);
 		}
-		$base_dir = $base_dir ?? dirname(realpath($filename));
+		$base_dir = $base_dir ?? dirname(realpath($filename) ?: $filename);
 		$path = $this->resolve_file($filename, $base_dir);
 		$this->base_dir = $base_dir ?? dirname($path);
 		$cache_key = $path.'|'.($this->media_url ?? '').'|'.($this->secure ? '1' : '0');
@@ -241,7 +241,7 @@ class Template{
 
 	private function rtinclude(string $src): string{
 		return \ebi\Xml::find_replace_all($src, 'rt:include', function($tag){
-			return $this->read_src($tag->in_attr('href'));
+			return $this->read_src($tag->in_attr('href') ?? '');
 		});
 	}
 
@@ -263,7 +263,7 @@ class Template{
 						$blocks[$n] = (string)$b->value();
 					}
 				}
-				$src = $this->replace_xtag($this->read_src($extends->in_attr('href')));
+				$src = $this->replace_xtag($this->read_src($extends->in_attr('href') ?? ''));
 			}
 		}catch(\ebi\exception\NotFoundException $e){
 		}
@@ -434,7 +434,7 @@ class Template{
 					$obj->in_attr('rt:param'),
 					$varName,
 					$keyName,
-					(trim($value ?? '') === '') ? sprintf('<option value="{$%s}">{$%s}</option>', $keyName, $varName) : $value
+					(trim($value) === '') ? sprintf('<option value="{$%s}">{$%s}</option>', $keyName, $varName) : $value
 				);
 				$obj->value($this->rtloop($value));
 				if($obj->is_attr('rt:null')){

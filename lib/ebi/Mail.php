@@ -34,7 +34,7 @@ class Mail{
 	 * Set from address
 	 */
 	public function from(string $address, ?string $sender_name=''): void{
-		$this->sender_name = $sender_name;
+		$this->sender_name = $sender_name ?? '';
 		$this->from = $address;
 
 		if(empty($this->return_path)){
@@ -283,15 +283,8 @@ class Mail{
 		}
 		return sprintf(
 			'=?ISO-2022-JP?B?%s?=',
-			base64_encode(mb_convert_encoding($str ?? '','JIS',mb_detect_encoding($str ?? '')))
+			base64_encode(mb_convert_encoding($str,'JIS',mb_detect_encoding($str)))
 		);
-	}
-
-	/**
-	 * @deprecated Use encode_header instead
-	 */
-	private function jis(string $str): string{
-		return $this->encode_header($str);
 	}
 
 	private function meta(string $type): string{
@@ -306,7 +299,7 @@ class Mail{
 		if($this->charset === 'utf-8'){
 			return base64_encode($message);
 		}
-		return mb_convert_encoding($message ?? '','JIS',mb_detect_encoding($message ?? ''));
+		return mb_convert_encoding($message,'JIS',mb_detect_encoding($message));
 	}
 
 	private function line(?string $value=''): string{
@@ -417,7 +410,7 @@ class Mail{
 			}catch(\ebi\exception\NotFoundException $e){
 			}
 			foreach($xml->find('to') as $to){
-				$this->to($to->in_attr('address'),$to->in_attr('name'));
+				$this->to($to->in_attr('address') ?? '',$to->in_attr('name') ?? '');
 			}
 			try{
 				$this->return_path($xml->find_get('return_path')->in_attr('address'));
@@ -440,7 +433,7 @@ class Mail{
 			$bind_vars['t'] = new \ebi\AppHelper();
 			$bind_vars['xtc'] = [$xtc_name=>$xtc];
 
-			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value()));
+			$subject = trim(str_replace(["\r\n","\r","\n"],'',$xml->find_get('subject')->value() ?? ''));
 			$template = new \ebi\Template();
 
 			if(is_array($bind_vars) || is_object($bind_vars)){
@@ -459,9 +452,9 @@ class Mail{
 					throw new \ebi\exception\InvalidArgumentException($signature.' not found');
 				}
 				$sig_xml = \ebi\Xml::extract(file_get_contents($sig_path),'mail');
-				$signature_text = \ebi\Util::plain_text(PHP_EOL.$sig_xml->find_get('signature')->value().PHP_EOL);
+				$signature_text = \ebi\Util::plain_text(PHP_EOL.($sig_xml->find_get('signature')->value() ?? '').PHP_EOL);
 			}
-			$message = $template->get(\ebi\Util::plain_text(PHP_EOL.$body_xml->value().PHP_EOL).$signature_text,$resource_path);
+			$message = $template->get(\ebi\Util::plain_text(PHP_EOL.($body_xml->value() ?? '').PHP_EOL).$signature_text,$resource_path);
 			$this->message($message);
 			$this->subject($template->get($subject,$resource_path));
 
