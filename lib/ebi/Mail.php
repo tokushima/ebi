@@ -31,21 +31,6 @@ class Mail{
 	}
 
 	/**
-	 * Generate Message-ID (lazy generation using from domain)
-	 */
-	private function generate_message_id(): string{
-		$domain = 'localhost';
-		if(!empty($this->from) && strpos($this->from, '@') !== false){
-			$domain = explode('@', $this->from)[1];
-		}
-		return sprintf('<%s.%s@%s>',
-			base_convert((string)intval(microtime(true) * 1000000), 10, 36),
-			bin2hex(random_bytes(8)),
-			$domain
-		);
-	}
-
-	/**
 	 * Set from address
 	 */
 	public function from(string $address, ?string $sender_name=''): void{
@@ -165,7 +150,6 @@ class Mail{
 		$rtn = '';
 
 		$rtn .= $this->line('MIME-Version: 1.0');
-		$rtn .= $this->line('Message-ID: '.$this->generate_message_id());
 		$rtn .= $this->line('To: '.$this->implode_address($this->to));
 		$rtn .= $this->line('From: '.$this->address($this->from, $this->sender_name));
 
