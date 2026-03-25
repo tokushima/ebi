@@ -17,18 +17,19 @@ class UserRememberMeDao extends \ebi\Dao{
 	
 	private static function crypt(string $user_id): string{
 		/**
-		 * @param string $salt user_idのハッシュ用salt
+		 * @var string
+		 * user_idのハッシュ用salt
 		 */
 		return sha1(\ebi\Conf::get('salt',__FILE__).$user_id);
 	}
-	private static function name(\ebi\flow\Request $req, string $k): string{
+	private static function name(\ebi\app\Request $req, string $k): string{
 		return '_'.md5($req->user_login_session_id().__FILE__.$k);
 	}
 	
 	/**
 	 * login_condition/remember_meで利用しtokenをセットする
 	 */
-	public static function write_cookie(\ebi\flow\Request $req): void{
+	public static function write_cookie(\ebi\app\Request $req): void{
 		if($req->user() instanceof \ebi\User){
 			try{
 				$self = static::find_get(Q::eq('user_id',$req->user()->id()));
@@ -37,7 +38,8 @@ class UserRememberMeDao extends \ebi\Dao{
 				$self->user_id($req->user()->id());
 			}
 			/**
-			 * @param int $lifetime クッキーの保存期間
+			 * @var int
+			 * クッキーの保存期間
 			 */
 			$expire = time() + \ebi\Conf::get('lifetime',5184000); // 60day
 			$codebase = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#%&@.';
@@ -65,7 +67,7 @@ class UserRememberMeDao extends \ebi\Dao{
 	/**
 	 * remember_meで利用しuser_idを取得する
 	 */
-	public static function read_cookie(\ebi\flow\Request $req): string{
+	public static function read_cookie(\ebi\app\Request $req): string{
 		$token = $_COOKIE[self::name($req,'token')] ?? null;
 		
 		if(!empty($token)){
@@ -102,7 +104,7 @@ class UserRememberMeDao extends \ebi\Dao{
 	/**
 	 * before_do_logoutで利用する
 	 */
-	public static function delete_cookie(\ebi\flow\Request $req): void{
+	public static function delete_cookie(\ebi\app\Request $req): void{
 		if($req->user() instanceof \ebi\User){
 			try{
 				$self = static::find_get(Q::eq('user_id',$req->user()->id()));

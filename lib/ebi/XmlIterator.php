@@ -10,6 +10,7 @@ class XmlIterator implements \Iterator{
 	private int $offset = 0;
 	private int $length = 0;
 	private int $count = 0;
+	private int $cursor = 0;
 
 	public function __construct($tag_name,$value,$offset,$length){
 		$this->name = $tag_name;
@@ -17,6 +18,7 @@ class XmlIterator implements \Iterator{
 		$this->offset = $offset;
 		$this->length = $length;
 		$this->count = 0;
+		$this->cursor = 0;
 	}
 
 	#[\ReturnTypeWillChange]
@@ -26,7 +28,7 @@ class XmlIterator implements \Iterator{
 
 	#[\ReturnTypeWillChange]
 	public function current(){
-		$this->plain = substr($this->plain,0,$this->tag->cur()).substr($this->plain,$this->tag->cur() + strlen($this->tag->plain()));
+		$this->cursor = $this->tag->cur() + strlen($this->tag->plain());
 		$this->count++;
 		return $this->tag;
 	}
@@ -41,7 +43,7 @@ class XmlIterator implements \Iterator{
 			$tags = [];
 			foreach($this->name as $name){
 				try{
-					$get_tag = \ebi\Xml::extract($this->plain,$name);
+					$get_tag = \ebi\Xml::extract($this->plain,$name,$this->cursor);
 					$tags[$get_tag->cur()] = $get_tag;
 				}catch(\ebi\exception\NotFoundException $e){
 				}
@@ -51,7 +53,7 @@ class XmlIterator implements \Iterator{
 			foreach($tags as $this->tag) return true;
 		}
 		try{
-			$this->tag = \ebi\Xml::extract($this->plain,$this->name);
+			$this->tag = \ebi\Xml::extract($this->plain,$this->name,$this->cursor);
 			return true;
 		}catch(\ebi\exception\NotFoundException $e){
 		}

@@ -101,7 +101,7 @@ abstract class Dao extends \ebi\Obj{
 		if(isset(self::$_dao_[$this->_class_id_])){
 			return;
 		}
-		$annotation = \ebi\Annotation::get_class($p,['readonly','table']);
+		$annotation = \ebi\AttributeReader::get_class($p,['readonly','table']);
 		$anon = [
 			null // con name
 			,(isset($annotation['table']['name']) ? $annotation['table']['name'] : null)
@@ -110,7 +110,16 @@ abstract class Dao extends \ebi\Obj{
 		
 		if(empty(self::$_connection_settings_)){
 			/**
-			 * @param string{} $connection 接続情報配列
+			 * @var array
+			 * Daoクラスごとのデータベース接続情報
+			 * キーにDaoクラス名、値に接続パラメータ(type,host,name,port,user,password,sock,encode,timezone)を指定
+			 * キーはnamespace単位でも指定可能
+			 * '*'をキーにするとデフォルトの接続先になる
+			 * 'ebi\SessionDao'=>[
+			 *   'type'=>'ebi\SqliteConnector',
+			 *   'name'=>'/tmp/data.session.sqlite3',
+			 *   'timezone'=>'+9:00',
+			 * ]
 			 */
 			self::$_connection_settings_ = \ebi\Conf::gets('connection');
 			
@@ -936,7 +945,7 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public static function create_table(): bool{
 		$dao = new static();
-		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		$anon = \ebi\AttributeReader::get_class(get_class($dao),['table']);
 		
 		if(!self::$_co_anon_[get_class($dao)][2] && 
 			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)
@@ -957,7 +966,7 @@ abstract class Dao extends \ebi\Obj{
 	 */
 	public static function drop_table(): bool{
 		$dao = new static();
-		$anon = \ebi\Annotation::get_class(get_class($dao),['table']);
+		$anon = \ebi\AttributeReader::get_class(get_class($dao),['table']);
 		
 		if(!self::$_co_anon_[get_class($dao)][2] &&
 			(!isset($anon['table']['create']) || $anon['table']['create'] !== false)

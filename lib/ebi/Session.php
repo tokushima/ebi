@@ -51,10 +51,6 @@ class Session implements \SessionHandlerInterface{
 					}catch(\Exception $e){}
 				}
 			});
-			
-			if(isset($_SESSION[session_name()])){
-				session_regenerate_id(true);
-			}
 		}
 	}
 	
@@ -126,7 +122,7 @@ class Session implements \SessionHandlerInterface{
 	 * @return mixed
 	 */
 	public function read(string $id): string{
-		return \ebi\Conf::handle('session_read', $id);
+		return (string)(\ebi\Conf::handle('session_read', $id) ?? '');
 	}
 	
 	/**

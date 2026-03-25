@@ -8,17 +8,17 @@ namespace ebi\Dt;
  * 
  * エントリファイルmock.phpを作成する
  * ```
- * \ebi\Flow::app(
+ * \ebi\App::run(
  * 	\ebi\Dt::mock_flow_mappings()
  * );
  * ```
- * 
+ *
  * commons/local.phpにadd_mockで追加する
  * ```
  * \ebi\Dt::add_mock('\yournamespace\Mock');
  * ```
  */
-abstract class MockRequest extends \ebi\flow\Request{
+abstract class MockRequest extends \ebi\app\Request{
 	/**
 	 * [$pattern=>$replacement]
 	 */

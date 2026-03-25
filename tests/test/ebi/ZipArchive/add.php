@@ -27,10 +27,7 @@ try {
 }
 
 $arc->add_from_string('new contents', 'tmpcontents.txt');
-
-
 $arc->write(); // 新規
-\ebi\Util::copy($zipfile, '/Users/tokushima/Downloads/test.zip');
 
 // 確認
 $outpath = \ebi\ZipArchive::extract($zipfile);

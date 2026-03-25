@@ -18,16 +18,7 @@ class Db implements \Iterator{
 	private int $resultset_counter;
 	private \ebi\DbConnector $connector;
 	
-	/**
-	 * @param string{} $def 接続情報 [type,host,name,port,user,password,sock,encode,timezone]
-	 */
-	public function __construct(array $def=[]){
-		if(empty($def)){
-			/**
-			 * @param string{} $connection デフォルトの接続情報 [type,host,name,port,user,password,sock,encode,timezone]
-			 */
-			$def = \ebi\Conf::gets('connection');
-		}
+	public function __construct(array $def){
 		$type = $def['type'] ?? null;
 		$host = $def['host'] ?? null;
 		$dbname = $def['name'] ?? null;
@@ -54,7 +45,8 @@ class Db implements \Iterator{
 		}
 		if(self::$autocommit === null){
 			/**
-			 * @param bool $autocommit オートコミットを行うかの真偽値
+			 * @var bool
+			 * オートコミットを行うか
 			 */
 			self::$autocommit = \ebi\Conf::get('autocommit',false);
 		}

@@ -374,7 +374,8 @@ class Browser{
 		}
 		
 		/**
-		 * @param bool $ssl_verify SSL証明書を確認するかの真偽値
+		 * @var bool 
+		 * SSL証明書を確認するかの真偽値
 		 */
 		if($this->ssl_verify === false || \ebi\Conf::get('ssl-verify',true) === false){
 			curl_setopt($this->resource, CURLOPT_SSL_VERIFYHOST,false);

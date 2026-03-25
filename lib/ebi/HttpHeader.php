@@ -18,12 +18,35 @@ class HttpHeader{
 	/**
 	 * キャッシュを指示する
 	 * @param $expires キャッシュさせる秒数
+	 * @deprecated_see send_cache_private
 	 */
 	public static function send_cache(int $expires): void{
-		self::send('Last-Modified',gmdate('D, d M Y H:i:s T',time() - $expires));
-		self::send('Expires',gmdate('D, d M Y H:i:s T',time() + $expires));
+		self::send_cache_private($expires);
+	}
+
+	/**
+	 * private キャッシュを指示する
+	 */
+	public static function send_cache_private(int $expires, ?int $last_modified=null): void{
+		self::send_cache_headers($expires, $last_modified);
 		self::send('Cache-Control','private, max-age='.$expires);
 		self::send('Pragma','');
+	}
+
+	/**
+	 * 保存を禁止する
+	 */
+	public static function send_no_store(): void{
+		self::send('Cache-Control','no-store, max-age=0');
+		self::send('Pragma','no-cache');
+		self::send('Expires','0');
+	}
+
+	private static function send_cache_headers(int $expires, ?int $last_modified=null): void{
+		if($last_modified !== null){
+			self::send('Last-Modified',gmdate('D, d M Y H:i:s T',$last_modified));
+		}
+		self::send('Expires',gmdate('D, d M Y H:i:s T',time() + $expires));
 	}
 	
 	/**
@@ -81,11 +104,20 @@ class HttpHeader{
 			case 415: return '415 Unsupported Media Type';
 			case 416: return '416 Requested Range Not Satisfiable';
 			case 417: return '417 Expectation Failed';
+			case 421: return '421 Misdirected Request';
+			case 422: return '422 Unprocessable Content';
+			case 425: return '425 Too Early';
+			case 428: return '428 Precondition Required';
+			case 429: return '429 Too Many Requests';
+			case 431: return '431 Request Header Fields Too Large';
+			case 451: return '451 Unavailable For Legal Reasons';
 			case 500: return '500 Internal Server Error';
 			case 501: return '501 Not Implemented';
 			case 502: return '502 Bad Gateway';
 			case 503: return '503 Service Unavailable';
 			case 504: return '504 Gateway Timeout';
+			case 507: return '507 Insufficient Storage';
+			case 511: return '511 Network Authentication Required';
 			case 505: return '505 Http Version Not Supported';
 			default: return '403 Forbidden ('.$status_code.')';
 		}

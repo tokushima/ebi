@@ -1,27 +1,20 @@
 <?xml encoding="UTF-8"?>
 
 <!ELEMENT rt:extends EMPTY>
-<!ATTLIST rt:extends
-  href NMTOKEN #REQUIRED>
-  
-  
+<!ATTLIST rt:extends href CDATA #REQUIRED>
+
+<!ELEMENT rt:include EMPTY>
+<!ATTLIST rt:include href CDATA #REQUIRED>
+
 <!ELEMENT rt:block ANY>
-<!ATTLIST rt:block
-  name CDATA #REQUIRED>
+<!ATTLIST rt:block name CDATA #REQUIRED>
 
-<!ELEMENT rt:blockvar (#PCDATA)>
-<!ATTLIST rt:blockvar
-  name CDATA #REQUIRED>
-
-
+<!ELEMENT rt:comment (#PCDATA)>
 
 <!ELEMENT rt:if ANY>
-<!ATTLIST rt:if
-  param CDATA #REQUIRED>
-
+<!ATTLIST rt:if param CDATA #REQUIRED>
 
 <!ELEMENT rt:else EMPTY>
-
 
 <!ELEMENT rt:loop ANY>
 <!ATTLIST rt:loop
@@ -29,23 +22,32 @@
   var CDATA #IMPLIED
   key CDATA #IMPLIED
   counter CDATA #IMPLIED
->
+  limit CDATA #IMPLIED>
 
-<!ELEMENT rt:comment (#PCDATA)>
+<!ELEMENT rt:paginator EMPTY>
+<!ATTLIST rt:paginator
+  param CDATA #IMPLIED
+  counter CDATA #IMPLIED
+  href CDATA #IMPLIED>
 
-
+<!ELEMENT rt:invalid ANY>
+<!ATTLIST rt:invalid
+  group CDATA #IMPLIED
+  type CDATA #IMPLIED
+  var CDATA #IMPLIED
+  class CDATA #IMPLIED>
 
 <!ATTLIST form
   rt:param CDATA #IMPLIED
-  rt:aref CDATA #IMPLIED
-  rt:ref CDATA #IMPLIED
->
-
+  rt:aref (true) #IMPLIED
+  rt:ref (true) #IMPLIED>
 
 <!ATTLIST input
   rt:multiple (true) #IMPLIED
->
+  rt:ref (true) #IMPLIED>
 
+<!ATTLIST textarea
+  rt:ref (true) #IMPLIED>
 
 <!ATTLIST select
   rt:param CDATA #IMPLIED
@@ -53,36 +55,26 @@
   rt:key CDATA #IMPLIED
   rt:null CDATA #IMPLIED
   rt:multiple (true) #IMPLIED
->
+  rt:ref (true) #IMPLIED
+  value CDATA #IMPLIED>
 
+<!ATTLIST option
+  value CDATA #IMPLIED>
 
 <!ATTLIST table
   rt:param CDATA #IMPLIED
   rt:var CDATA #IMPLIED
   rt:key CDATA #IMPLIED
-  rt:counter CDATA #IMPLIED
->
+  rt:counter CDATA #IMPLIED>
 
 <!ATTLIST ul
   rt:param CDATA #IMPLIED
   rt:var CDATA #IMPLIED
   rt:key CDATA #IMPLIED
-  rt:counter CDATA #IMPLIED
->
+  rt:counter CDATA #IMPLIED>
 
 <!ATTLIST ol
   rt:param CDATA #IMPLIED
   rt:var CDATA #IMPLIED
   rt:key CDATA #IMPLIED
-  rt:counter CDATA #IMPLIED
->
-
-
-
-
-
-
-
-
-
-
+  rt:counter CDATA #IMPLIED>
