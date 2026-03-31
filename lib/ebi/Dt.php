@@ -575,7 +575,12 @@ HTML;
 		return $patterns;
 	}
 
+	private static ?array $_urls_cache = null;
+
 	private static function get_urls(): array{
+		if(self::$_urls_cache !== null){
+			return self::$_urls_cache;
+		}
 		$dir = getcwd();
 		$urls = [];
 		foreach(new \RecursiveDirectoryIterator($dir,
@@ -592,6 +597,7 @@ HTML;
 				}
 			}
 		}
+		self::$_urls_cache = $urls;
 		return $urls;
 	}
 

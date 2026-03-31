@@ -648,6 +648,9 @@ class SourceAnalyzer{
 			foreach($use_method_list as $class_method){
 				[$uclass, $umethod] = explode('::',$class_method);
 
+				if(!class_exists($uclass, false)){
+					continue;
+				}
 				try{
 					$ref = new \ReflectionMethod($uclass,$umethod);
 					$use_method_src = self::method_src($ref);
@@ -794,6 +797,9 @@ class SourceAnalyzer{
 				}
 				if(preg_match_all('/(\$\w+)\s*=\s*([\\\\\w]+)::(\w+)/',$src,$m)){
 					foreach($m[1] as $k => $v){
+						if(!class_exists($m[2][$k], false)){
+							continue;
+						}
 						try{
 							$ref = new \ReflectionMethod($m[2][$k],$m[3][$k]);
 							if(preg_match("/@return\s+([^\s]+)(.*)/",self::trim_doc($ref->getDocComment()),$r)){
@@ -822,7 +828,7 @@ class SourceAnalyzer{
 					[$c, $m] = explode('::',$mcm);
 					$c = str_replace('\\\\','\\',($c[0] !== '\\') ? '\\'.$c : $c);
 
-					if(!isset($loaded_method_src[$c.'::'.$m])){
+					if(!isset($loaded_method_src[$c.'::'.$m]) && class_exists($c, false)){
 						foreach(self::use_method_list($c,$m,$loaded_method_src) as $k){
 							$list[$k] = true;
 						}
