@@ -776,4 +776,17 @@ class InvalidArgumentException extends \Exception {}
 /** 再帰上限を超えた場合の例外 */
 class RetryLimitOverException extends \Exception {}
 
+/**
+ * テスト実行エンジン
+ */
+class Runner
+{
+    /**
+     * 現在実行しているテストのパスを返す
+     *
+     * @return string
+     */
+    public static function current(): string {}
+}
+
 } // namespace testman
