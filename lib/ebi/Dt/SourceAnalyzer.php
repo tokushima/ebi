@@ -5,9 +5,24 @@ namespace ebi\Dt;
  * クラス・メソッドのドキュメント、設定、メールテンプレートを抽出
  */
 class SourceAnalyzer{
+	private static array $_class_info_cache = [];
+	private static array $_method_info_cache = [];
+	private static array $_file_cache = [];
+	private static array $_mail_template_cache;
+
+	/**
+	 * ファイル内容をキャッシュして返す
+	 */
+	private static function cached_file(string $filename): array{
+		if(!isset(self::$_file_cache[$filename])){
+			self::$_file_cache[$filename] = file($filename);
+		}
+		return self::$_file_cache[$filename];
+	}
+
 	private static function get_reflection_source(\ReflectionClass $r): string{
 		return implode(array_slice(
-			file($r->getFileName()),
+			self::cached_file($r->getFileName()),
 			$r->getStartLine(),
 			($r->getEndLine()-$r->getStartLine()-1)
 		));
@@ -39,6 +54,11 @@ class SourceAnalyzer{
 	 * クラスの情報を取得
 	 */
 	public static function class_info(string $class): DocInfo{
+		$cache_key = ltrim($class, '\\');
+		if(isset(self::$_class_info_cache[$cache_key])){
+			return self::$_class_info_cache[$cache_key];
+		}
+
 		$info = new DocInfo();
 		$r = new \ReflectionClass(self::get_class_name($class));
 
@@ -249,18 +269,28 @@ class SourceAnalyzer{
 		ksort($config_list);
 		$info->set_opt('config_list',$config_list);
 
+		self::$_class_info_cache[$cache_key] = $info;
 		return $info;
 	}
 
+	private static array $_class_name_cache = [];
+
 	private static function get_class_name(string $class_name): string{
+		if(isset(self::$_class_name_cache[$class_name])){
+			return self::$_class_name_cache[$class_name];
+		}
+		$original = $class_name;
 		$class_name = str_replace(['.','/'],['\\','\\'],$class_name);
 
 		if(class_exists($class_name)){
 			$r = new \ReflectionClass($class_name);
 			$name = $r->getName();
-			return ($name[0] !== '\\') ? '\\'.$name : $name;
+			$result = ($name[0] !== '\\') ? '\\'.$name : $name;
+		}else{
+			$result = '';
 		}
-		return '';
+		self::$_class_name_cache[$original] = $result;
+		return $result;
 	}
 
 	private static function find_merge_params(DocInfo $info, array $parameters): void{
@@ -427,10 +457,15 @@ class SourceAnalyzer{
 	 * IteratorAggregateを実装するクラスのgetIterator()からプロパティを抽出
 	 * @return ParamInfo[]
 	 */
+	private static array $_iterator_props_cache = [];
+
 	public static function iterator_properties(string $class): array{
 		$class_name = self::get_class_name($class);
 		if(empty($class_name)){
 			return [];
+		}
+		if(isset(self::$_iterator_props_cache[$class_name])){
+			return self::$_iterator_props_cache[$class_name];
 		}
 		$ref = new \ReflectionClass($class_name);
 		if(!$ref->implementsInterface(\IteratorAggregate::class)){
@@ -492,8 +527,10 @@ class SourceAnalyzer{
 					}
 				}
 			}
+			self::$_iterator_props_cache[$class_name] = $properties;
 			return $properties;
 		}catch(\ReflectionException $e){
+			self::$_iterator_props_cache[$class_name] = [];
 			return [];
 		}
 	}
@@ -530,6 +567,11 @@ class SourceAnalyzer{
 	 * メソッドの情報を取得
 	 */
 	public static function method_info(string $class, string $method, bool $detail=false, bool $deep=false): DocInfo{
+		$cache_key = ltrim($class, '\\').'::'.$method.':'.($detail ? '1' : '0').':'.($deep ? '1' : '0');
+		if(isset(self::$_method_info_cache[$cache_key])){
+			return self::$_method_info_cache[$cache_key];
+		}
+
 		$ref = new \ReflectionMethod(self::get_class_name($class),$method);
 		$is_request_flow = $ref->getDeclaringClass()->isSubclassOf(\ebi\app\Request::class);
 		$method_fullname = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
@@ -625,6 +667,7 @@ class SourceAnalyzer{
 		$info->set_opt('mail_list',$mail_list);
 		$info->set_opt('throws',self::merge_find_throws($throws));
 
+		self::$_method_info_cache[$cache_key] = $info;
 		return $info;
 	}
 
@@ -640,6 +683,10 @@ class SourceAnalyzer{
 	 * メールテンプレート一覧を取得
 	 */
 	public static function mail_template_list(): array{
+		if(isset(self::$_mail_template_cache)){
+			return self::$_mail_template_cache;
+		}
+
 		$path = self::mail_template_path('');
 		$template_list = [];
 
@@ -676,14 +723,24 @@ class SourceAnalyzer{
 		}
 		usort($template_list, fn($a,$b) => strcasecmp($a->name(), $b->name()));
 
+		self::$_mail_template_cache = $template_list;
 		return $template_list;
 	}
 
+	private static array $_method_src_cache = [];
+
 	public static function method_src(\ReflectionMethod $ref): string{
-		if(is_file($ref->getDeclaringClass()->getFileName())){
-			return implode(array_slice(file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
+		$cache_key = $ref->getDeclaringClass()->getName().'::'.$ref->getName();
+		if(isset(self::$_method_src_cache[$cache_key])){
+			return self::$_method_src_cache[$cache_key];
 		}
-		return '';
+		if(is_file($ref->getDeclaringClass()->getFileName())){
+			$result = implode(array_slice(self::cached_file($ref->getDeclaringClass()->getFileName()),$ref->getStartLine(),($ref->getEndLine()-$ref->getStartLine()-1)));
+		}else{
+			$result = '';
+		}
+		self::$_method_src_cache[$cache_key] = $result;
+		return $result;
 	}
 
 	private static function property_summary(\ReflectionProperty $prop, string $anon_summary): string{
