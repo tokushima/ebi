@@ -3,10 +3,10 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import './index.css';
 
 // PHPから渡されるグローバル変数
-const spec = window.spec || {};
-const webhooks = window.webhooks || [];
-const allTagDefs = window.allTags || [];
-const mailTemplates = window.mailTemplates || [];
+let spec = window.spec || {};
+let webhooks = window.webhooks || [];
+let allTagDefs = window.allTags || [];
+let mailTemplates = window.mailTemplates || [];
 const apiUrls = window.apiUrls || {};
 const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
 const appmode = window.appmode || '';
@@ -1030,6 +1030,7 @@ function App() {
 	const [selectedSchema, setSelectedSchema] = useState(null);
 	const [envelope, setEnvelope] = useState(true);
 	const [configClass, setConfigClass] = useState(initial.page === 'config' ? (initial.detail || '') : '');
+	const [specLoading, setSpecLoading] = useState(!spec.paths);
 
 	const updateHash = (p, detail = null) => {
 		const hash = detail ? `${p}=${encodeURIComponent(detail)}` : p;
@@ -1044,41 +1045,41 @@ function App() {
 	const handleSelectSchema = (name, schema) => { setSelectedSchema({ name, schema }); updateHash('schemas', name); };
 	const handleCloseSchema = () => { setSelectedSchema(null); updateHash('schemas'); };
 
-	useEffect(() => {
-		const { page: initPage, detail } = parseHash();
-		setPage(initPage);
-		if (initPage === 'endpoints' && detail) {
+	const applyHashState = useCallback(() => {
+		const { page: p, detail: d } = parseHash();
+		setPage(p);
+		if (p === 'endpoints' && d) {
 			const paths = spec.paths || {};
 			for (const [path, methods] of Object.entries(paths)) {
-				if (path === detail) {
-					const method = Object.keys(methods)[0];
-					setSelected({ path, method, op: methods[method] });
-					break;
-				}
+				if (path === d) { setSelected({ path, method: Object.keys(methods)[0], op: methods[Object.keys(methods)[0]] }); break; }
 			}
-		} else if (initPage === 'schemas' && detail) {
+		} else if (p === 'schemas' && d) {
 			const schemas = spec.components?.schemas || {};
-			if (schemas[detail]) setSelectedSchema({ name: detail, schema: schemas[detail] });
-		} else if (initPage === 'config' && detail) {
-			setConfigClass(detail);
+			if (schemas[d]) setSelectedSchema({ name: d, schema: schemas[d] });
+		} else if (p === 'config') {
+			setConfigClass(d || '');
 		}
-		const onHashChange = () => {
-			const { page: p, detail: d } = parseHash();
-			setPage(p);
-			if (p === 'endpoints' && d) {
-				const paths = spec.paths || {};
-				for (const [path, methods] of Object.entries(paths)) {
-					if (path === d) { setSelected({ path, method: Object.keys(methods)[0], op: methods[Object.keys(methods)[0]] }); break; }
-				}
-			} else if (p === 'schemas' && d) {
-				const schemas = spec.components?.schemas || {};
-				if (schemas[d]) setSelectedSchema({ name: d, schema: schemas[d] });
-			} else if (p === 'config') {
-				setConfigClass(d || '');
-			}
-		};
-		window.addEventListener('hashchange', onHashChange);
-		return () => window.removeEventListener('hashchange', onHashChange);
+	}, []);
+
+	useEffect(() => {
+		if (!spec.paths && apiUrls.openapi) {
+			const sep = apiUrls.openapi.includes('?') ? '&' : '?';
+			fetch(apiUrls.openapi + sep + 'include_dev=true')
+				.then(res => res.json())
+				.then(data => {
+					spec = data.spec || data;
+					webhooks = data.webhooks || webhooks;
+					allTagDefs = data.allTags || allTagDefs;
+					mailTemplates = data.mailTemplates || mailTemplates;
+					setSpecLoading(false);
+					applyHashState();
+				})
+				.catch(() => setSpecLoading(false));
+		} else {
+			applyHashState();
+		}
+		window.addEventListener('hashchange', applyHashState);
+		return () => window.removeEventListener('hashchange', applyHashState);
 	}, []);
 
 	return (
@@ -1109,11 +1110,15 @@ function App() {
 				</div>
 			</nav>
 			<main className="container py-4">
-				{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
-				{page === 'webhooks' && <WebhooksPage />}
-				{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
-				{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
-				{page === 'mail' && <MailPage />}
+				{specLoading ? (
+					<div className="text-center py-5"><div className="spinner-border text-primary" /><div className="text-muted mt-2">Loading...</div></div>
+				) : (<>
+					{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
+					{page === 'webhooks' && <WebhooksPage />}
+					{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
+					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
+					{page === 'mail' && <MailPage />}
+				</>)}
 			</main>
 			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />}
 		</div>

@@ -43,11 +43,32 @@ class Dt extends \ebi\app\Request{
 	#[Route(suffix: '.json')]
 	public function openapi(): void{
 		$envelope = ($this->in_vars('envelope', '') === 'true');
-		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
+		$include_dev = ($this->in_vars('include_dev', '') === 'true');
+		$openapi = new \ebi\Dt\OpenApi($this->entry);
+		$spec = $openapi->generate_spec($envelope, $include_dev);
+
+		$result = $spec;
+		if($include_dev){
+			$mail_templates = [];
+			foreach(\ebi\Dt\SourceAnalyzer::mail_template_list() as $info){
+				$mail_templates[] = [
+					'name' => $info->name(),
+					'code' => $info->opt('x_t_code'),
+					'subject' => $info->opt('subject') ?? '',
+					'summary' => $info->document(),
+				];
+			}
+			$result = [
+				'spec' => $spec,
+				'webhooks' => $openapi->get_webhooks(),
+				'allTags' => $openapi->get_all_tags(),
+				'mailTemplates' => $mail_templates,
+			];
+		}
 
 		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
 		\ebi\HttpHeader::send('Access-Control-Allow-Origin', '*');
-		echo json_encode($spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 		exit;
 	}
 
@@ -246,27 +267,6 @@ HTML;
 	// === Render Methods ===
 
 	private function render_react_app(): void{
-		$openapi = new \ebi\Dt\OpenApi($this->entry);
-		$spec = $openapi->generate_spec(include_dev: true);
-		$spec_json = json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-		$webhooks = $openapi->get_webhooks();
-		$webhooks_json = json_encode($webhooks, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-		$all_tags = $openapi->get_all_tags();
-		$all_tags_json = json_encode($all_tags, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-		$mail_templates = [];
-		foreach(\ebi\Dt\SourceAnalyzer::mail_template_list() as $info){
-			$mail_templates[] = [
-				'name' => $info->name(),
-				'code' => $info->opt('x_t_code'),
-				'subject' => $info->opt('subject') ?? '',
-				'summary' => $info->document(),
-			];
-		}
-		$mail_json = json_encode($mail_templates, JSON_UNESCAPED_UNICODE);
-
 		$has_smtp_blackhole = false;
 		try{
 			\ebi\SmtpBlackholeDao::find_count();
@@ -275,7 +275,6 @@ HTML;
 		}
 		$has_smtp_blackhole_json = $has_smtp_blackhole ? 'true' : 'false';
 
-		// AppHelperでURLを生成
 		$helper = new \ebi\AppHelper();
 		$urls = json_encode([
 			'openapi' => $helper->package_method_url('openapi'),
@@ -289,11 +288,9 @@ HTML;
 
 		$appmode = \ebi\Conf::appmode();
 
-		// ビルド済みのapp.jsを読み込む
 		$app_js = file_get_contents(__DIR__.'/Dt/assets/app.js');
 		$app_css = '';
 		if(is_file(__DIR__.'/Dt/assets/app.css')){
-			// ビルド済みのapp.cssを読み込む
 			$app_css = file_get_contents(__DIR__.'/Dt/assets/app.css');
 		}
 
@@ -359,10 +356,10 @@ HTML;
 <body class="bg-light">
 	<div id="root"></div>
 	<script>
-		window.spec = {$spec_json};
-		window.webhooks = {$webhooks_json};
-		window.allTags = {$all_tags_json};
-		window.mailTemplates = {$mail_json};
+		window.spec = {};
+		window.webhooks = [];
+		window.allTags = [];
+		window.mailTemplates = [];
 		window.apiUrls = {$urls};
 		window.hasSmtpBlackhole = {$has_smtp_blackhole_json};
 		window.appmode = '{$appmode}';
