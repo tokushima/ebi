@@ -2,7 +2,6 @@
 namespace ebi;
 
 use ebi\Attribute\Route;
-use ebi\Attribute\Parameter;
 
 /**
  * 開発支援ツール
@@ -27,6 +26,97 @@ class Dt extends \ebi\app\Request{
 			$this->entry = realpath($entryfile);
 		}
 		parent::__construct();
+	}
+
+	public function before(array $selected_pattern): void{
+		parent::before($selected_pattern);
+
+		/**
+		 * @var string
+		 * DevToolsのアクセスパスワード（未設定時は認証なし）
+		 */
+		$password = \ebi\Conf::get('password');
+
+		if(!empty($password) && !$this->is_sessions('dt_authed')){
+			$action = $selected_pattern['action'] ?? '';
+			if(strpos($action, '::dt_login') === false){
+				$this->set_before_redirect('dt_login');
+			}
+		}
+	}
+
+	#[Route]
+	public function dt_login(): void{
+		$password = \ebi\Conf::get('password');
+		$error = '';
+
+		if($this->is_vars('password')){
+			if($this->in_vars('password') === $password){
+				$this->sessions('dt_authed', true);
+				$this->sessions('dt_fail_count', 0);
+				$this->set_after_redirect((new \ebi\AppHelper())->package_method_url('index'));
+				return;
+			}
+			$error = 'Invalid password';
+			$count = (int)$this->in_sessions('dt_fail_count', 0) + 1;
+			$this->sessions('dt_fail_count', $count);
+
+			/**
+			 * @var int
+			 * ログイン失敗時に警告メールを送信する連続失敗回数（0で無効）
+			 */
+			$alert_threshold = (int)\ebi\Conf::get('alert_threshold', 5);
+			/**
+			 * @var string
+			 * ログイン失敗警告メールの送信先
+			 */
+			$alert_to = \ebi\Conf::get('alert_to');
+
+			if($alert_threshold > 0 && $count >= $alert_threshold && !empty($alert_to)){
+				if(!$this->is_sessions('dt_alert_sent')){
+					$this->sessions('dt_alert_sent', true);
+
+					$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+					$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+					$ua = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+					$host = $_SERVER['HTTP_HOST'] ?? 'unknown';
+					$time = date('Y-m-d H:i:s');
+
+					$body = implode("\n", [
+						"[DevTools] Login failure alert",
+						"",
+						"Consecutive failures: {$count}",
+						"Time: {$time}",
+						"Host: {$host}",
+						"IP: {$ip}",
+						!empty($forwarded) ? "X-Forwarded-For: {$forwarded}" : null,
+						"User-Agent: {$ua}",
+					]);
+					$body = implode("\n", array_filter(explode("\n", $body), fn($v) => $v !== null));
+
+					$mail = new \ebi\Mail();
+					$mail->to($alert_to);
+					$mail->from($alert_to);
+					$mail->send('[Alert] DevTools login failure', $body);
+				}
+			}
+		}
+		$border = !empty($error) ? 'border-color:#dc3545' : '';
+		echo <<<HTML
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f8f9fa}form{width:280px}input{width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border:1px solid #dee2e6;border-radius:0.375rem;font-size:0.875rem;outline:none;{$border}}input:focus{border-color:#86b7fe;box-shadow:0 0 0 3px rgba(13,110,253,0.15)}</style>
+</head>
+<body>
+<form method="post"><input type="password" name="password" autofocus required /></form>
+</body>
+</html>
+HTML;
+		exit;
 	}
 
 	/**

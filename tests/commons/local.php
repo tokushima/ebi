@@ -47,7 +47,8 @@
 		],
 		'url_rewrite'=>[
 			'@/rewrite/abc$@'=>'/rewrite/def',
-		]
+		],
+		'password'=>'developperpassword'
 	],
 ]);
 
