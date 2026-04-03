@@ -112,7 +112,7 @@ class Dt extends \ebi\app\Request{
 <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f8f9fa}form{width:280px}input{width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border:1px solid #dee2e6;border-radius:0.375rem;font-size:0.875rem;outline:none;{$border}}input:focus{border-color:#86b7fe;box-shadow:0 0 0 3px rgba(13,110,253,0.15)}</style>
 </head>
 <body>
-<form method="post"><input type="password" name="password" autofocus required /></form>
+<form method="post"><input type="hidden" name="username" value="dt" /><input type="password" name="password" autofocus required /></form>
 </body>
 </html>
 HTML;
