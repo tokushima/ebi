@@ -37,27 +37,25 @@ class Dt extends \ebi\app\Request{
 		 */
 		$password = \ebi\Conf::get('password');
 
-		if(!empty($password) && !$this->is_sessions('dt_authed')){
+		if(!empty($password) && !$this->is_sessions('dt_verifyed')){
 			$action = $selected_pattern['action'] ?? '';
-			if(strpos($action, '::dt_login') === false){
-				$this->set_before_redirect('dt_login');
+			if(strpos($action, '::dt_verify') === false){
+				$this->set_before_redirect('dt_verify');
 			}
 		}
 	}
 
 	#[Route]
-	public function dt_login(): void{
+	public function dt_verify(): void{
 		$password = \ebi\Conf::get('password');
-		$error = '';
 
 		if($this->is_vars('password')){
 			if($this->in_vars('password') === $password){
-				$this->sessions('dt_authed', true);
+				$this->sessions('dt_verifyed', true);
 				$this->sessions('dt_fail_count', 0);
 				$this->set_after_redirect((new \ebi\AppHelper())->package_method_url('index'));
 				return;
 			}
-			$error = 'Invalid password';
 			$count = (int)$this->in_sessions('dt_fail_count', 0) + 1;
 			$this->sessions('dt_fail_count', $count);
 
@@ -101,18 +99,21 @@ class Dt extends \ebi\app\Request{
 				}
 			}
 		}
-		$border = !empty($error) ? 'border-color:#dc3545' : '';
+		/**
+		 * @var string
+		 * パスワード保存時のユーザー名
+		 */
+		$username = htmlspecialchars(\ebi\Conf::get('username', 'dt'), ENT_QUOTES, 'UTF-8');
 		echo <<<HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
-<style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f8f9fa}form{width:280px}input{width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border:1px solid #dee2e6;border-radius:0.375rem;font-size:0.875rem;outline:none;{$border}}input:focus{border-color:#86b7fe;box-shadow:0 0 0 3px rgba(13,110,253,0.15)}</style>
+<style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f8f9fa}form{width:280px}input[type=password]{width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border:1px solid #dee2e6;border-radius:0.375rem;font-size:0.875rem;outline:none}input[type=password]:focus{border-color:#86b7fe;box-shadow:0 0 0 3px rgba(13,110,253,0.15)}</style>
 </head>
 <body>
-<form method="post"><input type="hidden" name="username" value="dt" /><input type="password" name="password" autofocus required /></form>
+<form method="post"><input type="hidden" name="username" value="{$username}" /><input type="password" name="password" autofocus required /></form>
 </body>
 </html>
 HTML;
