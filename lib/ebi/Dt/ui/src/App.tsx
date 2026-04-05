@@ -10,6 +10,8 @@ let mailTemplates = window.mailTemplates || [];
 const apiUrls = window.apiUrls || {};
 const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
 const appmode = window.appmode || '';
+const initialAuthenticated = !!window.authenticated;
+const requiresPassword = !!window.requiresPassword;
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
@@ -1023,7 +1025,68 @@ function parseHash() {
 	return { page: page || 'endpoints', detail: detail ? decodeURIComponent(detail) : null };
 }
 
+function LoginPage({ onSuccess }) {
+	const [password, setPassword] = useState('');
+	const [error, setError] = useState('');
+	const [submitting, setSubmitting] = useState(false);
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setSubmitting(true);
+		setError('');
+		try {
+			const form = new URLSearchParams();
+			form.append('password', password);
+			const res = await fetch(apiUrls.login, { method: 'POST', body: form });
+			const data = await res.json();
+			if (data.success) {
+				onSuccess();
+			} else {
+				setError(data.error || 'Authentication failed');
+				setPassword('');
+			}
+		} catch {
+			setError('Authentication failed');
+		} finally {
+			setSubmitting(false);
+		}
+	};
+
+	return (
+		<div className="min-vh-100 bg-light d-flex align-items-start justify-content-center">
+			<div style={{ width: '100%', maxWidth: 360, marginTop: '15vh' }}>
+				<div className="card shadow-sm">
+					<div className="card-body p-4">
+						<form onSubmit={handleSubmit}>
+							<div className="mb-3">
+								<label className="form-label small text-muted">Username</label>
+								<input type="text" name="username" className="form-control" autoComplete="username" />
+							</div>
+							<div className="mb-3">
+								<label className="form-label small text-muted">Password</label>
+								<input type="password" name="password" className="form-control" autoComplete="current-password" autoFocus required value={password} onChange={e => setPassword(e.target.value)} />
+							</div>
+							<button type="submit" className="btn btn-primary w-100" disabled={submitting}>{submitting ? 'Logging in...' : 'Login'}</button>
+						</form>
+						{error && <div className="text-danger small mt-3 text-center">{error}</div>}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function App() {
+	const [authenticated, setAuthenticated] = useState(initialAuthenticated);
+
+	if (requiresPassword && !authenticated) {
+		return <LoginPage onSuccess={() => setAuthenticated(true)} />;
+	}
+
+	return <MainApp />;
+}
+
+function MainApp() {
 	const initial = parseHash();
 	const [page, setPage] = useState(initial.page);
 	const [selected, setSelected] = useState(null);
