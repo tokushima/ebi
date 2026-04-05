@@ -48,9 +48,17 @@ class Dt extends \ebi\app\Request{
 	#[Route]
 	public function login(): void{
 		$password = \ebi\Conf::get('password');
+		/**
+		 * @var string
+		 * DevToolsのログインユーザー名
+		 */
+		$username = \ebi\Conf::get('username');
 
 		if($this->is_vars('password')){
-			if($this->in_vars('password') === $password){
+			if(
+				$this->in_vars('password') === $password
+				&& (empty($username) || $this->in_vars('username') === $username)
+			){
 				$this->sessions('dt_login', true);
 				$this->sessions('dt_fail_count', 0);
 
