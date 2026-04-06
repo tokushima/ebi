@@ -1031,6 +1031,17 @@ function LoginPage({ onSuccess }) {
 	const [error, setError] = useState('');
 	const [submitting, setSubmitting] = useState(false);
 
+	useEffect(() => {
+		if (navigator.credentials && navigator.credentials.get) {
+			navigator.credentials.get({ password: true, mediation: 'optional' }).then((cred) => {
+				if (cred && cred.type === 'password') {
+					setUsername(cred.id || '');
+					setPassword(cred.password || '');
+				}
+			}).catch(() => {});
+		}
+	}, []);
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setSubmitting(true);
@@ -1042,6 +1053,12 @@ function LoginPage({ onSuccess }) {
 			const res = await fetch(apiUrls.login, { method: 'POST', body: form });
 			const data = await res.json();
 			if (data.success) {
+				if (window.PasswordCredential) {
+					try {
+						const cred = new window.PasswordCredential({ id: username, password, name: username });
+						await navigator.credentials.store(cred);
+					} catch {}
+				}
 				onSuccess();
 			} else {
 				setError(data.error || 'Authentication failed');
