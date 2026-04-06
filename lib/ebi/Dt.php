@@ -516,6 +516,7 @@ HTML;
 					throw new \InvalidArgumentException('Invalid mock class: '.$class_name);
 				}
 				self::$mock[] = ltrim($class_name, '\\');
+				self::$_urls_cache = null;
 			}else if(is_array($class_name)){
 				self::add_mock(...$class_name);
 			}
