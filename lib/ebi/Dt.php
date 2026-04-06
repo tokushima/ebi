@@ -61,13 +61,12 @@ class Dt extends \ebi\app\Request{
 			){
 				$this->sessions('dt_login', true);
 				$this->sessions('dt_fail_count', 0);
-
-				header('Content-Type: application/json');
-				echo json_encode(['success' => true]);
-				exit;
+				$this->set_after_redirect((new \ebi\AppHelper())->package_method_url('index'));
+				return;
 			}
 			$count = (int)$this->in_sessions('dt_fail_count', 0) + 1;
 			$this->sessions('dt_fail_count', $count);
+			$this->sessions('dt_login_error', true);
 
 			/**
 			 * @var int
@@ -109,9 +108,6 @@ class Dt extends \ebi\app\Request{
 				}
 			}
 
-			header('Content-Type: application/json');
-			echo json_encode(['success' => false, 'error' => 'Authentication failed']);
-			exit;
 		}
 
 		$this->set_after_redirect((new \ebi\AppHelper())->package_method_url('index'));
@@ -364,6 +360,10 @@ HTML;
 
 		$password = \ebi\Conf::get('password');
 		$authenticated = empty($password) || $this->is_sessions('dt_login');
+		$login_error = $this->is_sessions('dt_login_error');
+		if($login_error){
+			$this->rm_sessions('dt_login_error');
+		}
 
 		$helper = new \ebi\AppHelper();
 		$urls = json_encode([
@@ -390,6 +390,7 @@ HTML;
 			'appmode' => \ebi\Conf::appmode(),
 			'authenticated' => $authenticated ? 'true' : 'false',
 			'requires_password' => !empty($password) ? 'true' : 'false',
+			'login_error' => $login_error ? 'true' : 'false',
 			'app_js' => $app_js,
 			'app_css' => $app_css,
 		];
