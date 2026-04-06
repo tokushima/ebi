@@ -1026,6 +1026,7 @@ function parseHash() {
 }
 
 function LoginPage({ onSuccess }) {
+	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState('');
 	const [submitting, setSubmitting] = useState(false);
@@ -1036,6 +1037,7 @@ function LoginPage({ onSuccess }) {
 		setError('');
 		try {
 			const form = new URLSearchParams();
+			form.append('username', username);
 			form.append('password', password);
 			const res = await fetch(apiUrls.login, { method: 'POST', body: form });
 			const data = await res.json();
@@ -1060,7 +1062,7 @@ function LoginPage({ onSuccess }) {
 						<form onSubmit={handleSubmit}>
 							<div className="mb-3">
 								<label className="form-label small text-muted">Username</label>
-								<input type="text" name="username" className="form-control" autoComplete="username" />
+								<input type="text" name="username" className="form-control" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} />
 							</div>
 							<div className="mb-3">
 								<label className="form-label small text-muted">Password</label>
