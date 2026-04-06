@@ -12,6 +12,7 @@ const hasSmtpBlackhole = !!window.hasSmtpBlackhole;
 const appmode = window.appmode || '';
 const initialAuthenticated = !!window.authenticated;
 const requiresPassword = !!window.requiresPassword;
+const initialLoginError = !!window.loginError;
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
@@ -1025,69 +1026,24 @@ function parseHash() {
 	return { page: page || 'endpoints', detail: detail ? decodeURIComponent(detail) : null };
 }
 
-function LoginPage({ onSuccess }) {
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [error, setError] = useState('');
-	const [submitting, setSubmitting] = useState(false);
-
-	useEffect(() => {
-		if (navigator.credentials && navigator.credentials.get) {
-			navigator.credentials.get({ password: true, mediation: 'optional' }).then((cred) => {
-				if (cred && cred.type === 'password') {
-					setUsername(cred.id || '');
-					setPassword(cred.password || '');
-				}
-			}).catch(() => {});
-		}
-	}, []);
-
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setSubmitting(true);
-		setError('');
-		try {
-			const form = new URLSearchParams();
-			form.append('username', username);
-			form.append('password', password);
-			const res = await fetch(apiUrls.login, { method: 'POST', body: form });
-			const data = await res.json();
-			if (data.success) {
-				if (window.PasswordCredential) {
-					try {
-						const cred = new window.PasswordCredential({ id: username, password, name: username });
-						await navigator.credentials.store(cred);
-					} catch {}
-				}
-				onSuccess();
-			} else {
-				setError(data.error || 'Authentication failed');
-				setPassword('');
-			}
-		} catch {
-			setError('Authentication failed');
-		} finally {
-			setSubmitting(false);
-		}
-	};
-
+function LoginPage() {
 	return (
 		<div className="min-vh-100 bg-light d-flex align-items-start justify-content-center">
 			<div style={{ width: '100%', maxWidth: 360, marginTop: '15vh' }}>
 				<div className="card shadow-sm">
 					<div className="card-body p-4">
-						<form onSubmit={handleSubmit}>
+						<form method="post" action={apiUrls.login}>
 							<div className="mb-3">
 								<label className="form-label small text-muted">Username</label>
-								<input type="text" name="username" className="form-control" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} />
+								<input type="text" name="username" className="form-control" autoComplete="username" />
 							</div>
 							<div className="mb-3">
 								<label className="form-label small text-muted">Password</label>
-								<input type="password" name="password" className="form-control" autoComplete="current-password" autoFocus required value={password} onChange={e => setPassword(e.target.value)} />
+								<input type="password" name="password" className="form-control" autoComplete="current-password" autoFocus required />
 							</div>
-							<button type="submit" className="btn btn-primary w-100" disabled={submitting}>{submitting ? 'Logging in...' : 'Login'}</button>
+							<button type="submit" className="btn btn-primary w-100">Login</button>
 						</form>
-						{error && <div className="text-danger small mt-3 text-center">{error}</div>}
+						{initialLoginError && <div className="text-danger small mt-3 text-center">Authentication failed</div>}
 					</div>
 				</div>
 			</div>
@@ -1096,12 +1052,9 @@ function LoginPage({ onSuccess }) {
 }
 
 function App() {
-	const [authenticated, setAuthenticated] = useState(initialAuthenticated);
-
-	if (requiresPassword && !authenticated) {
-		return <LoginPage onSuccess={() => setAuthenticated(true)} />;
+	if (requiresPassword && !initialAuthenticated) {
+		return <LoginPage />;
 	}
-
 	return <MainApp />;
 }
 
