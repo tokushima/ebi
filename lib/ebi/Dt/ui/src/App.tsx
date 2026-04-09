@@ -488,8 +488,16 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 }
 
 function Endpoints({ onSelect }) {
-	const [search, setSearch] = useState('');
-	const [tagFilter, setTagFilter] = useState('');
+	const initialQuery = parseHash().query;
+	const [search, setSearch] = useState(initialQuery.q || '');
+	const [tagFilter, setTagFilter] = useState(initialQuery.tag || '');
+
+	useEffect(() => {
+		const { page, detail } = parseHash();
+		if (page !== 'endpoints') return;
+		const hash = buildHash('endpoints', detail, { q: search, tag: tagFilter });
+		window.history.replaceState(null, '', '#' + hash);
+	}, [search, tagFilter]);
 	const endpoints = useMemo(() => {
 		const result = [];
 		for (const [path, methods] of Object.entries(spec.paths || {})) {
@@ -563,8 +571,16 @@ function Endpoints({ onSelect }) {
 function Schemas({ selected, onSelect, onClose }) {
 	const schemas = spec.components?.schemas || {};
 	const items = Object.entries(schemas);
-	const [search, setSearch] = useState('');
-	const [typeFilter, setTypeFilter] = useState('');
+	const initialQuery = parseHash().query;
+	const [search, setSearch] = useState(initialQuery.q || '');
+	const [typeFilter, setTypeFilter] = useState(initialQuery.type || '');
+
+	useEffect(() => {
+		const { page, detail } = parseHash();
+		if (page !== 'schemas') return;
+		const hash = buildHash('schemas', detail, { q: search, type: typeFilter });
+		window.history.replaceState(null, '', '#' + hash);
+	}, [search, typeFilter]);
 
 	if (items.length === 0) return <div className="text-muted">No schemas defined.</div>;
 
@@ -801,9 +817,17 @@ function MailPage() {
 }
 
 function WebhooksPage() {
-	const [search, setSearch] = useState('');
-	const [tagFilter, setTagFilter] = useState('');
+	const initialQuery = parseHash().query;
+	const [search, setSearch] = useState(initialQuery.q || '');
+	const [tagFilter, setTagFilter] = useState(initialQuery.tag || '');
 	const [selected, setSelected] = useState(null);
+
+	useEffect(() => {
+		const { page, detail } = parseHash();
+		if (page !== 'webhooks') return;
+		const hash = buildHash('webhooks', detail, { q: search, tag: tagFilter });
+		window.history.replaceState(null, '', '#' + hash);
+	}, [search, tagFilter]);
 
 	const allTags = useMemo(() => allTagDefs.map(t => ({ name: t.name, label: t['x-displayName'] || t.name })), []);
 	const tags = useMemo(() => {
@@ -1020,10 +1044,27 @@ function ConfigPage({ initialClass = '' }) {
 
 function parseHash() {
 	const hash = window.location.hash.slice(1);
-	if (!hash) return { page: 'endpoints', detail: null };
-	const [page, ...rest] = hash.split('=');
+	if (!hash) return { page: 'endpoints', detail: null, query: {} };
+	const [main, queryStr] = hash.split('?');
+	const [page, ...rest] = main.split('=');
 	const detail = rest.join('=') || null;
-	return { page: page || 'endpoints', detail: detail ? decodeURIComponent(detail) : null };
+	const query = {};
+	if (queryStr) {
+		for (const pair of queryStr.split('&')) {
+			const [k, v] = pair.split('=');
+			if (k) query[decodeURIComponent(k)] = v ? decodeURIComponent(v) : '';
+		}
+	}
+	return { page: page || 'endpoints', detail: detail ? decodeURIComponent(detail) : null, query };
+}
+
+function buildHash(page, detail, query) {
+	let hash = detail ? `${page}=${encodeURIComponent(detail)}` : page;
+	const entries = Object.entries(query || {}).filter(([, v]) => v !== '' && v != null);
+	if (entries.length > 0) {
+		hash += '?' + entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+	}
+	return hash;
 }
 
 function LoginPage() {
@@ -1067,12 +1108,12 @@ function MainApp() {
 	const [configClass, setConfigClass] = useState(initial.page === 'config' ? (initial.detail || '') : '');
 	const [specLoading, setSpecLoading] = useState(!spec.paths);
 
-	const updateHash = (p, detail = null) => {
-		const hash = detail ? `${p}=${encodeURIComponent(detail)}` : p;
-		window.history.replaceState(null, '', '#' + hash);
+	const updateHash = (p, detail = null, preserveQuery = true) => {
+		const query = preserveQuery ? parseHash().query : {};
+		window.history.replaceState(null, '', '#' + buildHash(p, detail, query));
 	};
 
-	const handlePageChange = (p) => { setPage(p); setSelected(null); setSelectedSchema(null); setConfigClass(''); updateHash(p); };
+	const handlePageChange = (p) => { setPage(p); setSelected(null); setSelectedSchema(null); setConfigClass(''); updateHash(p, null, false); };
 
 	const handleSelectEndpoint = (e) => { setSelected(e); updateHash('endpoints', e.path); };
 	const handleCloseEndpoint = () => { setSelected(null); updateHash('endpoints'); };
