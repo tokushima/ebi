@@ -53,7 +53,7 @@ class OpenApi extends \ebi\app\Request{
 		$req = new \ebi\Request();
 		$target_version = (string)$req->in_vars('version');
 		$file_version = date('Ymd', filemtime($this->entry));
-		$self_class = get_class($this);
+		$self_class = static::class;
 
 		$class_name = function($name){
 			return ($name[0] === '\\') ? substr($name, 1) : $name;

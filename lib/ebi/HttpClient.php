@@ -438,7 +438,7 @@ class HttpClient{
 
 		curl_exec($ch);
 			$size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-		curl_close($ch);
+		unset($ch);
 
 		return (int)$size;
 	}
@@ -512,7 +512,7 @@ class HttpClient{
 				unlink($tmp);
 
 				curl_multi_remove_handle($mh, $ch);
-				curl_close($ch);
+				unset($ch);
 			}
 			fclose($out);
 
@@ -523,9 +523,7 @@ class HttpClient{
 				if (is_resource($fp)){
 					fclose($fp);
 				}
-				if (is_resource($ch) || $ch instanceof \CurlHandle) {
- 					curl_close($ch);
-				}
+				unset($ch);
 				if (is_file($tmp)){
 					unlink($tmp);
 				}
@@ -565,7 +563,7 @@ class HttpClient{
 				$filesize = $this->content_length_download($url);
 
 				if($filesize > 1024 * 1024 * 1){
-					curl_close($ch);
+					unset($ch);
 
 					$this->parallel_download($url, $filesize, $download_path);
 					return $this;
@@ -644,7 +642,7 @@ class HttpClient{
 				}
 			}
 		}finally{
-			curl_close($ch);
+			unset($ch);
 		}
 		
 		return $this;
