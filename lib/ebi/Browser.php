@@ -513,7 +513,6 @@ class Browser{
 				}
 			}
 		}
-		curl_close($this->resource);
 		unset($this->resource);
 		
 		if($this->redirect_count++ < $this->redirect_max){
@@ -534,9 +533,7 @@ class Browser{
 	}
 
 	public function __destruct(){
-		if(isset($this->resource)){
-			curl_close($this->resource);
-		}
+		unset($this->resource);
 	}
 
 	/**

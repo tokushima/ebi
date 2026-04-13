@@ -79,7 +79,7 @@ abstract class Dao extends \ebi\Obj{
 				return $props[$n];
 			}
 		}
-		return get_class($this);
+		return static::class;
 	}
 	public function __construct(){
 		parent::__construct();
@@ -94,7 +94,7 @@ abstract class Dao extends \ebi\Obj{
 				}
 			}
 		}
-		$p = get_class($this);
+		$p = static::class;
 		if(!isset($this->_class_id_)){
 			$this->_class_id_ = $p;
 		}
@@ -358,7 +358,7 @@ abstract class Dao extends \ebi\Obj{
 	 * テーブル名を取得
 	 */
 	public function dao_table(): string{
-		return self::$_co_anon_[get_class($this)][1];
+		return self::$_co_anon_[static::class][1];
 	}
 
 	protected function __find_conds__(): \ebi\Q{
@@ -391,7 +391,7 @@ abstract class Dao extends \ebi\Obj{
 			self::$record_query[] = [$daq->sql(),$daq->ar_vars()];
 		}
 		try{
-			$statement = self::connection(get_class($this))->prepare($daq->sql());
+			$statement = self::connection(static::class)->prepare($daq->sql());
 		}catch(\PDOException $e){
 			throw new \ebi\exception\InvalidQueryException($e->getMessage());
 		}
@@ -456,7 +456,7 @@ abstract class Dao extends \ebi\Obj{
 					foreach($this->dao_primary_columns() as $primary){
 						if(null !== $this->{$primary->name()}) $q[] = Q::neq($primary->name(),$this->{$primary->name()});
 					}
-					if(0 < call_user_func_array([get_class($this),'find_count'],$q)){
+					if(0 < call_user_func_array([static::class,'find_count'],$q)){
 						\ebi\Exceptions::add(new \ebi\exception\UniqueException($name.' unique'),$name);
 					}
 				}
@@ -727,7 +727,7 @@ abstract class Dao extends \ebi\Obj{
 	 * DBから削除する
 	 */
 	public function delete(): void{
-		if(self::$_co_anon_[get_class($this)][2]){
+		if(self::$_co_anon_[static::class][2]){
 			throw new \ebi\exception\BadMethodCallException('delete is not permitted');
 		}
 		$daq = self::$_con_[get_called_class()]->delete_sql($this);

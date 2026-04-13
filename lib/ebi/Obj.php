@@ -8,7 +8,7 @@ class Obj implements \IteratorAggregate{
 	protected string $_;
 
 	private function init_obj_meta(): void{
-		$c = get_class($this);
+		$c = static::class;
 		if(!isset(self::$_m[$c])){
 			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',null,__CLASS__) ?? [];
 		}
@@ -35,12 +35,12 @@ class Obj implements \IteratorAggregate{
 	public function prop_anon(string $p, ?string $n=null, $d=null, bool $f=false){
 		$this->init_obj_meta();
 		if($f){
-			self::$_m[get_class($this)][$p][$n] = $d;
+			self::$_m[static::class][$p][$n] = $d;
 		}
 		if($n === null){
-			return (isset(self::$_m[get_class($this)][$p])) ? self::$_m[get_class($this)][$p] : [];
+			return (isset(self::$_m[static::class][$p])) ? self::$_m[static::class][$p] : [];
 		}
-		return (isset(self::$_m[get_class($this)][$p][$n])) ? self::$_m[get_class($this)][$p][$n] : $d;
+		return (isset(self::$_m[static::class][$p][$n])) ? self::$_m[static::class][$p][$n] : $d;
 	}
 	/**
 	 * プロパティの一覧を取得する、アノテーション expose=false (hash=false) のものは含まない
@@ -69,7 +69,7 @@ class Obj implements \IteratorAggregate{
 		$this->init_obj_meta();
 		if($n[0] != '_'){
 			$m = [];
-			[$c, $p] = (isset(self::$_props[get_class($this)][$n])) ?
+			[$c, $p] = (isset(self::$_props[static::class][$n])) ?
 				[(empty($args) ? 'get' : 'set'),$n] : 
 				(preg_match("/^([a-z]+)_([a-zA-Z].*)$/",$n,$m) ? 
 					[$m[1],$m[2]] : 
@@ -81,7 +81,7 @@ class Obj implements \IteratorAggregate{
 				return call_user_func_array([$this,(method_exists($this,$m=('__'.$c.'_'.$p.'__')) ? $m : $am)],$args);
 			}
 		}
-		throw new \ebi\exception\BadMethodCallException(get_class($this).'::'.$n.' method not found');
+		throw new \ebi\exception\BadMethodCallException(static::class.'::'.$n.' method not found');
 	}
 	/**
 	 * アクセス可能なプロパティを取得する
