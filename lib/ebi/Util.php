@@ -380,23 +380,6 @@ class Util{
 	}
 	
 	/**
-	 * 文字列を丸める
-	 * @deprecated
-	 */
-	public static function trim_width(string $str, int $width, string $postfix=''): string{
-		$rtn = "";
-		$cnt = 0;
-		$len = mb_strlen($str);
-		for($i=0;$i<$len;$i++){
-			$c = mb_substr($str,$i,1);
-			$cnt += (mb_strwidth($c) > 1) ? 2 : 1;
-			if($width < $cnt) break;
-			$rtn .= $c;
-		}
-		if($len > mb_strlen($rtn)) $rtn .= $postfix;
-		return $rtn;
-	}
-	/**
 	 * クラス名
 	 */
 	public static function get_class_name(string $class_name): string{
@@ -529,6 +512,42 @@ class Util{
 			}
 		}
 		return empty($array) ? null : $v;
+	}
+
+	/**
+	 * URL-safe base64エンコード (RFC 4648 Section 5)
+	 * +/= を -_ に置換し、パディングを除去することでURL/フォーム/ファイル名で安全に扱える
+	 */
+	public static function base64_url_encode(string $data): string{
+		return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+	}
+
+	/**
+	 * URL-safe base64デコード (RFC 4648 Section 5)
+	 * 通常base64(+/)も受け付ける。'+'がスペースに化けたケースも救済する
+	 */
+	public static function base64_url_decode(string $data): string|false{
+		return base64_decode(strtr($data, '-_ ', '+/+'), true);
+	}
+
+
+
+	/**
+	 * 文字列を丸める
+	 * @deprecated
+	 */
+	public static function trim_width(string $str, int $width, string $postfix=''): string{
+		$rtn = "";
+		$cnt = 0;
+		$len = mb_strlen($str);
+		for($i=0;$i<$len;$i++){
+			$c = mb_substr($str,$i,1);
+			$cnt += (mb_strwidth($c) > 1) ? 2 : 1;
+			if($width < $cnt) break;
+			$rtn .= $c;
+		}
+		if($len > mb_strlen($rtn)) $rtn .= $postfix;
+		return $rtn;
 	}
 	
 	/**
