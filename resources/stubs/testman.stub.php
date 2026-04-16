@@ -65,6 +65,21 @@ function mneq(string $keyword, $result, string $msg = 'failure not match'): void
 function fail(string $msg = 'failure'): void {}
 
 /**
+ * 画像ファイルが等しいことを検証する（PNG, JPG, PDF 対応）
+ *
+ * アンチエイリアス差はエッジ検出で自動判定し無視する
+ * PDF の場合は Ghostscript (gs) または Conf の image_pdf_converter 設定が必要。
+ *
+ * @param string $expected_file      期待画像のパス
+ * @param string $actual_file        実際の画像のパス
+ * @param bool   $ignore_antialiasing アンチエイリアス差を無視するか（デフォルト: true）
+ * @param int    $page               PDF の場合のページ番号（0始まり）
+ * @param string $msg                失敗時のメッセージ
+ * @throws \testman\AssertFailure
+ */
+function img_eq(string $expected_file, string $actual_file, bool $ignore_antialiasing = true, int $page = 0, string $msg = 'failure image equals'): void {}
+
+/**
  * Browser インスタンスを生成する
  *
  * @return \testman\Browser
@@ -787,6 +802,43 @@ class Runner
      * @return string
      */
     public static function current(): string {}
+}
+
+/**
+ * 画像比較ユーティリティ
+ *
+ * PNG, JPG, PDF の画像をピクセル単位で比較する。
+ * PDF は Ghostscript (gs) または Conf の image_pdf_converter 設定で画像化する。
+ *
+ * @example
+ *   // 差異の割合を取得
+ *   $diff = \testman\ImageComparator::compare('expected.png', 'actual.png');
+ *
+ *   // 差分画像を出力
+ *   \testman\ImageComparator::diff('expected.png', 'actual.png', '/tmp/diff.png');
+ */
+class ImageComparator
+{
+    /**
+     * 2つの画像ファイルを比較する
+     *
+     * @param string $expected_file      期待画像のパス
+     * @param string $actual_file        実際の画像のパス
+     * @param bool   $ignore_antialiasing アンチエイリアス差を無視するか（デフォルト: true）
+     * @param int    $page               PDF の場合のページ番号（0始まり）
+     * @return array{diff_ratio: float, is_antialiasing: bool, analysis: array}
+     */
+    public static function compare(string $expected_file, string $actual_file, bool $ignore_antialiasing = true, int $page = 0): array {}
+
+    /**
+     * 2つの画像ファイルの差分画像を生成する
+     *
+     * @param string $expected_file    期待画像のパス
+     * @param string $actual_file      実際の画像のパス
+     * @param string $diff_output_file 差分画像の出力先パス（PNG）
+     * @param int    $page             PDF の場合のページ番号（0始まり）
+     */
+    public static function diff(string $expected_file, string $actual_file, string $diff_output_file, int $page = 0): void {}
 }
 
 } // namespace testman
