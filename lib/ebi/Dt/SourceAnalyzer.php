@@ -179,7 +179,7 @@ class SourceAnalyzer{
 					$type = $get_type_format($anon[$name] ?? 'mixed');
 
 					// アノテーションで型が取れない場合、ReflectionPropertyから取得
-					if($type === 'mixed' && ($ref_type = $prop->getType()) !== null){
+					if($type === 'mixed' && ($ref_type = $prop->getType()) instanceof \ReflectionNamedType){
 						$type = $ref_type->getName();
 					}
 
