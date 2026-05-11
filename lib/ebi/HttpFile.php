@@ -72,27 +72,66 @@ class HttpFile{
 	private static function mime(string $filename): string{
 		$ext = (false !== ($p = strrpos($filename,'.'))) ? strtolower(substr($filename,$p+1)) : null;
 		switch($ext){
+			// image
 			case 'jpg':
 			case 'jpeg': return 'image/jpeg';
 			case 'png':
 			case 'gif':
 			case 'bmp':
-			case 'tiff': return 'image/'.$ext;
+			case 'tiff':
+			case 'webp':
+			case 'avif': return 'image/'.$ext;
 			case 'svg': return 'image/svg+xml';
+			case 'ico': return 'image/x-icon';
+			// document
 			case 'pdf': return 'application/pdf';
+			case 'rtf': return 'application/rtf';
+			// text/web
 			case 'css': return 'text/css';
 			case 'txt': return 'text/plain';
-			case 'html': return 'text/html';
+			case 'html':
+			case 'htm': return 'text/html';
 			case 'xml': return 'application/xml';
-			case 'js': return 'text/javascript';
+			case 'xhtml': return 'application/xhtml+xml';
+			case 'js':
+			case 'mjs': return 'text/javascript';
+			case 'json':
+			case 'map': return 'application/json';
+			case 'yaml':
+			case 'yml': return 'application/yaml';
+			case 'md': return 'text/markdown';
+			case 'csv': return 'text/csv';
+			// font
+			case 'woff': return 'font/woff';
+			case 'woff2': return 'font/woff2';
+			case 'ttf': return 'font/ttf';
+			case 'otf': return 'font/otf';
+			case 'eot': return 'application/vnd.ms-fontobject';
+			// audio
+			case 'wav': return 'audio/wav';
+			case 'mp3': return 'audio/mpeg';
+			case 'm4a': return 'audio/mp4';
+			case 'aac': return 'audio/aac';
+			case 'flac': return 'audio/flac';
+			case 'ogg':
+			case 'oga': return 'audio/ogg';
+			// video
+			case 'mp4': return 'video/mp4';
+			case 'webm': return 'video/webm';
+			case 'mov': return 'video/quicktime';
+			case 'avi': return 'video/x-msvideo';
+			case '3gp': return 'video/3gpp';
+			// flash (legacy)
 			case 'flv':
 			case 'swf': return 'application/x-shockwave-flash';
-			case '3gp': return 'video/3gpp';
+			// archive
+			case 'zip': return 'application/zip';
+			case '7z': return 'application/x-7z-compressed';
+			case 'rar': return 'application/vnd.rar';
+			case 'bz2': return 'application/x-bzip2';
 			case 'gz':
 			case 'tgz':
-			case 'tar':
-			case 'gz': return 'application/x-compress';
-			case 'csv': return 'text/csv';
+			case 'tar': return 'application/x-compress';
 			case null:
 			default:
 				return 'application/octet-stream';
