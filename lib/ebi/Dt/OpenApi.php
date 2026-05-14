@@ -475,14 +475,24 @@ class OpenApi extends \ebi\app\Request{
 							$data['summary'] ?? ''
 						);
 						$in = ($data['in'] ?? 'query');
+						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
 
 						if($has_body && $in !== 'path'){
 							$body_properties[$name] = $this->build_body_property($param);
+							if($has_items){
+								$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+							}
 							if(!empty($data['require'])){
 								$body_required[] = $name;
 							}
 						}else{
 							$p = $this->build_parameter($param, $in);
+							if($has_items){
+								$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+								if(!empty($param->summary())){
+									$p['schema']['description'] = $param->summary();
+								}
+							}
 							if(!empty($data['require'])){
 								$p['required'] = true;
 							}

@@ -7,6 +7,7 @@ namespace ebi\Attribute;
  * @example
  * #[Parameter(name: 'email', type: 'string', require: true)]
  * #[Parameter(name: 'age', type: 'int', min: 0, max: 150)]
+ * #[Parameter(name: 'tags', type: 'array', items: 'string')]
  * public function create() {}
  */
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
@@ -14,6 +15,7 @@ class Parameter{
 	public function __construct(
 		public string $name,
 		public string $type='string',
+		public ?string $items=null,
 		public ?string $summary=null,
 		public bool $require=false,
 		public int|float|null $min=null,

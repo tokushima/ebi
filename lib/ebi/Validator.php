@@ -115,6 +115,17 @@ class Validator{
 							return $v;
 						case 'mixed':
 							return $v;
+						case 'array':
+							if(!is_array($v)){
+								throw new \ebi\exception\InvalidArgumentException();
+							}
+							// items が指定されていれば各要素を再帰的に検証
+							if(isset($p['items'])){
+								foreach($v as $k => $item){
+									$v[$k] = self::type($name.'['.$k.']', $item, ['type' => $p['items']]);
+								}
+							}
+							return $v;
 						default:
 							if(!($v instanceof $t)){
 								throw new \ebi\exception\InvalidArgumentException();
@@ -123,6 +134,9 @@ class Validator{
 					}
 			}
 		}catch(\ebi\exception\InvalidArgumentException $e){
+			if($e->getMessage() !== ''){
+				throw $e;
+			}
 			throw new \ebi\exception\InvalidArgumentException($name.' must be an '.$t);
 		}
 	}
