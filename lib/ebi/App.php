@@ -78,6 +78,21 @@ class App{
 		exit;
 	}
 	/**
+	 * resources/dist の index.html を SPA エントリとして配信する
+	 * Vite ビルド出力の絶対パス(="/...) または相対パス(="./...) を media_url 配下に書き換える
+	 */
+	private static function dist_index(string $path, string $media_url): void{
+		$html = (string)file_get_contents($path);
+		$html = preg_replace_callback('/(=["\'])(?:\.\/|\/)([^\/])/', function($m) use($media_url){
+			return $m[1].$media_url.'/'.$m[2];
+		}, $html);
+
+		\ebi\HttpHeader::send('Content-Type','text/html; charset=UTF-8');
+		print($html);
+		self::terminate();
+		exit;
+	}
+	/**
 	 * pattern名でリダイレクトする
 	 * ://がある場合はURLとみなす
 	 *
@@ -272,7 +287,9 @@ class App{
 				if(isset($p['@']) && isset($p['idx']) && (int)$p['idx'] === (int)$m[1]){
 					if(
 						is_file($file=($p['@'].'/resources/media/'.$m[2])) ||
-						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2])))
+						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2]))) ||
+						is_file($file=($p['@'].'/resources/dist/'.$m[2])) ||
+						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/dist/'.$m[2])))
 					){
 						\ebi\HttpFile::inline($file);
 					}
@@ -399,11 +416,14 @@ class App{
 						}else if(isset($template)){
 							self::template($result_vars,$pattern,$ins,\ebi\Util::path_absolute(self::$template_dir,$template),null,null);
 						}else if(array_key_exists('@',$pattern)){
+							$media_base = ($is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url).self::$package_media_url.'/'.$pattern['idx'];
+
 							if(is_file($t=\ebi\Util::path_absolute(self::$template_dir,$pattern['name']).'.html')){
 								self::template($result_vars,$pattern,$ins,$t,null,null,null);
 							}else{
 								$rtp = '/resources/templates/';
-								$html = $rtp.preg_replace('/^.+::/','',$pattern['action']).'.html';
+								$action_method = preg_replace('/^.+::/','',$pattern['action']);
+								$html = $rtp.$action_method.'.html';
 
 								if(is_file($t=$pattern['@'].$html) || (isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).$html))){
 									self::template(
@@ -411,9 +431,14 @@ class App{
 										$pattern,
 										$ins,
 										$t,
-										(($is_secure_pattern_func($pattern) ? str_replace('http://','https://',self::$app_url) : self::$app_url).self::$package_media_url.'/'.$pattern['idx']),
+										$media_base,
 										(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
 									);
+								}else if($action_method === 'index' && (
+									is_file($t=$pattern['@'].'/resources/dist/index.html') ||
+									(isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).'/resources/dist/index.html'))
+								)){
+									self::dist_index($t,$media_base);
 								}
 							}
 						}
