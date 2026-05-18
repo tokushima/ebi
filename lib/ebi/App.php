@@ -78,10 +78,10 @@ class App{
 		exit;
 	}
 	/**
-	 * resources/dist の index.html を SPA エントリとして配信する
+	 * resources/spa の index.html を SPA エントリとして配信する
 	 * Vite ビルド出力の絶対パス(="/...) または相対パス(="./...) を media_url 配下に書き換える
 	 */
-	private static function dist_index(string $path, string $media_url): void{
+	private static function spa_index(string $path, string $media_url): void{
 		$html = (string)file_get_contents($path);
 		$html = preg_replace_callback('/(=["\'])(?:\.\/|\/)([^\/])/', function($m) use($media_url){
 			return $m[1].$media_url.'/'.$m[2];
@@ -288,8 +288,8 @@ class App{
 					if(
 						is_file($file=($p['@'].'/resources/media/'.$m[2])) ||
 						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/media/'.$m[2]))) ||
-						is_file($file=($p['@'].'/resources/dist/'.$m[2])) ||
-						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/dist/'.$m[2])))
+						is_file($file=($p['@'].'/resources/spa/'.$m[2])) ||
+						(isset($p['&']) && is_file($file=(dirname($p['@'],$p['&']).'/resources/spa/'.$m[2])))
 					){
 						\ebi\HttpFile::inline($file);
 					}
@@ -435,10 +435,10 @@ class App{
 										(isset($pattern['&']) ? [$pattern['@'].$rtp,dirname($pattern['@'],$pattern['&']).$rtp] : $pattern['@'].$rtp)
 									);
 								}else if($action_method === 'index' && (
-									is_file($t=$pattern['@'].'/resources/dist/index.html') ||
-									(isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).'/resources/dist/index.html'))
+									is_file($t=$pattern['@'].'/resources/spa/index.html') ||
+									(isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).'/resources/spa/index.html'))
 								)){
-									self::dist_index($t,$media_base);
+									self::spa_index($t,$media_base);
 								}
 							}
 						}
