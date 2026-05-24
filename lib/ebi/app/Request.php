@@ -149,7 +149,7 @@ class Request extends \ebi\Request{
 			if(!$this->is_user_logged_in() && (isset($this->_login_anon) || isset($this->_auth))){
 				if(
 					isset($this->_selected_pattern['action']) &&
-					strpos($this->_selected_pattern['action'],'::do_login') === false
+					!preg_match('/::(do_)?(login|logout)$/',$this->_selected_pattern['action'])
 				){
 					if(!$this->is_user_logged_in()){
 						if(
@@ -160,12 +160,7 @@ class Request extends \ebi\Request{
 							throw new \ebi\exception\UnauthorizedException('Unauthorized');
 						}
 					}
-					if(
-						strpos($this->_selected_pattern['action'],'::do_login') === false &&
-						strpos($this->_selected_pattern['action'],'::do_logout') === false
-					){
-						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
-					}
+					$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					$this->_sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
 
 					if(array_key_exists('@',$this->_selected_pattern)){
