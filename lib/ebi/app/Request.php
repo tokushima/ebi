@@ -152,7 +152,10 @@ class Request extends \ebi\Request{
 					strpos($this->_selected_pattern['action'],'::do_login') === false
 				){
 					if(!$this->is_user_logged_in()){
-						if(!($this->_selected_pattern['unauthorized_redirect'] ?? true)){
+						if(
+							!($this->_selected_pattern['unauthorized_redirect'] ?? true)
+							|| strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') !== false
+						){
 							\ebi\HttpHeader::send_status(401);
 							throw new \ebi\exception\UnauthorizedException('Unauthorized');
 						}
