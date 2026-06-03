@@ -158,7 +158,7 @@ class Request extends \ebi\Request{
 						\ebi\HttpHeader::send_status(401);
 						throw new \ebi\exception\UnauthorizedException('Unauthorized');
 					}
-					if(strpos($this->_selected_pattern['action'],'::do_logout') === false){
+					if(!preg_match('/::(do_)?logout$/',$this->_selected_pattern['action'])){
 						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
 					}
 					$this->_sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
