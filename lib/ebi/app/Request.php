@@ -149,18 +149,24 @@ class Request extends \ebi\Request{
 			if(!$this->is_user_logged_in() && (isset($this->_login_anon) || isset($this->_auth))){
 				if(
 					isset($this->_selected_pattern['action']) &&
-					!preg_match('/::(do_)?(login|logout)$/',$this->_selected_pattern['action'])
+					strpos($this->_selected_pattern['action'],'::do_login') === false
 				){
 					if(!$this->is_user_logged_in()){
+						$is_login_action = (bool)preg_match('/::(do_)?(login|logout)$/',$this->_selected_pattern['action']);
 						if(
 							!($this->_selected_pattern['unauthorized_redirect'] ?? true)
-							|| strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') !== false
+							|| (
+								!$is_login_action
+								&& strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'application/json') !== false
+							)
 						){
 							\ebi\HttpHeader::send_status(401);
 							throw new \ebi\exception\UnauthorizedException('Unauthorized');
 						}
 					}
-					$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
+					if(!preg_match('/::(do_)?logout$/',$this->_selected_pattern['action'])){
+						$this->set_logged_in_redirect_to(\ebi\Request::current_url().\ebi\Request::request_string(true));
+					}
 					$this->_sess->vars(__CLASS__.'_login_vars',[time(), $this->ar_vars()]);
 
 					if(array_key_exists('@',$this->_selected_pattern)){

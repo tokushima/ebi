@@ -11,133 +11,130 @@ class Validator{
 			return null;
 		}
 		$t = array_key_exists('type',$p) ? $p['type'] : 'mixed';
-		
-		try{
-			switch($t){
-				case null: 
-					return $v;
-				case 'string':
-				case 'text':
-					if(is_array($v)){
-						throw new \ebi\exception\InvalidArgumentException();
-					}
-					$v = is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
-					return ($t == 'text') ? $v : str_replace(["\r\n","\r","\n"],'',$v);
-				default:
-					if($v === ''){
-						return null;
-					}
-					switch($t){
-						case 'float':
-						case 'number':
-							if(!is_numeric($v)){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							$dp = isset($p['decimal_places']) ? $p['decimal_places'] : null;
-							return (float)(isset($dp) ? (floor($v * pow(10,$dp)) / pow(10,$dp)) : $v);
-						case 'serial':
-						case 'integer':
-						case 'int':
-							if(!is_numeric($v) || (int)$v != $v){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
+
+		// array 型は再帰呼び出しの詳細メッセージをそのまま伝播させるため try-catch の外で処理
+		if($t === 'array'){
+			if(!is_array($v)){
+				throw new \ebi\exception\InvalidArgumentException($name.' must be an array');
+			}
+			if(isset($p['items'])){
+				foreach($v as $k => $item){
+					$v[$k] = self::type($name.'['.$k.']', $item, ['type' => $p['items']]);
+				}
+			}
+			return $v;
+		}
+
+		$fail = fn() => throw new \ebi\exception\InvalidArgumentException($name.' must be an '.$t);
+
+		switch($t){
+			case null:
+				return $v;
+			case 'string':
+			case 'text':
+				if(is_array($v)){
+					$fail();
+				}
+				$v = is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
+				return ($t == 'text') ? $v : str_replace(["\r\n","\r","\n"],'',$v);
+			default:
+				if($v === ''){
+					return null;
+				}
+				switch($t){
+					case 'float':
+					case 'number':
+						if(!is_numeric($v)){
+							$fail();
+						}
+						$dp = isset($p['decimal_places']) ? $p['decimal_places'] : null;
+						return (float)(isset($dp) ? (floor($v * pow(10,$dp)) / pow(10,$dp)) : $v);
+					case 'serial':
+					case 'integer':
+					case 'int':
+						if(!is_numeric($v) || (int)$v != $v){
+							$fail();
+						}
+						return (int)$v;
+					case 'bool':
+					case 'boolean':
+						if(is_string($v)){
+							$v = (strtolower($v) === 'true' || $v === '1') ? true : ((strtolower($v) === 'false' || $v === '0') ? false : $v);
+						}else if(is_int($v)){
+							$v = ($v === 1) ? true : (($v === 0) ? false : $v);
+						}
+						if(!is_bool($v)){
+							$fail();
+						}
+						return (bool)$v;
+					case 'datetime':
+					case 'timestamp':
+					case 'date':
+						if(ctype_digit((string)$v) || (substr((string)$v,0,1) == '-' && ctype_digit(substr((string)$v,1)))){
 							return (int)$v;
-						case 'bool':
-						case 'boolean':
-							if(is_string($v)){
-								$v = (strtolower($v) === 'true' || $v === '1') ? true : ((strtolower($v) === 'false' || $v === '0') ? false : $v);
-							}else if(is_int($v)){
-								$v = ($v === 1) ? true : (($v === 0) ? false : $v);
-							}
-							if(!is_bool($v)){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							return (bool)$v;
-						case 'datetime':
-						case 'timestamp':
-						case 'date':
-							if(ctype_digit((string)$v) || (substr((string)$v,0,1) == '-' && ctype_digit(substr((string)$v,1)))){
-								return (int)$v;
-							}
-							if(preg_match('/^0+$/',preg_replace('/[^\d]/','',$v))){
-								return null;
-							}
-							$time = strtotime($v);
-							
-							if($time === false){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							return $time;
-						case 'time':
-							if(is_numeric($v)){
-								return $v;
-							}
-							$d = array_reverse(preg_split("/[^\d\.]+/",$v));
-							
-							if($d[0] === ''){
-								array_shift($d);
-							}
-							[$s, $m, $h] = [(isset($d[0]) ? (float)$d[0] : 0),(isset($d[1]) ? (float)$d[1] : 0),(isset($d[2]) ? (float)$d[2] : 0)];
-							if(sizeof($d) > 3 || $m > 59 || $s > 59 || strpos($h,'.') !== false || strpos($m,'.') !== false){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							return ($h * 3600) + ($m*60) + ((int)$s) + ($s-((int)$s));
-						case 'intdate':
-							if(preg_match("/^\d\d\d\d\d+$/",$v)){
-								$v = sprintf('%08d',$v);
-								[$y, $m, $d] = [(int)substr($v,0,-4),(int)substr($v,-4,2),(int)substr($v,-2,2)];
-							}else{
-								$x = preg_split("/[^\d]+/",mb_convert_kana($v,'n'));
-								if(sizeof($x) < 3){
-									throw new \ebi\exception\InvalidArgumentException();
-								}
-								[$y, $m, $d] = [(int)$x[0],(int)$x[1],(int)$x[2]];
-							}
-							if($m < 1 || $m > 12 || $d < 1 || $d > 31 || (in_array($m,[4,6,9,11]) && $d > 30) || (in_array($m,[1,3,5,7,8,10,12]) && $d > 31)
-									|| ($m == 2 && ($d > 29 || (!(($y % 4 == 0) && (($y % 100 != 0) || ($y % 400 == 0)) ) && $d > 28)))
-							){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							return (int)sprintf('%d%02d%02d',$y,$m,$d);
-						case 'email':
-							$v = trim($v);
-							if(!preg_match('/^[\w\''.preg_quote('./!#$%&*+-=?^_`{|}~','/').']+@(?:[A-Z0-9-]+\.)+[A-Z]{2,6}$/i',$v)
-								|| strlen($v) > 255 || strpos($v,'..') !== false || strpos($v,'.@') !== false || $v[0] === '.'
-							){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
+						}
+						if(preg_match('/^0+$/',preg_replace('/[^\d]/','',$v))){
+							return null;
+						}
+						$time = strtotime($v);
+
+						if($time === false){
+							$fail();
+						}
+						return $time;
+					case 'time':
+						if(is_numeric($v)){
 							return $v;
-						case 'alnum':
-							$a = $dp = isset($p['additional_chars']) ? $p['additional_chars'] : '';
-							if(!ctype_alnum((empty($a) ? $v : str_replace(str_split($a,1),'',$v)))){
-								throw new \ebi\exception\InvalidArgumentException();
+						}
+						$d = array_reverse(preg_split("/[^\d\.]+/",$v));
+
+						if($d[0] === ''){
+							array_shift($d);
+						}
+						[$s, $m, $h] = [(isset($d[0]) ? (float)$d[0] : 0),(isset($d[1]) ? (float)$d[1] : 0),(isset($d[2]) ? (float)$d[2] : 0)];
+						if(sizeof($d) > 3 || $m > 59 || $s > 59 || strpos($h,'.') !== false || strpos($m,'.') !== false){
+							$fail();
+						}
+						return ($h * 3600) + ($m*60) + ((int)$s) + ($s-((int)$s));
+					case 'intdate':
+						if(preg_match("/^\d\d\d\d\d+$/",$v)){
+							$v = sprintf('%08d',$v);
+							[$y, $m, $d] = [(int)substr($v,0,-4),(int)substr($v,-4,2),(int)substr($v,-2,2)];
+						}else{
+							$x = preg_split("/[^\d]+/",mb_convert_kana($v,'n'));
+							if(sizeof($x) < 3){
+								$fail();
 							}
-							return $v;
-						case 'mixed':
-							return $v;
-						case 'array':
-							if(!is_array($v)){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							// items が指定されていれば各要素を再帰的に検証
-							if(isset($p['items'])){
-								foreach($v as $k => $item){
-									$v[$k] = self::type($name.'['.$k.']', $item, ['type' => $p['items']]);
-								}
-							}
-							return $v;
-						default:
-							if(!($v instanceof $t)){
-								throw new \ebi\exception\InvalidArgumentException();
-							}
-							return $v;
-					}
-			}
-		}catch(\ebi\exception\InvalidArgumentException $e){
-			if($e->getMessage() !== ''){
-				throw $e;
-			}
-			throw new \ebi\exception\InvalidArgumentException($name.' must be an '.$t);
+							[$y, $m, $d] = [(int)$x[0],(int)$x[1],(int)$x[2]];
+						}
+						if($m < 1 || $m > 12 || $d < 1 || $d > 31 || (in_array($m,[4,6,9,11]) && $d > 30) || (in_array($m,[1,3,5,7,8,10,12]) && $d > 31)
+								|| ($m == 2 && ($d > 29 || (!(($y % 4 == 0) && (($y % 100 != 0) || ($y % 400 == 0)) ) && $d > 28)))
+						){
+							$fail();
+						}
+						return (int)sprintf('%d%02d%02d',$y,$m,$d);
+					case 'email':
+						$v = trim($v);
+						if(!preg_match('/^[\w\''.preg_quote('./!#$%&*+-=?^_`{|}~','/').']+@(?:[A-Z0-9-]+\.)+[A-Z]{2,6}$/i',$v)
+							|| strlen($v) > 255 || strpos($v,'..') !== false || strpos($v,'.@') !== false || $v[0] === '.'
+						){
+							$fail();
+						}
+						return $v;
+					case 'alnum':
+						$a = $dp = isset($p['additional_chars']) ? $p['additional_chars'] : '';
+						if(!ctype_alnum((empty($a) ? $v : str_replace(str_split($a,1),'',$v)))){
+							$fail();
+						}
+						return $v;
+					case 'mixed':
+						return $v;
+					default:
+						if(!($v instanceof $t)){
+							$fail();
+						}
+						return $v;
+				}
 		}
 	}
 	
