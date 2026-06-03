@@ -1,7 +1,8 @@
 <?php
 namespace ebi\exception;
 /**
- * コード生成のリトライ回数を超えた
+ * ユニークなコード生成のリトライ上限を超えた場合にスローされる例外です
  */
 class GenerateUniqueCodeRetryLimitOverException extends \ebi\exception\RetryLimitOverException{
+	protected $message = 'generate unique code retry limit over';
 }

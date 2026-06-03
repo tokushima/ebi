@@ -1,9 +1,9 @@
 <?php
 namespace ebi\exception;
 /**
- * 認証失敗の場合にスローされる例外です
+ * 認証に失敗した場合にスローされる例外です
  */
 class UnauthorizedException extends \ebi\Exception{
-	protected $message = 'Unauthorized';
 	protected ?int $http_status = 401;
+	protected $message = 'Unauthorized';
 }
