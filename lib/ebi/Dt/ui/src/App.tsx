@@ -1,6 +1,53 @@
 // @ts-nocheck
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import './index.css';
+
+// PHPDoc を markdown に正規化する。
+//   1. 行頭の "* " (PHPDoc 残り) を剥がす
+//   2. 2 スペース以上で字下げされた連続行は code block にまとめる
+//      (factory.php docblock のように "URL 体系:\n  service/* ... " 風の構造を
+//      コードブロックで等幅整形して表示するため)
+//   3. プレーン文中の URL を markdown リンク化
+//   4. (描画側で remark-breaks により単一改行はハードブレーク扱い)
+function phpdocToMarkdown(src) {
+	const lines = String(src).split('\n').map(l => l.replace(/^\s*\*\s?/, ''));
+	const out = [];
+	let buf = []; // 連続する字下げ行
+
+	const flushCode = () => {
+		if (buf.length === 0) return;
+		const minIndent = Math.min(...buf.map(l => l.match(/^ */)[0].length));
+		out.push('```');
+		for (const l of buf) out.push(l.slice(minIndent));
+		out.push('```');
+		buf = [];
+	};
+	const linkify = (s) => s.replace(/(https?:\/\/[^\s]+)/g, '[$1]($1)');
+
+	for (const line of lines) {
+		if (/^ {2,}\S/.test(line)) {        // 2 スペース以上で始まる非空行 → code 候補
+			buf.push(line);
+		} else {
+			flushCode();
+			out.push(linkify(line));
+		}
+	}
+	flushCode();
+	return out.join('\n');
+}
+
+function MarkdownText({ children, className = '', style }) {
+	if (!children) return null;
+	const text = phpdocToMarkdown(children);
+	return (
+		<div className={`md-body ${className}`} style={style}>
+			<ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{text}</ReactMarkdown>
+		</div>
+	);
+}
 
 // PHPから渡されるグローバル変数
 let spec = window.spec || {};
@@ -369,32 +416,31 @@ function findEndpointByPath(seePath) {
 
 function SeeLinks({ seeList, onNavigate, label = 'See:' }) {
 	if (!seeList || seeList.length === 0) return null;
+	const itemStyle = { fontSize: '0.75rem' };
 	return (
-		<div className="d-flex align-items-center gap-2 mt-2 flex-wrap">
-			<span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>{label}</span>
-			{seeList.map((see, i) => {
-				if (see.type === 'url') {
-					return <a key={i} href={see.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem' }}>{see.url}</a>;
-				}
-				if (see.type === 'endpoint') {
-					const target = findEndpointByPath(see.path);
-					if (target && onNavigate) {
-						return <a key={i} href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.path}</a>;
+		<div className="mt-2">
+			<div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500, marginBottom: 2 }}>{label}</div>
+			<ul className="see-list" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+				{seeList.map((see, i) => {
+					let inner = null;
+					if (see.type === 'url') {
+						inner = <a href={see.url} target="_blank" rel="noopener noreferrer" style={itemStyle}>{see.url}</a>;
+					} else if (see.type === 'endpoint') {
+						const target = findEndpointByPath(see.path);
+						inner = (target && onNavigate)
+							? <a href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ ...itemStyle, color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.path}</a>
+							: <span style={{ ...itemStyle, color: '#64748b' }}>{see.path}</span>;
+					} else if (see.type === 'method') {
+						inner = <span style={{ ...itemStyle, color: '#64748b' }}>{see.class}::{see.method}</span>;
+					} else if (see.type === 'class') {
+						const target = findEndpointByPath(see.class);
+						inner = (target && onNavigate)
+							? <a href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ ...itemStyle, color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.class}</a>
+							: <span style={{ ...itemStyle, color: '#64748b' }}>{see.class}</span>;
 					}
-					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.path}</span>;
-				}
-				if (see.type === 'method') {
-					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.class}::{see.method}</span>;
-				}
-				if (see.type === 'class') {
-					const target = findEndpointByPath(see.class);
-					if (target && onNavigate) {
-						return <a key={i} href="#" onClick={e => { e.preventDefault(); onNavigate(target); }} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>{see.class}</a>;
-					}
-					return <span key={i} style={{ fontSize: '0.75rem', color: '#64748b' }}>{see.class}</span>;
-				}
-				return null;
-			})}
+					return inner !== null ? <li key={i} style={{ margin: '2px 0' }}>{inner}</li> : null;
+				})}
+			</ul>
 		</div>
 	);
 }
@@ -418,7 +464,7 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 					</div>
 					{(op.summary || op.description) && <div className="mt-2">
 						{op.summary && <div style={{ fontSize: '0.9375rem', color: '#334155', fontWeight: 500 }}>{op.summary}</div>}
-						{op.description && <div style={{ fontSize: '0.8125rem', color: '#64748b', whiteSpace: 'pre-wrap', marginTop: 4 }}>{op.description}</div>}
+						{op.description && <MarkdownText style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: 4 }}>{op.description}</MarkdownText>}
 					</div>}
 					<div className="d-flex align-items-center gap-2 mt-2">
 						{op.tags?.map(t => <span key={t} className="badge" style={{ background: '#e2e8f0', color: '#475569', fontWeight: 500 }}>{t}</span>)}
@@ -535,7 +581,7 @@ function Endpoints({ onSelect }) {
 		<div>
 			<div className="mb-4">
 				<h1 className="h3">{spec.info?.title || 'API'} <span className="text-muted fw-normal fs-6">({filtered.length}/{endpoints.length})</span></h1>
-				{spec.info?.description && <p className="text-muted">{spec.info.description}</p>}
+				{spec.info?.description && <MarkdownText className="text-muted">{spec.info.description}</MarkdownText>}
 				<span className="badge bg-primary">v{spec.info?.version}</span>
 			</div>
 			<div className="row g-3 mb-4">
