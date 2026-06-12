@@ -80,6 +80,7 @@ class App{
 	/**
 	 * resources/spa の index.html を SPA エントリとして配信する
 	 * Vite ビルド出力の絶対パス(="/...) または相対パス(="./...) を media_url 配下に書き換える
+	 * SPA配下のパスをサーバー側で解決しないため、必ずHashRouterで実装してください
 	 */
 	private static function serve_spa(string $path, string $media_url): void{
 		$html = (string)file_get_contents($path);
