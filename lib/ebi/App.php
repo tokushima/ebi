@@ -80,33 +80,12 @@ class App{
 	/**
 	 * resources/spa の index.html を SPA エントリとして配信する
 	 * Vite ビルド出力の絶対パス(="/...) または相対パス(="./...) を media_url 配下に書き換える
-	 * SPA に basename (= 自身のマウントパス) を伝えるため <script>window.__APP_BASE__='/app/';</script> を <head> に注入する
-	 * (Vite plugin 'vite-plugin-ebi' と組み合わせて使う想定)
 	 */
-	private static function serve_spa(string $path, string $media_url, array $pattern = []): void{
+	private static function serve_spa(string $path, string $media_url): void{
 		$html = (string)file_get_contents($path);
 		$html = preg_replace_callback('/(=["\'])(?:\.\/|\/)([^\/])/', function($m) use($media_url){
 			return $m[1].$media_url.'/'.$m[2];
 		}, $html);
-
-		$mount_path = '/';
-		if(isset($pattern['name'])){
-			$name = trim((string)$pattern['name'], '/');
-			if(substr($name, -strlen('/index')) === '/index'){
-				$name = substr($name, 0, -strlen('/index'));
-			}else if($name === 'index'){
-				$name = '';
-			}
-			if($name !== ''){
-				$mount_path = '/'.$name.'/';
-			}
-		}
-		$inject = '<script>window.__APP_BASE__='.\ebi\Json::encode($mount_path).';</script>';
-		if(stripos($html, '</head>') !== false){
-			$html = preg_replace('/<\/head>/i', $inject.'</head>', $html, 1);
-		}else{
-			$html = $inject.$html;
-		}
 
 		\ebi\HttpHeader::send('Content-Type','text/html; charset=UTF-8');
 		print($html);
@@ -459,7 +438,7 @@ class App{
 									is_file($t=$pattern['@'].'/resources/spa/index.html') ||
 									(isset($pattern['&']) && is_file($t=dirname($pattern['@'],$pattern['&']).'/resources/spa/index.html'))
 								)){
-									self::serve_spa($t,$media_base,$pattern);
+									self::serve_spa($t,$media_base);
 								}
 							}
 						}
