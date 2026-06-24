@@ -4,14 +4,23 @@ namespace ebi\Attribute;
 /**
  * プロパティの型と制約を定義するAttribute
  *
+ * type 未指定時はプロパティの PHP 型宣言から推論される。
+ * セマンティック型（email, datetime, alnum など）のみ type を明示する。
+ *
  * @example
- * #[VarAttr(type: 'string', max: 100, require: true)]
- * protected $name;
+ * #[VarAttr]                                       // PHP型から推論
+ * protected ?int $age = null;
+ *
+ * #[VarAttr(max: 100)]                             // 制約のみ追加（型はPHP宣言から）
+ * protected ?string $name = null;
+ *
+ * #[VarAttr(type: 'email')]                        // セマンティック型は明示
+ * protected ?string $email = null;
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
 class VarAttr{
 	public function __construct(
-		public string $type='string',
+		public string $type='',
 		public ?string $items=null,
 		public ?string $summary=null,
 		public bool $primary=false,

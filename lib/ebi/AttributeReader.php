@@ -260,6 +260,12 @@ class AttributeReader{
 				$type = $inst->type;
 				$attr_type = null;
 
+				// type 未指定時は PHP の型宣言から推論
+				if($type === ''){
+					$ref_type = $prop->getType();
+					$type = ($ref_type instanceof \ReflectionNamedType) ? $ref_type->getName() : 'string';
+				}
+
 				// 配列/ハッシュ型の処理
 				if($type === 'array' && $inst->items !== null){
 					$attr_type = 'a';
