@@ -71,5 +71,31 @@
 		window.loginError = {$login_error};
 	</script>
 	<script>{$app_js}</script>
+	<script>
+		// OpenAPI 生成時にスキップされたエンドポイント（spec.x-skipped）があれば、ログだけでなく画面上部に警告表示する。
+		// React バンドルとは独立。openapi を取得して x-skipped を見るだけ。
+		(function(){
+			try{
+				var u = (window.apiUrls && window.apiUrls.openapi) ? window.apiUrls.openapi : null;
+				if(!u){ return; }
+				var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+				fetch(u).then(function(r){ return r.json(); }).then(function(data){
+					var spec = (data && data.spec) ? data.spec : data;
+					var skipped = (spec && spec['x-skipped']) ? spec['x-skipped'] : [];
+					if(!skipped.length){ return; }
+					var items = skipped.map(function(s){
+						return '<li><code>' + esc(s.path) + '</code> <span class="text-muted">(' + esc(s.action) + ')</span> — ' + esc(s.error) + '</li>';
+					}).join('');
+					var div = document.createElement('div');
+					div.className = 'alert alert-warning m-2 mb-0 small';
+					div.setAttribute('role', 'alert');
+					div.innerHTML = '<strong>&#9888; OpenAPI 生成でスキップされたエンドポイント ' + skipped.length + ' 件</strong>'
+						+ '<div class="text-muted">@context / @return の型名やレスポンス定義を確認してください</div>'
+						+ '<ul class="mb-0 mt-1">' + items + '</ul>';
+					document.body.insertBefore(div, document.body.firstChild);
+				}).catch(function(){});
+			}catch(e){}
+		})();
+	</script>
 </body>
 </html>

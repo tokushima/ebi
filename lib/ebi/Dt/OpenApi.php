@@ -42,6 +42,7 @@ class OpenApi extends \ebi\app\Request{
 	private bool $envelope = false;
 	private array $webhooks = [];
 	private array $all_tags = [];
+	private array $skipped = [];
 
 	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
 		$this->envelope = $envelope;
@@ -238,8 +239,22 @@ class OpenApi extends \ebi\app\Request{
 					}
 					$spec['paths'][$path][$http_method] = $operation;
 
-				}catch(\Exception $e){
-					// エラーが発生した場合はスキップ
+				}catch(\Throwable $e){
+					// 生成に失敗してもエンドポイントを「無言で」落とすと、丸ごと消えても気づけない。
+					// ログに残しつつ、スペックの x-skipped にも載せて DevTools UI 上で警告表示する。
+					$action = ($m['class'] ?? '?').'::'.($m['method'] ?? '?');
+					$this->skipped[] = [
+						'path'   => $url_pattern ?? '?',
+						'action' => $action,
+						'error'  => get_class($e).': '.$e->getMessage(),
+					];
+					\ebi\Log::warning(sprintf(
+						'OpenAPI: skipped endpoint %s (%s): %s: %s',
+						$url_pattern ?? '?',
+						$action,
+						get_class($e),
+						$e->getMessage()
+					));
 				}
 			}
 		}
@@ -287,7 +302,20 @@ class OpenApi extends \ebi\app\Request{
 			unset($spec['components']);
 		}
 
+		// 生成時にスキップしたエンドポイントを露出（DevTools UI で警告表示する）。
+		if(!empty($this->skipped)){
+			$spec['x-skipped'] = $this->skipped;
+		}
+
 		return $spec;
+	}
+
+	/**
+	 * 生成時にスキップしたエンドポイント一覧（path / action / error）。
+	 * @return array<int,array{path:string,action:string,error:string}>
+	 */
+	public function get_skipped(): array{
+		return $this->skipped;
 	}
 
 	/**
@@ -444,6 +472,7 @@ class OpenApi extends \ebi\app\Request{
 		$has_body = in_array($http_method, ['post', 'put', 'patch']);
 		$body_properties = [];
 		$body_required = [];
+		$is_multipart = false; // ファイル(format:binary)を含む場合 multipart/form-data にする
 
 		// URLパスパラメータ
 		if(isset($info)){
@@ -476,11 +505,21 @@ class OpenApi extends \ebi\app\Request{
 						);
 						$in = ($data['in'] ?? 'query');
 						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
+						// ファイルアップロード（OpenAPI3: multipart/form-data + type:string format:binary）
+						$is_binary = (($data['format'] ?? null) === 'binary') || (($data['type'] ?? null) === 'file');
 
 						if($has_body && $in !== 'path'){
-							$body_properties[$name] = $this->build_body_property($param);
-							if($has_items){
-								$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+							if($is_binary){
+								$body_properties[$name] = ['type' => 'string', 'format' => 'binary'];
+								if(!empty($data['summary'])){
+									$body_properties[$name]['description'] = $data['summary'];
+								}
+								$is_multipart = true;
+							}else{
+								$body_properties[$name] = $this->build_body_property($param);
+								if($has_items){
+									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+								}
 							}
 							if(!empty($data['require'])){
 								$body_required[] = $name;
@@ -594,10 +633,12 @@ class OpenApi extends \ebi\app\Request{
 			if(!empty($body_required)){
 				$body_schema['required'] = $body_required;
 			}
+			// ファイル(format:binary)を含む場合は multipart/form-data
+			$media_type = $is_multipart ? 'multipart/form-data' : 'application/json';
 			$operation['requestBody'] = [
 				'required' => true,
 				'content' => [
-					'application/json' => [
+					$media_type => [
 						'schema' => $body_schema,
 					],
 				],
