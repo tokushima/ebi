@@ -571,42 +571,84 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
-		// authクラスのlogin_conditionメソッドからパラメータを取得
-		$auth_class = $m['auth'] ?? null;
+		// do_loginの場合、authクラスのlogin_conditionメソッドからパラメータを取得
+		if(($m['method'] ?? '') === 'do_login'){
+			$auth_class = $m['auth'] ?? null;
 
-		// set_auth_objectからauthクラスを検出
-		if(empty($auth_class) && isset($m['class'])){
-			try{
-				$ref = new \ReflectionMethod($m['class'], '__construct');
-				$src = \ebi\Dt\SourceAnalyzer::method_src($ref);
+			// set_auth_objectからauthクラスを検出
+			if(empty($auth_class) && isset($m['class'])){
+				try{
+					$ref = new \ReflectionMethod($m['class'], '__construct');
+					$src = \ebi\Dt\SourceAnalyzer::method_src($ref);
 
-				if(preg_match('/set_auth_object\(\s*new\s+([\\\\\w]+)/', $src, $auth_match)){
-					$auth_class = $auth_match[1];
+					if(preg_match('/set_auth_object\(\s*new\s+([\\\\\w]+)/', $src, $auth_match)){
+						$auth_class = $auth_match[1];
+					}
+				}catch(\ReflectionException $e){
 				}
-			}catch(\ReflectionException $e){
 			}
-		}
 
-		if(!empty($auth_class)){
-			try{
-				$auth_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, 'login_condition', true, false);
+			if(!empty($auth_class)){
+				// @requestアノテーション（DocBlock）
+				try{
+					$auth_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, 'login_condition', true, false);
 
-				if($auth_info->has_opt('requests')){
-					foreach($auth_info->opt('requests') as $param){
-						if(!isset($added_params[$param->name()])){
-							if($has_body){
-								$body_properties[$param->name()] = $this->build_body_property($param);
-								if($param->opt('require')){
-									$body_required[] = $param->name();
+					if($auth_info->has_opt('requests')){
+						foreach($auth_info->opt('requests') as $param){
+							if(!isset($added_params[$param->name()])){
+								if($has_body){
+									$body_properties[$param->name()] = $this->build_body_property($param);
+									if($param->opt('require')){
+										$body_required[] = $param->name();
+									}
+								}else{
+									$parameters[] = $this->build_parameter($param, 'query');
+								}
+								$added_params[$param->name()] = true;
+							}
+						}
+					}
+				}catch(\Exception $e){
+				}
+
+				// #[Parameter]属性（AttributeReader経由）
+				$attr_login_params = \ebi\AttributeReader::get_method($auth_class, 'login_condition', 'request', 'summary');
+				if(!empty($attr_login_params)){
+					foreach($attr_login_params as $name => $data){
+						if(!isset($added_params[$name])){
+							$param = new \ebi\Dt\ParamInfo(
+								$name,
+								$data['type'] ?? 'string',
+								$data['summary'] ?? ''
+							);
+							$in = ($data['in'] ?? 'query');
+							$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
+
+							if($has_body && $in !== 'path'){
+								$body_properties[$name] = $this->build_body_property($param);
+								if($has_items){
+									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+								}
+								if(!empty($data['require'])){
+									$body_required[] = $name;
 								}
 							}else{
-								$parameters[] = $this->build_parameter($param, 'query');
+								$p = $this->build_parameter($param, $in);
+								if($has_items){
+									$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+									if(!empty($param->summary())){
+										$p['schema']['description'] = $param->summary();
+									}
+								}
+								if(!empty($data['require'])){
+									$p['required'] = true;
+								}
+								$parameters[] = $p;
 							}
-							$added_params[$param->name()] = true;
+							$added_params[$name] = true;
 						}
 					}
 				}
-			}catch(\Exception $e){
 			}
 		}
 
@@ -1165,7 +1207,7 @@ class OpenApi extends \ebi\app\Request{
 			$context_list = $info->opt('contexts');
 		}
 
-		// do_loginの場合、authクラスのget_after_vars_loginの@contextをマージ
+		// do_loginの場合、authクラスのlogin_condition・get_after_vars_loginの@contextをマージ
 		if(($m['method'] ?? '') === 'do_login'){
 			$auth_class = $m['auth'] ?? null;
 			if(empty($auth_class) && isset($m['class'])){
@@ -1179,12 +1221,58 @@ class OpenApi extends \ebi\app\Request{
 				}
 			}
 			if(!empty($auth_class)){
-				try{
-					$auth_login_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, 'get_after_vars_login', true, false);
-					if($auth_login_info->has_opt('contexts')){
-						$context_list = array_merge($context_list, $auth_login_info->opt('contexts'));
+				foreach(['login_condition', 'get_after_vars_login'] as $auth_method){
+					// @contextアノテーション（DocBlock）
+					try{
+						$auth_login_info = \ebi\Dt\SourceAnalyzer::method_info($auth_class, $auth_method, true, false);
+						if($auth_login_info->has_opt('contexts')){
+							$context_list = array_merge($context_list, $auth_login_info->opt('contexts'));
+						}
+					}catch(\Exception $e){
 					}
-				}catch(\Exception $e){
+
+					// #[Response]属性（AttributeReader経由）
+					$attr_auth_contexts = \ebi\AttributeReader::get_method($auth_class, $auth_method, 'context', 'summary');
+					if(!empty($attr_auth_contexts)){
+						foreach($attr_auth_contexts as $name => $data){
+							if(!isset($added_props[$name])){
+								$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
+
+								if(($data['type'] ?? null) === 'array' && !empty($data['items'])){
+									$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+								}else if(($data['attr'] ?? null) === 'a'){
+									$prop_schema = ['type' => 'array', 'items' => $prop_schema];
+								}else if(($data['attr'] ?? null) === 'h'){
+									$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];
+								}
+
+								$summary = $data['summary'] ?? '';
+								$is_deprecated = false;
+								if(preg_match('/@deprecated/', $summary)){
+									$is_deprecated = true;
+									$summary = trim(preg_replace('/@deprecated.*/', '', $summary));
+								}
+
+								if(!empty($summary)){
+									if(isset($prop_schema['$ref'])){
+										$prop_schema = [
+											'allOf' => [$prop_schema],
+											'description' => $summary,
+										];
+									}else{
+										$prop_schema['description'] = $summary;
+									}
+								}
+
+								if($is_deprecated){
+									$prop_schema['deprecated'] = true;
+								}
+
+								$properties[$name] = $prop_schema;
+								$added_props[$name] = true;
+							}
+						}
+					}
 				}
 			}
 		}
