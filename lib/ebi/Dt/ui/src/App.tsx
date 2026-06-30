@@ -862,11 +862,10 @@ function MailPage() {
 	);
 }
 
-function WebhooksPage() {
+function WebhooksPage({ onSelect }) {
 	const initialQuery = parseHash().query;
 	const [search, setSearch] = useState(initialQuery.q || '');
 	const [tagFilter, setTagFilter] = useState(initialQuery.tag || '');
-	const [selected, setSelected] = useState(null);
 
 	useEffect(() => {
 		const { page, detail } = parseHash();
@@ -902,7 +901,7 @@ function WebhooksPage() {
 					<div className="card-header fw-semibold">{allTags.find(t => t.name === tag)?.label || tag}</div>
 					<div className="list-group list-group-flush">
 						{items.map((w, i) => (
-							<div key={i} className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${w.op?.deprecated ? 'opacity-50' : ''}`} onClick={() => setSelected(w)}>
+							<div key={i} className={`list-group-item endpoint-row d-flex align-items-center gap-3 ${w.op?.deprecated ? 'opacity-50' : ''}`} onClick={() => onSelect(w)}>
 								<span className={`method-badge ${methodColors[w.method] || ''}`}>{w.method}</span>
 								<code className="flex-grow-1">{w.path}</code>
 								<span className="text-muted small" style={{ whiteSpace: 'normal' }}>{w.op?.summary}</span>
@@ -914,7 +913,6 @@ function WebhooksPage() {
 				</div>
 			))}
 			{filtered.length === 0 && <div className="alert alert-info">No webhooks found.</div>}
-			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={false} onClose={() => setSelected(null)} onNavigate={setSelected} />}
 		</div>
 	);
 }
@@ -1164,6 +1162,9 @@ function MainApp() {
 	const handleSelectEndpoint = (e) => { setSelected(e); updateHash('endpoints', e.path); };
 	const handleCloseEndpoint = () => { setSelected(null); updateHash('endpoints'); };
 
+	const handleSelectWebhook = (w) => { setSelected(w); updateHash('webhooks', w.path); };
+	const handleCloseWebhook = () => { setSelected(null); updateHash('webhooks'); };
+
 	const handleSelectSchema = (name, schema) => { setSelectedSchema({ name, schema }); updateHash('schemas', name); };
 	const handleCloseSchema = () => { setSelectedSchema(null); updateHash('schemas'); };
 
@@ -1174,6 +1175,10 @@ function MainApp() {
 			const paths = spec.paths || {};
 			for (const [path, methods] of Object.entries(paths)) {
 				if (path === d) { setSelected({ path, method: Object.keys(methods)[0], op: methods[Object.keys(methods)[0]] }); break; }
+			}
+		} else if (p === 'webhooks' && d) {
+			for (const w of webhooks) {
+				if (w.path === d) { setSelected(w); break; }
 			}
 		} else if (p === 'schemas' && d) {
 			const schemas = spec.components?.schemas || {};
@@ -1236,13 +1241,16 @@ function MainApp() {
 					<div className="text-center py-5"><div className="spinner-border text-primary" /><div className="text-muted mt-2">Loading...</div></div>
 				) : (<>
 					{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
-					{page === 'webhooks' && <WebhooksPage />}
+					{page === 'webhooks' && <WebhooksPage onSelect={handleSelectWebhook} />}
 					{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
 					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
 					{page === 'mail' && <MailPage />}
 				</>)}
 			</main>
-			{selected && <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />}
+			{selected && (page === 'webhooks'
+				? <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={false} onClose={handleCloseWebhook} onNavigate={handleSelectWebhook} />
+				: <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />
+			)}
 		</div>
 	);
 }
