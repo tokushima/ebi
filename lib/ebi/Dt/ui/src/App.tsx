@@ -317,6 +317,14 @@ function TryItPanel({ endpoint, op, envelope }) {
 	const [response, setResponse] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const allParams = op.parameters || [];
+	// POST/PUT/PATCH ではパラメータが requestBody 側に入るため、その properties も入力対象に含める
+	const bodyFields = Object.entries(op.requestBody?.content || {}).flatMap(([, c]) => {
+		const s = c.schema;
+		if (!s || !s.properties) return [];
+		return Object.entries(s.properties).map(([name, v]) => ({ name, in: 'body', schema: v, required: (s.required || []).includes(name) }));
+	});
+	const formFields = [...allParams, ...bodyFields];
+	const isMultipart = bodyFields.some(f => f.schema?.format === 'binary');
 
 	const execute = async () => {
 		setLoading(true); setResponse(null);
@@ -325,19 +333,29 @@ function TryItPanel({ endpoint, op, envelope }) {
 			const method = endpoint.method.toUpperCase();
 			const isBodyMethod = ['POST', 'PUT', 'PATCH'].includes(method);
 			allParams.filter(p => p.in === 'path').forEach(p => { url = url.replace(`{${p.name}}`, encodeURIComponent(params[p.name] || '')); });
-			const nonPathParams = allParams.filter(p => p.in !== 'path' && params[p.name]);
-			if (!isBodyMethod) {
-				const qp = nonPathParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
-				if (qp.length) url += '?' + qp.join('&');
-			}
+			// query に載せるのは parameters 由来の非パス項目のみ（body 項目は requestBody 側へ）
+			const queryParams = allParams.filter(p => p.in !== 'path' && params[p.name] !== undefined && params[p.name] !== '');
 			const baseUrl = window.location.pathname.replace(/\/dt\/?$/, '');
 			const accept = envelope ? 'application/json' : 'application/json; envelope=false';
 			const opts = { method, headers: { 'Accept': accept } };
-			if (isBodyMethod && nonPathParams.length) {
-				const jsonBody = {};
-				nonPathParams.forEach(p => { jsonBody[p.name] = params[p.name]; });
-				opts.body = JSON.stringify(jsonBody);
-				opts.headers['Content-Type'] = 'application/json';
+			if (isBodyMethod) {
+				const qp = queryParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
+				if (qp.length) url += '?' + qp.join('&');
+				const filled = bodyFields.filter(f => params[f.name] !== undefined && params[f.name] !== '');
+				if (isMultipart) {
+					// ファイル(format:binary)を含む場合は multipart/form-data（Content-Type はブラウザが boundary 付きで自動設定）
+					const fd = new FormData();
+					filled.forEach(f => fd.append(f.name, params[f.name]));
+					if (filled.length) opts.body = fd;
+				} else if (filled.length) {
+					const jsonBody = {};
+					filled.forEach(f => { jsonBody[f.name] = params[f.name]; });
+					opts.body = JSON.stringify(jsonBody);
+					opts.headers['Content-Type'] = 'application/json';
+				}
+			} else {
+				const qp = queryParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
+				if (qp.length) url += '?' + qp.join('&');
 			}
 			const start = Date.now();
 			const res = await fetch(baseUrl + url, opts);
@@ -354,11 +372,13 @@ function TryItPanel({ endpoint, op, envelope }) {
 	return (
 		<div className="try-it-section">
 			<div className="section-label">Try It</div>
-			{allParams.length > 0 && <div className="mb-3">
-				{allParams.map(p => (
+			{formFields.length > 0 && <div className="mb-3">
+				{formFields.map(p => (
 					<div key={p.name} className="d-flex align-items-center gap-2 mb-2">
 						<label className="param-name" style={{ minWidth: 120 }}>{p.name}{p.required && <span className="text-danger ms-1">*</span>}</label>
-						{p.schema?.type === 'boolean' ? (
+						{p.schema?.format === 'binary' ? (
+							<input type="file" className="try-input" onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.files?.[0] }))} />
+						) : p.schema?.type === 'boolean' ? (
 							<select className="try-input" value={params[p.name] || ''} onChange={e => setParams(prev => ({ ...prev, [p.name]: e.target.value }))}>
 								<option value="">-</option>
 								<option value="true">true</option>
@@ -483,7 +503,7 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 							{op.parameters.map((p, i) => (
 								<div key={i} className="param-row">
 									<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
-									<span className="param-type">{p.schema?.type || p.type || '-'}</span>
+									<span className="param-type">{p.schema?.format === 'binary' ? 'file' : (p.schema?.type || p.type || '-')}</span>
 									<span className="param-desc">{p.description || '-'}</span>
 								</div>
 							))}
@@ -501,7 +521,7 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 								{bodyProps.map((p, i) => (
 									<div key={i} className="param-row">
 										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
-										<span className="param-type">{p.type || '-'}</span>
+										<span className="param-type">{p.format === 'binary' ? 'file' : (p.type || '-')}</span>
 										<span className="param-desc">{p.description || '-'}</span>
 									</div>
 								))}
