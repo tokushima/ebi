@@ -317,14 +317,36 @@ class Template{
 			if(!$tag->is_attr('param')){
 				throw new \ebi\exception\InvalidTemplateException('if');
 			}
+			$value = $tag->value() ?? '';
+
+			// ネストされたrt:ifを先に処理し、この階層のrt:elseif/rt:elseだけを残す
+			if(strpos($value, 'rt:if') !== false){
+				$value = $this->rtif($value);
+			}
+
 			$uniq = uniqid('$I');
 			$arg1 = $this->variable_string($this->parse_plain_variable($tag->in_attr('param')));
 
+			// rt:elseif param="..." → }elseif($tmp){ 条件はifと同様にtry/catchでnull化して事前評価する
+			$elseif = '';
+			$value = preg_replace_callback('/<rt\:elseif\b([^>]*?)\/?>/i', function($m) use (&$elseif){
+				if(!preg_match('/\bparam[\s]*=[\s]*([\'"])(.*?)\1/is', $m[1], $pm)){
+					throw new \ebi\exception\InvalidTemplateException('elseif');
+				}
+				$u = uniqid('$EI');
+				$expr = $this->variable_string($this->parse_plain_variable($pm[2]));
+				$elseif .= sprintf('try{ %s=%s; }catch(\Exception $e){ %s=null; } ', $u, $expr, $u);
+				return sprintf('<?php }elseif(%s){ ?>', $u);
+			}, $value);
+
+			// rt:else → }else{（rt:elseifは上で変換済み。念のため正規表現でもelseifを除外）
+			$value = preg_replace('/<rt\:else(?!if)[\s]*.*?>/i', '<?php }else{ ?>', $value);
+
 			return $this->php_exception_catch(
-				sprintf('<?php try{ %s=%s; }catch(\Exception $e){ %s=null; } ?><?php if(%s){ ?>',
-					$uniq, $arg1, $uniq, $uniq
+				sprintf('<?php try{ %s=%s; }catch(\Exception $e){ %s=null; } %s?><?php if(%s){ ?>',
+					$uniq, $arg1, $uniq, $elseif, $uniq
 				) .
-				preg_replace('/<rt\:else[\s]*.*?>/i', '<?php }else{ ?>', $tag->value() ?? '') .
+				$value .
 				'<?php } ?>'
 			);
 		});
