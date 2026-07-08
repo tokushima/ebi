@@ -507,6 +507,8 @@ class OpenApi extends \ebi\app\Request{
 						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
 						// ファイルアップロード（OpenAPI3: multipart/form-data + type:string format:binary）
 						$is_binary = (($data['format'] ?? null) === 'binary') || (($data['type'] ?? null) === 'file');
+						// 非推奨: #[Parameter(deprecated: true)] または summary内 @deprecated
+						$is_deprecated_param = !empty($data['deprecated']) || str_contains($data['summary'] ?? '', '@deprecated');
 
 						if($has_body && $in !== 'path'){
 							if($is_binary){
@@ -521,6 +523,9 @@ class OpenApi extends \ebi\app\Request{
 									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
 								}
 							}
+							if($is_deprecated_param){
+								$body_properties[$name]['deprecated'] = true;
+							}
 							if(!empty($data['require'])){
 								$body_required[] = $name;
 							}
@@ -534,6 +539,9 @@ class OpenApi extends \ebi\app\Request{
 							}
 							if(!empty($data['require'])){
 								$p['required'] = true;
+							}
+							if($is_deprecated_param){
+								$p['deprecated'] = true;
 							}
 							$parameters[] = $p;
 						}
@@ -1174,7 +1182,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 
 					$summary = $data['summary'] ?? '';
-					$is_deprecated = false;
+					$is_deprecated = !empty($data['deprecated']);
 					if(preg_match('/@deprecated/', $summary)){
 						$is_deprecated = true;
 						$summary = trim(preg_replace('/@deprecated.*/', '', $summary));

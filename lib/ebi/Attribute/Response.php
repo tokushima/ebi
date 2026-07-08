@@ -15,5 +15,6 @@ class Response{
 		public string $type='mixed',
 		public ?string $items=null,
 		public ?string $summary=null,
+		public bool $deprecated=false,
 	){}
 }
