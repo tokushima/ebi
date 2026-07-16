@@ -179,6 +179,15 @@ class Browser
     public function set_header_accept_json(): self {}
 
     /**
+     * Accept: application/json (envelope=false) ヘッダを設定する
+     *
+     * result で包まない生JSON（本番クライアントと同じ形）でレスポンスを受け取る。
+     *
+     * @return static
+     */
+    public function set_header_accept_json_no_envelope(): self {}
+
+    /**
      * Accept を指定しない（Accept: star/star）
      *
      * @return static
@@ -719,12 +728,12 @@ class Conf
     public static function get(string $name, $default = null) {}
 
     /**
-     * 設定ファイル（testman.{name}）が存在するか確認する
+     * 設定ファイル（testman.{name}）のパスを探索して返す
      *
      * @param string $name ファイル名（拡張子含む）
      * @return string|null パス（存在しない場合は null）
      */
-    public static function has_settings(string $name): ?string {}
+    public static function find_settings_path(string $name): ?string {}
 
     /**
      * 設定ファイルのパスを返す
