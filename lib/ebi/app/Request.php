@@ -130,12 +130,16 @@ class Request extends \ebi\Request{
 		unset($selected_pattern['patterns']);
 		$this->_selected_pattern = $selected_pattern;
 
+		// 認証・認可・バリデーションより前に実行する。
+		// プリフライト(OPTIONS)は認証不要で応答し、後続で 401/403/検証エラーになっても
+		// CORSヘッダが送出済みになるようにするため（さもないとブラウザがエラー応答を読めない）。
+		$this->cors();
+
 		$sess_name = md5(\ebi\App::workgroup().($this->_selected_pattern['auth_id'] ?? ''));
 		$this->_sess = new \ebi\Session($sess_name);
 		$this->_login_id = $sess_name.'_LOGIN_';
 
 		$this->_login_anon = \ebi\AttributeReader::get_class($this, 'login' ,null, __CLASS__);
-		$this->request_validation();
 
 		if(isset($this->_selected_pattern['auth'])){
 			$auth_ref = new \ReflectionClass($this->_selected_pattern['auth']);
@@ -187,7 +191,13 @@ class Request extends \ebi\Request{
 				}
 			}
 		}
-		$this->cors();
+
+		// 認証・認可チェックの後に require / type / value のバリデーションを実行する
+		// (未認証者にAPIパラメータ構造を晒さないため、また未ログインなら 401 / ログイン画面遷移を先に返すため)。
+		// ログイン画面へのリダイレクトが設定されている場合はスキップ。
+		if(empty($this->get_before_redirect())){
+			$this->request_validation();
+		}
 	}
 
 	/**
