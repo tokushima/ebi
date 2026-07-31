@@ -52,7 +52,7 @@ class Request extends \ebi\Request{
 		$ann = \ebi\AttributeReader::get_method(static::class, $method, $doc_names);
 
 		if(isset($ann['http_method']['value']) && strtoupper($ann['http_method']['value']) != \ebi\Request::method()){
-			throw new \ebi\exception\BadMethodCallException('Method Not Allowed');
+			throw new \ebi\exception\MethodNotAllowedHttpException();
 		}
 		if(isset($ann['request'])){
 			foreach($ann['request'] as $k => $an){
