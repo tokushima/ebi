@@ -38,11 +38,53 @@ class Dt extends \ebi\app\Request{
 		$password = \ebi\Conf::get('password');
 
 		if(!empty($password) && !$this->is_sessions('dt_login')){
+			$bearer = $this->verify_bearer_token();
+
+			if($bearer === true){
+				// Bearer認証済み（APIクライアント等）: セッションを作らずそのまま許可する
+				return;
+			}
+			if($bearer === false){
+				// Bearerヘッダはあるがトークンが不正: HTMLログインへ飛ばさず401を返す
+				\ebi\HttpAuthorizationBearer::send_error_header(401, 'DevTools', 'invalid access token');
+				exit;
+			}
+
+			// Bearer未指定: 従来どおりCookie（セッション）ベースのログインへ誘導する
 			$action = $selected_pattern['action'] ?? '';
 			if(strpos($action, '::login') === false && strpos($action, '::index') === false){
 				$this->set_before_redirect('login');
 			}
 		}
+	}
+
+	/**
+	 * Authorizationヘッダ（Bearer）によるアクセス可否を判定する
+	 *
+	 * @return bool|null true:有効なトークン / false:トークン不一致 / null:Bearer認証無効またはヘッダ無し（Cookie認証へフォールバック）
+	 */
+	private function verify_bearer_token(): ?bool{
+		/**
+		 * @var string
+		 * DevToolsへBearer認証でアクセスするためのアクセストークン。
+		 * 設定するとAuthorizationヘッダ "Bearer <token>" でCookie無しにアクセスできる（未設定時はBearer認証無効）。
+		 * 配列で複数指定した場合はローテーション用に複数トークンを許可する。
+		 */
+		$configured = \ebi\Conf::get('bearer_token');
+
+		if(empty($configured)){
+			return null;
+		}
+		$token = \ebi\HttpAuthorizationBearer::get_token();
+		if(empty($token)){
+			return null;
+		}
+		foreach((is_array($configured) ? $configured : [$configured]) as $t){
+			if(is_string($t) && $t !== '' && hash_equals($t, $token)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	#[Route]

@@ -25,7 +25,7 @@ class HttpAuthorizationBearer{
 	 * エラーヘッダを設定
 	 */
 	public static function send_error_header(int $status_code, ?string $realm=null, ?string $description=null): void{
-		\ebi\HttpHeader::send_status(\ebi\HttpHeader::status_string($status_code));
+		\ebi\HttpHeader::send_status($status_code);
 		$error = [];
 		
 		switch($status_code){
