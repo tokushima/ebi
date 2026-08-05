@@ -199,6 +199,62 @@ class Dt extends \ebi\app\Request{
 	}
 
 	/**
+	 * MCP (Model Context Protocol) エンドポイント
+	 *
+	 * dt が生成する OpenAPI をもとに、アプリの API ドキュメントを MCP から検索・参照できるようにする（読み取り専用）。
+	 * 第三者製ブリッジを介さず ebi 自身が JSON-RPC 2.0(Streamable HTTP) を喋る。
+	 * 既定は無効で、Conf(\ebi\Dt) の mcp_enabled を true にしたときのみ有効になる。
+	 */
+	#[Route]
+	public function mcp(): void{
+		/**
+		 * @var bool
+		 * MCPエンドポイント(/dt/mcp)を有効にする（既定 false = 無効。無効時は404を返す）
+		 */
+		if(!\ebi\Conf::get('mcp_enabled', false)){
+			\ebi\HttpHeader::send_status(404);
+			exit;
+		}
+
+		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
+
+		$raw = file_get_contents('php://input');
+		$payload = json_decode((string)$raw, true);
+
+		if(!is_array($payload)){
+			echo json_encode(['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32700, 'message' => 'Parse error']]);
+			exit;
+		}
+
+		$mcp = new \ebi\Dt\Mcp($this->entry);
+
+		// バッチ(JSON配列) と 単一(JSONオブジェクト) の両対応。
+		// 単一リクエストは連想配列(jsonrpc/method等)、バッチは0始まりのリスト。
+		$is_batch = array_key_exists(0, $payload) && is_array($payload[0]);
+		$requests = $is_batch ? $payload : [$payload];
+
+		$responses = [];
+		foreach($requests as $req){
+			if(!is_array($req)){
+				continue;
+			}
+			$res = $mcp->handle($req);
+			if($res !== null){
+				$responses[] = $res;
+			}
+		}
+
+		if(empty($responses)){
+			// 通知のみ（応答不要）
+			\ebi\HttpHeader::send_status(202);
+			exit;
+		}
+
+		echo json_encode($is_batch ? $responses : $responses[0], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		exit;
+	}
+
+	/**
 	 * Redoc API Documentation
 	 */
 	#[Route]

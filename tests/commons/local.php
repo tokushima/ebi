@@ -39,6 +39,7 @@
 		]
 	],
 	'ebi\Dt'=>[
+		'mcp_enabled'=>true,
 		'use_vendor'=>[
 			'ebi\SmtpBlackholeDao',
 			'ebi\SessionDao',
