@@ -43,9 +43,17 @@ class OpenApi extends \ebi\app\Request{
 	private array $webhooks = [];
 	private array $all_tags = [];
 	private array $skipped = [];
+	private bool $auto_throws = true;
 
 	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
 		$this->envelope = $envelope;
+
+		/**
+		 * @var bool
+		 * ソースの throw new から自動検出した例外も 4xx レスポンスに含める（既定 true）。
+		 * false にすると @throws / #[Throws] / #[ErrorResponse] で明示宣言したものだけになる。
+		 */
+		$this->auto_throws = (bool)\ebi\Conf::get('openapi_auto_throws', true);
 		$this->webhooks = [];
 		$map = \ebi\App::get_map($this->entry);
 		$patterns = $map['patterns'];
@@ -98,6 +106,15 @@ class OpenApi extends \ebi\app\Request{
 		 * @param string[] $servers サーバーURL一覧
 		 */
 		$servers = \ebi\Conf::gets('servers');
+		if(empty($servers)){
+			// Conf未設定のときは dt を実行中のサーバー（現在のリクエスト）を1件補完する。
+			// scheme+hostはリクエスト由来、ベースパスはアプリのマウントパス(app_url)から取る。
+			$host = \ebi\Request::host();
+			if(!empty($host)){
+				$base_path = rtrim(str_replace('*', '', (string)parse_url((string)\ebi\App::app_url(), PHP_URL_PATH)), '/');
+				$servers = [rtrim($host.$base_path, '/')];
+			}
+		}
 		if(!empty($servers)){
 			$spec['servers'] = [];
 			foreach($servers as $server){
@@ -1391,8 +1408,8 @@ class OpenApi extends \ebi\app\Request{
 			$error_groups = [];
 
 			foreach($info->opt('throws') as $throw){
-				// ソースコードのthrow new文から自動検出されたものはスキップ
-				if($throw->opt('auto')){
+				// ソースコードのthrow new文から自動検出されたものは、openapi_auto_throwsがfalseのときのみスキップ
+				if($throw->opt('auto') && !$this->auto_throws){
 					continue;
 				}
 				$exception_name = $throw->name();
@@ -1421,6 +1438,46 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
+		// エラーレスポンス(4xx/5xx)に共通のErrorスキーマをcontentとして付与する。
+		// ebiの例外は envelope 有無に関わらず {"error":[{message,type,group}]} 形式で返る（\ebi\App）。
+		// これによりクライアント生成・モック作成でエラーボディを型として扱える。
+		foreach($responses as $status => $resp){
+			if((int)$status >= 400 && !isset($resp['content'])){
+				$responses[$status]['content'] = [
+					'application/json' => ['schema' => $this->error_schema_ref($schemas)],
+				];
+			}
+		}
+
 		return $responses;
+	}
+
+	/**
+	 * 共通のErrorスキーマを components.schemas に用意し、その $ref を返す。
+	 * ebiのエラーボディ形式（\ebi\App が出力する {"error":[{message,type,group}]}）に対応する。
+	 */
+	private function error_schema_ref(array &$schemas): array{
+		if(!isset($schemas['Error'])){
+			$schemas['Error'] = [
+				'type' => 'object',
+				'description' => 'エラーレスポンス。ebiの例外は envelope 有無に関わらずこの形式で返る。',
+				'properties' => [
+					'error' => [
+						'type' => 'array',
+						'items' => [
+							'type' => 'object',
+							'properties' => [
+								'message' => ['type' => 'string', 'description' => 'エラーメッセージ'],
+								'type' => ['type' => 'string', 'description' => '例外クラス名（namespaceを除いたbasename）'],
+								'group' => ['type' => 'string', 'description' => 'エラーグループ（対象フィールド名等。無い場合は省略）'],
+							],
+							'required' => ['message', 'type'],
+						],
+					],
+				],
+				'required' => ['error'],
+			];
+		}
+		return ['$ref' => '#/components/schemas/Error'];
 	}
 }

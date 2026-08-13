@@ -14,7 +14,10 @@ namespace ebi\Dt;
  *  - get_schema       … components schema を名前で取得
  */
 class Mcp{
-	private const PROTOCOL_VERSION = '2025-06-18';
+	// 対応するMCPプロトコル版（新しい順）。
+	// 使う機能は tools/list・tools/call の基本サブセットのみで、これらのリビジョン間で安定しているため複数を対応とする。
+	private const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
+	private const PROTOCOL_VERSION = self::PROTOCOL_VERSIONS[0]; // 既定（最新）
 	private const SERVER_NAME = 'endpoints-mcp';
 
 	private string $entry;
@@ -36,8 +39,13 @@ class Mcp{
 		try{
 			switch($method){
 				case 'initialize':
+					// バージョンネゴシエーション: クライアント要求版を対応集合に含めばエコー、無ければ既定版を返す
+					$requested = $params['protocolVersion'] ?? null;
+					$version = (is_string($requested) && in_array($requested, self::PROTOCOL_VERSIONS, true))
+						? $requested
+						: self::PROTOCOL_VERSION;
 					return $this->result($id, [
-						'protocolVersion' => self::PROTOCOL_VERSION,
+						'protocolVersion' => $version,
 						'capabilities' => ['tools' => ['listChanged' => false]],
 						'serverInfo' => ['name' => self::SERVER_NAME, 'version' => $this->server_version()],
 					]);

@@ -13,12 +13,18 @@ $call = function(\testman\Browser $b, string $name, array $args = []) use ($rpc)
 	return $res['result'];
 };
 
-// initialize
+// initialize: バージョンネゴシエーション（対応版はエコー）
 $b = b();
-$res = $rpc($b, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => []]);
+$res = $rpc($b, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-03-26']]);
 eq(200, $b->status());
 eq('2.0', $res['jsonrpc']);
-eq('ebi-dt-mcp', $res['result']['serverInfo']['name']);
+eq('2025-03-26', $res['result']['protocolVersion']);
+eq(true, !empty($res['result']['serverInfo']['name']));
+
+// 非対応版の要求は既定（最新の対応版）へフォールバック
+$b = b();
+$res = $rpc($b, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '1999-01-01']]);
+eq('2025-06-18', $res['result']['protocolVersion']);
 
 // tools/list はドキュメント検索・参照ツール（実行系は無い）
 $b = b();
