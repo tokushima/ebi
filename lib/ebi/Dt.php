@@ -168,7 +168,7 @@ class Dt extends \ebi\app\Request{
 	 */
 	#[Route(suffix: '.json')]
 	public function openapi(): void{
-		$envelope = ($this->in_vars('envelope', '') === 'true');
+		$envelope = $this->is_vars('envelope') ? ($this->in_vars('envelope') === 'true') : \ebi\App::envelope_default();
 		$include_dev = ($this->in_vars('include_dev', '') === 'true');
 		$openapi = new \ebi\Dt\OpenApi($this->entry);
 		$spec = $openapi->generate_spec($envelope, $include_dev);
@@ -259,7 +259,7 @@ class Dt extends \ebi\app\Request{
 	 */
 	#[Route]
 	public function redoc(): void{
-		$envelope = ($this->in_vars('envelope', '') === 'true');
+		$envelope = $this->is_vars('envelope') ? ($this->in_vars('envelope') === 'true') : \ebi\App::envelope_default();
 		$spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($envelope);
 		$title = htmlspecialchars($spec['info']['title'] ?? 'API Documentation', ENT_QUOTES, 'UTF-8');
 		$spec_json = json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

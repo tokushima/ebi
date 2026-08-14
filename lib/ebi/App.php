@@ -23,6 +23,28 @@ class App{
 	public static function app_url(): ?string{
 		return self::$app_url;
 	}
+
+	/**
+	 * このリクエストをエンベロープで返すか判定する（envelopeの唯一の判定元）。
+	 * Acceptに "envelope=false" があれば false、"envelope=true" があれば true、無ければ既定(envelope_default)。
+	 */
+	public static function is_envelope(?string $accept=null): bool{
+		$accept = strtolower($accept ?? (string)(new \ebi\Env())->get('HTTP_ACCEPT'));
+
+		if(strpos($accept, 'envelope=false') !== false){
+			return false;
+		}
+		if(strpos($accept, 'envelope=true') !== false){
+			return true;
+		}
+
+		/**
+		 * レスポンスをエンベロープ（成功は{"result":...}、失敗は{"error":[...]}をHTTP200）で返す既定。
+		 * @var bool envelope レスポンスエンベロープの既定（true=包む）
+		 */
+		return (bool)\ebi\Conf::get('envelope', true);
+	}
+
 	/**
 	 * メディアファイルのベースURL
 	 */
@@ -456,10 +478,8 @@ class App{
 						}
 					}
 
-					$is_plain_json = (strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'envelope=false') !== false);
-
 					\ebi\HttpHeader::send('Content-Type','application/json');
-					print(\ebi\Json::encode($is_plain_json ? \ebi\Util::to_primitive($result_vars) : ['result'=>\ebi\Util::to_primitive($result_vars)]));
+					print(\ebi\Json::encode(\ebi\App::is_envelope() ? ['result'=>\ebi\Util::to_primitive($result_vars)] : \ebi\Util::to_primitive($result_vars)));
 					self::terminate();
 					return;
 				}catch(\Exception $exception){
@@ -544,13 +564,10 @@ class App{
 						$message[] = $em;
 					}
 
-					$is_plain_json = (strpos(strtolower((string)(new \ebi\Env())->get('HTTP_ACCEPT')), 'envelope=false') !== false);
-					if($is_plain_json){
-						if($exception instanceof \ebi\Exception && $exception->http_status() !== null){
-							\ebi\HttpHeader::send_status($exception->http_status());
-						}else{
-							\ebi\HttpHeader::send_status(self::$error_http_status);
-						}
+					if(!\ebi\App::is_envelope()){
+						\ebi\HttpHeader::send_status(
+							($exception instanceof \ebi\Exception ? $exception->http_status() : null) ?? self::$error_http_status
+						);
 					}
 					\ebi\HttpHeader::send('Content-Type','application/json');
 					print(json_encode(['error'=>$message]));
