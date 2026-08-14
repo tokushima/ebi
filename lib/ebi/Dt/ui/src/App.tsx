@@ -1191,7 +1191,9 @@ function MainApp() {
 	useEffect(() => {
 		if (!spec.paths && apiUrls.openapi) {
 			const sep = apiUrls.openapi.includes('?') ? '&' : '?';
-			fetch(apiUrls.openapi + sep + 'include_dev=true')
+			// UIは全4xx+x-throwsを持つ envelope=false の spec を取得し、client側トグルで表示を切替える。
+			// サーバー既定(envelope_default)に依存しないよう明示的に envelope=false を付ける。
+			fetch(apiUrls.openapi + sep + 'include_dev=true&envelope=false')
 				.then(res => res.json())
 				.then(data => {
 					spec = data.spec || data;

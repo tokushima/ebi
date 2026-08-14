@@ -738,10 +738,13 @@ class OpenApi extends \ebi\app\Request{
 			$has_security = true;
 			$operation['security'] = [['sessionAuth' => []]];
 
-			// 401レスポンスを追加
+			// 401レスポンスを追加（未認証時は他のエラー同様 {"error":[...]} を返すのでErrorスキーマのcontentを付ける）
 			if(!isset($operation['responses']['401'])){
 				$operation['responses']['401'] = [
 					'description' => 'Unauthorized - Login required',
+					'content' => [
+						'application/json' => ['schema' => $this->error_schema_ref($schemas)],
+					],
 				];
 			}
 		}
@@ -1141,24 +1144,25 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
-	 * 例外クラス名からHTTPステータスコードを推定
+	 * 例外クラスからHTTPステータスコードを決定する。
+	 * App の実挙動（\ebi\App）に合わせる:
+	 *   \ebi\Exception を継承し http_status が非nullならその値、そうでなければ error_http_status（既定500）。
+	 * http_status は protected プロパティなので、インスタンス化せず ReflectionClass::getDefaultProperties() で読む。
 	 */
 	private function exception_to_status(string $exception_name): int{
-		$name = strtolower($exception_name);
+		$class = '\\'.ltrim($exception_name, '\\');
 
-		if(str_contains($name, 'unauthorizedexception')){
-			return 401;
+		if(strlen($class) > 1 && class_exists($class) && is_subclass_of($class, \ebi\Exception::class)){
+			try{
+				$defaults = (new \ReflectionClass($class))->getDefaultProperties();
+				if(isset($defaults['http_status']) && $defaults['http_status'] !== null){
+					return (int)$defaults['http_status'];
+				}
+			}catch(\ReflectionException $e){
+			}
 		}
-		if(str_contains($name, 'accessdeniedexception')){
-			return 403;
-		}
-		if(str_contains($name, 'notfoundexception')){
-			return 404;
-		}
-		if(str_contains($name, 'duplicatekeyexception') || str_contains($name, 'uniqueexception') || str_contains($name, 'alreadyexception') || str_contains($name, 'already')){
-			return 409;
-		}
-		return 422;
+		// \ebi\Exception を継承しない、または http_status 未設定 → App の error_http_status に合わせる
+		return (int)\ebi\Conf::get('ebi\App@error_http_status', 500);
 	}
 
 	/**
@@ -1438,14 +1442,48 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
+		// HttpHeader::send_status(NNN) で直接返すステータスを文書化する（auto_throws時のみ）。
+		// 例外経由ではないため body の型は不明 → ステータスの存在のみ記録し、Errorスキーマは付けない。
+		$status_only = [];
+		if($this->auto_throws && isset($info)){
+			foreach(($info->opt('send_statuses') ?: []) as $code){
+				if($code >= 400 && $code < 600 && !isset($responses[(string)$code])){
+					$responses[(string)$code] = ['description' => 'HttpHeader::send_status() で返却（レスポンス本文は不定）'];
+					$status_only[(string)$code] = true;
+				}
+			}
+		}
+
 		// エラーレスポンス(4xx/5xx)に共通のErrorスキーマをcontentとして付与する。
 		// ebiの例外は envelope 有無に関わらず {"error":[{message,type,group}]} 形式で返る（\ebi\App）。
 		// これによりクライアント生成・モック作成でエラーボディを型として扱える。
+		// ただし send_status() 由来のものは body が不明なので content を付けない。
 		foreach($responses as $status => $resp){
-			if((int)$status >= 400 && !isset($resp['content'])){
+			if((int)$status >= 400 && !isset($resp['content']) && !isset($status_only[$status])){
 				$responses[$status]['content'] = [
 					'application/json' => ['schema' => $this->error_schema_ref($schemas)],
 				];
+			}
+		}
+
+		// envelopeモードでは例外由来のエラーは HTTP 200 で {"error":[...]} として返る（\ebi\App）。
+		// 例外由来の4xx（send_status由来は実HTTPステータスなので除く）をレスポンスから外し、
+		// 200スキーマを oneOf: [成功, Error] にして「200で成功またはエラーが返る」ことを正確に表す。
+		if($this->envelope){
+			$folded = false;
+			foreach($responses as $status => $resp){
+				if((int)$status >= 400 && !isset($status_only[$status])){
+					unset($responses[$status]);
+					$folded = true;
+				}
+			}
+			if($folded){
+				$err_ref = $this->error_schema_ref($schemas);
+				$success = $responses['200']['content']['application/json']['schema'] ?? ['type' => 'object'];
+				$schema = isset($success['oneOf'])
+					? ['oneOf' => array_merge($success['oneOf'], [$err_ref])]
+					: ['oneOf' => [$success, $err_ref]];
+				$responses['200']['content'] = ['application/json' => ['schema' => $schema]];
 			}
 		}
 

@@ -631,6 +631,10 @@ class SourceAnalyzer{
 		}
 
 		$throws = $mail_list = [];
+		// catch-aware: 呼び出しグラフ横断でcatchされる例外を除外する（opt-in・deep時のみ）
+		$catch_aware = $deep && (bool)\ebi\Conf::get('ebi\Dt\OpenApi@openapi_catch_aware', false);
+		$endpoint_class = $ref->getDeclaringClass()->getName();
+		$endpoint_method = $ref->getName();
 		$use_method_list = $deep
 			? array_merge(self::use_method_list($ref->getDeclaringClass()->getName(),$ref->getName()),[$method_fullname])
 			: [$method_fullname];
@@ -656,7 +660,10 @@ class SourceAnalyzer{
 					$use_method_src = self::method_src($ref);
 					$use_method_doc = self::trim_doc($ref->getDocComment());
 
-					$throws = self::find_throws($throws,$use_method_doc,$use_method_src);
+					// catch-aware時は明示@throwsのみ収集し、throw newはguard-awareで別途処理する
+					$throws = $catch_aware
+						? self::find_doc_throws($throws,$use_method_doc)
+						: self::find_throws($throws,$use_method_doc,$use_method_src);
 
 					foreach($mail_template_list as $mail_info){
 						if(self::find_mail_doc($mail_info, $use_method_src)){
@@ -666,9 +673,28 @@ class SourceAnalyzer{
 				}catch(\ReflectionException){
 				}
 			}
+
+			// catch-aware: catchされずに外へ出る throw new のみを自動収集（明示@throwsは上で収集済み）
+			if($catch_aware){
+				foreach(self::deep_escaping_throws($endpoint_class, $endpoint_method) as $cls){
+					if(!isset($throws[$cls])){
+						$throws[$cls] = [$cls, ''];
+					}
+				}
+			}
 		}
 		$info->set_opt('mail_list',$mail_list);
 		$info->set_opt('throws',self::merge_find_throws($throws));
+
+		// HttpHeader::send_status(NNN) の直接呼び出しを検出（例外を投げずステータスだけ設定するケース）。
+		// bodyの型は不明なため、ステータスの存在のみ記録する（$srcはエンドポイントメソッド本体）。
+		$send_statuses = [];
+		if(preg_match_all('/send_status\s*\(\s*(\d{3})\b/', $src, $sm)){
+			foreach($sm[1] as $code){
+				$send_statuses[(int)$code] = true;
+			}
+		}
+		$info->set_opt('send_statuses', array_keys($send_statuses));
 
 		self::$_method_info_cache[$cache_key] = $info;
 		return $info;
@@ -838,5 +864,242 @@ class SourceAnalyzer{
 		}catch(\ReflectionException){
 		}
 		return array_keys($list);
+	}
+
+	/**
+	 * @throws(DocBlock)のみを収集する（catch-aware時に throw new と分離するため）。
+	 */
+	private static function find_doc_throws(array $throws, string $doc): array{
+		if(preg_match_all("/@throws\s+([^\s]+)(.*)/",$doc,$m)){
+			foreach($m[1] as $k => $n){
+				if(($class_name = self::get_class_name($n)) !== ''){
+					$throws[$class_name] = isset($throws[$class_name])
+						? [$class_name,$throws[$class_name][1].trim(PHP_EOL.$m[2][$k])]
+						: [$class_name,$m[2][$k]];
+				}
+			}
+		}
+		return $throws;
+	}
+
+	/**
+	 * クラス名を構成するトークンID（PHP8のT_NAME_*とPHP7互換のNS_SEPARATOR+STRING）。
+	 */
+	private static function name_token_ids(): array{
+		static $ids = null;
+		if($ids === null){
+			$ids = [T_STRING, T_NS_SEPARATOR];
+			foreach(['T_NAME_FULLY_QUALIFIED','T_NAME_QUALIFIED','T_NAME_RELATIVE'] as $c){
+				if(defined($c)) $ids[] = constant($c);
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * メソッドソースの try 本体レンジ（$src内バイトオフセット）とcatch(型/rethrow)をtokenで解析する。
+	 * @return array<int,array{start:int,end:int,catches:array<int,array{types:string[],rethrow:bool}>}>
+	 */
+	private static function token_try_regions(string $src): array{
+		$prefix = '<?php ';
+		$plen = strlen($prefix);
+		$raw = token_get_all($prefix.$src);
+
+		$toks = []; $off = 0;
+		foreach($raw as $t){
+			if(is_array($t)){ $id = $t[0]; $text = $t[1]; }
+			else{ $id = $t; $text = $t; }
+			$toks[] = ['id'=>$id, 'text'=>$text, 'off'=>$off - $plen];
+			$off += strlen($text);
+		}
+		$n = count($toks);
+		$names = self::name_token_ids();
+		$low = fn($i) => ($i >= 0 && $i < $n) ? strtolower($toks[$i]['text']) : '';
+		$match = function(int $open) use ($toks, $n): int{
+			$d = 0;
+			for($i = $open; $i < $n; $i++){
+				if($toks[$i]['text'] === '{') $d++;
+				elseif($toks[$i]['text'] === '}'){ $d--; if($d === 0) return $i; }
+			}
+			return $n - 1;
+		};
+
+		$regions = [];
+		for($i = 0; $i < $n; $i++){
+			if($low($i) !== 'try') continue;
+			$j = $i + 1; while($j < $n && $toks[$j]['text'] !== '{') $j++;
+			if($j >= $n) continue;
+			$bo = $j; $bc = $match($bo);
+
+			$catches = []; $k = $bc + 1;
+			while($low($k) === 'catch'){
+				$p = $k + 1; while($p < $n && $toks[$p]['text'] !== '(') $p++;
+				$types = []; $cur = ''; $var = null; $q = $p + 1;
+				for(; $q < $n; $q++){
+					$tk = $toks[$q];
+					if($tk['text'] === ')') break;
+					if($tk['id'] === T_VARIABLE){ $var = $tk['text']; continue; }
+					if($tk['text'] === '|'){ if($cur !== '') $types[] = $cur; $cur = ''; continue; }
+					if(in_array($tk['id'], $names, true)) $cur .= $tk['text'];
+				}
+				if($cur !== '') $types[] = $cur;
+
+				$cb = $q + 1; while($cb < $n && $toks[$cb]['text'] !== '{') $cb++;
+				$cbc = $match($cb);
+				// rethrow: 捕捉例外そのものの再送出(throw $var)のみ
+				$rethrow = false;
+				for($r = $cb + 1; $r < $cbc; $r++){
+					if($low($r) === 'throw' && $var !== null && ($toks[$r + 1]['id'] ?? null) === T_VARIABLE && ($toks[$r + 1]['text'] ?? '') === $var){
+						$rethrow = true; break;
+					}
+				}
+				$catches[] = ['types' => $types, 'rethrow' => $rethrow];
+				$k = $cbc + 1;
+			}
+			$regions[] = ['start' => $toks[$bo]['off'], 'end' => $toks[$bc]['off'], 'catches' => $catches];
+		}
+		return $regions;
+	}
+
+	/**
+	 * オフセット位置を囲む try の「非rethrow catch型」を平坦なリストで返す（guard集合）。
+	 */
+	private static function guard_at_offset(array $regions, int $off): array{
+		$guard = [];
+		foreach($regions as $r){
+			if($off > $r['start'] && $off < $r['end']){
+				foreach($r['catches'] as $c){
+					if(!$c['rethrow']){
+						foreach($c['types'] as $t) $guard[] = $t;
+					}
+				}
+			}
+		}
+		return $guard;
+	}
+
+	/**
+	 * throw型がguard(catch型集合)のいずれかに捕捉されるか（親型・\Throwable/\Exception含む）。
+	 */
+	private static function throw_caught_by(string $thrown, array $guard): bool{
+		$T = ltrim($thrown, '\\');
+		if($T === '') return false;
+		foreach($guard as $ct){
+			$C = ltrim(self::get_class_name($ct) ?: $ct, '\\');
+			if($C === '') continue;
+			if(strcasecmp($T, $C) === 0) return true;
+			if(class_exists('\\'.$T) && (class_exists('\\'.$C) || interface_exists('\\'.$C)) && is_a('\\'.$T, '\\'.$C, true)) return true;
+			if(in_array(strtolower($C), ['throwable','exception'], true) && class_exists('\\'.$T)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * guard集合の安定シグネチャ（メモ化キー用）。
+	 */
+	private static function guard_signature(array $guard): string{
+		$set = [];
+		foreach($guard as $t) $set[ltrim($t, '\\')] = true;
+		$keys = array_keys($set);
+		sort($keys);
+		return implode(',', $keys);
+	}
+
+	/**
+	 * use_method_list相当の変数→クラス解決（$this / 型付き引数 / new / Class::static()の@return）。
+	 */
+	private static function resolve_call_vars(string $class, \ReflectionMethod $ref, string $src): array{
+		$vars = ['$this' => $class];
+		foreach($ref->getParameters() as $param){
+			if($param->hasType() && $param->getType() instanceof \ReflectionNamedType){
+				$tc = $param->getType()->getName();
+				if(class_exists($tc)) $vars['$'.$param->getName()] = $tc;
+			}
+		}
+		if(preg_match_all('/(\$\w+)\s*=\s*new\s+([\\\\\w]+)/', $src, $m)){
+			foreach($m[1] as $k => $v) $vars[$v] = $m[2][$k];
+		}
+		if(preg_match_all('/(\$\w+)\s*=\s*([\\\\\w]+)::(\w+)/', $src, $m)){
+			foreach($m[1] as $k => $v){
+				if(!class_exists($m[2][$k], false)) continue;
+				try{
+					$r2 = new \ReflectionMethod($m[2][$k], $m[3][$k]);
+					if(preg_match("/@return\s+([^\s]+)(.*)/", self::trim_doc($r2->getDocComment()), $rr)){
+						$vars[$v] = preg_match('/[A-Z]/', $rr[1]) ? $rr[1] : $m[2][$k];
+					}
+				}catch(\ReflectionException){
+				}
+			}
+		}
+		return $vars;
+	}
+
+	/**
+	 * 呼び出しグラフを横断し「catchされずに外へ出る throw new」の例外クラス名を収集する。
+	 * try/catch を token でスコープ厳密に解析し、call-siteのguardを再帰に伝播（安全側:
+	 * 1つでもcatchされない経路があれば報告）。openapi_catch_aware=true のときのみ使用。
+	 * @return string[] 解決済み例外クラス名
+	 */
+	private static function deep_escaping_throws(string $class, string $method): array{
+		$escaping = [];
+		$seen = [];
+		$budget = 5000;
+
+		$walk = function(string $cls, string $mth, array $guard) use (&$walk, &$escaping, &$seen, &$budget): void{
+			if($budget-- <= 0) return;
+			try{
+				$ref = new \ReflectionMethod($cls, $mth);
+			}catch(\ReflectionException){
+				return;
+			}
+			$file = $ref->getDeclaringClass()->getFileName();
+			if(!is_file($file)) return;
+
+			$declClass = $ref->getDeclaringClass()->getName();
+			$sig = $declClass.'::'.$ref->getName().'|'.self::guard_signature($guard);
+			if(isset($seen[$sig])) return; // 同一メソッド×同一guardは再解析不要（循環・ダイヤ形を抑制）
+			$seen[$sig] = true;
+
+			$src = self::method_src($ref);
+			$regions = self::token_try_regions($src);
+			$vars = self::resolve_call_vars($declClass, $ref, $src);
+
+			// throw new X
+			if(preg_match_all('/throw\s+new\s+([\\\\\w]+)/', $src, $m, PREG_OFFSET_CAPTURE)){
+				foreach($m[1] as $k => $mm){
+					$cname = self::get_class_name($mm[0]);
+					if($cname === '') continue;
+					$g = array_merge($guard, self::guard_at_offset($regions, $m[0][$k][1]));
+					if(!self::throw_caught_by($cname, $g)){
+						$escaping[$cname] = true;
+					}
+				}
+			}
+			// $var->method()
+			if(preg_match_all('/(\$\w+)->(\w+)/', $src, $m, PREG_OFFSET_CAPTURE)){
+				foreach($m[1] as $k => $vm){
+					$v = $vm[0];
+					if(!isset($vars[$v])) continue;
+					$tc = self::get_class_name($vars[$v]);
+					if($tc === '' || !class_exists($tc, false)) continue;
+					$g = array_merge($guard, self::guard_at_offset($regions, $m[0][$k][1]));
+					$walk($tc, $m[2][$k][0], $g);
+				}
+			}
+			// Class::method()
+			if(preg_match_all('/([\\\\\w]+)::(\w+)/', $src, $m, PREG_OFFSET_CAPTURE)){
+				foreach($m[1] as $k => $cm){
+					$c = $cm[0];
+					if($c === 'self' || $c === 'static' || $c === 'parent') $c = $declClass;
+					$tc = self::get_class_name($c);
+					if($tc === '' || !class_exists($tc, false)) continue;
+					$g = array_merge($guard, self::guard_at_offset($regions, $m[0][$k][1]));
+					$walk($tc, $m[2][$k][0], $g);
+				}
+			}
+		};
+
+		$walk(self::get_class_name($class) ?: $class, $method, []);
+		return array_keys($escaping);
 	}
 }
