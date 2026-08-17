@@ -24,6 +24,14 @@ class App{
 		return self::$app_url;
 	}
 
+	public static function envelope_default(): bool{
+		/**
+		 * レスポンスをエンベロープ（成功は{"result":...}、失敗は{"error":[...]}をHTTP200）で返す既定。
+		 * @var bool envelope レスポンスエンベロープの既定（true=包む）
+		 */
+		return (bool)\ebi\Conf::get('envelope', true);
+	}
+
 	/**
 	 * このリクエストをエンベロープで返すか判定する（envelopeの唯一の判定元）。
 	 * Acceptに "envelope=false" があれば false、"envelope=true" があれば true、無ければ既定(envelope_default)。
@@ -37,12 +45,7 @@ class App{
 		if(strpos($accept, 'envelope=true') !== false){
 			return true;
 		}
-
-		/**
-		 * レスポンスをエンベロープ（成功は{"result":...}、失敗は{"error":[...]}をHTTP200）で返す既定。
-		 * @var bool envelope レスポンスエンベロープの既定（true=包む）
-		 */
-		return (bool)\ebi\Conf::get('envelope', true);
+		return self::envelope_default();
 	}
 
 	/**
