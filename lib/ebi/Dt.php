@@ -463,6 +463,8 @@ HTML;
 			$this->rm_sessions('dt_login_error');
 		}
 
+		$mcp_enabled = (bool)\ebi\Conf::get('mcp_enabled', false);
+
 		$helper = new \ebi\AppHelper();
 		$urls = json_encode([
 			'openapi' => $helper->package_method_url('openapi'),
@@ -473,6 +475,7 @@ HTML;
 			'mocks' => $helper->package_method_url('mocks'),
 			'phpinfo' => $helper->package_method_url('phpinfo'),
 			'login' => $helper->package_method_url('login'),
+			'mcp' => $helper->package_method_url('mcp'),
 		], JSON_UNESCAPED_SLASHES);
 
 		$app_js = file_get_contents(__DIR__.'/Dt/assets/app.js');
@@ -489,6 +492,7 @@ HTML;
 			'authenticated' => $authenticated ? 'true' : 'false',
 			'requires_password' => !empty($password) ? 'true' : 'false',
 			'login_error' => $login_error ? 'true' : 'false',
+			'mcp_enabled' => $mcp_enabled ? 'true' : 'false',
 			'app_js' => $app_js,
 			'app_css' => $app_css,
 		];

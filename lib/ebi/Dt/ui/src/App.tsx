@@ -60,6 +60,7 @@ const appmode = window.appmode || '';
 const initialAuthenticated = !!window.authenticated;
 const requiresPassword = !!window.requiresPassword;
 const initialLoginError = !!window.loginError;
+const mcpEnabled = !!window.mcpEnabled;
 
 const methodColors = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
 
@@ -1086,6 +1087,136 @@ function ConfigPage({ initialClass = '' }) {
 	);
 }
 
+function CopyButton({ text, className = '' }) {
+	const [copied, setCopied] = useState(false);
+	const handleCopy = () => {
+		navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
+	};
+	return (
+		<button type="button" className={`btn btn-sm ${className}`} style={{ fontSize: '0.6875rem', color: '#94a3b8', background: 'transparent', border: '1px solid #cbd5e1', borderRadius: 4, padding: '2px 8px', whiteSpace: 'nowrap' }} onClick={handleCopy}>{copied ? 'Copied!' : 'Copy'}</button>
+	);
+}
+
+function CodeBlock({ code }) {
+	return (
+		<div style={{ position: 'relative' }}>
+			<div style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}><CopyButton text={code} /></div>
+			<pre className="code-block p-3 mb-0" style={{ borderRadius: '0.5rem' }}>{code}</pre>
+		</div>
+	);
+}
+
+// Mcp.php の tool_defs() と対応。ここは表示用の要約。
+const MCP_TOOLS = [
+	{ name: 'search_endpoints', desc: 'エンドポイントをキーワードで検索（path / summary / description / tag / operationId が対象）' },
+	{ name: 'get_endpoint', desc: 'operationId を指定してエンドポイント詳細（parameters / requestBody / responses と参照スキーマ）を取得' },
+	{ name: 'list_tags', desc: 'API のタグ（グループ）一覧を取得' },
+	{ name: 'get_schema', desc: 'components schema（モデル定義）を名前で取得' },
+];
+
+function McpPage() {
+	const serverName = 'endpoints-mcp';
+	const mcpUrl = useMemo(() => {
+		try { return apiUrls.mcp ? new URL(apiUrls.mcp, window.location.href).href : ''; }
+		catch { return apiUrls.mcp || ''; }
+	}, []);
+
+	const claudeCodeCmd = `claude mcp add --transport http ${serverName} ${mcpUrl}`;
+	const jsonConfig = JSON.stringify({ mcpServers: { [serverName]: { type: 'http', url: mcpUrl } } }, null, 2);
+	const geminiCmd = `gemini mcp add --transport http ${serverName} ${mcpUrl}`;
+	const geminiConfig = JSON.stringify({ mcpServers: { [serverName]: { httpUrl: mcpUrl } } }, null, 2);
+	const desktopBridgeConfig = JSON.stringify({ mcpServers: { [serverName]: { command: 'npx', args: ['-y', 'mcp-remote', mcpUrl] } } }, null, 2);
+
+	return (
+		<div>
+			<div className="mb-4">
+				<h1 className="h3 mb-1">MCP <span className="badge bg-success" style={{ fontSize: '0.6rem', verticalAlign: 'middle' }}>enabled</span></h1>
+				<p className="text-muted mb-0" style={{ fontSize: '0.875rem' }}>
+					このアプリの API ドキュメントを MCP (Model Context Protocol) 経由で検索・参照できます。読み取り専用で、API を実行するものではありません。<br />
+					トランスポートは Streamable HTTP (JSON-RPC 2.0)。ebi 自身が MCP を喋るため、npx 等のブリッジは不要です。
+				</p>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">エンドポイント</div>
+				<div className="card-body">
+					<div className="d-flex align-items-center gap-2">
+						<code style={{ fontSize: '0.875rem', flex: 1, wordBreak: 'break-all' }}>{mcpUrl || '(URL を取得できませんでした)'}</code>
+						{mcpUrl && <CopyButton text={mcpUrl} />}
+					</div>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">Claude Code (CLI)</div>
+				<div className="card-body">
+					<p className="text-muted small mb-2">ターミナルで以下を実行して登録します。</p>
+					<CodeBlock code={claudeCodeCmd} />
+					<p className="text-muted small mb-0 mt-2">Bearer 認証が必要な場合は <code>{'--header "Authorization: Bearer <token>"'}</code> を付けて登録します。</p>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">設定ファイル (JSON)</div>
+				<div className="card-body">
+					<p className="text-muted small mb-2"><code>type: http</code> のリモート MCP を <code>mcpServers</code> に直接書けるクライアント（Cursor など）向け。</p>
+					<CodeBlock code={jsonConfig} />
+					<p className="text-muted small mb-0 mt-2">Bearer 認証が必要な場合は同ブロックに <code>{'"headers": { "Authorization": "Bearer <token>" }'}</code> を追加します。</p>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">Claude Desktop</div>
+				<div className="card-body">
+					<p className="text-muted small mb-2">Claude Desktop の <code>claude_desktop_config.json</code> は stdio サーバのみ対応で、<code>url</code> を直接書くと無視・起動失敗の原因になります。リモート MCP へは <code>mcp-remote</code> ブリッジ経由で繋ぎます。</p>
+					<CodeBlock code={desktopBridgeConfig} />
+					<p className="text-muted small mb-0 mt-2">Bearer 認証が必要な場合は <code>args</code> の末尾に <code>{'"--header", "Authorization: Bearer <token>"'}</code> を追加します（URL には埋め込まないこと）。</p>
+					<p className="text-muted small mb-0 mt-2">GUI から繋ぐ場合は 設定 → Connectors の Custom Connector も使えますが、こちらは OAuth 前提で静的 Bearer トークンは渡せません。</p>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">Gemini CLI</div>
+				<div className="card-body">
+					<p className="text-muted small mb-2">ターミナルで以下を実行して登録します。</p>
+					<CodeBlock code={geminiCmd} />
+					<p className="text-muted small mb-2 mt-3">または <code>~/.gemini/settings.json</code>（プロジェクト単位なら <code>.gemini/settings.json</code>）に直接記述します。Streamable HTTP のキーは <code>httpUrl</code> です。</p>
+					<CodeBlock code={geminiConfig} />
+					<p className="text-muted small mb-0 mt-2">Bearer 認証が必要な場合は同ブロックに <code>{'"headers": { "Authorization": "Bearer <token>" }'}</code> を追加します。</p>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">ChatGPT <span className="badge bg-secondary" style={{ fontSize: '0.6rem', verticalAlign: 'middle' }}>認証なし構成のみ</span></div>
+				<div className="card-body">
+					<p className="text-muted small mb-2">設定ファイルではなく Web アプリの GUI から登録します（Pro / Plus / Business / Enterprise / Edu、Web 版のみ）。</p>
+					<ol className="text-muted small mb-2" style={{ paddingLeft: '1.2rem' }}>
+						<li>設定 → Apps（コネクタ）→ Advanced settings で <strong>Developer mode</strong> を ON</li>
+						<li><strong>Add custom connector</strong> を選び、上記のエンドポイント URL を貼り付け</li>
+						<li>チャットで有効化</li>
+					</ol>
+					<div className="alert alert-warning small mb-0 py-2">
+						ChatGPT のコネクタは <strong>OAuth または認証なし</strong>のみ対応です。ebi の静的 Bearer トークンや Cookie ログインは使えないため、<strong><code>bearer_token</code> を設定しない（認証なし）エンドポイントのときだけ</strong>接続できます。保護された API を見せる場合はネットワーク層（VPN / IP 制限）で守ってください。
+					</div>
+				</div>
+			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">利用できるツール</div>
+				<table className="table table-hover mb-0">
+					<thead className="table-light"><tr><th style={{ width: 200 }}>Tool</th><th>説明</th></tr></thead>
+					<tbody>{MCP_TOOLS.map(t => (
+						<tr key={t.name}>
+							<td><code className="text-primary">{t.name}</code></td>
+							<td className="text-muted small">{t.desc}</td>
+						</tr>
+					))}</tbody>
+				</table>
+			</div>
+		</div>
+	);
+}
+
 function parseHash() {
 	const hash = window.location.hash.slice(1);
 	if (!hash) return { page: 'endpoints', detail: null, query: {} };
@@ -1235,7 +1366,7 @@ function MainApp() {
 							<span style={{ color: '#94a3b8', fontSize: '0.625rem' }}>Accept: application/json; envelope=false と同等</span>
 						</span>
 					</span>
-					<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
+					{mcpEnabled && <button className={`btn btn-outline-secondary btn-sm me-2 ${page === 'mcp' ? 'active' : ''}`} onClick={() => handlePageChange('mcp')}>MCP</button>}<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>
 			</nav>
 			<main className="container py-4">
@@ -1247,6 +1378,7 @@ function MainApp() {
 					{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
 					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
 					{page === 'mail' && <MailPage />}
+					{page === 'mcp' && <McpPage />}
 				</>)}
 			</main>
 			{selected && (page === 'webhooks'
