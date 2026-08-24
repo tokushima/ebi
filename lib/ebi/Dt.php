@@ -226,7 +226,8 @@ class Dt extends \ebi\app\Request{
 			exit;
 		}
 
-		$mcp = new \ebi\Dt\Mcp($this->entry);
+		// envelope は App と同じ Accept ヘッダ判定に従う（Accept: application/json; envelope=true、無ければ既定）。
+		$mcp = new \ebi\Dt\Mcp($this->entry, \ebi\App::is_envelope());
 
 		// バッチ(JSON配列) と 単一(JSONオブジェクト) の両対応。
 		// 単一リクエストは連想配列(jsonrpc/method等)、バッチは0始まりのリスト。

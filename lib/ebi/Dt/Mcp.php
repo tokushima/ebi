@@ -12,6 +12,8 @@ namespace ebi\Dt;
  *  - get_endpoint     … operationId でエンドポイントの詳細（parameters/requestBody/responses/参照スキーマ）を取得
  *  - list_tags        … タグ一覧
  *  - get_schema       … components schema を名前で取得
+ *
+ * envelope（レスポンス形式）は App と同じ Accept ヘッダ判定（\ebi\App::is_envelope()）に従う。
  */
 class Mcp{
 	// 対応するMCPプロトコル版（新しい順）。
@@ -21,10 +23,12 @@ class Mcp{
 	private const SERVER_NAME = 'endpoints-mcp';
 
 	private string $entry;
+	private bool $envelope;
 	private ?array $spec = null;
 
-	public function __construct(string $entry){
+	public function __construct(string $entry, bool $envelope=false){
 		$this->entry = $entry;
+		$this->envelope = $envelope;
 	}
 
 	/**
@@ -95,7 +99,7 @@ class Mcp{
 		if($this->spec === null){
 			// @dev エンドポイントを含めるかは実行モードに従う（App が mode を in_mode で出し分けるのと同じ）。
 			$include_dev = \ebi\Conf::in_mode('@dev');
-			$this->spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec(false, $include_dev);
+			$this->spec = (new \ebi\Dt\OpenApi($this->entry))->generate_spec($this->envelope, $include_dev);
 		}
 		return $this->spec;
 	}
