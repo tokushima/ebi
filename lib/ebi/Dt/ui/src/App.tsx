@@ -1213,6 +1213,38 @@ function McpPage() {
 					))}</tbody>
 				</table>
 			</div>
+
+			<div className="card mb-4">
+				<div className="card-header fw-semibold">envelope（レスポンス形式）</div>
+				<div className="card-body">
+					<p className="text-muted small mb-2">
+						返すドキュメントを envelope 形式にするかは、API 本体と同じく <code>Accept</code> ヘッダで決まります。登録時に <code>--header</code> で指定します。
+					</p>
+					<table className="table table-sm mb-2">
+						<thead className="table-light"><tr><th style={{ width: 320 }}>Accept ヘッダ</th><th>ドキュメントの表現</th></tr></thead>
+						<tbody>
+							<tr>
+								<td><code>application/json; envelope=true</code></td>
+								<td className="text-muted small">成功・失敗とも HTTP 200 前提。各エンドポイントの <code>200</code> が <code>oneOf[成功, Error]</code>、エラーは <code>x-throws</code> に列挙。</td>
+							</tr>
+							<tr>
+								<td><code>application/json; envelope=false</code></td>
+								<td className="text-muted small">エラーを 4xx/5xx としてステータス別に列挙し、各エラーに <code>Error</code> スキーマを付与。</td>
+							</tr>
+							<tr>
+								<td className="text-muted">（未指定）</td>
+								<td className="text-muted small">アプリの既定（<code>Conf 'envelope'</code>、既定 true）に従う。</td>
+							</tr>
+						</tbody>
+					</table>
+					<p className="text-muted small mb-0">
+						例: <code>{'claude mcp add --transport http endpoints-mcp <URL> --header "Accept: application/json; envelope=false"'}</code>
+					</p>
+					<div className="alert alert-warning small mb-0 mt-2 py-2">
+						一部のクライアントは Streamable HTTP のために <code>Accept</code> を自前で設定します。<code>--header</code> での上書きが効かない／SSE と競合する場合は、既定（<code>Conf 'envelope'</code>）で揃えてください。
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -1366,7 +1398,7 @@ function MainApp() {
 							<span style={{ color: '#94a3b8', fontSize: '0.625rem' }}>Accept: application/json; envelope=false と同等</span>
 						</span>
 					</span>
-					{mcpEnabled && <button className={`btn btn-outline-secondary btn-sm me-2 ${page === 'mcp' ? 'active' : ''}`} onClick={() => handlePageChange('mcp')}>MCP</button>}<a href={apiUrls.redoc + (envelope ? '?envelope=true' : '')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + (envelope ? '?envelope=true' : '')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
+					{mcpEnabled && <button className={`btn btn-outline-secondary btn-sm me-2 ${page === 'mcp' ? 'active' : ''}`} onClick={() => handlePageChange('mcp')}>MCP</button>}<a href={apiUrls.redoc + '?envelope=' + (envelope ? 'true' : 'false')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + '?envelope=' + (envelope ? 'true' : 'false')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>
 			</nav>
 			<main className="container py-4">
