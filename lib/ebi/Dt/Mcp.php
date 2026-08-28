@@ -149,6 +149,17 @@ class Mcp{
 					'required' => ['name'],
 				],
 			],
+			[
+				'name' => 'get_flow',
+				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[Requires])と効果(#[Produces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[After]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'goal' => ['type' => 'string', 'description' => 'ゴール。operationId（例: bulkorder_cancel）か、成立させたい状態トークン（例: order.canceled）'],
+					],
+					'required' => ['goal'],
+				],
+			],
 		];
 	}
 
@@ -162,6 +173,8 @@ class Mcp{
 				return $this->tool_json($this->list_tags());
 			case 'get_schema':
 				return $this->get_schema((string)($args['name'] ?? ''));
+			case 'get_flow':
+				return $this->get_flow(is_array($args) ? $args : []);
 			default:
 				return $this->tool_error('unknown tool: '.$name);
 		}
@@ -318,6 +331,428 @@ class Mcp{
 		foreach(array_keys($child) as $c){
 			$this->resolve_ref_schema($c, $out);
 		}
+	}
+
+	/**
+	 * goal（operationId か token）へ到達する呼び出し順を x-flow から導出する。
+	 */
+	private function get_flow(array $args){
+		$goal = trim((string)($args['goal'] ?? ''));
+		if($goal === ''){
+			return $this->tool_error('goal is required (operationId or token)');
+		}
+		$spec = $this->spec();
+		$registry = $spec['x-flow-registry'] ?? [];
+
+		// x-flow を持つ operation を収集し、生産者索引 token=>[operationId] を作る
+		$ops = [];
+		$producers = [];
+		foreach(($spec['paths'] ?? []) as $path => $methods){
+			foreach($methods as $method => $op){
+				$flow = $op['x-flow'] ?? null;
+				if(empty($flow)){
+					continue;
+				}
+				$oid = $op['operationId'] ?? (strtoupper($method).' '.$path);
+
+				$req = [];
+				foreach(($flow['requires'] ?? []) as $r){
+					if(isset($r['token'])){
+						$req[] = $r['token'];
+					}
+				}
+				$pro = [];
+				foreach(($flow['produces'] ?? []) as $p){
+					if(isset($p['token'])){
+						$pro[] = ['token' => $p['token'], 'when' => $p['when'] ?? 'success'];
+						$producers[$p['token']][$oid] = true;
+					}
+				}
+				$ops[$oid] = [
+					'method' => strtoupper($method),
+					'path' => $path,
+					'summary' => $op['summary'] ?? '',
+					'requires' => $req,
+					'produces' => $pro,
+					'requiresRaw' => $flow['requires'] ?? [],
+					'after' => $flow['after'] ?? [],
+					'deprecated' => !empty($op['deprecated']),
+				];
+			}
+		}
+
+		// token の生産者は active（非 deprecated）を優先し、active が無い時だけ deprecated にフォールバックする。
+		$active_producers = function(string $t) use (&$producers, &$ops): array{
+			$all = array_keys($producers[$t] ?? []);
+			$active = array_values(array_filter($all, fn($p) => empty($ops[$p]['deprecated'])));
+			return empty($active) ? $all : $active;
+		};
+
+		// goal を operationId か token として解決
+		if(isset($ops[$goal])){
+			$goal_ops = [$goal];
+			$resolved_as = 'operationId';
+		}else if(isset($producers[$goal])){
+			$goal_ops = $active_producers($goal);
+			$resolved_as = 'token';
+		}else{
+			return $this->tool_error("goal '{$goal}' が operationId としても produces token としても解決できません");
+		}
+
+		// 後ろ向き閉包: hard requires の token を辿り生産者を集める。ambient/未生産は inputs へ。
+		$needed = [];
+		$inputs = [];
+		$alternatives = [];
+		$stack = $goal_ops;
+		$guard = 0;
+		while(!empty($stack) && $guard++ < 1000){
+			$oid = array_pop($stack);
+			if(isset($needed[$oid])){
+				continue;
+			}
+			$needed[$oid] = true;
+			foreach($ops[$oid]['requiresRaw'] as $r){
+				$t = $r['token'] ?? null;
+				if($t === null || !empty($r['optional'])){
+					continue;
+				}
+				if(!empty($registry[$t]['ambient']) || (($registry[$t]['kind'] ?? '') === 'ambient')){
+					$inputs[$t] = 'ambient';
+					continue;
+				}
+				$prod = $active_producers($t);
+				if(empty($prod)){
+					$inputs[$t] = 'no-producer';
+					continue;
+				}
+				if(count($prod) > 1){
+					$alternatives[$t] = $prod;
+				}
+				foreach($prod as $p){
+					if(!isset($needed[$p])){
+						$stack[] = $p;
+					}
+				}
+			}
+		}
+
+		$plan = $this->flow_topo_order(array_keys($needed), $ops, $producers);
+
+		$plan_out = [];
+		$branches = [];
+		foreach($plan as $i => $oid){
+			$plan_out[] = [
+				'step' => $i + 1,
+				'operationId' => $oid,
+				'method' => $ops[$oid]['method'],
+				'path' => $ops[$oid]['path'],
+				'summary' => $ops[$oid]['summary'],
+				'requires' => $ops[$oid]['requires'],
+				'produces' => array_map(fn($p) => $p['token'], $ops[$oid]['produces']),
+			];
+			foreach($ops[$oid]['produces'] as $p){
+				if(($p['when'] ?? 'success') !== 'success'){
+					$branches[] = ['at' => $i + 1, 'operationId' => $oid, 'when' => $p['when'], 'token' => $p['token']];
+				}
+			}
+		}
+
+		$input_list = [];
+		foreach($inputs as $t => $reason){
+			$input_list[] = ['token' => $t, 'kind' => ($registry[$t]['kind'] ?? 'unknown'), 'reason' => $reason];
+		}
+
+		// hard plan（spine）は維持しつつ、この flow に差し込める任意の中間段を optionalSteps として提示する。
+		$optional_steps = $this->flow_optional_steps($needed, $ops, $plan_out, $inputs, $registry);
+
+		// spine op の optional requires（one-of 等）の token を作る「上流の入口候補」を提示する。
+		$entry_options = $this->flow_entry_options($needed, $ops, $plan_out, $producers, $registry, $active_producers);
+
+		$rel_issues = [];
+		foreach(($spec['x-flow-issues'] ?? []) as $iss){
+			if(isset($needed[$iss['operationId'] ?? ''])){
+				$rel_issues[] = $iss;
+			}
+		}
+
+		return $this->tool_json(array_filter([
+			'goal' => $goal,
+			'resolvedAs' => $resolved_as,
+			'inputs' => $input_list,
+			'entryOptions' => empty($entry_options) ? null : $entry_options,
+			'plan' => $plan_out,
+			'optionalSteps' => empty($optional_steps) ? null : $optional_steps,
+			'branches' => $branches,
+			'alternatives' => empty($alternatives) ? null : $alternatives,
+			'issues' => empty($rel_issues) ? null : $rel_issues,
+		], fn($v) => $v !== null && $v !== []));
+	}
+
+	/**
+	 * spine 各 op の optional requires（one-of の値トークン等。後ろ向き閉包は optional を辿らないため
+	 * hard spine には現れない）について、その token を作る生産者 op を「上流の入口候補」として列挙する。
+	 * plan 内で既に生産される token / ambient / 生産者が spine 内 / 生産者なし は除外する。
+	 * @return array<int,array{token:string,forOperationId:string,forStep:?int,producers:array}>
+	 */
+	private function flow_entry_options(array $needed, array $ops, array $plan_out, array $producers, array $registry, callable $active_producers): array{
+		$plan_produced = [];
+		$oid_step = [];
+		foreach($plan_out as $po){
+			$oid_step[$po['operationId']] = $po['step'];
+			foreach($po['produces'] as $t){
+				$plan_produced[$t] = true;
+			}
+		}
+		$is_ambient = function(string $t) use ($registry): bool{
+			return !empty($registry[$t]['ambient']) || (($registry[$t]['kind'] ?? '') === 'ambient');
+		};
+
+		$out = [];
+		$seen = [];
+		foreach(array_keys($needed) as $oid){
+			foreach($ops[$oid]['requiresRaw'] as $r){
+				if(empty($r['optional'])){
+					continue; // hard は spine 側で解決済み
+				}
+				$t = $r['token'] ?? null;
+				if($t === null || $is_ambient($t) || isset($plan_produced[$t])){
+					continue;
+				}
+				// spine 外に生産者があるか（無ければ入口候補にならない）
+				$rest = array_values(array_filter($active_producers($t), fn($p) => !isset($needed[$p])));
+				if(empty($rest)){
+					continue;
+				}
+				$key = $oid.'|'.$t;
+				if(isset($seen[$key])){
+					continue;
+				}
+				$seen[$key] = true;
+				// token を作る上流チェーン全体（後ろ向き閉包＋topo整列）。多段の入口を1本で見せる。
+				$chain = $this->flow_producer_chain($t, $ops, $producers, $registry, $active_producers);
+				$out[] = [
+					'token' => $t,
+					'forOperationId' => $oid,
+					'forStep' => $oid_step[$oid] ?? null,
+					'chain' => array_map(fn($p) => [
+						'operationId' => $p,
+						'method' => $ops[$p]['method'],
+						'path' => $ops[$p]['path'],
+						'summary' => $ops[$p]['summary'],
+						'produces' => array_map(fn($x) => $x['token'], $ops[$p]['produces']),
+					], $chain),
+				];
+			}
+		}
+		usort($out, fn($a, $b) => [$a['forStep'] ?? 0, $a['token']] <=> [$b['forStep'] ?? 0, $b['token']]);
+		return $out;
+	}
+
+	/**
+	 * token を作るための op 連鎖を後ろ向き閉包（hard requires を辿る。ambient/生産者なしで停止）し、
+	 * flow_topo_order で整列して operationId 列（root→直接生産者）を返す。entryOptions の多段表示用。
+	 */
+	private function flow_producer_chain(string $token, array $ops, array $producers, array $registry, callable $active_producers): array{
+		$needed = [];
+		$stack = $active_producers($token);
+		$guard = 0;
+		while(!empty($stack) && $guard++ < 1000){
+			$oid = array_pop($stack);
+			if($oid === null || isset($needed[$oid]) || !isset($ops[$oid])){
+				continue;
+			}
+			$needed[$oid] = true;
+			foreach($ops[$oid]['requiresRaw'] as $r){
+				$t = $r['token'] ?? null;
+				if($t === null || !empty($r['optional'])){
+					continue;
+				}
+				if(!empty($registry[$t]['ambient']) || (($registry[$t]['kind'] ?? '') === 'ambient')){
+					continue;
+				}
+				foreach($active_producers($t) as $p){
+					if(!isset($needed[$p])){
+						$stack[] = $p;
+					}
+				}
+			}
+		}
+		return $this->flow_topo_order(array_keys($needed), $ops, $producers);
+	}
+
+	/**
+	 * hard plan（spine）に対して「差し込み可能な任意の中間段」を導出する。
+	 * soft requires（optional:true）の token が plan の産物で満たされる、
+	 * または #[After] が plan op を指す op を、推奨挿入位置(afterStep)付きで列挙する。
+	 * hard requires は plan産物 / inputs / ambient で満たせるものだけを対象とする（満たせない=別フロー）。
+	 */
+	private function flow_optional_steps(array $needed, array $ops, array $plan_out, array $inputs, array $registry): array{
+		// plan の各 op が生産する token => 最小 step、operationId => step
+		$token_step = [];
+		$oid_step = [];
+		foreach($plan_out as $po){
+			$oid_step[$po['operationId']] = $po['step'];
+			foreach($po['produces'] as $t){
+				if(!isset($token_step[$t]) || $po['step'] < $token_step[$t]){
+					$token_step[$t] = $po['step'];
+				}
+			}
+		}
+		// 利用可能 token: plan 産物 ∪ inputs
+		$available = [];
+		foreach($token_step as $t => $s){
+			$available[$t] = true;
+		}
+		foreach($inputs as $t => $r){
+			$available[$t] = true;
+		}
+		$is_ambient = function(string $t) use ($registry): bool{
+			return !empty($registry[$t]['ambient']) || (($registry[$t]['kind'] ?? '') === 'ambient');
+		};
+
+		$steps = [];
+		$chosen = [];
+		$guard = 0;
+		// 不動点反復: 採用した任意段の産物を available に足し、それに依存する任意段を次passで拾う（多段接続）。
+		do{
+			$added = false;
+			foreach($ops as $oid => $o){
+				if(isset($needed[$oid]) || isset($chosen[$oid])){
+					continue; // spine か採用済み
+				}
+				if(!empty($o['deprecated'])){
+					continue; // deprecated は任意段に出さない
+				}
+				$hard_ok = true;
+				$soft_link = []; // plan/任意段 産物で満たされる soft token（この flow への接続根拠）
+				$after_step = 0;
+				foreach($o['requiresRaw'] as $r){
+					$t = $r['token'] ?? null;
+					if($t === null){
+						continue;
+					}
+					if(empty($r['optional'])){
+						// hard require: この flow の文脈で満たせなければ対象外
+						if(!isset($available[$t]) && !$is_ambient($t)){
+							$hard_ok = false;
+							break;
+						}
+						if(isset($token_step[$t])){
+							$after_step = max($after_step, $token_step[$t]);
+						}
+					}else if(isset($token_step[$t])){
+						// soft require が既知産物で満たされる → 接続根拠かつ位置ヒント
+						$soft_link[] = $t;
+						$after_step = max($after_step, $token_step[$t]);
+					}
+				}
+				if(!$hard_ok){
+					continue;
+				}
+				// #[After] が plan/任意段 op を指すなら接続根拠 & 位置ヒント
+				$after_hits = [];
+				foreach($o['after'] as $a){
+					$ep = $a['endpoint'] ?? null;
+					if($ep !== null && isset($oid_step[$ep])){
+						$after_hits[] = $ep;
+						$after_step = max($after_step, $oid_step[$ep]);
+					}
+				}
+				// この flow に接続していない op（無関係な soft 消費者）は出さない
+				if(empty($soft_link) && empty($after_hits)){
+					continue;
+				}
+				$chosen[$oid] = true;
+				$added = true;
+				$produced = array_map(fn($p) => $p['token'], $o['produces']);
+				$steps[] = [
+					'operationId' => $oid,
+					'method' => $o['method'],
+					'path' => $o['path'],
+					'summary' => $o['summary'],
+					'requires' => $o['requires'],
+					'produces' => $produced,
+					'afterStep' => $after_step,
+					'linkedBy' => array_values(array_unique(array_merge(
+						array_map(fn($t) => 'requires:'.$t, $soft_link),
+						array_map(fn($e) => 'after:'.$e, $after_hits)
+					))),
+				];
+				// 産物を available に加える（挿入位置以降で利用可）。多段接続の次pass用。
+				$pos = $after_step + 1;
+				$oid_step[$oid] = $pos;
+				foreach($produced as $t){
+					if(!isset($token_step[$t]) || $pos < $token_step[$t]){
+						$token_step[$t] = $pos;
+					}
+					$available[$t] = true;
+				}
+			}
+		}while($added && $guard++ < 100);
+
+		// afterStep, operationId で安定ソート
+		usort($steps, fn($a, $b) => [$a['afterStep'], $a['operationId']] <=> [$b['afterStep'], $b['operationId']]);
+		return $steps;
+	}
+
+	/**
+	 * 生産者→消費者の依存で安定トポロジカル整列（Kahn法）。循環時は残りを後置。
+	 */
+	private function flow_topo_order(array $oids, array $ops, array $producers): array{
+		$set = array_flip($oids);
+		$indeg = [];
+		$edges = [];
+		foreach($oids as $oid){
+			$indeg[$oid] = 0;
+		}
+		foreach($oids as $oid){
+			foreach($ops[$oid]['requiresRaw'] as $r){
+				$t = $r['token'] ?? null;
+				if($t === null || !empty($r['optional'])){
+					continue;
+				}
+				foreach(array_keys($producers[$t] ?? []) as $p){
+					if($p === $oid || !isset($set[$p])){
+						continue;
+					}
+					$edges[$p][] = $oid;
+					$indeg[$oid]++;
+				}
+			}
+		}
+		$queue = [];
+		foreach($oids as $oid){
+			if($indeg[$oid] === 0){
+				$queue[] = $oid;
+			}
+		}
+		sort($queue);
+		$order = [];
+		$seen = [];
+		while(!empty($queue)){
+			$oid = array_shift($queue);
+			if(isset($seen[$oid])){
+				continue;
+			}
+			$seen[$oid] = true;
+			$order[] = $oid;
+			$next = [];
+			foreach(($edges[$oid] ?? []) as $c){
+				if(--$indeg[$c] === 0){
+					$next[] = $c;
+				}
+			}
+			sort($next);
+			foreach($next as $n){
+				$queue[] = $n;
+			}
+		}
+		foreach($oids as $oid){
+			if(!isset($seen[$oid])){
+				$order[] = $oid;
+			}
+		}
+		return $order;
 	}
 
 	private function tool_json($data): array{
