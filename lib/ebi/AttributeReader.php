@@ -211,6 +211,52 @@ class AttributeReader{
 						}
 					}
 					break;
+				case 'produces':
+					$attrs = $r->getAttributes(\ebi\Attribute\Produces::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$result[$name][] = array_filter([
+								'token' => $inst->token,
+								'via' => $inst->via,
+								'when' => $inst->when,
+								'summary' => $inst->summary,
+							], fn($v) => $v !== null);
+						}
+					}
+					break;
+				case 'requires':
+					$attrs = $r->getAttributes(\ebi\Attribute\Requires::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$data = ['token' => $inst->token, 'optional' => $inst->optional];
+							if($inst->bind !== null){
+								$data['bind'] = $inst->bind;
+							}
+							if($inst->summary !== null){
+								$data['summary'] = $inst->summary;
+							}
+							$result[$name][] = $data;
+						}
+					}
+					break;
+				case 'after':
+					$attrs = $r->getAttributes(\ebi\Attribute\After::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$data = ['endpoint' => $inst->endpoint, 'soft' => $inst->soft];
+							if($inst->summary !== null){
+								$data['summary'] = $inst->summary;
+							}
+							$result[$name][] = $data;
+						}
+					}
+					break;
 			}
 		}
 		return $result;

@@ -324,7 +324,209 @@ class OpenApi extends \ebi\app\Request{
 			$spec['x-skipped'] = $this->skipped;
 		}
 
+		// flow token: registry照合(G1..G6)と registry/issue のトップレベル露出（registry未設定時は無効）。
+		$this->flow_finalize($spec);
+
 		return $spec;
+	}
+
+	/**
+	 * flow token registry を Conf から読む（未設定/不在時は null=機能オフ）。
+	 * Conf キー: `ebi\Dt\OpenApi@flow_registry`（JSONファイルの絶対パス）
+	 */
+	private function load_flow_registry(): ?array{
+		$path = \ebi\Conf::get('ebi\Dt\OpenApi@flow_registry');
+		if(empty($path) || !is_file($path)){
+			return null;
+		}
+		$json = json_decode((string)file_get_contents($path), true);
+		return is_array($json) ? $json : null;
+	}
+
+	/**
+	 * 各operationの x-flow を registry と突き合わせ、G1..G6 を検証して
+	 * `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
+	 */
+	private function flow_finalize(array &$spec): void{
+		$registry = $this->load_flow_registry();
+		if($registry === null){
+			return;
+		}
+		$tokens = $registry['tokens'] ?? [];
+		$schemas = $spec['components']['schemas'] ?? [];
+
+		// operationId => operation（x-flowを持つもの）と 生産者索引 token=>[operationId]、全operationId集合を作る
+		$ops = [];
+		$producers = [];
+		$op_ids = [];
+		foreach(($spec['paths'] ?? []) as $path => $methods){
+			foreach($methods as $method => $op){
+				$oid = $op['operationId'] ?? ($method.' '.$path);
+				$op_ids[$oid] = true;
+				if(empty($op['x-flow'])){
+					continue;
+				}
+				$ops[$oid] = $op;
+				foreach(($op['x-flow']['produces'] ?? []) as $p){
+					if(isset($p['token'])){
+						$producers[$p['token']][$oid] = true;
+					}
+				}
+			}
+		}
+
+		$issues = [];
+		$add = function(string $gate, string $oid, string $msg) use (&$issues){
+			$issues[] = ['gate' => $gate, 'operationId' => $oid, 'message' => $msg];
+		};
+
+		foreach($ops as $oid => $op){
+			$flow = $op['x-flow'];
+			$req_tokens = [];
+
+			foreach(($flow['requires'] ?? []) as $r){
+				$t = $r['token'] ?? null;
+				if($t === null){
+					continue;
+				}
+				$req_tokens[$t] = true;
+
+				if(!isset($tokens[$t])){                                    // G1
+					$add('G1', $oid, "requires token '{$t}' が registry に未登録");
+					continue;
+				}
+				$is_ambient = !empty($tokens[$t]['ambient']) || (($tokens[$t]['kind'] ?? '') === 'ambient');
+				$optional = !empty($r['optional']);
+				if(!$optional && !$is_ambient && empty($producers[$t])){     // G2
+					$add('G2', $oid, "hard requires '{$t}' の生産者(#[Produces])が存在しない");
+				}
+				if(isset($r['bind']) && !$this->flow_has_request_field($op, (string)$r['bind'], $schemas)){ // G4
+					$add('G4', $oid, "bind '{$r['bind']}' に対応する #[Parameter] が無い");
+				}
+			}
+
+			foreach(($flow['produces'] ?? []) as $p){
+				$t = $p['token'] ?? null;
+				if($t === null){
+					continue;
+				}
+				if(!isset($tokens[$t])){                                    // G1
+					$add('G1', $oid, "produces token '{$t}' が registry に未登録");
+				}
+				$via = $p['via'] ?? null;
+				if(is_string($via) && strncmp($via, 'response:', 9) === 0){  // G3
+					$rname = substr($via, 9);
+					if(!$this->flow_has_response_field($op, $rname, $schemas)){
+						$add('G3', $oid, "via 'response:{$rname}' に対応する #[Response] が無い");
+					}
+				}
+				if(isset($req_tokens[$t]) && ($p['when'] ?? 'success') === 'success'){ // G6
+					$add('G6', $oid, "token '{$t}' を同一opで require かつ produce（when ガード無し）");
+				}
+			}
+
+			foreach(($flow['after'] ?? []) as $a){
+				$ep = $a['endpoint'] ?? null;
+				if($ep !== null && !isset($op_ids[$ep])){                    // G5
+					$add('G5', $oid, "after endpoint '{$ep}' が operationId として解決できない");
+				}
+			}
+		}
+
+		$spec['x-flow-registry'] = $tokens;
+		if(!empty($issues)){
+			$spec['x-flow-issues'] = $issues;
+		}
+	}
+
+	/**
+	 * operation のリクエスト側（parameters / requestBody schema properties）に指定名のフィールドがあるか。
+	 * location プレフィックス対応: bind に "header:X" / "cookie:X" / "query:X" / "path:X" / "body:X" を書ける。
+	 * header / cookie は #[Parameter] ではなく security scheme / middleware（Bearer 等）由来のことが多いため、
+	 * 明示宣言された in:header/cookie パラメータがあればそれを検証し、無ければ許容する。
+	 */
+	private function flow_has_request_field(array $op, string $name, array $schemas): bool{
+		$in = null;
+		if(preg_match('/^(header|cookie|query|path|body):(.+)$/', $name, $mch)){
+			$in = $mch[1];
+			$name = $mch[2];
+		}
+		if($in === 'header' || $in === 'cookie'){
+			$declared = false;
+			foreach(($op['parameters'] ?? []) as $p){
+				if(($p['in'] ?? null) === $in){
+					$declared = true;
+					if(($p['name'] ?? null) === $name){
+						return true;
+					}
+				}
+			}
+			return !$declared; // 宣言が無ければ security/middleware 由来として許容
+		}
+		foreach(($op['parameters'] ?? []) as $p){
+			if(($p['name'] ?? null) === $name){
+				return true;
+			}
+		}
+		return $this->flow_schema_has_property($op['requestBody']['content'] ?? [], $name, $schemas);
+	}
+
+	/**
+	 * operation のレスポンス側（responses schema properties）に指定名のフィールドがあるか。
+	 */
+	private function flow_has_response_field(array $op, string $name, array $schemas): bool{
+		foreach(($op['responses'] ?? []) as $res){
+			if($this->flow_schema_has_property($res['content'] ?? [], $name, $schemas)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * content[*].schema（$ref解決含む）の properties に name があるか。
+	 */
+	private function flow_schema_has_property(array $content, string $name, array $schemas): bool{
+		foreach($content as $media){
+			$schema = $media['schema'] ?? null;
+			if($this->flow_schema_props_contain($schema, $name, $schemas, 0)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function flow_schema_props_contain($schema, string $name, array $schemas, int $depth): bool{
+		if(!is_array($schema) || $depth > 4){
+			return false;
+		}
+		if(isset($schema['$ref']) && is_string($schema['$ref'])){
+			$ref = str_replace('#/components/schemas/', '', $schema['$ref']);
+			$resolved = $schemas[$ref] ?? null;
+			return $this->flow_schema_props_contain($resolved, $name, $schemas, $depth + 1);
+		}
+		if(is_array($schema['properties'] ?? null)){
+			if(isset($schema['properties'][$name])){
+				return true;
+			}
+			// envelope（result ラッパ等）でネストしたフィールドも辿る
+			foreach($schema['properties'] as $sub){
+				if($this->flow_schema_props_contain($sub, $name, $schemas, $depth + 1)){
+					return true;
+				}
+			}
+		}
+		foreach(['items','allOf','oneOf','anyOf'] as $k){
+			if(isset($schema[$k])){
+				$list = isset($schema[$k][0]) ? $schema[$k] : [$schema[$k]];
+				foreach($list as $sub){
+					if($this->flow_schema_props_contain($sub, $name, $schemas, $depth + 1)){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -763,6 +965,42 @@ class OpenApi extends \ebi\app\Request{
 		// mode
 		if(!empty($m['mode'])){
 			$operation['x-mode'] = $m['mode'];
+		}
+
+		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[After]。#[Login]があればsession.memberを前提に自動付与。
+		if(isset($m['class'], $m['method'])){
+			$produces = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'produces') ?? [];
+			$requires = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'requires') ?? [];
+			$after    = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'after') ?? [];
+
+			// do_login 等の共有ハンドラは per-route の差別化子である auth プラグインの login_condition にも
+			// flow を宣言できる（http_method / request params を login_condition から読むのと同じ流儀）。
+			if(!empty($m['auth'])){
+				$produces = array_merge($produces, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'produces') ?? []);
+				$requires = array_merge($requires, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'requires') ?? []);
+				$after    = array_merge($after,    \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'after') ?? []);
+			}
+
+			// #[Login] はメソッド階層(info)にもクラス階層にも付き得るため両方を見る
+			$has_login = (isset($info) && !empty($info->opt('login')))
+				|| (isset($m['class']) && !empty(\ebi\AttributeReader::get_class($m['class'], 'login')));
+			if($has_login){
+				array_unshift($requires, [
+					'token' => 'session.member',
+					'optional' => false,
+					'auto' => true,
+					'summary' => 'ログイン済み会員セッション',
+				]);
+			}
+			$flow = array_filter([
+				'requires' => $requires,
+				'produces' => $produces,
+				'after' => $after,
+			], fn($v) => !empty($v));
+
+			if(!empty($flow)){
+				$operation['x-flow'] = $flow;
+			}
 		}
 
 		// nullを除去

@@ -1249,6 +1249,578 @@ function McpPage() {
 	);
 }
 
+// spec に x-flow 情報が含まれているか（nav 出し分け用）。spec は非同期ロードで差し替わるため呼び出し時に評価する。
+function specHasFlow() {
+	if (spec && spec['x-flow-registry'] && Object.keys(spec['x-flow-registry']).length > 0) return true;
+	for (const methods of Object.values(spec.paths || {})) {
+		for (const op of Object.values(methods)) {
+			if (op && op['x-flow']) return true;
+		}
+	}
+	return false;
+}
+
+// ---- Flow 派生ロジック（Mcp.php の get_flow() / flow_topo_order() の TS 移植）----
+
+// x-flow を持つ operation を収集し、生産者索引 token=>{oid:true} を作る。
+function buildFlowIndex() {
+	const ops = {};
+	const producers = {};
+	for (const [path, methods] of Object.entries(spec.paths || {})) {
+		for (const [method, op] of Object.entries(methods)) {
+			const flow = op['x-flow'];
+			if (!flow || Object.keys(flow).length === 0) continue;
+			const oid = op.operationId || (method.toUpperCase() + ' ' + path);
+			const req = [];
+			for (const r of (flow.requires || [])) {
+				if (r && r.token != null) req.push(r.token);
+			}
+			const pro = [];
+			for (const p of (flow.produces || [])) {
+				if (p && p.token != null) {
+					pro.push({ token: p.token, when: p.when || 'success' });
+					if (!producers[p.token]) producers[p.token] = {};
+					producers[p.token][oid] = true;
+				}
+			}
+			ops[oid] = {
+				method: method.toUpperCase(),
+				path,
+				summary: op.summary || '',
+				requires: req,
+				produces: pro,
+				requiresRaw: flow.requires || [],
+				after: flow.after || [],
+				deprecated: !!op.deprecated,
+			};
+		}
+	}
+	return { ops, producers };
+}
+
+// 生産者→消費者の依存で安定トポロジカル整列（Kahn法）。循環時は残りを後置。
+function flowTopoOrder(oids, ops, producers) {
+	const set = {};
+	for (const o of oids) set[o] = true;
+	const indeg = {};
+	const edges = {};
+	for (const oid of oids) indeg[oid] = 0;
+	for (const oid of oids) {
+		for (const r of (ops[oid].requiresRaw || [])) {
+			const t = r.token == null ? null : r.token;
+			if (t === null || r.optional) continue;
+			for (const p of Object.keys(producers[t] || {})) {
+				if (p === oid || !set[p]) continue;
+				(edges[p] || (edges[p] = [])).push(oid);
+				indeg[oid]++;
+			}
+		}
+	}
+	const queue = [];
+	for (const oid of oids) if (indeg[oid] === 0) queue.push(oid);
+	queue.sort();
+	const order = [];
+	const seen = {};
+	while (queue.length) {
+		const oid = queue.shift();
+		if (seen[oid]) continue;
+		seen[oid] = true;
+		order.push(oid);
+		const next = [];
+		for (const c of (edges[oid] || [])) {
+			if (--indeg[c] === 0) next.push(c);
+		}
+		next.sort();
+		for (const n of next) queue.push(n);
+	}
+	for (const oid of oids) if (!seen[oid]) order.push(oid);
+	return order;
+}
+
+// token を作る op 連鎖を後ろ向き閉包（hard requires を辿る）→ topo整列して operationId 列を返す（entryOptions多段用）。
+function flowProducerChain(token, ops, producers, registry, activeProducers) {
+	const needed = {};
+	const stack = [...activeProducers(token)];
+	let guard = 0;
+	while (stack.length && guard++ < 1000) {
+		const oid = stack.pop();
+		if (oid == null || needed[oid] || !ops[oid]) continue;
+		needed[oid] = true;
+		for (const r of (ops[oid].requiresRaw || [])) {
+			const t = r.token == null ? null : r.token;
+			if (t === null || r.optional) continue;
+			if (registry[t]?.ambient || (registry[t]?.kind || '') === 'ambient') continue;
+			for (const p of activeProducers(t)) { if (!needed[p]) stack.push(p); }
+		}
+	}
+	return flowTopoOrder(Object.keys(needed), ops, producers);
+}
+
+// hard plan（spine）に差し込める任意の中間段を導出する。不動点反復で、採用した任意段の産物に依存する
+// 任意段も次passで拾う（多段接続）。soft requires が既知産物で満たされる or after が既知 op を指すものを列挙（Mcp.php の移植）。
+function flowOptionalSteps(needed, ops, planOut, inputs, registry) {
+	const tokenStep = {};
+	const oidStep = {};
+	for (const po of planOut) {
+		oidStep[po.operationId] = po.step;
+		for (const t of po.produces) {
+			if (tokenStep[t] == null || po.step < tokenStep[t]) tokenStep[t] = po.step;
+		}
+	}
+	const available = {};
+	for (const t of Object.keys(tokenStep)) available[t] = true;
+	for (const t of Object.keys(inputs)) available[t] = true;
+	const isAmbient = t => registry[t]?.ambient || (registry[t]?.kind || '') === 'ambient';
+
+	const steps = [];
+	const chosen = {};
+	let guard = 0;
+	let added;
+	do {
+		added = false;
+		for (const oid of Object.keys(ops)) {
+			if (needed[oid] || chosen[oid]) continue; // spine か採用済み
+			if (ops[oid].deprecated) continue;
+			let hardOk = true;
+			const softLink = [];
+			let afterStep = 0;
+			for (const r of (ops[oid].requiresRaw || [])) {
+				const t = r.token == null ? null : r.token;
+				if (t === null) continue;
+				if (!r.optional) {
+					if (available[t] == null && !isAmbient(t)) { hardOk = false; break; }
+					if (tokenStep[t] != null) afterStep = Math.max(afterStep, tokenStep[t]);
+				} else if (tokenStep[t] != null) {
+					softLink.push(t);
+					afterStep = Math.max(afterStep, tokenStep[t]);
+				}
+			}
+			if (!hardOk) continue;
+			const afterHits = [];
+			for (const a of (ops[oid].after || [])) {
+				const ep = a.endpoint == null ? null : a.endpoint;
+				if (ep !== null && oidStep[ep] != null) { afterHits.push(ep); afterStep = Math.max(afterStep, oidStep[ep]); }
+			}
+			if (softLink.length === 0 && afterHits.length === 0) continue; // この flow に非接続
+			chosen[oid] = true;
+			added = true;
+			const produced = ops[oid].produces.map(p => p.token);
+			steps.push({
+				operationId: oid,
+				method: ops[oid].method,
+				path: ops[oid].path,
+				summary: ops[oid].summary,
+				requires: ops[oid].requires,
+				produces: produced,
+				afterStep,
+				linkedBy: Array.from(new Set([...softLink.map(t => 'requires:' + t), ...afterHits.map(e => 'after:' + e)])),
+			});
+			const pos = afterStep + 1;
+			oidStep[oid] = pos;
+			for (const t of produced) {
+				if (tokenStep[t] == null || pos < tokenStep[t]) tokenStep[t] = pos;
+				available[t] = true;
+			}
+		}
+	} while (added && guard++ < 100);
+
+	steps.sort((a, b) => (a.afterStep - b.afterStep) || (a.operationId < b.operationId ? -1 : a.operationId > b.operationId ? 1 : 0));
+	return steps;
+}
+
+// goal（operationId か token）へ到達する呼び出し順を導出する。
+function computeFlow(goal, index) {
+	const { ops, producers } = index;
+	const registry = spec['x-flow-registry'] || {};
+	if (!goal) return { error: 'goal is required (operationId or token)' };
+
+	// token の生産者は active（非 deprecated）を優先。active が無い時だけ deprecated にフォールバック。
+	const activeProducers = t => {
+		const all = Object.keys(producers[t] || {});
+		const active = all.filter(p => !ops[p]?.deprecated);
+		return active.length ? active : all;
+	};
+
+	let goalOps, resolvedAs;
+	if (ops[goal]) { goalOps = [goal]; resolvedAs = 'operationId'; }
+	else if (producers[goal]) { goalOps = activeProducers(goal); resolvedAs = 'token'; }
+	else return { error: `goal '${goal}' が operationId としても produces token としても解決できません` };
+
+	// 後ろ向き閉包: hard requires の token を辿り生産者を集める。ambient/未生産は inputs へ。
+	const needed = {};
+	const inputs = {};
+	const alternatives = {};
+	const stack = [...goalOps];
+	let guard = 0;
+	while (stack.length && guard++ < 1000) {
+		const oid = stack.pop();
+		if (needed[oid]) continue;
+		needed[oid] = true;
+		for (const r of (ops[oid].requiresRaw || [])) {
+			const t = r.token == null ? null : r.token;
+			if (t === null || r.optional) continue;
+			if (registry[t]?.ambient || (registry[t]?.kind || '') === 'ambient') { inputs[t] = 'ambient'; continue; }
+			const prod = activeProducers(t);
+			if (prod.length === 0) { inputs[t] = 'no-producer'; continue; }
+			if (prod.length > 1) alternatives[t] = prod;
+			for (const p of prod) { if (!needed[p]) stack.push(p); }
+		}
+	}
+
+	const plan = flowTopoOrder(Object.keys(needed), ops, producers);
+
+	const planOut = [];
+	const branches = [];
+	plan.forEach((oid, i) => {
+		planOut.push({
+			step: i + 1,
+			operationId: oid,
+			method: ops[oid].method,
+			path: ops[oid].path,
+			summary: ops[oid].summary,
+			requires: ops[oid].requires,
+			produces: ops[oid].produces.map(p => p.token),
+		});
+		for (const p of ops[oid].produces) {
+			if ((p.when || 'success') !== 'success') branches.push({ at: i + 1, operationId: oid, when: p.when, token: p.token });
+		}
+	});
+
+	const inputList = Object.entries(inputs).map(([t, reason]) => ({ token: t, kind: registry[t]?.kind || 'unknown', reason }));
+
+	// spine op の optional requires（one-of の値トークン等。後ろ向き閉包は optional を辿らない）の
+	// token を作る生産者を「上流の入口候補」として列挙する。plan 内生産/ambient/生産者なし/spine内 は除外。
+	const planProduced = {};
+	const oidStep = {};
+	planOut.forEach(po => { oidStep[po.operationId] = po.step; po.produces.forEach(t => { planProduced[t] = true; }); });
+	const isAmbient = t => registry[t]?.ambient || (registry[t]?.kind || '') === 'ambient';
+	const entryOptions = [];
+	const eoSeen = {};
+	for (const oid of Object.keys(needed)) {
+		for (const r of (ops[oid].requiresRaw || [])) {
+			if (!r.optional) continue;
+			const t = r.token == null ? null : r.token;
+			if (t === null || isAmbient(t) || planProduced[t]) continue;
+			const rest = activeProducers(t).filter(p => !needed[p]);
+			if (rest.length === 0) continue;
+			const key = oid + '|' + t;
+			if (eoSeen[key]) continue;
+			eoSeen[key] = true;
+			const chain = flowProducerChain(t, ops, producers, registry, activeProducers);
+			entryOptions.push({
+				token: t,
+				forOperationId: oid,
+				forStep: oidStep[oid] != null ? oidStep[oid] : null,
+				chain: chain.map(p => ({ operationId: p, method: ops[p].method, path: ops[p].path, summary: ops[p].summary, produces: ops[p].produces.map(x => x.token) })),
+			});
+		}
+	}
+	entryOptions.sort((a, b) => (a.forStep || 0) - (b.forStep || 0) || (a.token < b.token ? -1 : a.token > b.token ? 1 : 0));
+
+	const optionalSteps = flowOptionalSteps(needed, ops, planOut, inputs, registry);
+
+	const relIssues = (spec['x-flow-issues'] || []).filter(iss => needed[(iss && iss.operationId) || '']);
+
+	return { goal, resolvedAs, inputs: inputList, entryOptions, plan: planOut, optionalSteps, branches, alternatives, issues: relIssues, needed };
+}
+
+function FlowPage() {
+	const index = useMemo(() => buildFlowIndex(), []);
+	const { ops, producers } = index;
+	const registry = spec['x-flow-registry'] || {};
+	const issuesAll = spec['x-flow-issues'] || [];
+
+	const tokenOptions = useMemo(() => Object.keys(producers).sort(), [producers]);
+	const opOptions = useMemo(() => Object.keys(ops).sort(), [ops]);
+
+	const initial = parseHash();
+	const [search, setSearch] = useState(initial.query.q || '');
+	const [goal, setGoal] = useState(initial.detail || tokenOptions[0] || opOptions[0] || '');
+
+	useEffect(() => {
+		const { page } = parseHash();
+		if (page !== 'flow') return;
+		window.history.replaceState(null, '', '#' + buildHash('flow', goal, { q: search }));
+	}, [goal, search]);
+
+	const flow = useMemo(() => (goal ? computeFlow(goal, index) : null), [goal, index]);
+
+	const layout = useMemo(() => {
+		if (!flow || flow.error) return null;
+		const plan = flow.plan.map(p => p.operationId);
+		const planSet = {};
+		plan.forEach(o => { planSet[o] = true; });
+		const layerOf = {};
+		for (const oid of plan) {
+			let L = 0;
+			for (const r of (ops[oid].requiresRaw || [])) {
+				const t = r.token == null ? null : r.token;
+				if (t === null || r.optional) continue;
+				for (const p of Object.keys(producers[t] || {})) {
+					if (p === oid || !planSet[p]) continue;
+					if (layerOf[p] != null) L = Math.max(L, layerOf[p] + 1);
+				}
+			}
+			layerOf[oid] = L;
+		}
+		const layers = [];
+		for (const oid of plan) { const L = layerOf[oid]; (layers[L] || (layers[L] = [])).push(oid); }
+		const nodeW = 220, nodeH = 64, gapX = 40, gapY = 96, padX = 20, padY = 16;
+		const colW = nodeW + gapX;
+		const maxRow = Math.max(1, ...layers.map(l => (l ? l.length : 0)));
+		const width = maxRow * colW + padX * 2;
+		const pos = {};
+		layers.forEach((l, L) => {
+			if (!l) return;
+			const rowWidth = l.length * colW;
+			const x0 = (width - rowWidth) / 2;
+			l.forEach((oid, i) => {
+				const x = x0 + i * colW + gapX / 2;
+				const y = padY + L * (nodeH + gapY);
+				pos[oid] = { x, y, cx: x + nodeW / 2 };
+			});
+		});
+		const layerCount = layers.length;
+		const height = padY * 2 + layerCount * nodeH + Math.max(0, layerCount - 1) * gapY;
+		const edges = [];
+		for (const oid of plan) {
+			for (const r of (ops[oid].requiresRaw || [])) {
+				const t = r.token == null ? null : r.token;
+				if (t === null || r.optional) continue;
+				for (const p of Object.keys(producers[t] || {})) {
+					if (p === oid || !planSet[p]) continue;
+					edges.push({ from: p, to: oid, token: t });
+				}
+			}
+		}
+		return { plan, layerOf, pos, width, height, nodeW, nodeH, edges };
+	}, [flow, ops, producers]);
+
+	// フローデータそのものが無い場合
+	if (tokenOptions.length === 0 && opOptions.length === 0) {
+		return (
+			<div>
+				<h1 className="h3 mb-4">Flow</h1>
+				<div className="text-muted">No flow tokens defined.</div>
+			</div>
+		);
+	}
+
+	const s = search.toLowerCase();
+	const filteredTokens = tokenOptions.filter(t => !s || t.toLowerCase().includes(s) || (registry[t]?.summary || '').toLowerCase().includes(s));
+	const filteredOps = opOptions.filter(o => !s || o.toLowerCase().includes(s) || (ops[o]?.summary || '').toLowerCase().includes(s));
+
+	const branchesByOid = {};
+	if (flow && !flow.error) {
+		for (const b of flow.branches) { (branchesByOid[b.operationId] || (branchesByOid[b.operationId] = [])).push(b); }
+	}
+	const alternatives = (flow && !flow.error) ? flow.alternatives : {};
+	const altTokens = Object.keys(alternatives || {});
+
+	return (
+		<div>
+			<h1 className="h3 mb-1">Flow</h1>
+			<p className="text-muted mb-4" style={{ fontSize: '0.875rem' }}>
+				goal（状態トークン or operationId）に到達するための呼び出し順を、各エンドポイントの前提(Requires)と効果(Produces)から導出します。
+			</p>
+			<div className="row g-3 mb-4">
+				<div className="col-md-5">
+					<select className="form-select" value={goal} onChange={e => setGoal(e.target.value)}>
+						{filteredTokens.length > 0 && <optgroup label="Tokens">
+							{filteredTokens.map(t => <option key={'t-' + t} value={t}>{t}{registry[t]?.summary ? ` — ${registry[t].summary}` : ''}</option>)}
+						</optgroup>}
+						{filteredOps.length > 0 && <optgroup label="Operations">
+							{filteredOps.map(o => <option key={'o-' + o} value={o}>{o}{ops[o]?.summary ? ` — ${ops[o].summary}` : ''}</option>)}
+						</optgroup>}
+					</select>
+				</div>
+				<div className="col-md-7">
+					<input type="text" className="form-control" placeholder="Filter goal options..." value={search} onChange={e => setSearch(e.target.value)} />
+				</div>
+			</div>
+
+			{flow && flow.error ? (
+				<div className="alert alert-warning">{flow.error}</div>
+			) : flow ? (
+				<>
+					<div className="d-flex align-items-center gap-2 mb-3" style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+						<span>goal: <code style={{ color: '#3b82f6' }}>{flow.goal}</code></span>
+						<span className="badge" style={{ background: '#e2e8f0', color: '#475569' }}>{flow.resolvedAs}</span>
+						<span>{flow.plan.length} steps</span>
+					</div>
+
+					{flow.inputs.length > 0 && <div className="mb-3">
+						<div className="section-label">Inputs</div>
+						<div className="d-flex flex-wrap gap-2 mt-1">
+							{flow.inputs.map((inp, i) => (
+								<span key={i} className={`flow-input-pill ${inp.reason === 'no-producer' ? 'flow-input-missing' : ''}`} title={`${inp.kind} / ${inp.reason}`}>
+									{inp.token}
+									<span className="flow-input-kind">{inp.reason === 'no-producer' ? 'no producer' : inp.kind}</span>
+								</span>
+							))}
+						</div>
+					</div>}
+
+					{flow.entryOptions && flow.entryOptions.length > 0 && <div className="mb-3">
+						<div className="section-label">Entry options（上流の入口候補・one-of）</div>
+						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
+							{flow.entryOptions.map((eo, i) => (
+								<div key={i} className="d-flex align-items-center gap-2 py-1 flex-wrap">
+									<span className="flow-input-pill">{eo.token}</span>
+									<span style={{ color: '#94a3b8' }}>←</span>
+									{(eo.chain || []).map((p, pi) => (
+										<span key={pi} className="d-inline-flex align-items-center gap-1" title={p.summary || ''}>
+											{pi > 0 && <span style={{ color: '#cbd5e1' }}>›</span>}
+											<span className={`method-badge ${methodColors[p.method] || ''}`} style={{ fontSize: '0.5625rem' }}>{p.method}</span>
+											<code style={{ fontSize: '0.75rem' }}>{p.operationId}</code>
+										</span>
+									))}
+									<span style={{ color: '#94a3b8' }}>→ {eo.forOperationId}</span>
+								</div>
+							))}
+						</div>
+					</div>}
+
+					{layout && layout.plan.length > 0 ? (
+						<div className="flow-graph mb-4">
+							<svg viewBox={`0 0 ${layout.width} ${layout.height}`} width="100%" style={{ maxWidth: layout.width, height: 'auto', display: 'block', margin: '0 auto' }}>
+								<defs>
+									<marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+										<path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+									</marker>
+								</defs>
+								{layout.edges.map((e, i) => {
+									const a = layout.pos[e.from], b = layout.pos[e.to];
+									if (!a || !b) return null;
+									const x1 = a.cx, y1 = a.y + layout.nodeH;
+									const x2 = b.cx, y2 = b.y;
+									const dy = Math.max(24, (y2 - y1) / 2);
+									const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+									const isAlt = !!(alternatives && alternatives[e.token]);
+									const chipW = Math.min(180, 8 + e.token.length * 6.2);
+									return (
+										<g key={i}>
+											<path className="flow-edge" d={`M ${x1} ${y1} C ${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`} markerEnd="url(#flow-arrow)" />
+											<g transform={`translate(${mx - chipW / 2}, ${my - 9})`}>
+												<rect className={`flow-token-chip-bg ${isAlt ? 'flow-token-chip-alt' : ''}`} width={chipW} height="18" rx="9" />
+												<text className="flow-token-chip" x={chipW / 2} y="13" textAnchor="middle">{e.token}{isAlt ? ` ↔${alternatives[e.token].length}` : ''}</text>
+											</g>
+										</g>
+									);
+								})}
+								{layout.plan.map((oid, i) => {
+									const p = layout.pos[oid];
+									if (!p) return null;
+									const step = flow.plan[i];
+									const brs = branchesByOid[oid] || [];
+									return (
+										<foreignObject key={oid} x={p.x} y={p.y} width={layout.nodeW} height={layout.nodeH}>
+											<div className="flow-node" title={oid}>
+												<div className="flow-node-head">
+													<span className={`method-badge ${methodColors[step.method] || ''}`}>{step.method}</span>
+													<span className="flow-node-oid">{oid}</span>
+													{brs.map((b, bi) => <span key={bi} className="flow-branch-badge">when={b.when}</span>)}
+												</div>
+												{step.summary && <div className="flow-node-summary">{step.summary}</div>}
+											</div>
+										</foreignObject>
+									);
+								})}
+							</svg>
+						</div>
+					) : (
+						<div className="text-muted mb-4">No steps required — goal is directly satisfiable.</div>
+					)}
+
+					{flow.optionalSteps && flow.optionalSteps.length > 0 && <div className="mb-3">
+						<div className="section-label">Optional steps（本筋に差し込める任意の中間段）</div>
+						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
+							{flow.optionalSteps.map((os, i) => (
+								<div key={i} className="d-flex align-items-center gap-2 py-1 flex-wrap">
+									<span className="badge" style={{ background: '#e2e8f0', color: '#475569' }}>after step {os.afterStep}</span>
+									<span className={`method-badge ${methodColors[os.method] || ''}`} style={{ fontSize: '0.5625rem' }}>{os.method}</span>
+									<code style={{ fontSize: '0.75rem' }}>{os.operationId}</code>
+									{os.summary && <span style={{ color: '#64748b' }}>{os.summary}</span>}
+									<span style={{ color: '#94a3b8', fontSize: '0.6875rem' }}>[{os.linkedBy.join(', ')}]</span>
+								</div>
+							))}
+						</div>
+					</div>}
+
+					{flow.branches.length > 0 && <div className="mb-3">
+						<div className="section-label">Branches</div>
+						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
+							{flow.branches.map((b, i) => (
+								<div key={i} className="d-flex align-items-center gap-2 py-1">
+									<span className="flow-branch-badge">when={b.when}</span>
+									<code style={{ color: '#3b82f6' }}>{b.token}</code>
+									<span className="text-muted">at step {b.at}</span>
+									<code style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>{b.operationId}</code>
+								</div>
+							))}
+						</div>
+					</div>}
+
+					{altTokens.length > 0 && <div className="mb-3">
+						<div className="section-label">Alternatives</div>
+						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
+							{altTokens.map((t, i) => (
+								<div key={i} className="py-1">
+									<code style={{ color: '#3b82f6' }}>{t}</code>
+									<span className="text-muted ms-2">代替 {alternatives[t].length} 経路:</span>
+									{alternatives[t].map((o, oi) => <code key={oi} style={{ fontSize: '0.6875rem', color: '#64748b', marginLeft: 6 }}>{o}</code>)}
+								</div>
+							))}
+						</div>
+					</div>}
+
+					{flow.issues.length > 0 && <div className="alert alert-warning">
+						<div className="fw-semibold mb-1" style={{ fontSize: '0.8125rem' }}>Related flow issues ({flow.issues.length})</div>
+						{flow.issues.map((iss, i) => (
+							<div key={i} style={{ fontSize: '0.8125rem' }}>
+								{iss.gate && <span className="badge bg-danger me-2">{iss.gate}</span>}
+								{iss.operationId && <code className="me-2" style={{ fontSize: '0.6875rem' }}>{iss.operationId}</code>}
+								{iss.message || ''}
+							</div>
+						))}
+					</div>}
+				</>
+			) : null}
+
+			<details className="flow-details mt-4">
+				<summary>Token Registry ({Object.keys(registry).length})</summary>
+				{Object.keys(registry).length === 0 ? <div className="text-muted small mt-2">No registry defined.</div> : (
+					<table className="table table-sm table-hover mt-2 mb-0" style={{ fontSize: '0.8125rem' }}>
+						<thead className="table-light"><tr><th>Token</th><th style={{ width: 120 }}>Kind</th><th>Summary</th></tr></thead>
+						<tbody>{Object.entries(registry).map(([t, r]) => (
+							<tr key={t}>
+								<td><code className="text-primary">{t}</code></td>
+								<td><span className="badge bg-secondary">{r?.kind || (r?.ambient ? 'ambient' : 'unknown')}</span></td>
+								<td className="text-muted">{r?.summary || '-'}</td>
+							</tr>
+						))}</tbody>
+					</table>
+				)}
+			</details>
+
+			<details className="flow-details mt-3">
+				<summary>All Flow Issues ({issuesAll.length})</summary>
+				{issuesAll.length === 0 ? <div className="text-muted small mt-2">No issues.</div> : (
+					<div className="mt-2">
+						{issuesAll.map((iss, i) => (
+							<div key={i} className="d-flex align-items-center gap-2 py-1" style={{ fontSize: '0.8125rem' }}>
+								{iss.gate && <span className="badge bg-danger">{iss.gate}</span>}
+								{iss.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>{iss.operationId}</code>}
+								<span className="text-muted">{iss.message || ''}</span>
+							</div>
+						))}
+					</div>
+				)}
+			</details>
+		</div>
+	);
+}
+
 function parseHash() {
 	const hash = window.location.hash.slice(1);
 	if (!hash) return { page: 'endpoints', detail: null, query: {} };
@@ -1314,6 +1886,7 @@ function MainApp() {
 	const [envelope, setEnvelope] = useState(true);
 	const [configClass, setConfigClass] = useState(initial.page === 'config' ? (initial.detail || '') : '');
 	const [specLoading, setSpecLoading] = useState(!spec.paths);
+	const hasFlow = specHasFlow();
 
 	const updateHash = (p, detail = null, preserveQuery = true) => {
 		const query = preserveQuery ? parseHash().query : {};
@@ -1383,6 +1956,7 @@ function MainApp() {
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
 						{webhooks.length > 0 && <button className={`nav-link btn btn-link ${page === 'webhooks' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('webhooks')}>Webhooks</button>}
 						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
+						{hasFlow && <button className={`nav-link btn btn-link ${page === 'flow' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('flow')}>Flow</button>}
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
 						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
 					</div>
@@ -1408,6 +1982,7 @@ function MainApp() {
 					{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
 					{page === 'webhooks' && <WebhooksPage onSelect={handleSelectWebhook} />}
 					{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
+						{page === 'flow' && <FlowPage />}
 					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
 					{page === 'mail' && <MailPage />}
 					{page === 'mcp' && <McpPage />}
