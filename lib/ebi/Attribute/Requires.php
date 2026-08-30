@@ -3,7 +3,7 @@ namespace ebi\Attribute;
 
 /**
  * このエンドポイントを呼ぶ前に成立していなければならない状態トークンを宣言するAttribute（flow token / 前提）
- * registry に登録済みのトークンのみ有効（Dtが照合する）。
+ * token は #[Produces]（生産） か #[FlowToken]（ambient）で定義済みである必要がある（未定義は Dt が G1 で検知）。
  *
  * @example
  * #[Requires('order.code', bind:'code')]                    // 値トークン: この前提が #[Parameter(name:'code')] の値を供給
@@ -14,7 +14,7 @@ namespace ebi\Attribute;
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class Requires{
 	public function __construct(
-		/** 前提トークン（registryに存在必須） domain.entity[.qualifier] */
+		/** 前提トークン（#[Produces]/#[FlowToken] で定義済み） domain.entity[.qualifier] */
 		public string $token,
 		/**
 		 * この前提が値を供給する #[Parameter] 名（値トークン時）。

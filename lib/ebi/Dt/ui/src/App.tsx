@@ -446,22 +446,36 @@ function SeeLinks({ seeList, onNavigate, label = 'See:' }) {
 	);
 }
 
-function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null }) {
+function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = null }) {
 	const [showTry, setShowTry] = useState(false);
+	// 詳細を開く/隣接エンドポイントへ移動したら先頭へスクロール（全画面詳細のため）
+	useEffect(() => { window.scrollTo({ top: 0 }); }, [endpoint]);
 	const op = endpoint.op;
+	// x-flow の生産者/消費者索引（直前=前提を作る / 直後=効果を使う endpoint 導出用）
+	const flowNeighbors = useMemo(() => {
+		const producers = {}, consumers = {}, byId = {};
+		for (const [path, methods] of Object.entries(spec.paths || {})) {
+			for (const [m, o] of Object.entries(methods)) {
+				if (!o || !o.operationId) continue;
+				byId[o.operationId] = { path, method: m.toUpperCase(), op: o };
+				const fl = o['x-flow']; if (!fl) continue;
+				for (const p of (fl.produces || [])) if (p.token) (producers[p.token] = producers[p.token] || []).push(o.operationId);
+				for (const r of (fl.requires || [])) if (r.token) (consumers[r.token] = consumers[r.token] || []).push(o.operationId);
+			}
+		}
+		return { producers, consumers, byId };
+	}, [endpoint]);
 	const method = endpoint.method.toUpperCase();
 	const methodBg = { GET: '#0d6efd', POST: '#198754', PUT: '#fd7e14', DELETE: '#dc3545', PATCH: '#20c997' }[method] || '#6c757d';
 
 	return (
-		<div className="modal-backdrop-custom" onClick={onClose}>
-			<div className="modal-panel" onClick={e => e.stopPropagation()}>
+		<>
 				<div className="modal-panel-header">
 					<div className="d-flex align-items-center justify-content-between">
 						<div className="d-flex align-items-center gap-3">
 							<span className={`method-badge ${methodColors[method] || methodColors[endpoint.method]}`}>{method}</span>
 							<code style={{ fontSize: '1.1rem', color: '#1e293b' }}>{endpoint.path}</code>
 						</div>
-						<button type="button" className="btn-close" onClick={onClose} />
 					</div>
 					{(op.summary || op.description) && <div className="mt-2">
 						{op.summary && <div style={{ fontSize: '0.9375rem', color: '#334155', fontWeight: 500 }}>{op.summary}</div>}
@@ -478,6 +492,7 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 					{op['x-deprecated-see'] && <SeeLinks seeList={[op['x-deprecated-see']]} onNavigate={onNavigate} label="Deprecated, see:" />}
 				</div>
 				<div className="modal-panel-body">
+
 					{op.parameters && op.parameters.length > 0 && <section>
 						<div className="section-label">Parameters</div>
 						<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
@@ -528,7 +543,85 @@ function EndpointModal({ endpoint, schemas, envelope, onClose, onNavigate = null
 						<button className={`btn btn-sm px-4 ${showTry ? 'btn-outline-danger' : 'btn-dark'}`} onClick={() => setShowTry(!showTry)}>{showTry ? 'Close' : 'Try It'}</button>
 						{showTry && <div className="mt-3"><TryItPanel endpoint={endpoint} op={op} envelope={envelope} /></div>}
 					</section>
+					{op['x-flow'] && ((op['x-flow'].requires || []).length > 0 || (op['x-flow'].produces || []).length > 0) && (() => {
+						const reg = spec['x-flow-registry'] || {};
+						const fl = op['x-flow'];
+						const kindLabel = t => reg[t]?.kind === 'state' ? '状態' : reg[t]?.kind === 'value' ? '値' : reg[t]?.kind === 'ambient' ? '外部由来' : '';
+						const selfOid = op.operationId;
+						const uniq = a => [...new Set(a)];
+						const prev = uniq((fl.requires || []).flatMap(r => flowNeighbors.producers[r.token] || [])).filter(o => o !== selfOid && !flowNeighbors.byId[o]?.op.deprecated);
+						const next = uniq((fl.produces || []).flatMap(p => flowNeighbors.consumers[p.token] || [])).filter(o => o !== selfOid && !flowNeighbors.byId[o]?.op.deprecated);
+						return <section style={{ borderTop: '1px solid #e2e8f0', marginTop: '1.75rem', paddingTop: '1.25rem' }}>
+                        <div className="section-label">Flow <span className="fw-normal text-muted" style={{ fontSize: '0.75rem' }}>— このAPIの前後関係（呼び出しの文脈）</span></div>
+                        <div className="row g-4 mt-0" style={{ fontSize: '0.8125rem' }}>
+                          <div className="col-lg-6">
+                            <div className="text-muted fw-semibold mb-2" style={{ fontSize: '0.75rem' }}>前提 <span className="fw-normal">— 呼ぶ前に成立していること</span></div>
+                            {(fl.requires || []).length > 0 ? (
+                              <div className="d-flex flex-column gap-2">
+                                {fl.requires.map((r, i) => (
+                                  <div key={i} className={`flow-io-item${r.optional ? ' flow-io-optional' : ''}`}>
+                                    <span className="flow-io-dot" />
+                                    <div className="flow-io-body">
+                                      <div className="flow-io-summary">{reg[r.token]?.summary || r.token}</div>
+                                      <div className="flow-io-meta"><code>{r.token}</code>{kindLabel(r.token) && <span className="flow-io-kind">{kindLabel(r.token)}</span>}{r.optional && <span className="flow-io-tag">任意</span>}{r.bind && <span className="flow-io-tag">bind:{r.bind}</span>}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : <div className="text-muted">なし</div>}
+                          </div>
+                          <div className="col-lg-6">
+                            <div className="text-muted fw-semibold mb-2" style={{ fontSize: '0.75rem' }}>効果 <span className="fw-normal">— このAPIが成立させること</span></div>
+                            {(fl.produces || []).length > 0 ? (
+                              <div className="d-flex flex-column gap-2">
+                                {fl.produces.map((p, i) => (
+                                  <div key={i} className="flow-io-item flow-io-produce">
+                                    <span className="flow-io-dot" />
+                                    <div className="flow-io-body">
+                                      <div className="flow-io-summary">{reg[p.token]?.summary || p.token} <a href={`#flow=${encodeURIComponent(p.token)}`} className="flow-io-goto" title="このゴールへの全手順を Flow で見る">→ 手順</a></div>
+                                      <div className="flow-io-meta"><code>{p.token}</code>{kindLabel(p.token) && <span className="flow-io-kind">{kindLabel(p.token)}</span>}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : <div className="text-muted">なし</div>}
+                          </div>
+                        </div>
+                        {(prev.length > 0 || next.length > 0) && (
+                          <div className="row g-4 mt-1" style={{ fontSize: '0.8125rem' }}>
+                            <div className="col-lg-6">
+                              <div className="text-muted fw-semibold mb-2" style={{ fontSize: '0.75rem' }} title="この前提を作るAPI（先に呼ぶ）">← 直前に呼べるAPI</div>
+                              {prev.length > 0 ? <div className="list-group">{prev.map((oid, i) => { const ep = flowNeighbors.byId[oid]; return (
+                            <button key={i} className="list-group-item list-group-item-action d-flex align-items-center gap-2 flow-neighbor" onClick={() => onNavigate && onNavigate(ep)} disabled={!onNavigate}>
+                              <span className={`method-badge ${methodColors[ep?.method] || ''}`}>{ep?.method}</span>
+                              <code className="flow-neighbor-oid">{oid}</code>
+                              {ep?.op.summary && <span className="text-muted text-truncate ms-1" style={{ fontSize: '0.75rem' }}>{ep.op.summary}</span>}
+                            </button>); })}</div> : <div className="text-muted">—</div>}
+                            </div>
+                            <div className="col-lg-6">
+                              <div className="text-muted fw-semibold mb-2" style={{ fontSize: '0.75rem' }} title="この効果を使うAPI（後に呼べる）">直後に呼べるAPI →</div>
+                              {next.length > 0 ? <div className="list-group">{next.map((oid, i) => { const ep = flowNeighbors.byId[oid]; return (
+                            <button key={i} className="list-group-item list-group-item-action d-flex align-items-center gap-2 flow-neighbor" onClick={() => onNavigate && onNavigate(ep)} disabled={!onNavigate}>
+                              <span className={`method-badge ${methodColors[ep?.method] || ''}`}>{ep?.method}</span>
+                              <code className="flow-neighbor-oid">{oid}</code>
+                              {ep?.op.summary && <span className="text-muted text-truncate ms-1" style={{ fontSize: '0.75rem' }}>{ep.op.summary}</span>}
+                            </button>); })}</div> : <div className="text-muted">—</div>}
+                            </div>
+                          </div>
+                        )}
+                      </section>;
+					})()}
 				</div>
+		</>
+	);
+}
+
+function EndpointDetail(props) {
+	return (
+		<div>
+			<button className="btn btn-sm btn-link px-0 mb-3 text-decoration-none" onClick={props.onClose}>← 一覧に戻る</button>
+			<div className="card">
+				<EndpointContent {...props} />
 			</div>
 		</div>
 	);
@@ -1106,12 +1199,15 @@ function CodeBlock({ code }) {
 	);
 }
 
-// Mcp.php の tool_defs() と対応。ここは表示用の要約。
+// 取得失敗時のフォールバック（通常は MCP の tools/list を動的表示）。Mcp.php の tool_defs() と対応。
 const MCP_TOOLS = [
+	{ name: 'api_info', desc: 'API 概要（info / servers=base URL / securitySchemes=認証方式）。クライアント実装の起点' },
 	{ name: 'search_endpoints', desc: 'エンドポイントをキーワードで検索（path / summary / description / tag / operationId が対象）' },
 	{ name: 'get_endpoint', desc: 'operationId を指定してエンドポイント詳細（parameters / requestBody / responses と参照スキーマ）を取得' },
 	{ name: 'list_tags', desc: 'API のタグ（グループ）一覧を取得' },
 	{ name: 'get_schema', desc: 'components schema（モデル定義）を名前で取得' },
+	{ name: 'list_flows', desc: '達成できるゴール（状態/値トークン）の一覧＝ユースケース発見。goal を選び get_flow へ' },
+	{ name: 'get_flow', desc: 'goal（operationId か 状態トークン）への呼び出し順(plan)を Requires/Produces から導出' },
 ];
 
 function McpPage() {
@@ -1120,6 +1216,17 @@ function McpPage() {
 		try { return apiUrls.mcp ? new URL(apiUrls.mcp, window.location.href).href : ''; }
 		catch { return apiUrls.mcp || ''; }
 	}, []);
+
+	// MCP の tools/list を動的取得（ドリフト防止）。失敗時は静的 MCP_TOOLS にフォールバック。
+	const [tools, setTools] = useState(null);
+	useEffect(() => {
+		if (!mcpUrl) return;
+		fetch(mcpUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) })
+			.then(r => r.json())
+			.then(j => { const t = j?.result?.tools; if (Array.isArray(t) && t.length) setTools(t.map(x => ({ name: x.name, desc: x.description || '' }))); })
+			.catch(() => {});
+	}, [mcpUrl]);
+	const toolList = tools || MCP_TOOLS;
 
 	const claudeCodeCmd = `claude mcp add --transport http ${serverName} ${mcpUrl}`;
 	const jsonConfig = JSON.stringify({ mcpServers: { [serverName]: { type: 'http', url: mcpUrl } } }, null, 2);
@@ -1205,7 +1312,7 @@ function McpPage() {
 				<div className="card-header fw-semibold">利用できるツール</div>
 				<table className="table table-hover mb-0">
 					<thead className="table-light"><tr><th style={{ width: 200 }}>Tool</th><th>説明</th></tr></thead>
-					<tbody>{MCP_TOOLS.map(t => (
+					<tbody>{toolList.map(t => (
 						<tr key={t.name}>
 							<td><code className="text-primary">{t.name}</code></td>
 							<td className="text-muted small">{t.desc}</td>
@@ -1535,13 +1642,34 @@ function FlowPage() {
 
 	const initial = parseHash();
 	const [search, setSearch] = useState(initial.query.q || '');
-	const [goal, setGoal] = useState(initial.detail || tokenOptions[0] || opOptions[0] || '');
+	const [goal, setGoal] = useState(initial.detail || '');
+	const schemas = spec.components?.schemas || {};
+	// operationId → {path, method, op}（ノードクリックで endpoint 詳細を開く用）
+	const opEndpoints = useMemo(() => {
+		const m = {};
+		for (const [path, methods] of Object.entries(spec.paths || {})) {
+			for (const [method, op] of Object.entries(methods)) {
+				if (op && op.operationId) m[op.operationId] = { path, method: method.toUpperCase(), op };
+			}
+		}
+		return m;
+	}, []);
+	const openEp = oid => { const e = opEndpoints[oid]; if (e) window.location.hash = buildHash('endpoints', e.path, {}); };
 
 	useEffect(() => {
 		const { page } = parseHash();
 		if (page !== 'flow') return;
 		window.history.replaceState(null, '', '#' + buildHash('flow', goal, { q: search }));
 	}, [goal, search]);
+
+	// hash（戻る/進む・外部遷移）に goal を追従。goal 空＝ユースケース一覧。
+	useEffect(() => {
+		const h = () => { const p = parseHash(); if (p.page === 'flow') setGoal(p.detail || ''); };
+		window.addEventListener('hashchange', h);
+		return () => window.removeEventListener('hashchange', h);
+	}, []);
+	const gotoGoal = t => { window.location.hash = buildHash('flow', t, { q: search }); };
+	const backToList = () => { window.location.hash = buildHash('flow', null, { q: search }); };
 
 	const flow = useMemo(() => (goal ? computeFlow(goal, index) : null), [goal, index]);
 
@@ -1565,7 +1693,10 @@ function FlowPage() {
 		}
 		const layers = [];
 		for (const oid of plan) { const L = layerOf[oid]; (layers[L] || (layers[L] = [])).push(oid); }
-		const nodeW = 220, nodeH = 64, gapX = 40, gapY = 96, padX = 20, padY = 16;
+		// ノード幅を最長 operationId に合わせて動的化（名前が切れないように）
+		const maxLen = Math.max(10, ...plan.map(o => o.length));
+		// chrome 分（番号バッジ＋HTTPメソッドバッジ＋左右padding/gap）を見込んで operationId が省略されない幅にする
+		const nodeW = Math.min(560, Math.max(210, maxLen * 8 + 132)), nodeH = 46, gapX = 32, gapY = 92, padX = 14, padY = 14;
 		const colW = nodeW + gapX;
 		const maxRow = Math.max(1, ...layers.map(l => (l ? l.length : 0)));
 		const width = maxRow * colW + padX * 2;
@@ -1617,206 +1748,242 @@ function FlowPage() {
 	const alternatives = (flow && !flow.error) ? flow.alternatives : {};
 	const altTokens = Object.keys(alternatives || {});
 
+	// 冗長な summary を短い見出しに。末尾の注釈括弧だけ除去（インラインの「（再送）」等は残す）。
+	const shortLabel = t => {
+		let s = (registry[t] && registry[t].summary) || t;
+		s = s.replace(/[（(][^（）()]*[）)]\s*$/, '').trim(); // 末尾の (…) 注釈を除去
+		return s || t;
+	};
+
 	return (
 		<div>
-			<h1 className="h3 mb-1">Flow</h1>
-			<p className="text-muted mb-4" style={{ fontSize: '0.875rem' }}>
-				goal（状態トークン or operationId）に到達するための呼び出し順を、各エンドポイントの前提(Requires)と効果(Produces)から導出します。
-			</p>
-			<div className="row g-3 mb-4">
-				<div className="col-md-5">
-					<select className="form-select" value={goal} onChange={e => setGoal(e.target.value)}>
-						{filteredTokens.length > 0 && <optgroup label="Tokens">
-							{filteredTokens.map(t => <option key={'t-' + t} value={t}>{t}{registry[t]?.summary ? ` — ${registry[t].summary}` : ''}</option>)}
-						</optgroup>}
-						{filteredOps.length > 0 && <optgroup label="Operations">
-							{filteredOps.map(o => <option key={'o-' + o} value={o}>{o}{ops[o]?.summary ? ` — ${ops[o].summary}` : ''}</option>)}
-						</optgroup>}
-					</select>
-				</div>
-				<div className="col-md-7">
-					<input type="text" className="form-control" placeholder="Filter goal options..." value={search} onChange={e => setSearch(e.target.value)} />
-				</div>
+			<div className="mb-4">
+				<h1 className="h3">Flow</h1>
 			</div>
 
-			{flow && flow.error ? (
-				<div className="alert alert-warning">{flow.error}</div>
-			) : flow ? (
-				<>
-					<div className="d-flex align-items-center gap-2 mb-3" style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-						<span>goal: <code style={{ color: '#3b82f6' }}>{flow.goal}</code></span>
-						<span className="badge" style={{ background: '#e2e8f0', color: '#475569' }}>{flow.resolvedAs}</span>
-						<span>{flow.plan.length} steps</span>
-					</div>
-
-					{flow.inputs.length > 0 && <div className="mb-3">
-						<div className="section-label">Inputs</div>
-						<div className="d-flex flex-wrap gap-2 mt-1">
-							{flow.inputs.map((inp, i) => (
-								<span key={i} className={`flow-input-pill ${inp.reason === 'no-producer' ? 'flow-input-missing' : ''}`} title={`${inp.kind} / ${inp.reason}`}>
-									{inp.token}
-									<span className="flow-input-kind">{inp.reason === 'no-producer' ? 'no producer' : inp.kind}</span>
-								</span>
-							))}
-						</div>
-					</div>}
-
-					{flow.entryOptions && flow.entryOptions.length > 0 && <div className="mb-3">
-						<div className="section-label">Entry options（上流の入口候補・one-of）</div>
-						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
-							{flow.entryOptions.map((eo, i) => (
-								<div key={i} className="d-flex align-items-center gap-2 py-1 flex-wrap">
-									<span className="flow-input-pill">{eo.token}</span>
-									<span style={{ color: '#94a3b8' }}>←</span>
-									{(eo.chain || []).map((p, pi) => (
-										<span key={pi} className="d-inline-flex align-items-center gap-1" title={p.summary || ''}>
-											{pi > 0 && <span style={{ color: '#cbd5e1' }}>›</span>}
-											<span className={`method-badge ${methodColors[p.method] || ''}`} style={{ fontSize: '0.5625rem' }}>{p.method}</span>
-											<code style={{ fontSize: '0.75rem' }}>{p.operationId}</code>
-										</span>
-									))}
-									<span style={{ color: '#94a3b8' }}>→ {eo.forOperationId}</span>
-								</div>
-							))}
-						</div>
-					</div>}
-
-					{layout && layout.plan.length > 0 ? (
-						<div className="flow-graph mb-4">
-							<svg viewBox={`0 0 ${layout.width} ${layout.height}`} width="100%" style={{ maxWidth: layout.width, height: 'auto', display: 'block', margin: '0 auto' }}>
-								<defs>
-									<marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-										<path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
-									</marker>
-								</defs>
-								{layout.edges.map((e, i) => {
-									const a = layout.pos[e.from], b = layout.pos[e.to];
-									if (!a || !b) return null;
-									const x1 = a.cx, y1 = a.y + layout.nodeH;
-									const x2 = b.cx, y2 = b.y;
-									const dy = Math.max(24, (y2 - y1) / 2);
-									const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-									const isAlt = !!(alternatives && alternatives[e.token]);
-									const chipW = Math.min(180, 8 + e.token.length * 6.2);
-									return (
-										<g key={i}>
-											<path className="flow-edge" d={`M ${x1} ${y1} C ${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`} markerEnd="url(#flow-arrow)" />
-											<g transform={`translate(${mx - chipW / 2}, ${my - 9})`}>
-												<rect className={`flow-token-chip-bg ${isAlt ? 'flow-token-chip-alt' : ''}`} width={chipW} height="18" rx="9" />
-												<text className="flow-token-chip" x={chipW / 2} y="13" textAnchor="middle">{e.token}{isAlt ? ` ↔${alternatives[e.token].length}` : ''}</text>
-											</g>
-										</g>
-									);
-								})}
-								{layout.plan.map((oid, i) => {
-									const p = layout.pos[oid];
-									if (!p) return null;
-									const step = flow.plan[i];
-									const brs = branchesByOid[oid] || [];
-									return (
-										<foreignObject key={oid} x={p.x} y={p.y} width={layout.nodeW} height={layout.nodeH}>
-											<div className="flow-node" title={oid}>
-												<div className="flow-node-head">
-													<span className={`method-badge ${methodColors[step.method] || ''}`}>{step.method}</span>
-													<span className="flow-node-oid">{oid}</span>
-													{brs.map((b, bi) => <span key={bi} className="flow-branch-badge">when={b.when}</span>)}
-												</div>
-												{step.summary && <div className="flow-node-summary">{step.summary}</div>}
-											</div>
-										</foreignObject>
-									);
-								})}
-							</svg>
-						</div>
-					) : (
-						<div className="text-muted mb-4">No steps required — goal is directly satisfiable.</div>
-					)}
-
-					{flow.optionalSteps && flow.optionalSteps.length > 0 && <div className="mb-3">
-						<div className="section-label">Optional steps（本筋に差し込める任意の中間段）</div>
-						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
-							{flow.optionalSteps.map((os, i) => (
-								<div key={i} className="d-flex align-items-center gap-2 py-1 flex-wrap">
-									<span className="badge" style={{ background: '#e2e8f0', color: '#475569' }}>after step {os.afterStep}</span>
-									<span className={`method-badge ${methodColors[os.method] || ''}`} style={{ fontSize: '0.5625rem' }}>{os.method}</span>
-									<code style={{ fontSize: '0.75rem' }}>{os.operationId}</code>
-									{os.summary && <span style={{ color: '#64748b' }}>{os.summary}</span>}
-									<span style={{ color: '#94a3b8', fontSize: '0.6875rem' }}>[{os.linkedBy.join(', ')}]</span>
-								</div>
-							))}
-						</div>
-					</div>}
-
-					{flow.branches.length > 0 && <div className="mb-3">
-						<div className="section-label">Branches</div>
-						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
-							{flow.branches.map((b, i) => (
-								<div key={i} className="d-flex align-items-center gap-2 py-1">
-									<span className="flow-branch-badge">when={b.when}</span>
-									<code style={{ color: '#3b82f6' }}>{b.token}</code>
-									<span className="text-muted">at step {b.at}</span>
-									<code style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>{b.operationId}</code>
-								</div>
-							))}
-						</div>
-					</div>}
-
-					{altTokens.length > 0 && <div className="mb-3">
-						<div className="section-label">Alternatives</div>
-						<div className="mt-1" style={{ fontSize: '0.8125rem' }}>
-							{altTokens.map((t, i) => (
-								<div key={i} className="py-1">
-									<code style={{ color: '#3b82f6' }}>{t}</code>
-									<span className="text-muted ms-2">代替 {alternatives[t].length} 経路:</span>
-									{alternatives[t].map((o, oi) => <code key={oi} style={{ fontSize: '0.6875rem', color: '#64748b', marginLeft: 6 }}>{o}</code>)}
-								</div>
-							))}
-						</div>
-					</div>}
-
-					{flow.issues.length > 0 && <div className="alert alert-warning">
-						<div className="fw-semibold mb-1" style={{ fontSize: '0.8125rem' }}>Related flow issues ({flow.issues.length})</div>
-						{flow.issues.map((iss, i) => (
-							<div key={i} style={{ fontSize: '0.8125rem' }}>
-								{iss.gate && <span className="badge bg-danger me-2">{iss.gate}</span>}
-								{iss.operationId && <code className="me-2" style={{ fontSize: '0.6875rem' }}>{iss.operationId}</code>}
-								{iss.message || ''}
-							</div>
-						))}
-					</div>}
-				</>
+			{!goal ? (
+              <>
+                <div className="mb-4">
+                  <input type="text" className="form-control" placeholder="ユースケースを絞り込む…" value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+                {filteredTokens.length === 0 ? <div className="text-muted">該当するユースケースがありません。</div> : (() => {
+                  const tagList = (spec.tags || []).filter(x => x.name !== 'Dt');
+                  const tagLabel = name => tagList.find(x => x.name === name)?.['x-displayName'] || name;
+                  const tagOrder = name => { const i = tagList.findIndex(x => x.name === name); return i < 0 ? 999 : i; };
+                  const tagOf = t => { const ps = Object.keys(producers[t] || {}); const p = ps.find(o => !opEndpoints[o]?.op.deprecated) || ps[0]; return (p && opEndpoints[p]?.op.tags?.[0]) || 'Other'; };
+                  const grouped = {};
+                  filteredTokens.forEach(t => { const g = tagOf(t); (grouped[g] || (grouped[g] = [])).push(t); });
+                  return Object.keys(grouped).sort((a, b) => tagOrder(a) - tagOrder(b) || (a < b ? -1 : 1)).map(g => (
+                    <div key={g} className="card mb-4">
+                      <div className="card-header fw-semibold">{tagLabel(g)}</div>
+                      <div className="list-group list-group-flush">
+                        {grouped[g].map(t => (
+                          <button key={t} className="list-group-item list-group-item-action d-flex align-items-center gap-3 flow-usecase-row" onClick={() => gotoGoal(t)}>
+                            <span className={`flow-uc-kind flow-uc-${registry[t]?.kind || 'value'}`}>{registry[t]?.kind === 'state' ? '状態' : '値'}</span>
+                            <span className="flex-grow-1 fw-medium" style={{ fontSize: '0.875rem' }}>{shortLabel(t)}</span>
+                            <code className="text-muted small">{t}</code>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </>
+            ) : flow && flow.error ? (
+              <div className="alert alert-warning">
+                <a href="#" onClick={e => { e.preventDefault(); backToList(); }} className="d-inline-block mb-2 small text-decoration-none">← ユースケース一覧</a>
+                <div>{flow.error}</div>
+              </div>
+            ) : flow ? (
+              <>
+              <a href="#" onClick={e => { e.preventDefault(); backToList(); }} className="d-inline-block mb-2 small text-decoration-none">← ユースケース一覧</a>
+              <div className="card">
+                <div className="modal-panel-header">
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="badge" style={{ background: '#e2e8f0', color: '#475569' }}>{flow.resolvedAs === 'token' ? '状態/値' : 'API'}</span>
+                    <span className="fw-semibold" style={{ fontSize: '1.1rem', color: '#1e293b' }}>{shortLabel(flow.goal)}</span>
+                  </div>
+                  {registry[flow.goal]?.summary && registry[flow.goal].summary !== shortLabel(flow.goal) && <div className="text-muted" style={{ fontSize: '0.8125rem', marginTop: 4 }}>{registry[flow.goal].summary}</div>}
+                  <div className="d-flex align-items-center gap-2 mt-2">
+                    <code style={{ color: '#3b82f6', fontSize: '0.8125rem' }}>{flow.goal}</code>
+                    <span className="text-muted small ms-auto">全 {flow.plan.length} ステップ</span>
+                  </div>
+                </div>
+                <div className="modal-panel-body">
+                  {flow.inputs.length > 0 && <section>
+                    <div className="section-label">前提</div>
+                    <div className="d-flex flex-column gap-2 mt-2">
+                      {flow.inputs.map((inp, i) => (
+                        <div key={i} className={`flow-io-item${inp.reason === 'no-producer' ? ' flow-io-warn' : ''}`}>
+                          <span className="flow-io-dot" />
+                          <div className="flow-io-body">
+                            <div className="flow-io-summary">{registry[inp.token]?.summary || inp.token}</div>
+                            <div className="flow-io-meta"><code>{inp.token}</code><span className={inp.reason === 'no-producer' ? 'flow-io-tag' : 'flow-io-kind'}>{inp.reason === 'no-producer' ? '生産者なし' : (inp.kind === 'state' ? '状態' : inp.kind === 'value' ? '値' : '外部由来')}</span></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>}
+                  {flow.entryOptions && flow.entryOptions.length > 0 && <section>
+                    <div className="section-label">始め方（入口）<span className="text-muted fw-normal small"> — いずれか1つ</span></div>
+                    <div className="list-group mt-2">
+                      {flow.entryOptions.map((eo, i) => (
+                        <div key={i} className="list-group-item">
+                          <div className="mb-2" style={{ fontSize: '0.8125rem' }}><span className="fw-medium">{registry[eo.token]?.summary || eo.token}</span> <code className="text-muted" style={{ fontSize: '0.6875rem' }}>{eo.token}</code></div>
+                          <div className="d-flex flex-column gap-1">
+                            {(eo.chain || []).map((p, pi) => (
+                              <button key={pi} className="d-flex align-items-center gap-2 flow-neighbor border rounded px-2 py-1 bg-white text-start" onClick={() => openEp(p.operationId)} title={p.summary || ''}>
+                                <span className="flow-opt-after">{pi + 1}</span>
+                                <span className={`method-badge ${methodColors[p.method] || ''}`}>{p.method}</span>
+                                <code className="flow-neighbor-oid">{p.operationId}</code>
+                                {p.summary && <span className="text-muted small text-truncate ms-1">{p.summary}</span>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>}
+                  <section>
+                    <div className="section-label">手順 <span className="text-muted fw-normal small">— ノードをクリックでAPI詳細</span></div>
+                    <div className="mt-2">
+                    {layout && layout.plan.length > 0 ? (
+                      <div className="flow-graph">
+                        <svg viewBox={`0 0 ${layout.width} ${layout.height}`} width="100%" style={{ maxWidth: layout.width, height: 'auto', display: 'block' }}>
+                          <defs>
+                            <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1" />
+                            </marker>
+                          </defs>
+                          {layout.edges.map((e, i) => {
+                            const a = layout.pos[e.from], b = layout.pos[e.to];
+                            if (!a || !b) return null;
+                            const x1 = a.cx, y1 = a.y + layout.nodeH;
+                            const x2 = b.cx, y2 = b.y;
+                            const dy = Math.max(20, (y2 - y1) / 2);
+                            const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+                            const isAlt = !!(alternatives && alternatives[e.token]);
+                            const full = registry[e.token]?.summary || e.token;
+                            const labelTxt = full + (isAlt ? ` ↔${alternatives[e.token].length}` : '');
+                            const perLine = 20, maxW = 260;
+                            const lines = Math.max(1, Math.ceil(labelTxt.length / perLine));
+                            const chipW = labelTxt.length <= perLine ? (18 + labelTxt.length * 12) : maxW;
+                            const chipH = lines * 16 + 8;
+                            return (
+                              <g key={i}>
+                                <path className="flow-edge" d={`M ${x1} ${y1} C ${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`} markerEnd="url(#flow-arrow)" />
+                                <foreignObject x={mx - chipW / 2} y={my - chipH / 2} width={chipW} height={chipH}>
+                                  <div className={`flow-edge-label ${isAlt ? 'flow-edge-label-alt' : ''}`} title={full}>{labelTxt}</div>
+                                </foreignObject>
+                              </g>
+                            );
+                          })}
+                          {layout.plan.map((oid, i) => {
+                            const p = layout.pos[oid];
+                            if (!p) return null;
+                            const step = flow.plan[i];
+                            const brs = branchesByOid[oid] || [];
+                            return (
+                              <foreignObject key={oid} x={p.x} y={p.y} width={layout.nodeW} height={layout.nodeH}>
+                                <div className="flow-node" onClick={() => openEp(oid)} title={step.summary || oid}>
+                                  <span className="flow-node-num">{step.step}</span>
+                                  <span className={`method-badge ${methodColors[step.method] || ''}`}>{step.method}</span>
+                                  <span className="flow-node-oid">{oid}</span>
+                                  {brs.map((b, bi) => <span key={bi} className="flow-branch-badge">分岐:{b.when}</span>)}
+                                </div>
+                              </foreignObject>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="text-muted">追加の呼び出しは不要（直接満たせます）。</div>
+                    )}
+                    </div>
+                  </section>
+                  {flow.optionalSteps && flow.optionalSteps.length > 0 && <section>
+                    <div className="section-label">任意で挟める操作<span className="text-muted fw-normal small"> — クリックで詳細</span></div>
+                    <div className="list-group mt-2">
+                      {flow.optionalSteps.map((os, i) => (
+                        <button key={i} className="list-group-item list-group-item-action d-flex align-items-center gap-2 flow-opt-row" onClick={() => openEp(os.operationId)}>
+                          <span className="flow-opt-after">手順{os.afterStep}後</span>
+                          <span className={`method-badge ${methodColors[os.method] || ''}`}>{os.method}</span>
+                          <code className="flow-opt-oid">{os.operationId}</code>
+                          {os.summary && <span className="text-muted small text-truncate ms-1">{os.summary}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </section>}
+                  {flow.branches.length > 0 && <section>
+                    <div className="section-label">分岐</div>
+                    <div className="list-group mt-2">
+                      {flow.branches.map((b, i) => (
+                        <div key={i} className="list-group-item d-flex align-items-center gap-2" style={{ fontSize: '0.8125rem' }}>
+                          <span className="flow-branch-badge">{b.when}</span>
+                          <span className="text-muted">手順{b.at} で分岐 →</span>
+                          <code style={{ color: '#3b82f6' }}>{registry[b.token]?.summary || b.token}</code>
+                        </div>
+                      ))}
+                    </div>
+                  </section>}
+                  {altTokens.length > 0 && <section>
+                    <div className="section-label">代替経路</div>
+                    <div className="list-group mt-2">
+                      {altTokens.map((t, i) => (
+                        <div key={i} className="list-group-item">
+                          <div className="mb-2" style={{ fontSize: '0.8125rem' }}><span className="fw-medium" style={{ color: '#3b82f6' }}>{registry[t]?.summary || t}</span> <span className="text-muted small">を成立させる別の手段</span></div>
+                          <div className="d-flex flex-column gap-1">
+                            {alternatives[t].map((o, oi) => { const ep = opEndpoints[o]; return (
+                              <button key={oi} className="d-flex align-items-center gap-2 flow-neighbor border rounded px-2 py-1 bg-white text-start" onClick={() => openEp(o)} title={ep?.op.summary || ''}>
+                                <span className={`method-badge ${methodColors[ep?.method || 'GET'] || ''}`}>{ep?.method || ''}</span>
+                                <code className="flow-neighbor-oid">{o}</code>
+                                {ep?.op.summary && <span className="text-muted small text-truncate ms-1">{ep.op.summary}</span>}
+                              </button>); })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>}
+                  {flow.resolvedAs === 'token' && (() => {
+                    const consumers = Object.keys(ops).filter(oid => !flow.needed[oid] && !opEndpoints[oid]?.op.deprecated && (ops[oid].requiresRaw || []).some(r => r.token === flow.goal)).sort();
+                    if (!consumers.length) return null;
+                    return <section>
+                      <div className="section-label">この後に呼べる操作 <span className="text-muted fw-normal small">— この状態/値を前提にするAPI</span></div>
+                      <div className="list-group mt-2">
+                        {consumers.map(oid => { const ep = opEndpoints[oid]; return (
+                          <button key={oid} className="list-group-item list-group-item-action d-flex align-items-center gap-2 flow-neighbor" onClick={() => openEp(oid)} title={ep?.op.summary || ''}>
+                            <span className={`method-badge ${methodColors[ep?.method] || ''}`}>{ep?.method}</span>
+                            <code className="flow-neighbor-oid">{oid}</code>
+                            {ep?.op.summary && <span className="text-muted small text-truncate ms-1">{ep.op.summary}</span>}
+                          </button>); })}
+                      </div>
+                    </section>;
+                  })()}
+                  {flow.issues.length > 0 && <div className="alert alert-warning mt-3">
+                    <div className="fw-semibold mb-1" style={{ fontSize: '0.8125rem' }}>この経路に関係する宣言の不整合（{flow.issues.length}）</div>
+                    {flow.issues.map((iss, i) => (
+                      <div key={i} style={{ fontSize: '0.8125rem' }}>
+                        {iss.gate && <span className="badge bg-danger me-2">{iss.gate}</span>}
+                        {iss.operationId && <code className="me-2" style={{ fontSize: '0.6875rem' }}>{iss.operationId}</code>}
+                        {iss.message || ''}
+                      </div>
+                    ))}
+                  </div>}
+                </div>
+              </div>
+            </>
 			) : null}
 
-			<details className="flow-details mt-4">
-				<summary>Token Registry ({Object.keys(registry).length})</summary>
-				{Object.keys(registry).length === 0 ? <div className="text-muted small mt-2">No registry defined.</div> : (
-					<table className="table table-sm table-hover mt-2 mb-0" style={{ fontSize: '0.8125rem' }}>
-						<thead className="table-light"><tr><th>Token</th><th style={{ width: 120 }}>Kind</th><th>Summary</th></tr></thead>
-						<tbody>{Object.entries(registry).map(([t, r]) => (
-							<tr key={t}>
-								<td><code className="text-primary">{t}</code></td>
-								<td><span className="badge bg-secondary">{r?.kind || (r?.ambient ? 'ambient' : 'unknown')}</span></td>
-								<td className="text-muted">{r?.summary || '-'}</td>
-							</tr>
-						))}</tbody>
-					</table>
-				)}
-			</details>
-
-			<details className="flow-details mt-3">
-				<summary>All Flow Issues ({issuesAll.length})</summary>
-				{issuesAll.length === 0 ? <div className="text-muted small mt-2">No issues.</div> : (
-					<div className="mt-2">
-						{issuesAll.map((iss, i) => (
-							<div key={i} className="d-flex align-items-center gap-2 py-1" style={{ fontSize: '0.8125rem' }}>
-								{iss.gate && <span className="badge bg-danger">{iss.gate}</span>}
-								{iss.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>{iss.operationId}</code>}
-								<span className="text-muted">{iss.message || ''}</span>
-							</div>
-						))}
-					</div>
-				)}
-			</details>
+			{issuesAll.length > 0 && <div className="alert alert-danger mt-4">
+              <div className="fw-semibold mb-2" style={{ fontSize: '0.875rem' }}>宣言の整合性チェック — {issuesAll.length} 件の不整合（#[Requires]/#[Produces] が語彙と不一致。G1..G6）</div>
+              {issuesAll.map((iss, i) => (
+                <div key={i} className="d-flex align-items-center gap-2 py-1" style={{ fontSize: '0.8125rem' }}>
+                  {iss.gate && <span className="badge bg-danger">{iss.gate}</span>}
+                  {iss.operationId && <code style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>{iss.operationId}</code>}
+                  <span>{iss.message || ''}</span>
+                </div>
+              ))}
+            </div>}
 		</div>
 	);
 }
@@ -1888,21 +2055,23 @@ function MainApp() {
 	const [specLoading, setSpecLoading] = useState(!spec.paths);
 	const hasFlow = specHasFlow();
 
-	const updateHash = (p, detail = null, preserveQuery = true) => {
+	// 全ナビゲーションは location.hash を単一の真実の源にする（hashchange → applyHashState が状態へ反映）。
+	// これでブラウザの戻る/進むが 一覧↔詳細↔隣接↔フロー で一貫して機能する。
+	const navHash = (p, detail = null, preserveQuery = true) => {
 		const query = preserveQuery ? parseHash().query : {};
-		window.history.replaceState(null, '', '#' + buildHash(p, detail, query));
+		window.location.hash = buildHash(p, detail, query);
 	};
 
-	const handlePageChange = (p) => { setPage(p); setSelected(null); setSelectedSchema(null); setConfigClass(''); updateHash(p, null, false); };
+	const handlePageChange = (p) => { navHash(p, null, false); };
 
-	const handleSelectEndpoint = (e) => { setSelected(e); updateHash('endpoints', e.path); };
-	const handleCloseEndpoint = () => { setSelected(null); updateHash('endpoints'); };
+	const handleSelectEndpoint = (e) => { navHash('endpoints', e.path); };
+	const handleCloseEndpoint = () => { navHash('endpoints'); };
 
-	const handleSelectWebhook = (w) => { setSelected(w); updateHash('webhooks', w.path); };
-	const handleCloseWebhook = () => { setSelected(null); updateHash('webhooks'); };
+	const handleSelectWebhook = (w) => { navHash('webhooks', w.path); };
+	const handleCloseWebhook = () => { navHash('webhooks'); };
 
-	const handleSelectSchema = (name, schema) => { setSelectedSchema({ name, schema }); updateHash('schemas', name); };
-	const handleCloseSchema = () => { setSelectedSchema(null); updateHash('schemas'); };
+	const handleSelectSchema = (name) => { navHash('schemas', name); };
+	const handleCloseSchema = () => { navHash('schemas'); };
 
 	const applyHashState = useCallback(() => {
 		const { page: p, detail: d } = parseHash();
@@ -1922,6 +2091,9 @@ function MainApp() {
 		} else if (p === 'config') {
 			setConfigClass(d || '');
 		}
+		// 詳細を持たないページ状態では選択をクリア（全画面詳細→一覧の戻りを hash と同期）
+		if (!((p === 'endpoints' || p === 'webhooks') && d)) setSelected(null);
+		if (!(p === 'schemas' && d)) setSelectedSchema(null);
 	}, []);
 
 	useEffect(() => {
@@ -1955,8 +2127,8 @@ function MainApp() {
 					<div className="navbar-nav me-auto flex-row gap-2">
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
 						{webhooks.length > 0 && <button className={`nav-link btn btn-link ${page === 'webhooks' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('webhooks')}>Webhooks</button>}
-						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						{hasFlow && <button className={`nav-link btn btn-link ${page === 'flow' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('flow')}>Flow</button>}
+						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
 						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
 					</div>
@@ -1979,8 +2151,12 @@ function MainApp() {
 				{specLoading ? (
 					<div className="text-center py-5"><div className="spinner-border text-primary" /><div className="text-muted mt-2">Loading...</div></div>
 				) : (<>
-					{page === 'endpoints' && <Endpoints onSelect={handleSelectEndpoint} />}
-					{page === 'webhooks' && <WebhooksPage onSelect={handleSelectWebhook} />}
+					{page === 'endpoints' && (selected
+						? <EndpointDetail endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />
+						: <Endpoints onSelect={handleSelectEndpoint} />)}
+					{page === 'webhooks' && (selected
+						? <EndpointDetail endpoint={selected} schemas={spec.components?.schemas || {}} envelope={false} onClose={handleCloseWebhook} onNavigate={handleSelectWebhook} />
+						: <WebhooksPage onSelect={handleSelectWebhook} />)}
 					{page === 'schemas' && <Schemas selected={selectedSchema} onSelect={handleSelectSchema} onClose={handleCloseSchema} />}
 						{page === 'flow' && <FlowPage />}
 					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
@@ -1988,10 +2164,6 @@ function MainApp() {
 					{page === 'mcp' && <McpPage />}
 				</>)}
 			</main>
-			{selected && (page === 'webhooks'
-				? <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={false} onClose={handleCloseWebhook} onNavigate={handleSelectWebhook} />
-				: <EndpointModal endpoint={selected} schemas={spec.components?.schemas || {}} envelope={envelope} onClose={handleCloseEndpoint} onNavigate={handleSelectEndpoint} />
-			)}
 		</div>
 	);
 }

@@ -110,6 +110,11 @@ class Mcp{
 	private function tool_defs(): array{
 		return [
 			[
+				'name' => 'api_info',
+				'description' => 'API の概要を返す＝クライアント実装の起点。info(title/version/description)・servers(base URL)・securitySchemes(認証方式の定義)・security(グローバル既定)。各エンドポイントの security 参照名はここの securitySchemes で解決する。',
+				'inputSchema' => ['type' => 'object', 'properties' => new \stdClass()],
+			],
+			[
 				'name' => 'search_endpoints',
 				'description' => 'アプリのAPIエンドポイントをキーワードで検索する（path/summary/description/tag/operationIdが対象）。結果は operationId・method・path・summary の一覧。',
 				'inputSchema' => [
@@ -150,12 +155,17 @@ class Mcp{
 				],
 			],
 			[
+				'name' => 'list_flows',
+				'description' => '達成できるゴール（produce される状態/値トークン）の一覧を返す＝ユースケース発見用。各要素は goal(トークン名)・kind・summary・tag・producedBy(その状態/値を成立させるAPI)。ここから goal を選び get_flow に渡すと到達手順(plan)が得られる。',
+				'inputSchema' => ['type' => 'object', 'properties' => new \stdClass()],
+			],
+			[
 				'name' => 'get_flow',
 				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[Requires])と効果(#[Produces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[After]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
-						'goal' => ['type' => 'string', 'description' => 'ゴール。operationId（例: bulkorder_cancel）か、成立させたい状態トークン（例: order.canceled）'],
+						'goal' => ['type' => 'string', 'description' => 'ゴール。operationId か、成立させたい状態トークン（x-flow-registry のトークン名）'],
 					],
 					'required' => ['goal'],
 				],
@@ -165,6 +175,8 @@ class Mcp{
 
 	private function call_tool(string $name, array $args){
 		switch($name){
+			case 'api_info':
+				return $this->tool_json($this->api_info());
 			case 'search_endpoints':
 				return $this->tool_json($this->search_endpoints($args));
 			case 'get_endpoint':
@@ -173,6 +185,8 @@ class Mcp{
 				return $this->tool_json($this->list_tags());
 			case 'get_schema':
 				return $this->get_schema((string)($args['name'] ?? ''));
+			case 'list_flows':
+				return $this->tool_json($this->list_flows());
 			case 'get_flow':
 				return $this->get_flow(is_array($args) ? $args : []);
 			default:
@@ -199,6 +213,19 @@ class Mcp{
 			}
 		}
 		return $ops;
+	}
+
+	/**
+	 * API 概要（info・servers・securitySchemes・グローバル security）を返す＝クライアント実装の起点。
+	 */
+	private function api_info(): array{
+		$spec = $this->spec();
+		return array_filter([
+			'info' => $spec['info'] ?? null,
+			'servers' => $spec['servers'] ?? null,
+			'security' => $spec['security'] ?? null,
+			'securitySchemes' => $spec['components']['securitySchemes'] ?? null,
+		], fn($v) => $v !== null && $v !== []);
 	}
 
 	private function search_endpoints(array $args): array{
@@ -336,6 +363,62 @@ class Mcp{
 	/**
 	 * goal（operationId か token）へ到達する呼び出し順を x-flow から導出する。
 	 */
+	/**
+	 * 達成できるゴール（produce される状態/値トークン）の一覧を返す。get_flow の入口＝ユースケース発見用。
+	 */
+	private function list_flows(): array{
+		$spec = $this->spec();
+		$registry = $spec['x-flow-registry'] ?? [];
+		$producers = [];
+		foreach(($spec['paths'] ?? []) as $path => $methods){
+			foreach($methods as $method => $op){
+				$flow = $op['x-flow'] ?? null;
+				if(empty($flow['produces'])){
+					continue;
+				}
+				$oid = $op['operationId'] ?? (strtoupper($method).' '.$path);
+				$info = [
+					'operationId' => $oid,
+					'method' => strtoupper($method),
+					'path' => $path,
+					'tag' => $op['tags'][0] ?? null,
+					'deprecated' => !empty($op['deprecated']),
+				];
+				foreach($flow['produces'] as $p){
+					if(isset($p['token'])){
+						$producers[$p['token']][$oid] = $info;
+					}
+				}
+			}
+		}
+		$flows = [];
+		foreach($producers as $token => $by){
+			// active（非 deprecated）の生産者を優先、無ければ全件
+			$active = array_filter($by, fn($o) => empty($o['deprecated']));
+			$use = !empty($active) ? $active : $by;
+			$tag = null;
+			foreach($use as $o){
+				if($o['tag'] !== null){
+					$tag = $o['tag'];
+					break;
+				}
+			}
+			$flows[] = array_filter([
+				'goal' => $token,
+				'kind' => $registry[$token]['kind'] ?? null,
+				'summary' => $registry[$token]['summary'] ?? null,
+				'tag' => $tag,
+				'producedBy' => array_values(array_map(fn($o) => [
+					'operationId' => $o['operationId'],
+					'method' => $o['method'],
+					'path' => $o['path'],
+				], $use)),
+			], fn($v) => $v !== null && $v !== []);
+		}
+		usort($flows, fn($a, $b) => [$a['tag'] ?? '~', $a['goal']] <=> [$b['tag'] ?? '~', $b['goal']]);
+		return ['flows' => $flows];
+	}
+
 	private function get_flow(array $args){
 		$goal = trim((string)($args['goal'] ?? ''));
 		if($goal === ''){

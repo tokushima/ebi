@@ -43,6 +43,8 @@ class OpenApi extends \ebi\app\Request{
 	private array $webhooks = [];
 	private array $all_tags = [];
 	private array $skipped = [];
+	/** #[FlowToken] で宣言された、生産者を持たない ambient トークンの定義 token=>def */
+	private array $flow_token_decls = [];
 	private bool $auto_throws = true;
 
 	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
@@ -324,41 +326,26 @@ class OpenApi extends \ebi\app\Request{
 			$spec['x-skipped'] = $this->skipped;
 		}
 
-		// flow token: registry照合(G1..G6)と registry/issue のトップレベル露出（registry未設定時は無効）。
+		// flow token: 属性から辞書を構築し G1..G6 を検証、registry/issue をトップレベル露出（flow宣言が無ければ無効）。
 		$this->flow_finalize($spec);
 
 		return $spec;
 	}
 
 	/**
-	 * flow token registry を Conf から読む（未設定/不在時は null=機能オフ）。
-	 * Conf キー: `ebi\Dt\OpenApi@flow_registry`（JSONファイルの絶対パス）
-	 */
-	private function load_flow_registry(): ?array{
-		$path = \ebi\Conf::get('ebi\Dt\OpenApi@flow_registry');
-		if(empty($path) || !is_file($path)){
-			return null;
-		}
-		$json = json_decode((string)file_get_contents($path), true);
-		return is_array($json) ? $json : null;
-	}
-
-	/**
-	 * 各operationの x-flow を registry と突き合わせ、G1..G6 を検証して
-	 * `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
+	 * 各operationの x-flow から token 辞書を構築（#[Produces] が定義、#[FlowToken] が生産者なし語彙）し、
+	 * G1..G6 を検証して `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
 	 */
 	private function flow_finalize(array &$spec): void{
-		$registry = $this->load_flow_registry();
-		if($registry === null){
-			return;
-		}
-		$tokens = $registry['tokens'] ?? [];
 		$schemas = $spec['components']['schemas'] ?? [];
 
-		// operationId => operation（x-flowを持つもの）と 生産者索引 token=>[operationId]、全operationId集合を作る
+		// operationId => operation（x-flowを持つもの）／生産者索引 token=>[operationId]／全operationId集合／
+		// トークン辞書($tokens)を構築する。辞書は「生産箇所(#[Produces])が自らを定義」する原則で、
+		// produces から kind/summary を集約する（kind は明示 > via推論: response:*→value / それ以外→state。先勝ち）。
 		$ops = [];
 		$producers = [];
 		$op_ids = [];
+		$tokens = [];
 		foreach(($spec['paths'] ?? []) as $path => $methods){
 			foreach($methods as $method => $op){
 				$oid = $op['operationId'] ?? ($method.' '.$path);
@@ -368,9 +355,39 @@ class OpenApi extends \ebi\app\Request{
 				}
 				$ops[$oid] = $op;
 				foreach(($op['x-flow']['produces'] ?? []) as $p){
-					if(isset($p['token'])){
-						$producers[$p['token']][$oid] = true;
+					if(!isset($p['token'])){
+						continue;
 					}
+					$t = $p['token'];
+					$producers[$t][$oid] = true;
+					if(!isset($tokens[$t])){
+						$via = (string)($p['via'] ?? '');
+						$tokens[$t] = array_filter([
+							'kind' => $p['kind'] ?? (strncmp($via, 'response:', 9) === 0 ? 'value' : 'state'),
+							'summary' => $p['summary'] ?? null,
+						], fn($v) => $v !== null);
+					}
+				}
+			}
+		}
+
+		// 生産者を持たない ambient トークン（#[FlowToken]）を辞書へマージ
+		foreach($this->flow_token_decls as $t => $def){
+			if(!isset($tokens[$t])){
+				$tokens[$t] = $def;
+			}
+		}
+
+		// flow の宣言が一切無ければ機能オフ（何もしない）
+		if(empty($ops) && empty($this->flow_token_decls)){
+			return;
+		}
+
+		// session.user は #[Login] から自動前提化される組込トークン。注釈は不要で、参照時に辞書へ補完する。
+		foreach($ops as $op){
+			foreach(($op['x-flow']['requires'] ?? []) as $r){
+				if(($r['token'] ?? null) === 'session.user' && !isset($tokens['session.user'])){
+					$tokens['session.user'] = ['kind' => 'state', 'ambient' => true, 'summary' => 'ログイン済みセッション'];
 				}
 			}
 		}
@@ -392,7 +409,7 @@ class OpenApi extends \ebi\app\Request{
 				$req_tokens[$t] = true;
 
 				if(!isset($tokens[$t])){                                    // G1
-					$add('G1', $oid, "requires token '{$t}' が registry に未登録");
+					$add('G1', $oid, "requires token '{$t}' が未定義（生産する #[Produces] も #[FlowToken] 宣言も無い。typoの可能性）");
 					continue;
 				}
 				$is_ambient = !empty($tokens[$t]['ambient']) || (($tokens[$t]['kind'] ?? '') === 'ambient');
@@ -410,9 +427,7 @@ class OpenApi extends \ebi\app\Request{
 				if($t === null){
 					continue;
 				}
-				if(!isset($tokens[$t])){                                    // G1
-					$add('G1', $oid, "produces token '{$t}' が registry に未登録");
-				}
+				// produces トークンは生産箇所が自らの定義なので G1（未定義）は起き得ない。
 				$via = $p['via'] ?? null;
 				if(is_string($via) && strncmp($via, 'response:', 9) === 0){  // G3
 					$rname = substr($via, 9);
@@ -967,8 +982,19 @@ class OpenApi extends \ebi\app\Request{
 			$operation['x-mode'] = $m['mode'];
 		}
 
-		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[After]。#[Login]があればsession.memberを前提に自動付与。
+		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[After]。#[Login]があればsession.userを前提に自動付与。
 		if(isset($m['class'], $m['method'])){
+			// クラス階層に宣言された #[FlowToken]（生産者なしの ambient トークン語彙）を集約
+			foreach((\ebi\AttributeReader::get_class($m['class'], 'flow_token') ?? []) as $ft){
+				if(isset($ft['token']) && !isset($this->flow_token_decls[$ft['token']])){
+					$this->flow_token_decls[$ft['token']] = array_filter([
+						'kind' => $ft['kind'] ?? 'ambient',
+						'summary' => $ft['summary'] ?? null,
+						'ambient' => $ft['ambient'] ?? true,
+					], fn($v) => $v !== null);
+				}
+			}
+
 			$produces = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'produces') ?? [];
 			$requires = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'requires') ?? [];
 			$after    = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'after') ?? [];
@@ -986,10 +1012,10 @@ class OpenApi extends \ebi\app\Request{
 				|| (isset($m['class']) && !empty(\ebi\AttributeReader::get_class($m['class'], 'login')));
 			if($has_login){
 				array_unshift($requires, [
-					'token' => 'session.member',
+					'token' => 'session.user',
 					'optional' => false,
 					'auto' => true,
-					'summary' => 'ログイン済み会員セッション',
+					'summary' => 'ログイン済みセッション',
 				]);
 			}
 			$flow = array_filter([

@@ -125,6 +125,21 @@ class AttributeReader{
 						$result[$name] = [];
 					}
 					break;
+				case 'flow_token':
+					$attrs = $r->getAttributes(\ebi\Attribute\FlowToken::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							$inst = $attr->newInstance();
+							$result[$name][] = array_filter([
+								'token' => $inst->token,
+								'kind' => $inst->kind,
+								'summary' => $inst->summary,
+								'ambient' => $inst->ambient,
+							], fn($v) => $v !== null && $v !== false);
+						}
+					}
+					break;
 			}
 		}
 
@@ -222,6 +237,7 @@ class AttributeReader{
 								'via' => $inst->via,
 								'when' => $inst->when,
 								'summary' => $inst->summary,
+								'kind' => $inst->kind,
 							], fn($v) => $v !== null);
 						}
 					}
