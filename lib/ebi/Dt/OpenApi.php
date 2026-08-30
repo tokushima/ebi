@@ -326,6 +326,11 @@ class OpenApi extends \ebi\app\Request{
 			$spec['x-skipped'] = $this->skipped;
 		}
 
+		// バッチアクターを収集（Conf flow_batch_classes 由来）。HTTP paths とは別に x-flow-batches へ。
+		$batches = $this->collect_flow_batches();
+		if(!empty($batches)){
+			$spec['x-flow-batches'] = $batches;
+		}
 		// flow token: 属性から辞書を構築し G1..G6 を検証、registry/issue をトップレベル露出（flow宣言が無ければ無効）。
 		$this->flow_finalize($spec);
 
@@ -333,8 +338,51 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
+	 * バッチアクターを収集する。Conf `ebi\Dt\OpenApi@flow_batch_classes`（クラス名の配列）に
+	 * 登録されたクラスの public static メソッドを走査し、#[Batch] を持つものを x-flow-batches エントリ化する。
+	 * HTTP エンドポイントではない状態遷移（呼び出し不可）を flow に載せるための入口。
+	 */
+	private function collect_flow_batches(): array{
+		$classes = \ebi\Conf::get('ebi\Dt\OpenApi@flow_batch_classes');
+		if(empty($classes) || !is_array($classes)){
+			return [];
+		}
+		$batches = [];
+		foreach($classes as $class){
+			if(!class_exists($class)){
+				continue;
+			}
+			$ref = new \ReflectionClass($class);
+			foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_STATIC) as $rm){
+				$method = $rm->getName();
+				$batch = \ebi\AttributeReader::get_method($class, $method, 'batch');
+				if($batch === null){
+					continue; // #[Batch] の無い静的メソッドは対象外
+				}
+				$produces = \ebi\AttributeReader::get_method($class, $method, 'produces') ?? [];
+				$requires = \ebi\AttributeReader::get_method($class, $method, 'requires') ?? [];
+				$after    = \ebi\AttributeReader::get_method($class, $method, 'after') ?? [];
+				$flow = array_filter(['requires' => $requires, 'produces' => $produces, 'after' => $after], fn($v) => !empty($v));
+				if(empty($flow)){
+					continue; // 前提/効果が無ければ flow 的意味なし
+				}
+				$batches[] = array_filter([
+					'operationId' => $batch['name'] ?? ('batch:'.$method),
+					'name' => $batch['name'] ?? $method,
+					'class' => $class,
+					'method' => $method,
+					'actor' => 'batch',
+					'x-flow' => $flow,
+				], fn($v) => $v !== null);
+			}
+		}
+		return $batches;
+	}
+
+	/**
 	 * 各operationの x-flow から token 辞書を構築（#[Produces] が定義、#[FlowToken] が生産者なし語彙）し、
-	 * G1..G6 を検証して `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
+	 * バッチ(x-flow-batches)も生産者/辞書に含めて G1..G6 を検証、
+	 * `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
 	 */
 	private function flow_finalize(array &$spec): void{
 		$schemas = $spec['components']['schemas'] ?? [];
@@ -367,6 +415,33 @@ class OpenApi extends \ebi\app\Request{
 							'summary' => $p['summary'] ?? null,
 						], fn($v) => $v !== null);
 					}
+				}
+			}
+		}
+
+		// バッチ(cron)アクターも op/生産者/辞書に含める（x-flow-batches）。呼び出し不可の状態遷移。
+		foreach(($spec['x-flow-batches'] ?? []) as $b){
+			$oid = $b['operationId'] ?? null;
+			if($oid === null){
+				continue;
+			}
+			$op_ids[$oid] = true;
+			if(empty($b['x-flow'])){
+				continue;
+			}
+			$ops[$oid] = $b;
+			foreach(($b['x-flow']['produces'] ?? []) as $p){
+				if(!isset($p['token'])){
+					continue;
+				}
+				$t = $p['token'];
+				$producers[$t][$oid] = true;
+				if(!isset($tokens[$t])){
+					$via = (string)($p['via'] ?? '');
+					$tokens[$t] = array_filter([
+						'kind' => $p['kind'] ?? (strncmp($via, 'response:', 9) === 0 ? 'value' : 'state'),
+						'summary' => $p['summary'] ?? null,
+					], fn($v) => $v !== null);
 				}
 			}
 		}

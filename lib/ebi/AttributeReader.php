@@ -273,6 +273,15 @@ class AttributeReader{
 						}
 					}
 					break;
+				case 'batch':
+					$attrs = $r->getAttributes(\ebi\Attribute\Batch::class);
+					if(!empty($attrs)){
+						$inst = $attrs[0]->newInstance();
+						$result[$name] = array_filter([
+							'name' => $inst->name,
+						], fn($v) => $v !== null);
+					}
+					break;
 			}
 		}
 		return $result;

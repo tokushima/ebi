@@ -128,6 +128,9 @@ pre {
   cursor: pointer; overflow: hidden; transition: background-color 0.15s, border-color 0.15s;
 }
 .flow-node:hover { background-color: rgba(0, 0, 0, 0.03); border-color: #cbd5e1; }
+.flow-node-batch { border-style: dashed; border-color: #fcd34d; background: #fffbeb; cursor: default; }
+.flow-node-batch:hover { background: #fffbeb; }
+.flow-node-batch-badge { flex-shrink: 0; font-size: 0.625rem; font-weight: 700; color: #92400e; background: #fef3c7; border-radius: 0.25rem; padding: 0.1rem 0.4rem; white-space: nowrap; }
 .flow-node-num { flex-shrink: 0; font-size: 0.6875rem; color: #94a3b8; font-weight: 700; }
 .flow-node .method-badge { flex-shrink: 0; font-size: 0.625rem; padding: 0.1rem 0.35rem; }
 .flow-node-oid {

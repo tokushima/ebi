@@ -391,6 +391,19 @@ class Mcp{
 				}
 			}
 		}
+		// バッチ(cron)アクターの生産者も含める
+		foreach(($spec['x-flow-batches'] ?? []) as $b){
+			$oid = $b['operationId'] ?? null;
+			if($oid === null || empty($b['x-flow']['produces'])){
+				continue;
+			}
+			$info = ['operationId' => $oid, 'method' => 'BATCH', 'path' => null, 'tag' => null, 'actor' => 'batch', 'deprecated' => false];
+			foreach($b['x-flow']['produces'] as $p){
+				if(isset($p['token'])){
+					$producers[$p['token']][$oid] = $info;
+				}
+			}
+		}
 		$flows = [];
 		foreach($producers as $token => $by){
 			// active（非 deprecated）の生産者を優先、無ければ全件
@@ -408,11 +421,12 @@ class Mcp{
 				'kind' => $registry[$token]['kind'] ?? null,
 				'summary' => $registry[$token]['summary'] ?? null,
 				'tag' => $tag,
-				'producedBy' => array_values(array_map(fn($o) => [
+				'producedBy' => array_values(array_map(fn($o) => array_filter([
 					'operationId' => $o['operationId'],
 					'method' => $o['method'],
 					'path' => $o['path'],
-				], $use)),
+					'actor' => $o['actor'] ?? null,
+				], fn($v) => $v !== null), $use)),
 			], fn($v) => $v !== null && $v !== []);
 		}
 		usort($flows, fn($a, $b) => [$a['tag'] ?? '~', $a['goal']] <=> [$b['tag'] ?? '~', $b['goal']]);
@@ -462,6 +476,40 @@ class Mcp{
 					'deprecated' => !empty($op['deprecated']),
 				];
 			}
+		}
+
+		// バッチ(cron)アクターも同じ索引に含める（呼び出し不可の状態遷移。actor=cron を付与）。
+		foreach(($spec['x-flow-batches'] ?? []) as $b){
+			$flow = $b['x-flow'] ?? null;
+			$oid = $b['operationId'] ?? null;
+			if(empty($flow) || $oid === null){
+				continue;
+			}
+			$req = [];
+			foreach(($flow['requires'] ?? []) as $r){
+				if(isset($r['token'])){
+					$req[] = $r['token'];
+				}
+			}
+			$pro = [];
+			foreach(($flow['produces'] ?? []) as $p){
+				if(isset($p['token'])){
+					$pro[] = ['token' => $p['token'], 'when' => $p['when'] ?? 'success'];
+					$producers[$p['token']][$oid] = true;
+				}
+			}
+			$ops[$oid] = [
+				'method' => 'BATCH',
+				'path' => null,
+				'summary' => '',
+				'requires' => $req,
+				'produces' => $pro,
+				'requiresRaw' => $flow['requires'] ?? [],
+				'after' => $flow['after'] ?? [],
+				'deprecated' => false,
+				'actor' => 'batch',
+				'name' => $b['name'] ?? $oid,
+			];
 		}
 
 		// token の生産者は active（非 deprecated）を優先し、active が無い時だけ deprecated にフォールバックする。
@@ -524,7 +572,7 @@ class Mcp{
 		$plan_out = [];
 		$branches = [];
 		foreach($plan as $i => $oid){
-			$plan_out[] = [
+			$entry = [
 				'step' => $i + 1,
 				'operationId' => $oid,
 				'method' => $ops[$oid]['method'],
@@ -533,6 +581,12 @@ class Mcp{
 				'requires' => $ops[$oid]['requires'],
 				'produces' => array_map(fn($p) => $p['token'], $ops[$oid]['produces']),
 			];
+			if(($ops[$oid]['actor'] ?? 'http') === 'batch'){
+				// バッチ段: 呼び出し不可（システムが cron で自動実行）
+				$entry['actor'] = 'batch';
+				$entry['callable'] = false;
+			}
+			$plan_out[] = $entry;
 			foreach($ops[$oid]['produces'] as $p){
 				if(($p['when'] ?? 'success') !== 'success'){
 					$branches[] = ['at' => $i + 1, 'operationId' => $oid, 'when' => $p['when'], 'token' => $p['token']];

@@ -1402,6 +1402,28 @@ function buildFlowIndex() {
 			};
 		}
 	}
+	// バッチ(cron)アクターも索引に含める（呼び出し不可の状態遷移。actor='cron'）
+	for (const b of (spec['x-flow-batches'] || [])) {
+		const flow = b['x-flow'];
+		const oid = b.operationId;
+		if (!flow || !oid) continue;
+		const req = [];
+		for (const r of (flow.requires || [])) { if (r && r.token != null) req.push(r.token); }
+		const pro = [];
+		for (const p of (flow.produces || [])) {
+			if (p && p.token != null) {
+				pro.push({ token: p.token, when: p.when || 'success' });
+				if (!producers[p.token]) producers[p.token] = {};
+				producers[p.token][oid] = true;
+			}
+		}
+		ops[oid] = {
+			method: 'CRON', path: null, summary: '',
+			requires: req, produces: pro,
+			requiresRaw: flow.requires || [], after: flow.after || [],
+			deprecated: false, actor: 'batch', name: b.name || oid,
+		};
+	}
 	return { ops, producers };
 }
 
@@ -1587,6 +1609,8 @@ function computeFlow(goal, index) {
 			summary: ops[oid].summary,
 			requires: ops[oid].requires,
 			produces: ops[oid].produces.map(p => p.token),
+			actor: ops[oid].actor || 'http',
+			callable: (ops[oid].actor || 'http') !== 'batch',
 		});
 		for (const p of ops[oid].produces) {
 			if ((p.when || 'success') !== 'success') branches.push({ at: i + 1, operationId: oid, when: p.when, token: p.token });
@@ -1883,12 +1907,15 @@ function FlowPage() {
                             if (!p) return null;
                             const step = flow.plan[i];
                             const brs = branchesByOid[oid] || [];
+                            const isBatch = step.actor === 'batch';
                             return (
                               <foreignObject key={oid} x={p.x} y={p.y} width={layout.nodeW} height={layout.nodeH}>
-                                <div className="flow-node" onClick={() => openEp(oid)} title={step.summary || oid}>
+                                <div className={`flow-node${isBatch ? ' flow-node-batch' : ''}`} onClick={() => { if (!isBatch) openEp(oid); }} title={isBatch ? `⏱ 自動実行（batch）— 呼び出し不可: ${step.summary || oid}` : (step.summary || oid)}>
                                   <span className="flow-node-num">{step.step}</span>
-                                  <span className={`method-badge ${methodColors[step.method] || ''}`}>{step.method}</span>
-                                  <span className="flow-node-oid">{oid}</span>
+                                  {isBatch
+                                    ? <span className="flow-node-batch-badge">⏱ 自動</span>
+                                    : <span className={`method-badge ${methodColors[step.method] || ''}`}>{step.method}</span>}
+                                  <span className="flow-node-oid">{isBatch ? oid.replace(/^batch:/, '') : oid}</span>
                                   {brs.map((b, bi) => <span key={bi} className="flow-branch-badge">分岐:{b.when}</span>)}
                                 </div>
                               </foreignObject>
