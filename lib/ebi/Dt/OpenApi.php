@@ -338,12 +338,12 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
-	 * バッチアクターを収集する。Conf `ebi\Dt\OpenApi@flow_batch_classes`（クラス名の配列）に
+	 * バッチアクターを収集する。Conf `ebi\Dt@flow_batch_classes`（クラス名の配列）に
 	 * 登録されたクラスの public static メソッドを走査し、#[Batch] を持つものを x-flow-batches エントリ化する。
 	 * HTTP エンドポイントではない状態遷移（呼び出し不可）を flow に載せるための入口。
 	 */
 	private function collect_flow_batches(): array{
-		$classes = \ebi\Conf::get('ebi\Dt\OpenApi@flow_batch_classes');
+		$classes = \ebi\Dt::get_flow_batch_classes();
 		if(empty($classes) || !is_array($classes)){
 			return [];
 		}

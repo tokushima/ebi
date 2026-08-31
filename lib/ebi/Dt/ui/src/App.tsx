@@ -1879,29 +1879,47 @@ function FlowPage() {
                               <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1" />
                             </marker>
                           </defs>
-                          {layout.edges.map((e, i) => {
-                            const a = layout.pos[e.from], b = layout.pos[e.to];
-                            if (!a || !b) return null;
-                            const x1 = a.cx, y1 = a.y + layout.nodeH;
-                            const x2 = b.cx, y2 = b.y;
-                            const dy = Math.max(20, (y2 - y1) / 2);
-                            const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-                            const isAlt = !!(alternatives && alternatives[e.token]);
-                            const full = registry[e.token]?.summary || e.token;
-                            const labelTxt = full + (isAlt ? ` ↔${alternatives[e.token].length}` : '');
-                            const perLine = 20, maxW = 260;
-                            const lines = Math.max(1, Math.ceil(labelTxt.length / perLine));
-                            const chipW = labelTxt.length <= perLine ? (18 + labelTxt.length * 12) : maxW;
-                            const chipH = lines * 16 + 8;
-                            return (
-                              <g key={i}>
-                                <path className="flow-edge" d={`M ${x1} ${y1} C ${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`} markerEnd="url(#flow-arrow)" />
-                                <foreignObject x={mx - chipW / 2} y={my - chipH / 2} width={chipW} height={chipH}>
-                                  <div className={`flow-edge-label ${isAlt ? 'flow-edge-label-alt' : ''}`} title={full}>{labelTxt}</div>
-                                </foreignObject>
-                              </g>
-                            );
-                          })}
+                          {(() => {
+                            const boxes = layout.edges.map(e => {
+                              const a = layout.pos[e.from], b = layout.pos[e.to];
+                              if (!a || !b) return null;
+                              const x1 = a.cx, y1 = a.y + layout.nodeH, x2 = b.cx, y2 = b.y;
+                              const isAlt = !!(alternatives && alternatives[e.token]);
+                              const full = registry[e.token]?.summary || e.token;
+                              const labelTxt = full + (isAlt ? ` ↔${alternatives[e.token].length}` : '');
+                              const perLine = 20, maxW = 260;
+                              const lines = Math.max(1, Math.ceil(labelTxt.length / perLine));
+                              const w = labelTxt.length <= perLine ? (18 + labelTxt.length * 12) : maxW;
+                              const h = lines * 16 + 8;
+                              return { e, x1, y1, x2, y2, isAlt, full, labelTxt, w, h, cx: (x1 + x2) / 2, cy: (y1 + y2) / 2, label: true };
+                            }).filter(Boolean);
+                            // 同一(source, token)のエッジはラベルが重複するので1本だけ表示
+                            const seen = new Set();
+                            for (const box of boxes) { const k = box.e.from + '|' + box.e.token; if (seen.has(k)) box.label = false; else seen.add(k); }
+                            // 残るラベルの重なりは縦方向にずらして回避
+                            const placed = [];
+                            for (const box of boxes.filter(b => b.label).sort((p, q) => p.cy - q.cy || p.cx - q.cx)) {
+                              let moved = true, guard = 0;
+                              while (moved && guard++ < 40) {
+                                moved = false;
+                                for (const o of placed) {
+                                  if (Math.abs(box.cx - o.cx) < (box.w + o.w) / 2 - 6 && Math.abs(box.cy - o.cy) < (box.h + o.h) / 2 + 2) { box.cy = o.cy + (box.h + o.h) / 2 + 2; moved = true; }
+                                }
+                              }
+                              placed.push(box);
+                            }
+                            return boxes.map((box, i) => {
+                              const dy = Math.max(20, (box.y2 - box.y1) / 2);
+                              return (
+                                <g key={i}>
+                                  <path className="flow-edge" d={`M ${box.x1} ${box.y1} C ${box.x1} ${box.y1 + dy} ${box.x2} ${box.y2 - dy} ${box.x2} ${box.y2}`} markerEnd="url(#flow-arrow)" />
+                                  {box.label && <foreignObject x={box.cx - box.w / 2} y={box.cy - box.h / 2} width={box.w} height={box.h}>
+                                    <div className={`flow-edge-label ${box.isAlt ? 'flow-edge-label-alt' : ''}`} title={box.full}>{box.labelTxt}</div>
+                                  </foreignObject>}
+                                </g>
+                              );
+                            });
+                          })()}
                           {layout.plan.map((oid, i) => {
                             const p = layout.pos[oid];
                             if (!p) return null;

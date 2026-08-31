@@ -755,4 +755,17 @@ HTML;
 			call_user_func([$class, 'create_table']);
 		}
 	}
+
+	/**
+	 * ebi\Dt@flow_batch_classes に登録されたクラスの静的メソッドを走査し、#[Batch] を持つものを x-flow-batches として収集する。
+	 */
+	public static function get_flow_batch_classes(): array{
+		/**
+		 * バッチアクター（クラス名の配列）を登録する
+		 *  @var array
+		 */
+		$classes = \ebi\Conf::get('flow_batch_classes', []);
+
+		return $classes;
+	}
 }
