@@ -1204,8 +1204,8 @@ class OpenApi extends \ebi\app\Request{
 		// クラス名を正規化（先頭にバックスラッシュを付ける）
 		$normalized_class = ltrim($class_name, '\\');
 
-		// スキーマ名（PHPの名前空間形式）
-		$schema_name = '\\' . $normalized_class;
+		// スキーマ名（OpenAPI命名規則 ^[a-zA-Z0-9.\-_]+$ に適合させる。'\' → '.'）
+		$schema_name = str_replace('\\', '.', $normalized_class);
 
 		// 既に構築済みの場合は$refを返す
 		if(isset($schemas[$schema_name])){
@@ -1226,6 +1226,7 @@ class OpenApi extends \ebi\app\Request{
 
 			$properties = [];
 			$join_tables = [];
+			$required_names = [];
 			if($class_info->has_opt('properties')){
 				foreach($class_info->opt('properties') as $prop){
 					// expose=>false (hash=>false) のプロパティはスキップ
@@ -1269,7 +1270,26 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema['x-auto-code'] = true;
 					}
 
+					// 標準2軸(OpenAPI 3.0):
+					//   required = expose列は getIterator で必ずキー出力されるため全て required（キー存在）
+					//   nullable = 値が必ず非nullとは限らない列に true（nullable:false / auto系 は非null確定なので付けない）
+					$is_non_null = ($prop->opt('nullable') === false)
+						|| $prop->opt('primary')
+						|| $prop->opt('auto')
+						|| $prop->opt('auto_now_add')
+						|| $prop->opt('auto_now')
+						|| $prop->opt('auto_code_add');
+					if(!$is_non_null){
+						if(isset($prop_schema['$ref'])){
+							// OpenAPI 3.0 では $ref の兄弟キーが無視されるため allOf でラップして nullable を効かせる
+							$prop_schema = ['nullable' => true, 'allOf' => [$prop_schema]];
+						}else{
+							$prop_schema['nullable'] = true;
+						}
+					}
+
 					$properties[$prop->name()] = $prop_schema;
+					$required_names[] = $prop->name();
 				}
 
 				// cond（外部結合テーブル）- @参照を解決するため2パスで処理
@@ -1320,6 +1340,11 @@ class OpenApi extends \ebi\app\Request{
 
 			if(!empty($properties)){
 				$model_schema['properties'] = $properties;
+			}
+
+			// expose列は全て required（キー存在）。non-null 性は各プロパティの nullable で表現。
+			if(!empty($required_names)){
+				$model_schema['required'] = array_values($required_names);
 			}
 
 			if(!empty($class_info->document())){

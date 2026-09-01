@@ -6,6 +6,7 @@ namespace ebi\Attribute;
  *
  * type 未指定時はプロパティの PHP 型宣言から推論される。
  * セマンティック型（email, datetime, alnum など）のみ type を明示する。
+ * nullable 未指定時もプロパティの PHP 型宣言（?付きかどうか）から推論される。
  *
  * @example
  * #[VarAttr]                                       // PHP型から推論
@@ -16,6 +17,9 @@ namespace ebi\Attribute;
  *
  * #[VarAttr(type: 'email')]                        // セマンティック型は明示
  * protected ?string $email = null;
+ *
+ * #[VarAttr(nullable: false)]                      // 型宣言によらず非nullを明示
+ * protected $code;
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
 class VarAttr{
@@ -33,6 +37,7 @@ class VarAttr{
 		public bool $unique=false,
 		public string|array|null $unique_together=null,
 		public bool $require=false,
+		public ?bool $nullable=null,
 		public int|float|null $min=null,
 		public int|float|null $max=null,
 		public ?string $cond=null,

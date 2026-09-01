@@ -330,12 +330,15 @@ class AttributeReader{
 
 				$type = $inst->type;
 				$attr_type = null;
+				$ref_type = $prop->getType();
 
 				// type 未指定時は PHP の型宣言から推論
 				if($type === ''){
-					$ref_type = $prop->getType();
 					$type = ($ref_type instanceof \ReflectionNamedType) ? $ref_type->getName() : 'string';
 				}
+
+				// nullable 未指定時は PHP の型宣言から推論（型宣言なしはnullable扱い）
+				$nullable = $inst->nullable ?? (($ref_type === null) ? true : $ref_type->allowsNull());
 
 				// 配列/ハッシュ型の処理
 				if($type === 'array' && $inst->items !== null){
@@ -388,6 +391,9 @@ class AttributeReader{
 				}
 				if($inst->require){
 					$data['require'] = true;
+				}
+				if(!$nullable){
+					$data['nullable'] = false;
 				}
 				if($inst->min !== null){
 					$data['min'] = $inst->min;

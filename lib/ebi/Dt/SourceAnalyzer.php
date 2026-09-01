@@ -203,6 +203,15 @@ class SourceAnalyzer{
 					if(!empty($anon[$name]['cond'])){
 						$properties[$name]->set_opt('cond', $anon[$name]['cond']);
 					}
+					if(array_key_exists('nullable', $anon[$name] ?? [])){
+						$properties[$name]->set_opt('nullable', (bool)$anon[$name]['nullable']);
+					}
+					// DocBlock/属性で明示された auto系 opt を反映（命名規則ベースの補完と揃える）
+					foreach(['primary','auto','auto_now_add','auto_now','auto_code_add'] as $ak){
+						if(!empty($anon[$name][$ak])){
+							$properties[$name]->set_opt($ak, true);
+						}
+					}
 				}
 			}
 		}
