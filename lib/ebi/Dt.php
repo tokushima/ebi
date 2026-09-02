@@ -216,6 +216,15 @@ class Dt extends \ebi\app\Request{
 			exit;
 		}
 
+		// Streamable HTTP: 本サーバは POST(JSON-RPC) のみ対応。
+		// クライアントが server→client 用の SSE ストリームを開こうとする GET 等には
+		// 405 を返して「SSEストリーム無し」を明示する（返さないと再接続ループになる）。
+		if(($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST'){
+			\ebi\HttpHeader::send('Allow', 'POST');
+			\ebi\HttpHeader::send_status(405);
+			exit;
+		}
+
 		\ebi\HttpHeader::send('Content-Type', 'application/json; charset=utf-8');
 
 		$raw = file_get_contents('php://input');

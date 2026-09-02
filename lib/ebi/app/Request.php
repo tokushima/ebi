@@ -72,12 +72,19 @@ class Request extends \ebi\Request{
 							}
 						}
 					}else{
-						try{
-							\ebi\Validator::type($k,$this->in_vars($k),$an);
-						}catch(\ebi\exception\InvalidArgumentException $e){
-							\ebi\Exceptions::add($e,$k);
+						$v = $this->in_vars($k);
+						// クラス型 @request（大文字を含む型名＝スカラ型名でない）は、入力が常に連想配列で
+						// instanceof を満たせないため構造検証へ切替。attr は Obj::___set___ 同様に反復。
+						if(is_string($an['type']) && !ctype_lower($an['type']) && class_exists($an['type'])){
+							$this->request_validate_object($k, $v, $an['type'], $an['attr'] ?? null, $an['require'] ?? false);
+						}else{
+							try{
+								\ebi\Validator::type($k,$v,$an);
+							}catch(\ebi\exception\InvalidArgumentException $e){
+								\ebi\Exceptions::add($e,$k);
+							}
+							\ebi\Validator::value($k, $v, $an);
 						}
-						\ebi\Validator::value($k, $this->in_vars($k), $an);
 					}
 				}
 			}
@@ -85,6 +92,63 @@ class Request extends \ebi\Request{
 		\ebi\Exceptions::throw_over();
 
 		return $ann;
+	}
+
+	/**
+	 * クラス型 @request の構造検証（ハイドレートしない）。
+	 * リクエスト入力は常に連想配列でインスタンスにならないため instanceof でなく構造で検証する。
+	 * attr='a'/'h' は \ebi\Obj::___set___ と同様に呼び出し側で反復する。
+	 */
+	private function request_validate_object(string $name, $v, string $class, ?string $attr, bool $require): void{
+		if($v === null || $v === ''){
+			if($require === true){
+				\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.' required'), $name);
+			}
+			return;
+		}
+		if($attr === 'a' || $attr === 'h'){
+			if(!is_array($v)){
+				\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($name.' must be an array'), $name);
+				return;
+			}
+			foreach($v as $i => $e){
+				$this->request_validate_object_fields($name.'['.$i.']', $e, $class);
+			}
+			return;
+		}
+		$this->request_validate_object_fields($name, $v, $class);
+	}
+
+	/**
+	 * 宣言プロパティ（AttributeReader::get_class(..,'var')）に対する型/require 検証。
+	 * 未知キーは許容（前方互換）。nested のクラス型フィールドは再帰する。
+	 */
+	private function request_validate_object_fields(string $name, $v, string $class): void{
+		if($v instanceof $class){
+			return; // モデル/Obj を直接渡された場合は許容
+		}
+		if(!is_array($v)){
+			\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($name.' must be an object of '.$class), $name);
+			return;
+		}
+		$props = \ebi\AttributeReader::get_class($class, 'var') ?? [];
+		foreach($props as $pk => $pan){
+			if(array_key_exists($pk, $v)){
+				$pt = $pan['type'] ?? 'mixed';
+				if(is_string($pt) && !ctype_lower($pt) && class_exists($pt)){
+					$this->request_validate_object($name.'.'.$pk, $v[$pk], $pt, $pan['attr'] ?? null, $pan['require'] ?? false);
+				}else{
+					try{
+						\ebi\Validator::type($name.'.'.$pk, $v[$pk], $pan);
+					}catch(\ebi\exception\InvalidArgumentException $e){
+						\ebi\Exceptions::add($e, $name.'.'.$pk);
+					}
+					\ebi\Validator::value($name.'.'.$pk, $v[$pk], $pan);
+				}
+			}else if(($pan['require'] ?? false) === true){
+				\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.'.'.$pk.' required'), $name.'.'.$pk);
+			}
+		}
 	}
 
 	/**

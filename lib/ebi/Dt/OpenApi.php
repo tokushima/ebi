@@ -46,6 +46,8 @@ class OpenApi extends \ebi\app\Request{
 	/** #[FlowToken] で宣言された、生産者を持たない ambient トークンの定義 token=>def */
 	private array $flow_token_decls = [];
 	private bool $auto_throws = true;
+	private bool $collapse_internal_errors = true;
+	private bool $normalize_operation_id = true;
 
 	public function generate_spec(bool $envelope=false, bool $include_dev=false): array{
 		$this->envelope = $envelope;
@@ -56,6 +58,22 @@ class OpenApi extends \ebi\app\Request{
 		 * false にすると @throws / #[Throws] / #[ErrorResponse] で明示宣言したものだけになる。
 		 */
 		$this->auto_throws = (bool)\ebi\Conf::get('openapi_auto_throws', true);
+
+		/**
+		 * @var bool
+		 * auto検出(throw new)した例外のうち HTTPステータス未宣言（既定500へfallback）の内部例外を、
+		 * 個別列挙せず汎用 500 に畳む（既定 true）。明示 http_status を持つ例外(4xx/意図的5xx)や
+		 * @throws / #[Throws] / #[ErrorResponse] で明示宣言したものは畳まない。
+		 */
+		$this->collapse_internal_errors = (bool)\ebi\Conf::get('openapi_collapse_internal_errors', true);
+
+		/**
+		 * @var bool
+		 * operationId をコードジェネレータ安全な文字([A-Za-z0-9_])へ正規化する（既定 true）。
+		 * route名のスラッシュ等が `_` になる。x-flow の after 参照も同一 rename map で追随する。
+		 * 注意: operationId は公開識別子のため、旧IDを参照する既存クライアントには破壊的。false で無効化可。
+		 */
+		$this->normalize_operation_id = (bool)\ebi\Conf::get('openapi_normalize_operation_id', true);
 		$this->webhooks = [];
 		$map = \ebi\App::get_map($this->entry);
 		$patterns = $map['patterns'];
@@ -85,7 +103,7 @@ class OpenApi extends \ebi\app\Request{
 		$api_version = \ebi\Conf::get('api_version', $target_version ?: $file_version);
 
 		$spec = [
-			'openapi' => '3.0.3',
+			'openapi' => '3.1.0',
 			'info' => [
 				'title' => $title,
 				'version' => $api_version,
@@ -124,8 +142,41 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
+		// レスポンス形式（envelope）の契約をドキュメント自身に明示する。
+		// このドキュメントがどちらのモード（envelope=true か false）を表すかを機械可読・人間可読の双方で宣言する。
+		// - envelope=true : 下位互換モード。成功={"result":...}、アプリ例外は HTTP200 で {"error":[...]}（200が oneOf[成功, Error]）。
+		//                   ただし 401（認証）と send_status() 由来（404等）は envelope でも実HTTPステータスで返る。
+		// - envelope=false: 推奨。生ボディ＋実HTTPステータス。実行時の既定は当面 true で、将来 false へ移行予定。
+		$spec['x-envelope'] = [
+			'mode' => $this->envelope ? 'envelope' : 'raw',
+			'runtimeDefault' => \ebi\App::envelope_default() ? 'envelope' : 'raw',
+			'recommended' => 'raw',
+			'deprecated' => 'envelope',
+			'wrappers' => ['success' => 'result', 'error' => 'error'],
+			'select' => [
+				'header' => 'Accept',
+				'envelope' => 'application/json; envelope=true',
+				'raw' => 'application/json; envelope=false',
+			],
+			'realHttpStatusesInEnvelope' => [401, 404],
+			'note' => 'envelope=true は下位互換モード。既定は当面 envelope=true だが将来 envelope=false へ移行予定。envelope 時も 401/404 は実HTTPステータスで返る。',
+		];
+
+		$envelope_desc = $this->envelope
+			? "**レスポンス形式**: このドキュメントは envelope=true（下位互換モード）を表します。"
+				."成功は `{\"result\": ...}`、アプリ例外は HTTP 200 で `{\"error\":[...]}` を返します（200 が `oneOf[成功, Error]` なのはこのため）。"
+				."ただし 401（認証）と `send_status()` 由来（404 等）は envelope でも実HTTPステータスで返ります。"
+				."envelope=true は下位互換用で、新規連携は `Accept: application/json; envelope=false`（生ボディ＋実HTTPステータス）を推奨します。"
+			: "**レスポンス形式**: このドキュメントは envelope=false（推奨）を表します。"
+				."成功はボディ直下、失敗は実HTTPステータス＋ `{\"error\":[...]}` を返します。"
+				."`Accept: application/json; envelope=true` で下位互換のエンベロープ形式（アプリ例外を HTTP 200 で返す）に切り替わります（実行時の既定は当面 envelope=true）。";
+		$spec['info']['description'] = isset($spec['info']['description'])
+			? $spec['info']['description']."\n\n".$envelope_desc
+			: $envelope_desc;
+
 		$schemas = [];
 		$has_security = false;
+		$has_bearer = false;
 		$tags = [];
 
 		$name_to_path = [];
@@ -240,7 +291,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 					if($is_s2s){
 						$path = $this->convert_to_openapi_path($url_pattern, $param_names);
-						$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path, $http_method);
+						$operation = $this->build_operation($m, $info, $schemas, $has_security, $has_bearer, $tags, $name_to_path, $http_method);
 
 						$this->webhooks[] = [
 							'path' => $path,
@@ -251,7 +302,17 @@ class OpenApi extends \ebi\app\Request{
 					}
 
 					$path = $this->convert_to_openapi_path($url_pattern, $param_names);
-					$operation = $this->build_operation($m, $info, $schemas, $has_security, $tags, $name_to_path, $http_method);
+					$operation = $this->build_operation($m, $info, $schemas, $has_security, $has_bearer, $tags, $name_to_path, $http_method);
+
+					// 画像/バイナリ応答: パスのサフィックス(.png/.jpg等)からメディアタイプを判定し 200 を上書きする。
+					// build_responses は成功応答を application/json 固定にするため、そのままだと誤って JSON になる。
+					// サフィックスが無いエンドポイント(例 /book/preview/{code}/{fcode})は #[Response(format:'binary', mediaType:...)] で明示宣言する。
+					$binary_media = $this->binary_media_type_for_path($path) ?? $this->binary_media_type_from_attr($m);
+					if($binary_media !== null && isset($operation['responses']['200'])){
+						$operation['responses']['200']['content'] = [
+							$binary_media => ['schema' => ['type' => 'string', 'format' => 'binary']],
+						];
+					}
 
 					if(!isset($spec['paths'][$path])){
 						$spec['paths'][$path] = [];
@@ -306,15 +367,24 @@ class OpenApi extends \ebi\app\Request{
 			$spec['components']['schemas'] = $schemas;
 		}
 
-		if($has_security){
-			$spec['components']['securitySchemes'] = [
-				'sessionAuth' => [
+		if($has_security || $has_bearer){
+			$schemes = [];
+			if($has_security){
+				$schemes['sessionAuth'] = [
 					'type' => 'apiKey',
 					'in' => 'cookie',
 					'name' => 'session',
 					'description' => 'Session-based authentication',
-				],
-			];
+				];
+			}
+			if($has_bearer){
+				$schemes['bearerAuth'] = [
+					'type' => 'http',
+					'scheme' => 'bearer',
+					'description' => 'Bearer token 認証（member_auth_token が発行したトークンを Authorization: Bearer で送信）',
+				];
+			}
+			$spec['components']['securitySchemes'] = $schemes;
 		}
 
 		if(empty($spec['components']['schemas']) && empty($spec['components']['securitySchemes'])){
@@ -330,6 +400,10 @@ class OpenApi extends \ebi\app\Request{
 		$batches = $this->collect_flow_batches();
 		if(!empty($batches)){
 			$spec['x-flow-batches'] = $batches;
+		}
+		// operationId のスラッシュ等を codegen 安全な文字へ正規化（after 参照も同一 map で追随）。flow_finalize より前。
+		if($this->normalize_operation_id){
+			$this->normalize_operation_ids($spec);
 		}
 		// flow token: 属性から辞書を構築し G1..G6 を検証、registry/issue をトップレベル露出（flow宣言が無ければ無効）。
 		$this->flow_finalize($spec);
@@ -377,6 +451,102 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 		return $batches;
+	}
+
+	/**
+	 * operationId を codegen 安全な文字へ正規化する（[A-Za-z0-9_] 以外を `_` に）。
+	 */
+	private function normalize_operation_id_str(string $id): string{
+		return preg_replace('~[^A-Za-z0-9_]~', '_', $id);
+	}
+
+	/**
+	 * spec 全体の operationId を正規化し、x-flow の after 参照を同じ rename map で追随させる。
+	 * 正規化後に別IDと衝突するものは元IDのまま温存し、x-openapi-operationid-collisions に記録する
+	 * （サイレントに壊さない。x-flow-issues は flow_finalize が上書きするため別キーを使う）。
+	 */
+	private function normalize_operation_ids(array &$spec): void{
+		// 1) 現行の全 operationId を収集（paths + batches）
+		$originals = [];
+		foreach(($spec['paths'] ?? []) as $methods){
+			foreach($methods as $op){
+				if(isset($op['operationId'])){
+					$originals[$op['operationId']] = true;
+				}
+			}
+		}
+		foreach(($spec['x-flow-batches'] ?? []) as $b){
+			if(isset($b['operationId'])){
+				$originals[$b['operationId']] = true;
+			}
+		}
+
+		// 2) rename map を構築（衝突検出）
+		$map = [];        // old => new
+		$used = [];       // 確定した new id
+		$collisions = [];
+		foreach(array_keys($originals) as $oid){
+			$cand = $this->normalize_operation_id_str($oid);
+			if($cand === $oid){
+				$map[$oid] = $oid;
+				$used[$oid] = true;
+				continue;
+			}
+			// 正規化後IDが別の元ID or 既確定IDと衝突するなら元のまま温存
+			if(isset($originals[$cand]) || isset($used[$cand])){
+				$map[$oid] = $oid;
+				$used[$oid] = true;
+				$collisions[] = $oid;
+			}else{
+				$map[$oid] = $cand;
+				$used[$cand] = true;
+			}
+		}
+
+		// 変更も衝突も無ければ何もしない（衝突のみ発生＝rename0件でも記録は残す）
+		$changed = false;
+		foreach($map as $o => $n){
+			if($o !== $n){ $changed = true; break; }
+		}
+		if(!$changed && empty($collisions)){
+			return;
+		}
+
+		$remap_after = function(array $op) use ($map): array{
+			if(isset($op['x-flow']['after']) && is_array($op['x-flow']['after'])){
+				foreach($op['x-flow']['after'] as $i => $a){
+					if(isset($a['endpoint'], $map[$a['endpoint']])){
+						$op['x-flow']['after'][$i]['endpoint'] = $map[$a['endpoint']];
+					}
+				}
+			}
+			return $op;
+		};
+
+		// 3) 適用（operationId と after.endpoint）
+		foreach(($spec['paths'] ?? []) as $path => $methods){
+			foreach($methods as $method => $op){
+				if(isset($op['operationId'], $map[$op['operationId']])){
+					$op['operationId'] = $map[$op['operationId']];
+				}
+				$spec['paths'][$path][$method] = $remap_after($op);
+			}
+		}
+		foreach(($spec['x-flow-batches'] ?? []) as $i => $b){
+			if(isset($b['operationId'], $map[$b['operationId']])){
+				$b['operationId'] = $map[$b['operationId']];
+			}
+			$spec['x-flow-batches'][$i] = $remap_after($b);
+		}
+
+		// 4) 衝突は記録（サイレントに壊さない）
+		foreach($collisions as $oid){
+			$spec['x-openapi-operationid-collisions'][] = [
+				'operationId' => $oid,
+				'normalized' => $this->normalize_operation_id_str($oid),
+				'message' => '正規化後IDが他と衝突するため元IDのまま温存',
+			];
+		}
 	}
 
 	/**
@@ -712,7 +882,48 @@ class OpenApi extends \ebi\app\Request{
 	/**
 	 * オペレーション（エンドポイント定義）を構築
 	 */
-	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, array &$tags, array $name_to_path=[], string $http_method='get'): array{
+	/**
+	 * パスのサフィックスからバイナリ応答のメディアタイプを返す（画像/PDF等）。該当しなければ null（=JSON応答扱い）。
+	 * ルートは `.../thumb.jpg` 等サフィックス付きで、ハンドラはファイル本体を出力するため application/json ではない。
+	 */
+	private function binary_media_type_for_path(string $path): ?string{
+		if(preg_match('/\.(png|jpe?g|gif|webp|svg|pdf|csv|zip)$/i', $path, $mt)){
+			return match(strtolower($mt[1])){
+				'png' => 'image/png',
+				'jpg', 'jpeg' => 'image/jpeg',
+				'gif' => 'image/gif',
+				'webp' => 'image/webp',
+				'svg' => 'image/svg+xml',
+				'pdf' => 'application/pdf',
+				'csv' => 'text/csv',
+				'zip' => 'application/zip',
+				default => null,
+			};
+		}
+		return null;
+	}
+
+	/**
+	 * メソッドの #[Response(format:'binary', mediaType:...)] からバイナリ応答のメディアタイプを返す。
+	 * 該当が無ければ null。パスにサフィックスが無いバイナリ配信エンドポイント用（binary_media_type_for_path の補完）。
+	 */
+	private function binary_media_type_from_attr(array $m): ?string{
+		if(!isset($m['class'], $m['method'])){
+			return null;
+		}
+		$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
+		if(empty($attr_contexts)){
+			return null;
+		}
+		foreach($attr_contexts as $data){
+			if(($data['format'] ?? null) === 'binary'){
+				return $data['mediaType'] ?? 'application/octet-stream';
+			}
+		}
+		return null;
+	}
+
+	private function build_operation(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, bool &$has_security, bool &$has_bearer, array &$tags, array $name_to_path=[], string $http_method='get'): array{
 		$operation = [];
 
 		if(!empty($m['summary'])){
@@ -809,8 +1020,11 @@ class OpenApi extends \ebi\app\Request{
 					if(!isset($added_params[$name])){
 						$param = new \ebi\Dt\ParamInfo(
 							$name,
-							$data['type'] ?? 'string',
-							$data['summary'] ?? ''
+							// attr='a'/'h'（@request X[] / X{} 由来）は型サフィックスに復元し get_schema_type の配列/マップ処理に載せる
+							($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
+							$data['summary'] ?? '',
+							// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
+							(isset($data['enum']) ? ['enum' => $data['enum']] : [])
 						);
 						$in = ($data['in'] ?? 'query');
 						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
@@ -827,7 +1041,7 @@ class OpenApi extends \ebi\app\Request{
 								}
 								$is_multipart = true;
 							}else{
-								$body_properties[$name] = $this->build_body_property($param);
+								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
 									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
 								}
@@ -865,7 +1079,7 @@ class OpenApi extends \ebi\app\Request{
 			foreach($info->opt('requests') as $param){
 				if(!isset($added_params[$param->name()])){
 					if($has_body){
-						$body_properties[$param->name()] = $this->build_body_property($param);
+						$body_properties[$param->name()] = $this->build_body_property($param, $schemas);
 						if($param->opt('require')){
 							$body_required[] = $param->name();
 						}
@@ -914,7 +1128,7 @@ class OpenApi extends \ebi\app\Request{
 						foreach($auth_info->opt('requests') as $param){
 							if(!isset($added_params[$param->name()])){
 								if($has_body){
-									$body_properties[$param->name()] = $this->build_body_property($param);
+									$body_properties[$param->name()] = $this->build_body_property($param, $schemas);
 									if($param->opt('require')){
 										$body_required[] = $param->name();
 									}
@@ -935,14 +1149,17 @@ class OpenApi extends \ebi\app\Request{
 						if(!isset($added_params[$name])){
 							$param = new \ebi\Dt\ParamInfo(
 								$name,
-								$data['type'] ?? 'string',
-								$data['summary'] ?? ''
+								// attr='a'/'h'（X[] / X{} 由来）は型サフィックスに復元
+								($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
+								$data['summary'] ?? '',
+								// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
+								(isset($data['enum']) ? ['enum' => $data['enum']] : [])
 							);
 							$in = ($data['in'] ?? 'query');
 							$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
 
 							if($has_body && $in !== 'path'){
-								$body_properties[$name] = $this->build_body_property($param);
+								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
 									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
 								}
@@ -1026,7 +1243,34 @@ class OpenApi extends \ebi\app\Request{
 				$is_login = true;
 			}
 		}
-		if($is_login){
+		// Bearer 認証の検出：auth プラグインの login_condition が Authorization ヘッダ由来の
+		// トークンを要求している（#[Requires(bind:'header:Authorization')]）場合。
+		// do_login ルート(auth/token 等)でも成立するため $is_login とは独立に判定する。
+		$is_bearer = false;
+		if(!empty($m['auth'])){
+			$auth_requires = \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'requires') ?? [];
+			foreach(($auth_requires ?? []) as $r){
+				if(isset($r['bind']) && preg_match('/^header:Authorization\b/i', (string)$r['bind'])){
+					$is_bearer = true;
+					break;
+				}
+			}
+		}
+
+		if($is_bearer){
+			$has_bearer = true;
+			$operation['security'] = [['bearerAuth' => []]];
+
+			// 401レスポンス（Bearerトークン未指定/無効時。他エラー同様 {"error":[...]} 形式）
+			if(!isset($operation['responses']['401'])){
+				$operation['responses']['401'] = [
+					'description' => 'Unauthorized - Bearer token required',
+					'content' => [
+						'application/json' => ['schema' => $this->error_schema_ref($schemas)],
+					],
+				];
+			}
+		}else if($is_login){
 			$has_security = true;
 			$operation['security'] = [['sessionAuth' => []]];
 
@@ -1131,17 +1375,29 @@ class OpenApi extends \ebi\app\Request{
 
 		$parameter['schema'] = $this->get_schema_type($param->type());
 
+		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
+		if(!empty($param->opt('enum')) && is_array($param->opt('enum'))){
+			$parameter['schema']['enum'] = array_values($param->opt('enum'));
+		}
+
 		return $parameter;
 	}
 
 	/**
 	 * requestBodyプロパティを構築
 	 */
-	private function build_body_property(\ebi\Dt\ParamInfo $param): array{
-		$prop_schema = $this->get_schema_type($param->type());
+	private function build_body_property(\ebi\Dt\ParamInfo $param, array &$schemas): array{
+		// $schemas を渡すことでクラス型(object)ボディの $ref を components に登録する
+		// （渡さないと build_model_schema がローカル配列へ登録し、ダングリング $ref になる）。
+		$prop_schema = $this->get_schema_type($param->type(), $schemas);
 
 		if(!empty($param->summary())){
 			$prop_schema['description'] = $param->summary();
+		}
+
+		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
+		if(!empty($param->opt('enum')) && is_array($param->opt('enum'))){
+			$prop_schema['enum'] = array_values($param->opt('enum'));
 		}
 
 		return $prop_schema;
@@ -1204,8 +1460,9 @@ class OpenApi extends \ebi\app\Request{
 		// クラス名を正規化（先頭にバックスラッシュを付ける）
 		$normalized_class = ltrim($class_name, '\\');
 
-		// スキーマ名（OpenAPI命名規則 ^[a-zA-Z0-9.\-_]+$ に適合させる。'\' → '.'）
-		$schema_name = str_replace('\\', '.', $normalized_class);
+		// スキーマ名（OpenAPI命名規則 ^[a-zA-Z0-9.\-_]+$ に適合。'\' → '_'）
+		// ドット区切りは Redoc 2.x の example 生成が JSON Pointer トークンとして解決に失敗するため '_' を使う。
+		$schema_name = str_replace('\\', '_', $normalized_class);
 
 		// 既に構築済みの場合は$refを返す
 		if(isset($schemas[$schema_name])){
@@ -1245,6 +1502,11 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema['format'] = $prop->opt('format');
 					}
 
+					// enum（#[VarAttr(enum:[...])] または @var @['enum'=>[...]] 由来）
+					if(!empty($prop->opt('enum')) && is_array($prop->opt('enum'))){
+						$prop_schema['enum'] = array_values($prop->opt('enum'));
+					}
+
 					// primary key
 					if($prop->opt('primary')){
 						$prop_schema['x-primary'] = true;
@@ -1270,9 +1532,9 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema['x-auto-code'] = true;
 					}
 
-					// 標準2軸(OpenAPI 3.0):
+					// 標準2軸(OpenAPI 3.1):
 					//   required = expose列は getIterator で必ずキー出力されるため全て required（キー存在）
-					//   nullable = 値が必ず非nullとは限らない列に true（nullable:false / auto系 は非null確定なので付けない）
+					//   nullable = 値が必ず非nullとは限らない列は型に "null" を許容（nullable:false / auto系 は非null確定なので付けない）
 					$is_non_null = ($prop->opt('nullable') === false)
 						|| $prop->opt('primary')
 						|| $prop->opt('auto')
@@ -1280,16 +1542,15 @@ class OpenApi extends \ebi\app\Request{
 						|| $prop->opt('auto_now')
 						|| $prop->opt('auto_code_add');
 					if(!$is_non_null){
-						if(isset($prop_schema['$ref'])){
-							// OpenAPI 3.0 では $ref の兄弟キーが無視されるため allOf でラップして nullable を効かせる
-							$prop_schema = ['nullable' => true, 'allOf' => [$prop_schema]];
-						}else{
-							$prop_schema['nullable'] = true;
-						}
+						$prop_schema = $this->apply_nullable($prop_schema);
 					}
 
 					$properties[$prop->name()] = $prop_schema;
-					$required_names[] = $prop->name();
+					// extra（name_last 等の派生/計算プロパティ）は入力必須でないため required から除外
+					// （出力では常在だが optional 扱いは安全側。リクエストDTOの over-required を避ける）
+					if(!$prop->opt('extra')){
+						$required_names[] = $prop->name();
+					}
 				}
 
 				// cond（外部結合テーブル）- @参照を解決するため2パスで処理
@@ -1514,24 +1775,60 @@ class OpenApi extends \ebi\app\Request{
 	 * http_status は protected プロパティなので、インスタンス化せず ReflectionClass::getDefaultProperties() で読む。
 	 */
 	private function exception_to_status(string $exception_name): int{
+		return $this->exception_status_meta($exception_name)['status'];
+	}
+
+	/**
+	 * 例外名から ['status'=>int, 'explicit'=>bool] を返す。
+	 * explicit=true … 例外自身が http_status を宣言している（HTTPセマンティクスを意図的に持つ＝API契約の一部）。
+	 * explicit=false … 既定 error_http_status(500) への fallback（HTTP的な意味づけの無い内部エラー）。
+	 */
+	private function exception_status_meta(string $exception_name): array{
 		$class = '\\'.ltrim($exception_name, '\\');
 
 		if(strlen($class) > 1 && class_exists($class) && is_subclass_of($class, \ebi\Exception::class)){
 			try{
 				$defaults = (new \ReflectionClass($class))->getDefaultProperties();
 				if(isset($defaults['http_status']) && $defaults['http_status'] !== null){
-					return (int)$defaults['http_status'];
+					return ['status' => (int)$defaults['http_status'], 'explicit' => true];
 				}
 			}catch(\ReflectionException $e){
 			}
 		}
 		// \ebi\Exception を継承しない、または http_status 未設定 → App の error_http_status に合わせる
-		return (int)\ebi\Conf::get('ebi\App@error_http_status', 500);
+		return ['status' => (int)\ebi\Conf::get('ebi\App@error_http_status', 500), 'explicit' => false];
 	}
 
 	/**
 	 * レスポンス定義を構築
 	 */
+	/**
+	 * スキーマを null 許容にする（OpenAPI 3.1 / JSON Schema 2020-12）。
+	 * nullable キーワードは廃止されているため、型に "null" を加える（type 配列化）。
+	 * $ref / allOf / anyOf / oneOf など型を持たない合成スキーマは anyOf で null 型を足す。
+	 * enum を持つ場合は type:null と整合させるため許容値に null を加える。
+	 */
+	private function apply_nullable(array $schema): array{
+		$is_composite = isset($schema['$ref']) || isset($schema['allOf']) || isset($schema['anyOf']) || isset($schema['oneOf']);
+
+		if(!$is_composite && isset($schema['type'])){
+			$types = is_array($schema['type']) ? $schema['type'] : [$schema['type']];
+			if(!in_array('null', $types, true)){
+				$types[] = 'null';
+			}
+			$schema['type'] = $types;
+			if(isset($schema['enum']) && is_array($schema['enum']) && !in_array(null, $schema['enum'], true)){
+				$schema['enum'][] = null;
+			}
+			return $schema;
+		}
+		if($is_composite){
+			return ['anyOf' => [$schema, ['type' => 'null']]];
+		}
+		// 型指定の無い空スキーマ（任意型）は既に null も許容
+		return $schema;
+	}
+
 	private function build_responses(array $m, ?\ebi\Dt\DocInfo $info, array &$schemas, array &$x_throws=[]): array{
 		$responses = [];
 
@@ -1550,12 +1847,20 @@ class OpenApi extends \ebi\app\Request{
 
 		$properties = [];
 		$added_props = [];
+		$required_names = [];
+		$root_schema = null; // root:true 指定時、200 ボディ全体のスキーマ（object-properties ラップをバイパス）
 
 		// #[Response]属性からレスポンススキーマを構築（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
 			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
+					// format:binary は画像/PDF 等のバイナリ応答。JSON プロパティにはせず、
+					// パス構築後の post-override(binary_media_type_from_attr)で content を上書きする。
+					if(($data['format'] ?? null) === 'binary'){
+						continue;
+					}
+
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
 
 					if($data['type'] === 'array' && !empty($data['items'])){
@@ -1586,6 +1891,21 @@ class OpenApi extends \ebi\app\Request{
 
 					if($is_deprecated){
 						$prop_schema['deprecated'] = true;
+					}
+
+					// nullable/required 2軸（モデル層ミラー：nullable既定ON・required既定true）
+					if(($data['nullable'] ?? true) !== false){
+						$prop_schema = $this->apply_nullable($prop_schema);
+					}
+
+					// root:true は 200 ボディ全体のスキーマ。プロパティ集約せず退避し、required も対象外。
+					if(!empty($data['root'])){
+						$root_schema = $prop_schema;
+						continue;
+					}
+
+					if(($data['required'] ?? true) !== false){
+						$required_names[] = $name;
 					}
 
 					$properties[$name] = $prop_schema;
@@ -1661,6 +1981,14 @@ class OpenApi extends \ebi\app\Request{
 									$prop_schema['deprecated'] = true;
 								}
 
+								// nullable/required 2軸（モデル層ミラー）
+								if(($data['nullable'] ?? true) !== false){
+									$prop_schema = $this->apply_nullable($prop_schema);
+								}
+								if(($data['required'] ?? true) !== false){
+									$required_names[] = $name;
+								}
+
 								$properties[$name] = $prop_schema;
 								$added_props[$name] = true;
 							}
@@ -1689,22 +2017,43 @@ class OpenApi extends \ebi\app\Request{
 					$prop_schema['deprecated'] = true;
 				}
 
+				// nullable/required 2軸（モデル層ミラー。@['nullable'=>false] / @['required'=>false] で opt-out）
+				if($context->opt('nullable', true) !== false){
+					$prop_schema = $this->apply_nullable($prop_schema);
+				}
+				if($context->opt('required', true) !== false){
+					$required_names[] = $context->name();
+				}
+
 				$properties[$context->name()] = $prop_schema;
 			}
 		}
 
-		if(!empty($properties)){
+		// root:true が指定されていれば 200 ボディ全体をそのスキーマにする（object-properties ラップをバイパス）。
+		// bare 配列 / 単一オブジェクト応答の型化用。root がある場合は名前付き properties より優先。
+		$schema = null;
+		if($root_schema !== null){
+			$schema = $root_schema;
+		}else if(!empty($properties)){
 			$schema = [
 				'type' => 'object',
 				'properties' => $properties,
 			];
+			// documented な result プロパティは既定 required（キー存在）。#4697 の T|undefined を回避
+			if(!empty($required_names)){
+				$schema['required'] = array_values(array_unique($required_names));
+			}
+		}
 
+		if($schema !== null){
 			if($this->envelope){
 				$schema = [
 					'type' => 'object',
 					'properties' => [
 						'result' => $schema,
 					],
+					// 成功時は result ラッパが必ず存在する
+					'required' => ['result'],
 				];
 			}
 
@@ -1774,6 +2123,7 @@ class OpenApi extends \ebi\app\Request{
 		// エラーレスポンス（@throws DocBlockから、明示的に記述されたもののみ）
 		if(isset($info) && $info->has_opt('throws')){
 			$error_groups = [];
+			$has_collapsed_internal = false;
 
 			foreach($info->opt('throws') as $throw){
 				// ソースコードのthrow new文から自動検出されたものは、openapi_auto_throwsがfalseのときのみスキップ
@@ -1782,7 +2132,17 @@ class OpenApi extends \ebi\app\Request{
 				}
 				$exception_name = $throw->name();
 				$short_name = (($pos = strrpos($exception_name, '\\')) !== false) ? substr($exception_name, $pos + 1) : $exception_name;
-				$status = $this->exception_to_status($exception_name);
+				$meta = $this->exception_status_meta($exception_name);
+				$status = $meta['status'];
+
+				// auto検出(ソースの throw new)された 500 の内部例外は、個別列挙せず汎用500へ畳む。
+				// ebi例外は基底が http_status=500 を宣言しており explicit では判別できないため、
+				// 「auto かつ status===500」を内部ノイズの判定に用いる。@throws 明示宣言(auto=false)は
+				// API契約として尊重し温存。501/503 等の別5xxも温存。
+				if($this->collapse_internal_errors && $throw->opt('auto') && $status === 500){
+					$has_collapsed_internal = true;
+					continue;
+				}
 
 				$desc = trim($throw->summary());
 				$label = empty($desc) ? $short_name : $short_name.' - '.$desc;
@@ -1802,6 +2162,17 @@ class OpenApi extends \ebi\app\Request{
 			foreach($error_groups as $status => $labels){
 				$responses[(string)$status] = [
 					'description' => implode("\n", $labels),
+				];
+			}
+
+			// 畳んだ内部例外は汎用500として1件だけ表現する（既に明示500がある場合はそちらに委ねる）
+			if($has_collapsed_internal && !isset($responses['500'])){
+				$responses['500'] = [
+					'description' => 'サーバ内部エラー',
+				];
+				$x_throws[] = [
+					'status' => 500,
+					'description' => 'サーバ内部エラー',
 				];
 			}
 		}

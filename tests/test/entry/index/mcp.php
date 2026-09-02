@@ -31,7 +31,7 @@ $b = b();
 $res = $rpc($b, ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list', 'params' => []]);
 $names = array_map(fn($t) => $t['name'], $res['result']['tools']);
 sort($names);
-eq(['get_endpoint', 'get_schema', 'list_tags', 'search_endpoints'], $names);
+eq(['api_info', 'get_endpoint', 'get_flow', 'get_schema', 'list_flows', 'list_tags', 'search_endpoints'], $names);
 
 // search_endpoints（空クエリ=全件）→ endpoints 配列が返る
 $b = b();

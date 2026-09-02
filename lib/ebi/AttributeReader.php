@@ -419,6 +419,9 @@ class AttributeReader{
 				if($inst->length !== null){
 					$data['length'] = $inst->length;
 				}
+				if($inst->enum !== null){
+					$data['enum'] = $inst->enum;
+				}
 
 				$result[$name] = $data;
 			}

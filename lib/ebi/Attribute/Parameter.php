@@ -23,5 +23,6 @@ class Parameter{
 		public int|float|null $max=null,
 		public ?string $format=null,
 		public bool $deprecated=false,
+		public ?array $enum=null,
 	){}
 }

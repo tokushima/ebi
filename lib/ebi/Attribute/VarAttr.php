@@ -46,5 +46,6 @@ class VarAttr{
 		public ?string $ctype=null,
 		public ?string $base=null,
 		public ?int $length=null,
+		public ?array $enum=null,
 	){}
 }

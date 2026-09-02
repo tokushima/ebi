@@ -203,6 +203,12 @@ class SourceAnalyzer{
 					if(!empty($anon[$name]['cond'])){
 						$properties[$name]->set_opt('cond', $anon[$name]['cond']);
 					}
+					if(!empty($anon[$name]['enum'])){
+						$properties[$name]->set_opt('enum', $anon[$name]['enum']);
+					}
+					if(!empty($anon[$name]['extra'])){
+						$properties[$name]->set_opt('extra', true);
+					}
 					if(array_key_exists('nullable', $anon[$name] ?? [])){
 						$properties[$name]->set_opt('nullable', (bool)$anon[$name]['nullable']);
 					}
