@@ -46,6 +46,7 @@ class VarAttr{
 		public ?string $ctype=null,
 		public ?string $base=null,
 		public ?int $length=null,
-		public ?array $enum=null,
+		// enum: (推奨) backed enum の FQCN 文字列(EnumClass::class)＝値/ラベルの単一ソース。または [値 => ラベル] 連想(後方互換)。
+		public array|string|null $enum=null,
 	){}
 }

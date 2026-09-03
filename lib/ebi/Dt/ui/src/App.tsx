@@ -70,37 +70,89 @@ const LockIcon = ({ size = 14 }) => (
 	</svg>
 );
 
+// OpenAPI 3.1 の nullable 表現を単一型ビューへ正規化する補助（既存の型描画が単一 type 前提のため）。
+// type:["x","null"] -> type:"x"(+__nullable) / anyOf|oneOf:[X,{type:"null"}] -> X(+__nullable)。
+function normSchema(v) {
+	if (!v || typeof v !== 'object') return v;
+	let s = v;
+	let nullable = false;
+	const comp = s.anyOf || s.oneOf;
+	if (Array.isArray(comp)) {
+		if (comp.some(m => m && m.type === 'null')) nullable = true;
+		const rest = comp.filter(m => !(m && m.type === 'null'));
+		if (rest.length === 1) {
+			const { anyOf, oneOf, ...siblings } = s;
+			s = { ...siblings, ...rest[0] };
+		}
+	}
+	if (Array.isArray(s.type)) {
+		if (s.type.includes('null')) nullable = true;
+		const t = s.type.filter(x => x !== 'null');
+		s = { ...s, type: t.length === 1 ? t[0] : (t[0] || undefined) };
+	}
+	if (nullable) {
+		if (s === v) s = { ...s };
+		s.__nullable = true;
+	}
+	return s;
+}
+
 function resolveTypeName(v) {
 	if (!v) return '-';
+	v = normSchema(v);
+	const suffix = v.__nullable ? ' | null' : '';
 	const refToName = (r) => r.replace('#/components/schemas/', '').split('\\').pop();
-	if (v.$ref) return refToName(v.$ref);
-	if (v.allOf?.[0]?.$ref) return refToName(v.allOf[0].$ref);
+	if (v.$ref) return refToName(v.$ref) + suffix;
+	if (v.allOf?.[0]?.$ref) return refToName(v.allOf[0].$ref) + suffix;
 	if (v.type === 'array' && v.items) {
-		if (v.items.$ref) return refToName(v.items.$ref) + '[]';
-		if (v.items.allOf?.[0]?.$ref) return refToName(v.items.allOf[0].$ref) + '[]';
-		return (v.items.type || 'any') + '[]';
+		const it = normSchema(v.items);
+		if (it.$ref) return refToName(it.$ref) + '[]' + suffix;
+		if (it.allOf?.[0]?.$ref) return refToName(it.allOf[0].$ref) + '[]' + suffix;
+		return (it.type || 'any') + '[]' + suffix;
 	}
 	if (v.type === 'object' && v.additionalProperties) {
-		const valType = v.additionalProperties.$ref ? refToName(v.additionalProperties.$ref) : (v.additionalProperties.type || 'any');
-		return `array<string, ${valType}>`;
+		const ap = normSchema(v.additionalProperties);
+		const valType = ap.$ref ? refToName(ap.$ref) : (ap.type || 'any');
+		return `array<string, ${valType}>` + suffix;
 	}
-	return v.type || '-';
+	return v.type ? v.type + suffix : '-';
 }
 
 function resolveRefSchema(v, schemas) {
 	if (!v || !schemas) return null;
+	v = normSchema(v);
 	const getRef = (r) => r.replace('#/components/schemas/', '');
 	let refKey = null;
 	if (v.$ref) refKey = getRef(v.$ref);
 	else if (v.allOf?.[0]?.$ref) refKey = getRef(v.allOf[0].$ref);
 	else if (v.type === 'array' && v.items) {
-		if (v.items.$ref) refKey = getRef(v.items.$ref);
-		else if (v.items.allOf?.[0]?.$ref) refKey = getRef(v.items.allOf[0].$ref);
-		else if (v.items.properties) return v.items;
+		const it = normSchema(v.items);
+		if (it.$ref) refKey = getRef(it.$ref);
+		else if (it.allOf?.[0]?.$ref) refKey = getRef(it.allOf[0].$ref);
+		else if (it.properties) return it;
 	}
 	if (refKey && schemas[refKey]?.properties) return schemas[refKey];
 	if (v.type === 'object' && v.properties) return v;
 	return null;
+}
+
+// enum の値と x-enum-descriptions（値→意味）を小さなチップ列で表示する。node は schema か {schema} のどちらでも可。
+function EnumValues({ node }) {
+	const s = node && Array.isArray(node.enum) ? node : (node && node.schema && Array.isArray(node.schema.enum) ? node.schema : null);
+	if (!s) return null;
+	const desc = s['x-enum-descriptions'];
+	const pairs = s.enum.map((v, i) => ({ v, d: Array.isArray(desc) ? desc[i] : null })).filter(p => p.v !== null);
+	if (!pairs.length) return null;
+	return (
+		<div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+			{pairs.map((p, i) => (
+				<span key={i} style={{ display: 'inline-flex', alignItems: 'stretch', fontSize: '0.6875rem', lineHeight: 1.6, border: '1px solid #dbe3ec', borderRadius: 5, overflow: 'hidden', background: '#fff' }}>
+					<code style={{ color: '#fff', background: '#3b82f6', padding: '1px 7px', fontWeight: 700, fontFamily: 'SF Mono,SFMono-Regular,Menlo,Consolas,monospace' }}>{typeof p.v === 'string' ? p.v : String(p.v)}</code>
+					{p.d ? <span style={{ color: '#334155', padding: '1px 8px' }}>{p.d}</span> : null}
+				</span>
+			))}
+		</div>
+	);
 }
 
 function renderNestedProps(items, parentKey, schemas, expanded, depth = 1) {
@@ -111,7 +163,7 @@ function renderNestedProps(items, parentKey, schemas, expanded, depth = 1) {
 		const hasChildren = !!(nested?.properties) && depth < 3;
 		const isOpen = expanded.has(key);
 		rows.push(
-			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', deprecated: !!p.deprecated, depth, hasChildren, isOpen }
+			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', deprecated: !!p.deprecated, depth, hasChildren, isOpen, enum: p.enum, enumDescriptions: p['x-enum-descriptions'] }
 		);
 		if (hasChildren && isOpen) {
 			const children = Object.entries(nested.properties).map(([k, v]) => ({ name: k, ...v }));
@@ -133,7 +185,7 @@ function PropsTable({ items, title }) {
 						<tr key={i}>
 							<td><code className="text-primary">{p.name}</code>{p.required && <span className="text-danger ms-1">*</span>}</td>
 							<td className="text-muted">{p.schema?.type || p.type || '-'}</td>
-							<td className="text-muted small">{p.description || '-'}</td>
+							<td className="text-muted small">{p.description || '-'}<EnumValues node={p} /></td>
 						</tr>
 					))}
 				</tbody>
@@ -144,6 +196,7 @@ function PropsTable({ items, title }) {
 
 function SchemaView({ schema, schemas, name }) {
 	if (!schema) return <span className="text-muted">-</span>;
+	schema = normSchema(schema);
 	if (schema.$ref) {
 		const refName = schema.$ref.replace('#/components/schemas/', '');
 		return <SchemaView schema={schemas[refName]} schemas={schemas} name={refName} />;
@@ -162,16 +215,18 @@ function refToShortName(refName) {
 
 function schemaToTs(schema, schemas, indent = '\t', refs = new Set()) {
 	if (!schema) return 'unknown';
-	if (schema.type === 'array' && schema.items) return schemaToTs(schema.items, schemas, indent, refs) + '[]';
+	schema = normSchema(schema);
+	const nn = schema.__nullable ? ' | null' : '';
+	if (schema.type === 'array' && schema.items) return schemaToTs(schema.items, schemas, indent, refs) + '[]' + nn;
 	if (schema.$ref) {
 		const name = refToShortName(schema.$ref);
 		refs.add(schema.$ref.replace('#/components/schemas/', ''));
-		return name;
+		return name + nn;
 	}
 	if (schema.allOf?.[0]?.$ref) {
 		const name = refToShortName(schema.allOf[0].$ref);
 		refs.add(schema.allOf[0].$ref.replace('#/components/schemas/', ''));
-		return name;
+		return name + nn;
 	}
 	if (schema.properties) {
 		const required = schema.required || [];
@@ -182,12 +237,12 @@ function schemaToTs(schema, schemas, indent = '\t', refs = new Set()) {
 		});
 		return `{\n${lines.join('\n')}\n${indent.slice(1)}}`;
 	}
-	if (schema.additionalProperties) return `Record<string, ${schemaToTs(schema.additionalProperties, schemas, indent, refs)}>`;
+	if (schema.additionalProperties) return `Record<string, ${schemaToTs(schema.additionalProperties, schemas, indent, refs)}>` + nn;
 	if (schema.enum) return schema.enum.map(e => typeof e === 'string' ? `'${e}'` : e).join(' | ');
 	switch (schema.type) {
-		case 'string': return 'string';
-		case 'integer': case 'number': return 'number';
-		case 'boolean': return 'boolean';
+		case 'string': return 'string' + nn;
+		case 'integer': case 'number': return 'number' + nn;
+		case 'boolean': return 'boolean' + nn;
 		default: return 'unknown';
 	}
 }
@@ -289,7 +344,7 @@ function ResponsesView({ responses, schemas, operationId, envelope = false }) {
 											{r.name}
 										</span>
 										<span className="param-type" style={r.deprecated ? { textDecoration: 'line-through' } : {}}>{r.type}</span>
-										<span className="param-desc" style={{ ...(isNested ? { color: '#94a3b8' } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>{r.desc}</span>
+										<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start', ...(isNested ? { color: '#94a3b8' } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>{r.desc}<EnumValues node={{ enum: r.enum, 'x-enum-descriptions': r.enumDescriptions }} /></span>
 									</div>
 								);
 							});
@@ -500,7 +555,7 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 								<div key={i} className="param-row">
 									<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
 									<span className="param-type">{p.schema?.type || p.type || '-'}</span>
-									<span className="param-desc">{p.description || '-'}</span>
+									<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>{p.description || '-'}<EnumValues node={p} /></span>
 								</div>
 							))}
 						</div>
@@ -518,7 +573,7 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 									<div key={i} className="param-row">
 										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
 										<span className="param-type">{p.type || '-'}</span>
-										<span className="param-desc">{p.description || '-'}</span>
+										<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>{p.description || '-'}<EnumValues node={p} /></span>
 									</div>
 								))}
 							</div>

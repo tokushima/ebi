@@ -23,6 +23,9 @@ class Parameter{
 		public int|float|null $max=null,
 		public ?string $format=null,
 		public bool $deprecated=false,
-		public ?array $enum=null,
+		// enum: (推奨) backed enum の FQCN 文字列(EnumClass::class)＝値/ラベルの単一ソース。または [値 => ラベル] 連想(後方互換)。
+		public array|string|null $enum=null,
+		// enum_subset: enum が enum クラス参照のとき、部分集合を返す static メソッド名（リクエストの一部許容）。
+		public ?string $enum_subset=null,
 	){}
 }

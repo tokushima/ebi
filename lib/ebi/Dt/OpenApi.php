@@ -1024,7 +1024,10 @@ class OpenApi extends \ebi\app\Request{
 							($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
 							$data['summary'] ?? '',
 							// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
-							(isset($data['enum']) ? ['enum' => $data['enum']] : [])
+							array_filter([
+								'enum' => $data['enum'] ?? null,
+								'enum_subset' => $data['enum_subset'] ?? null,
+							], fn($v) => $v !== null)
 						);
 						$in = ($data['in'] ?? 'query');
 						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
@@ -1153,7 +1156,10 @@ class OpenApi extends \ebi\app\Request{
 								($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
 								$data['summary'] ?? '',
 								// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
-								(isset($data['enum']) ? ['enum' => $data['enum']] : [])
+								array_filter([
+								'enum' => $data['enum'] ?? null,
+								'enum_subset' => $data['enum_subset'] ?? null,
+							], fn($v) => $v !== null)
 							);
 							$in = ($data['in'] ?? 'query');
 							$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
@@ -1376,9 +1382,7 @@ class OpenApi extends \ebi\app\Request{
 		$parameter['schema'] = $this->get_schema_type($param->type());
 
 		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
-		if(!empty($param->opt('enum')) && is_array($param->opt('enum'))){
-			$parameter['schema']['enum'] = array_values($param->opt('enum'));
-		}
+		$this->apply_enum_meta($parameter['schema'], $param);
 
 		return $parameter;
 	}
@@ -1396,11 +1400,35 @@ class OpenApi extends \ebi\app\Request{
 		}
 
 		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
-		if(!empty($param->opt('enum')) && is_array($param->opt('enum'))){
-			$prop_schema['enum'] = array_values($param->opt('enum'));
-		}
+		$this->apply_enum_meta($prop_schema, $param);
 
 		return $prop_schema;
+	}
+
+	/**
+	 * enum([値=>ラベル]連想)から x-enum-descriptions（配列）と x-enumDescriptions（オブジェクト）を付与する。
+	 * Redoc/openapi-generator が値→意味を解釈できる。$holder は opt() を持つ ParamInfo 相当。
+	 */
+	private function apply_enum_meta(array &$schema, $holder): void{
+		// enum は backed enum の FQCN 文字列で指定する（値/ラベルの単一ソース）。cases→値、label():string→説明。
+		$enum = $holder->opt('enum');
+		if(!is_string($enum) || !is_subclass_of(ltrim($enum,'\\'), \BackedEnum::class)){
+			return;
+		}
+		$enum_class = ltrim($enum,'\\');
+		// enum_subset: cases配列を返す static メソッド名。指定時はその部分集合（リクエストの「一部許容」表現）。
+		$only = $holder->opt('enum_subset');
+		if(is_string($only) && $only !== '' && method_exists($enum_class, $only)){
+			$cases = $enum_class::{$only}();
+		}else{
+			$cases = $enum_class::cases();
+		}
+		$schema['enum'] = array_map(fn($c) => $c->value, $cases);
+		if(method_exists($enum_class, 'label')){
+			$descs = array_map(fn($c) => $c->label(), $cases);
+			$schema['x-enum-descriptions'] = $descs;
+			$schema['x-enumDescriptions'] = (object)array_combine($schema['enum'], $descs);
+		}
 	}
 
 	/**
@@ -1503,9 +1531,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 
 					// enum（#[VarAttr(enum:[...])] または @var @['enum'=>[...]] 由来）
-					if(!empty($prop->opt('enum')) && is_array($prop->opt('enum'))){
-						$prop_schema['enum'] = array_values($prop->opt('enum'));
-					}
+					$this->apply_enum_meta($prop_schema, $prop);
 
 					// primary key
 					if($prop->opt('primary')){
@@ -1819,6 +1845,10 @@ class OpenApi extends \ebi\app\Request{
 			$schema['type'] = $types;
 			if(isset($schema['enum']) && is_array($schema['enum']) && !in_array(null, $schema['enum'], true)){
 				$schema['enum'][] = null;
+				// enum に null を足したら x-enum-descriptions も同数に揃える（index 対応を崩さない）
+				if(isset($schema['x-enum-descriptions']) && is_array($schema['x-enum-descriptions'])){
+					$schema['x-enum-descriptions'][] = 'null';
+				}
 			}
 			return $schema;
 		}
