@@ -259,8 +259,8 @@ class AttributeReader{
 						}
 					}
 					break;
-				case 'after':
-					$attrs = $r->getAttributes(\ebi\Attribute\After::class);
+				case 'follows':
+					$attrs = $r->getAttributes(\ebi\Attribute\Follows::class);
 					if(!empty($attrs)){
 						$result[$name] = [];
 						foreach($attrs as $attr){

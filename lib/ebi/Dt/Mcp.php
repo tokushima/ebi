@@ -161,7 +161,7 @@ class Mcp{
 			],
 			[
 				'name' => 'get_flow',
-				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[Requires])と効果(#[Produces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[After]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
+				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[Requires])と効果(#[Produces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[Follows]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -472,7 +472,7 @@ class Mcp{
 					'requires' => $req,
 					'produces' => $pro,
 					'requiresRaw' => $flow['requires'] ?? [],
-					'after' => $flow['after'] ?? [],
+					'follows' => $flow['follows'] ?? [],
 					'deprecated' => !empty($op['deprecated']),
 				];
 			}
@@ -505,7 +505,7 @@ class Mcp{
 				'requires' => $req,
 				'produces' => $pro,
 				'requiresRaw' => $flow['requires'] ?? [],
-				'after' => $flow['after'] ?? [],
+				'follows' => $flow['follows'] ?? [],
 				'deprecated' => false,
 				'actor' => 'batch',
 				'name' => $b['name'] ?? $oid,
@@ -720,7 +720,7 @@ class Mcp{
 	/**
 	 * hard plan（spine）に対して「差し込み可能な任意の中間段」を導出する。
 	 * soft requires（optional:true）の token が plan の産物で満たされる、
-	 * または #[After] が plan op を指す op を、推奨挿入位置(afterStep)付きで列挙する。
+	 * または #[Follows] が plan op を指す op を、推奨挿入位置(afterStep)付きで列挙する。
 	 * hard requires は plan産物 / inputs / ambient で満たせるものだけを対象とする（満たせない=別フロー）。
 	 */
 	private function flow_optional_steps(array $needed, array $ops, array $plan_out, array $inputs, array $registry): array{
@@ -786,17 +786,17 @@ class Mcp{
 				if(!$hard_ok){
 					continue;
 				}
-				// #[After] が plan/任意段 op を指すなら接続根拠 & 位置ヒント
-				$after_hits = [];
-				foreach($o['after'] as $a){
+				// #[Follows] が plan/任意段 op を指すなら接続根拠 & 位置ヒント
+				$follows_hits = [];
+				foreach($o['follows'] as $a){
 					$ep = $a['endpoint'] ?? null;
 					if($ep !== null && isset($oid_step[$ep])){
-						$after_hits[] = $ep;
+						$follows_hits[] = $ep;
 						$after_step = max($after_step, $oid_step[$ep]);
 					}
 				}
 				// この flow に接続していない op（無関係な soft 消費者）は出さない
-				if(empty($soft_link) && empty($after_hits)){
+				if(empty($soft_link) && empty($follows_hits)){
 					continue;
 				}
 				$chosen[$oid] = true;
@@ -812,7 +812,7 @@ class Mcp{
 					'afterStep' => $after_step,
 					'linkedBy' => array_values(array_unique(array_merge(
 						array_map(fn($t) => 'requires:'.$t, $soft_link),
-						array_map(fn($e) => 'after:'.$e, $after_hits)
+						array_map(fn($e) => 'follows:'.$e, $follows_hits)
 					))),
 				];
 				// 産物を available に加える（挿入位置以降で利用可）。多段接続の次pass用。

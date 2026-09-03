@@ -1452,7 +1452,7 @@ function buildFlowIndex() {
 				requires: req,
 				produces: pro,
 				requiresRaw: flow.requires || [],
-				after: flow.after || [],
+				follows: flow.follows || [],
 				deprecated: !!op.deprecated,
 			};
 		}
@@ -1475,7 +1475,7 @@ function buildFlowIndex() {
 		ops[oid] = {
 			method: 'CRON', path: null, summary: '',
 			requires: req, produces: pro,
-			requiresRaw: flow.requires || [], after: flow.after || [],
+			requiresRaw: flow.requires || [], follows: flow.follows || [],
 			deprecated: false, actor: 'batch', name: b.name || oid,
 		};
 	}
@@ -1541,7 +1541,7 @@ function flowProducerChain(token, ops, producers, registry, activeProducers) {
 }
 
 // hard plan（spine）に差し込める任意の中間段を導出する。不動点反復で、採用した任意段の産物に依存する
-// 任意段も次passで拾う（多段接続）。soft requires が既知産物で満たされる or after が既知 op を指すものを列挙（Mcp.php の移植）。
+// 任意段も次passで拾う（多段接続）。soft requires が既知産物で満たされる or follows が既知 op を指すものを列挙（Mcp.php の移植）。
 function flowOptionalSteps(needed, ops, planOut, inputs, registry) {
 	const tokenStep = {};
 	const oidStep = {};
@@ -1580,12 +1580,12 @@ function flowOptionalSteps(needed, ops, planOut, inputs, registry) {
 				}
 			}
 			if (!hardOk) continue;
-			const afterHits = [];
-			for (const a of (ops[oid].after || [])) {
+			const followsHits = [];
+			for (const a of (ops[oid].follows || [])) {
 				const ep = a.endpoint == null ? null : a.endpoint;
-				if (ep !== null && oidStep[ep] != null) { afterHits.push(ep); afterStep = Math.max(afterStep, oidStep[ep]); }
+				if (ep !== null && oidStep[ep] != null) { followsHits.push(ep); afterStep = Math.max(afterStep, oidStep[ep]); }
 			}
-			if (softLink.length === 0 && afterHits.length === 0) continue; // この flow に非接続
+			if (softLink.length === 0 && followsHits.length === 0) continue; // この flow に非接続
 			chosen[oid] = true;
 			added = true;
 			const produced = ops[oid].produces.map(p => p.token);
@@ -1597,7 +1597,7 @@ function flowOptionalSteps(needed, ops, planOut, inputs, registry) {
 				requires: ops[oid].requires,
 				produces: produced,
 				afterStep,
-				linkedBy: Array.from(new Set([...softLink.map(t => 'requires:' + t), ...afterHits.map(e => 'after:' + e)])),
+				linkedBy: Array.from(new Set([...softLink.map(t => 'requires:' + t), ...followsHits.map(e => 'follows:' + e)])),
 			});
 			const pos = afterStep + 1;
 			oidStep[oid] = pos;

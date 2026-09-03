@@ -435,8 +435,8 @@ class OpenApi extends \ebi\app\Request{
 				}
 				$produces = \ebi\AttributeReader::get_method($class, $method, 'produces') ?? [];
 				$requires = \ebi\AttributeReader::get_method($class, $method, 'requires') ?? [];
-				$after    = \ebi\AttributeReader::get_method($class, $method, 'after') ?? [];
-				$flow = array_filter(['requires' => $requires, 'produces' => $produces, 'after' => $after], fn($v) => !empty($v));
+				$follows  = \ebi\AttributeReader::get_method($class, $method, 'follows') ?? [];
+				$flow = array_filter(['requires' => $requires, 'produces' => $produces, 'follows' => $follows], fn($v) => !empty($v));
 				if(empty($flow)){
 					continue; // 前提/効果が無ければ flow 的意味なし
 				}
@@ -512,11 +512,11 @@ class OpenApi extends \ebi\app\Request{
 			return;
 		}
 
-		$remap_after = function(array $op) use ($map): array{
-			if(isset($op['x-flow']['after']) && is_array($op['x-flow']['after'])){
-				foreach($op['x-flow']['after'] as $i => $a){
+		$remap_follows = function(array $op) use ($map): array{
+			if(isset($op['x-flow']['follows']) && is_array($op['x-flow']['follows'])){
+				foreach($op['x-flow']['follows'] as $i => $a){
 					if(isset($a['endpoint'], $map[$a['endpoint']])){
-						$op['x-flow']['after'][$i]['endpoint'] = $map[$a['endpoint']];
+						$op['x-flow']['follows'][$i]['endpoint'] = $map[$a['endpoint']];
 					}
 				}
 			}
@@ -529,14 +529,14 @@ class OpenApi extends \ebi\app\Request{
 				if(isset($op['operationId'], $map[$op['operationId']])){
 					$op['operationId'] = $map[$op['operationId']];
 				}
-				$spec['paths'][$path][$method] = $remap_after($op);
+				$spec['paths'][$path][$method] = $remap_follows($op);
 			}
 		}
 		foreach(($spec['x-flow-batches'] ?? []) as $i => $b){
 			if(isset($b['operationId'], $map[$b['operationId']])){
 				$b['operationId'] = $map[$b['operationId']];
 			}
-			$spec['x-flow-batches'][$i] = $remap_after($b);
+			$spec['x-flow-batches'][$i] = $remap_follows($b);
 		}
 
 		// 4) 衝突は記録（サイレントに壊さない）
@@ -685,10 +685,10 @@ class OpenApi extends \ebi\app\Request{
 				}
 			}
 
-			foreach(($flow['after'] ?? []) as $a){
+			foreach(($flow['follows'] ?? []) as $a){
 				$ep = $a['endpoint'] ?? null;
 				if($ep !== null && !isset($op_ids[$ep])){                    // G5
-					$add('G5', $oid, "after endpoint '{$ep}' が operationId として解決できない");
+					$add('G5', $oid, "follows endpoint '{$ep}' が operationId として解決できない");
 				}
 			}
 		}
@@ -1307,7 +1307,7 @@ class OpenApi extends \ebi\app\Request{
 			$operation['x-mode'] = $m['mode'];
 		}
 
-		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[After]。#[Login]があればsession.userを前提に自動付与。
+		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[Follows]。#[Login]があればsession.userを前提に自動付与。
 		if(isset($m['class'], $m['method'])){
 			// クラス階層に宣言された #[FlowToken]（生産者なしの ambient トークン語彙）を集約
 			foreach((\ebi\AttributeReader::get_class($m['class'], 'flow_token') ?? []) as $ft){
@@ -1322,14 +1322,14 @@ class OpenApi extends \ebi\app\Request{
 
 			$produces = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'produces') ?? [];
 			$requires = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'requires') ?? [];
-			$after    = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'after') ?? [];
+			$follows  = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'follows') ?? [];
 
 			// do_login 等の共有ハンドラは per-route の差別化子である auth プラグインの login_condition にも
 			// flow を宣言できる（http_method / request params を login_condition から読むのと同じ流儀）。
 			if(!empty($m['auth'])){
 				$produces = array_merge($produces, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'produces') ?? []);
 				$requires = array_merge($requires, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'requires') ?? []);
-				$after    = array_merge($after,    \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'after') ?? []);
+				$follows  = array_merge($follows,  \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'follows') ?? []);
 			}
 
 			// #[Login] はメソッド階層(info)にもクラス階層にも付き得るため両方を見る
@@ -1346,7 +1346,7 @@ class OpenApi extends \ebi\app\Request{
 			$flow = array_filter([
 				'requires' => $requires,
 				'produces' => $produces,
-				'after' => $after,
+				'follows' => $follows,
 			], fn($v) => !empty($v));
 
 			if(!empty($flow)){
