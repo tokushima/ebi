@@ -5,7 +5,7 @@ namespace ebi\Attribute;
  * レスポンス変数を定義するAttribute（OpenAPI responses相当）
  *
  * @example
- * #[Response(name: 'user', type: 'App\Model\User')]
+ * #[Response(name: 'user', type: \App\Model\User::class)]
  * public function show() {}
  *
  * required/nullable はモデル層スキーマと同一の2軸・同一の既定：
@@ -27,7 +27,7 @@ namespace ebi\Attribute;
 class Response{
 	public function __construct(
 		public string $name,
-		public string $type='mixed',
+		public \ebi\T|string $type=\ebi\T::Mixed,
 		public ?string $items=null,
 		public ?string $summary=null,
 		public bool $deprecated=false,

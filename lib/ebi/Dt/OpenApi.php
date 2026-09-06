@@ -55,7 +55,7 @@ class OpenApi extends \ebi\app\Request{
 		/**
 		 * @var bool
 		 * ソースの throw new から自動検出した例外も 4xx レスポンスに含める（既定 true）。
-		 * false にすると @throws / #[Throws] / #[ErrorResponse] で明示宣言したものだけになる。
+		 * false にすると @throws / #[ErrorResponse] で明示宣言したものだけになる。
 		 */
 		$this->auto_throws = (bool)\ebi\Conf::get('openapi_auto_throws', true);
 
@@ -63,7 +63,7 @@ class OpenApi extends \ebi\app\Request{
 		 * @var bool
 		 * auto検出(throw new)した例外のうち HTTPステータス未宣言（既定500へfallback）の内部例外を、
 		 * 個別列挙せず汎用 500 に畳む（既定 true）。明示 http_status を持つ例外(4xx/意図的5xx)や
-		 * @throws / #[Throws] / #[ErrorResponse] で明示宣言したものは畳まない。
+		 * @throws / #[ErrorResponse] で明示宣言したものは畳まない。
 		 */
 		$this->collapse_internal_errors = (bool)\ebi\Conf::get('openapi_collapse_internal_errors', true);
 
@@ -1031,6 +1031,8 @@ class OpenApi extends \ebi\app\Request{
 						);
 						$in = ($data['in'] ?? 'query');
 						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
+						// #[Parameter(type:'map', items: T)] = map<string,T>（OpenAPI: type:object + additionalProperties）
+						$has_map = ($data['type'] ?? null) === 'map' && !empty($data['items']);
 						// ファイルアップロード（OpenAPI3: multipart/form-data + type:string format:binary）
 						$is_binary = (($data['format'] ?? null) === 'binary') || (($data['type'] ?? null) === 'file');
 						// 非推奨: #[Parameter(deprecated: true)] または summary内 @deprecated
@@ -1047,6 +1049,10 @@ class OpenApi extends \ebi\app\Request{
 								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
 									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+								}else if($has_map){
+									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									// 値型 mixed は空スキーマ([])になるため、OpenAPIとして妥当な additionalProperties:true に丸める
+									$body_properties[$name]['additionalProperties'] = empty($val_schema) ? true : $val_schema;
 								}
 							}
 							if($is_deprecated_param){
@@ -1059,6 +1065,12 @@ class OpenApi extends \ebi\app\Request{
 							$p = $this->build_parameter($param, $in);
 							if($has_items){
 								$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+								if(!empty($param->summary())){
+									$p['schema']['description'] = $param->summary();
+								}
+							}else if($has_map){
+								$val_schema = $this->get_schema_type($data['items'], $schemas);
+								$p['schema'] = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 								if(!empty($param->summary())){
 									$p['schema']['description'] = $param->summary();
 								}
@@ -1163,11 +1175,15 @@ class OpenApi extends \ebi\app\Request{
 							);
 							$in = ($data['in'] ?? 'query');
 							$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
+							$has_map = ($data['type'] ?? null) === 'map' && !empty($data['items']);
 
 							if($has_body && $in !== 'path'){
 								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
 									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+								}else if($has_map){
+									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$body_properties[$name]['additionalProperties'] = empty($val_schema) ? true : $val_schema;
 								}
 								if(!empty($data['require'])){
 									$body_required[] = $name;
@@ -1176,6 +1192,12 @@ class OpenApi extends \ebi\app\Request{
 								$p = $this->build_parameter($param, $in);
 								if($has_items){
 									$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+									if(!empty($param->summary())){
+										$p['schema']['description'] = $param->summary();
+									}
+								}else if($has_map){
+									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$p['schema'] = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 									if(!empty($param->summary())){
 										$p['schema']['description'] = $param->summary();
 									}
@@ -2114,36 +2136,6 @@ class OpenApi extends \ebi\app\Request{
 						$x_throws[] = [
 							'status' => (int)$status,
 							'description' => $err['description'],
-						];
-					}
-				}
-			}
-		}
-
-		// #[Throws]属性からエラーレスポンスを取得
-		if(isset($m['class'], $m['method'])){
-			$attr_throws = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'attr_throws');
-			if(!empty($attr_throws)){
-				foreach($attr_throws as $t){
-					$exception_name = $t['exception'];
-					$short_name = (($pos = strrpos($exception_name, '\\')) !== false) ? substr($exception_name, $pos + 1) : $exception_name;
-					$status = (string)$this->exception_to_status($exception_name);
-
-					$desc = trim($t['summary']);
-					$label = empty($desc) ? $short_name : $short_name.' - '.$desc;
-
-					if(isset($responses[$status])){
-						$responses[$status]['description'] .= "\n".$label;
-					}else{
-						$responses[$status] = ['description' => $label];
-					}
-
-					// x-throwsにも収集
-					if($status !== '401'){
-						$x_throws[] = [
-							'status' => (int)$status,
-							'exception' => $short_name,
-							'description' => $desc,
 						];
 					}
 				}

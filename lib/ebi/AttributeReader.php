@@ -181,7 +181,7 @@ class AttributeReader{
 							$n = $inst->name;
 							$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
 							unset($data['name']);
-							$data['type'] = $inst->type;
+							$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
 							$result[$name][$n] = $data;
 						}
 					}
@@ -195,7 +195,7 @@ class AttributeReader{
 							$n = $inst->name;
 							$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
 							unset($data['name']);
-							$data['type'] = $inst->type;
+							$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
 							$result[$name][$n] = $data;
 						}
 					}
@@ -209,19 +209,6 @@ class AttributeReader{
 							$result[$name][] = [
 								'status' => $inst->status,
 								'description' => $inst->description,
-							];
-						}
-					}
-					break;
-				case 'attr_throws':
-					$attrs = $r->getAttributes(\ebi\Attribute\Throws::class);
-					if(!empty($attrs)){
-						$result[$name] = [];
-						foreach($attrs as $attr){
-							$inst = $attr->newInstance();
-							$result[$name][] = [
-								'exception' => $inst->exception,
-								'summary' => $inst->summary ?? '',
 							];
 						}
 					}

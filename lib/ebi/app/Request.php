@@ -77,6 +77,19 @@ class Request extends \ebi\Request{
 						// instanceof を満たせないため構造検証へ切替。attr は Obj::___set___ 同様に反復。
 						if(is_string($an['type']) && !ctype_lower($an['type']) && class_exists($an['type'])){
 							$this->request_validate_object($k, $v, $an['type'], $an['attr'] ?? null, $an['require'] ?? false);
+						}else if($an['type'] === 'array' && isset($an['items']) && is_string($an['items']) && !ctype_lower($an['items']) && class_exists($an['items'])){
+							// #[Parameter(type:'array', items: ClassType)] は 旧 @request ClassType[] と等価に、
+							// 各要素を（instanceof でなく）連想配列の構造として検証する。
+							$this->request_validate_object($k, $v, $an['items'], 'a', $an['require'] ?? false);
+						}else if(($an['type'] ?? null) === 'map'){
+							// #[Parameter(type:'map', items: T)] = map<string,T>（旧 @request T{} 相当）。
+							// items がクラス型なら各値を連想配列の構造として検証（attr='h' で値を反復）、
+							// それ以外（scalar/mixed）は値型任意とし require のみ確認する。
+							if(isset($an['items']) && is_string($an['items']) && !ctype_lower($an['items']) && class_exists($an['items'])){
+								$this->request_validate_object($k, $v, $an['items'], 'h', $an['require'] ?? false);
+							}else if(($an['require'] ?? false) === true && ($v === '' || $v === null)){
+								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'), $k);
+							}
 						}else{
 							try{
 								\ebi\Validator::type($k,$v,$an);

@@ -8,6 +8,8 @@ namespace ebi\Attribute;
  * #[Parameter(name: 'email', type: 'string', require: true)]
  * #[Parameter(name: 'age', type: 'int', min: 0, max: 150)]
  * #[Parameter(name: 'tags', type: 'array', items: 'string')]
+ * #[Parameter(name: 'pages', type: 'map', items: 'mixed')]        // map<string, mixed>（OpenAPI: additionalProperties）
+ * #[Parameter(name: 'sections', type: 'map', items: Section::class)] // map<string, Section>
  * #[Parameter(name: 'file', type: 'string', format: 'binary', require: true)] // ファイルアップロード（multipart/form-data）
  * public function create() {}
  */
@@ -15,7 +17,8 @@ namespace ebi\Attribute;
 class Parameter{
 	public function __construct(
 		public string $name,
-		public string $type='string',
+		// スカラ型は 'int' 等の正準文字列（\ebi\T::Int でも可）、クラス型は \Foo\Bar::class。
+		public \ebi\T|string $type=\ebi\T::String,
 		public ?string $items=null,
 		public ?string $summary=null,
 		public bool $require=false,
