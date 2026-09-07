@@ -1,6 +1,7 @@
 <?php
 namespace test\db;
 /**
+ * @var serial $id
  * @var string $code @['auto_code_add'=>true,'max'=>16]
  */
 class AutoCodePrefix extends \ebi\Dao{

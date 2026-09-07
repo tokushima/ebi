@@ -38,7 +38,6 @@ class AttributeReader{
 		// var は継承順で階層マージする（trait→親→子、各段 doc→attr の順で後段が上書き）。
 		if(in_array('var', $names, true)){
 			$return['var'] = self::resolve_var_hierarchical($class, $parent_class, $doc_name);
-			self::apply_dao_var_conventions($class, $return['var']);
 			self::apply_native_type_completion($class, $return['var']);
 		}
 		return is_array($anon_names) ? $return : $return[$anon_names];
@@ -145,46 +144,6 @@ class AttributeReader{
 			$out[$trait->getName()] = $trait;
 		}
 		return array_values($out);
-	}
-
-	/**
-	 * Dao の命名規約(id→serial / create_date→datetime+auto_now_add /
-	 * update_date→datetime+auto_now / code→string+auto_code_add)を var メタへ補完する。
-	 * Dao サブクラス限定・型が未解決のプロパティにのみ適用（明示 type: / @var 優先）。
-	 */
-	private static function apply_dao_var_conventions(string $class, ?array &$var): void{
-		try{
-			$r = new \ReflectionClass($class);
-		}catch(\Throwable $e){
-			return;
-		}
-		if(!$r->isSubclassOf(\ebi\Dao::class)){
-			return;
-		}
-		if($var === null){
-			$var = [];
-		}
-		foreach($r->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $prop){
-			if($prop->isStatic()){
-				continue;
-			}
-			$name = $prop->getName();
-			if($name === '' || $name[0] === '_' || !empty($var[$name]['type'])){
-				continue;
-			}
-			if($name === 'id'){
-				$var[$name]['type'] = 'serial';
-			}else if($name === 'created_at' || $name === 'create_date' || $name === 'created'){
-				$var[$name]['type'] = 'datetime';
-				$var[$name]['auto_now_add'] = true;
-			}else if($name === 'updated_at' || $name === 'update_date' || $name === 'modified'){
-				$var[$name]['type'] = 'datetime';
-				$var[$name]['auto_now'] = true;
-			}else if($name === 'code'){
-				$var[$name]['type'] = 'string';
-				$var[$name]['auto_code_add'] = true;
-			}
-		}
 	}
 
 	/**

@@ -225,20 +225,13 @@ class SourceAnalyzer{
 			}
 		}
 
-		// Daoの場合、命名規則に基づく spec 装飾を補完（型は \ebi\AttributeReader が var メタで解決済み）
+		// Dao の serial 列は auto-increment 主キー（型セマンティクス）。命名規約ではなく型から補完する。
+		// 他の装飾(auto_now/auto_now_add/auto_code_add と format)は明示メタ(#[VarAttr]/@var)＋型マッピングで解決済み。
 		if($is_obj && is_subclass_of($class, \ebi\Dao::class)){
-			foreach($properties as $name => $prop){
-				if($name === 'id'){
+			foreach($properties as $prop){
+				if($prop->type() === 'serial'){
 					$prop->set_opt('primary', true);
 					$prop->set_opt('auto', true);
-				}else if(in_array($name, ['created_at', 'create_date', 'created'])){
-					$prop->set_opt('format', 'date-time');
-					$prop->set_opt('auto_now_add', true);
-				}else if(in_array($name, ['updated_at', 'update_date', 'modified'])){
-					$prop->set_opt('format', 'date-time');
-					$prop->set_opt('auto_now', true);
-				}else if($name === 'code'){
-					$prop->set_opt('auto_code_add', true);
 				}
 			}
 		}
