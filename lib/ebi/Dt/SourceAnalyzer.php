@@ -211,6 +211,9 @@ class SourceAnalyzer{
 					}
 					if(array_key_exists('nullable', $anon[$name] ?? [])){
 						$properties[$name]->set_opt('nullable', (bool)$anon[$name]['nullable']);
+					}else if(($nullable_ref_type = $prop->getType()) instanceof \ReflectionNamedType && !$nullable_ref_type->allowsNull()){
+						// nullable 未指定時は PHP 型宣言(? の有無)から補完する（型の reflection 補完と揃える）
+						$properties[$name]->set_opt('nullable', false);
 					}
 					// DocBlock/属性で明示された auto系 opt を反映（命名規則ベースの補完と揃える）
 					foreach(['primary','auto','auto_now_add','auto_now','auto_code_add'] as $ak){
@@ -222,33 +225,19 @@ class SourceAnalyzer{
 			}
 		}
 
-		// Daoの場合、命名規則に基づくプロパティ情報を補完
+		// Daoの場合、命名規則に基づく spec 装飾を補完（型は \ebi\AttributeReader が var メタで解決済み）
 		if($is_obj && is_subclass_of($class, \ebi\Dao::class)){
 			foreach($properties as $name => $prop){
-				$type = $prop->type();
-
 				if($name === 'id'){
-					if(empty($type) || $type === 'mixed'){
-						$prop->type('integer');
-					}
 					$prop->set_opt('primary', true);
 					$prop->set_opt('auto', true);
 				}else if(in_array($name, ['created_at', 'create_date', 'created'])){
-					if(empty($type) || $type === 'mixed'){
-						$prop->type('string');
-					}
 					$prop->set_opt('format', 'date-time');
 					$prop->set_opt('auto_now_add', true);
 				}else if(in_array($name, ['updated_at', 'update_date', 'modified'])){
-					if(empty($type) || $type === 'mixed'){
-						$prop->type('string');
-					}
 					$prop->set_opt('format', 'date-time');
 					$prop->set_opt('auto_now', true);
 				}else if($name === 'code'){
-					if(empty($type) || $type === 'mixed'){
-						$prop->type('string');
-					}
 					$prop->set_opt('auto_code_add', true);
 				}
 			}

@@ -25,7 +25,7 @@ eq("",$obj->bb());
 $obj->bb(null);
 eq(null,$obj->bb());
 $obj->bb("aaa\nbbb\nccc\n");
-eq("aaabbbccc",$obj->bb());
+eq("aaa\nbbb\nccc\n",$obj->bb()); // string は改行を除去せず忠実に保持する
 
 eq(false,$obj->is_pp());
 $obj->pp("hoge");

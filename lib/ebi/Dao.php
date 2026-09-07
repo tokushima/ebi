@@ -171,25 +171,10 @@ abstract class Dao extends \ebi\Obj{
 		while(!empty($props)){
 			$name = array_shift($props);
 			$anon_cond = $this->prop_anon($name,'cond');
-			$column_type = $this->prop_anon($name,'type');
-			if(empty($column_type)){
-				if($name == 'id'){
-					$this->prop_anon($name,'type','serial',true);
-				}else if($name == 'created_at' || $name == 'create_date' || $name == 'created'){
-					$this->prop_anon($name,'type','datetime',true);
-					$this->prop_anon($name,'auto_now_add',true,true);
-				}else if($name == 'updated_at' || $name == 'update_date' || $name == 'modified'){
-					$this->prop_anon($name,'type','datetime',true);
-					$this->prop_anon($name,'auto_now',true,true);
-				}else if($name == 'code'){
-					$this->prop_anon($name,'type','string',true);
-					$this->prop_anon($name,'auto_code_add',true,true);
-				}
-				$column_type = $this->prop_anon($name,'type','string');
-			}
-			if($this->prop_anon($name,'type') == 'serial'){
-				$this->prop_anon($name,'primary',true,true);
-			}
+			// 命名規約(id→serial / create_date→datetime / code→string+auto_code_add 等)は
+			// \ebi\AttributeReader が var メタ構築時に解決済み。ここは未解決(汎用列)の既定 string を
+			// ローカル $column_type にのみ与える（メタには載せない＝汎用列の type は未設定のまま）。
+			$column_type = $this->prop_anon($name,'type','string');
 			$column = new \ebi\Column();
 			$column->name($name);
 			$column->column($this->prop_anon($name,'column',$name));
@@ -854,7 +839,7 @@ abstract class Dao extends \ebi\Obj{
 						break;
 				}
 			}else if($new && ($this->{$column->name()}() === null || $this->{$column->name()}() === '')){
-				if($this->prop_anon($column->name(),'type') == 'string' && $this->prop_anon($column->name(),'auto_code_add') === true){
+				if($this->prop_anon($column->name(),'auto_code_add') === true){
 					$this->set_unique_code($column->name());
 				}else if($this->prop_anon($column->name(),'auto_now_add') === true){
 					switch($this->prop_anon($column->name(),'type')){

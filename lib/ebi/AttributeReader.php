@@ -35,7 +35,191 @@ class AttributeReader{
 				$return[$name] = $doc_val;
 			}
 		}
+		// var は継承順で階層マージする（trait→親→子、各段 doc→attr の順で後段が上書き）。
+		if(in_array('var', $names, true)){
+			$return['var'] = self::resolve_var_hierarchical($class, $parent_class, $doc_name);
+			self::apply_dao_var_conventions($class, $return['var']);
+			self::apply_native_type_completion($class, $return['var']);
+		}
 		return is_array($anon_names) ? $return : $return[$anon_names];
+	}
+
+	/**
+	 * var メタを継承順（最も非特化→特化）で階層マージして解決する。
+	 * 各クラス段の並びは trait(doc→attr) → クラス自身(doc→attr)。クラス連鎖は親→子。
+	 * 後段（より特化）が前段を array_replace_recursive で上書きする。
+	 * これにより doc/Attribute を問わず「継承側（消費クラス）が上位を上書き」できる。
+	 */
+	private static function resolve_var_hierarchical($class, ?string $parent_class, ?string $doc_name): ?array{
+		$key = (is_object($class) ? get_class($class) : $class).'::__varh__::'.($parent_class ?? '').'::'.($doc_name ?? '');
+		if(array_key_exists($key, self::$attr_cache)){
+			return self::$attr_cache[$key];
+		}
+		try{
+			$r = new \ReflectionClass($class);
+		}catch(\Throwable $e){
+			return null;
+		}
+		if(empty($parent_class)){
+			$parent_class = 'stdClass';
+		}
+		$chain = [];
+		$t = $r;
+		while($t !== false && $t->getName() !== $parent_class){
+			$chain[] = $t;
+			$t = $t->getParentClass();
+		}
+		$chain = array_reverse($chain); // 親 → 子（非特化→特化）
+
+		$acc = [];
+		$merge = function(?array $site) use (&$acc){
+			if(empty($site)){
+				return;
+			}
+			foreach($site as $name => $data){
+				$acc[$name] = isset($acc[$name]) ? array_replace_recursive($acc[$name], $data) : $data;
+			}
+		};
+		foreach($chain as $c){
+			$traits = self::all_traits($c);
+			// trait 群（当該クラスより非特化）: doc → attr
+			foreach($traits as $trait){
+				$merge(self::decode_class_doc($trait, $doc_name));
+			}
+			$level_trait_attr = [];
+			foreach($traits as $trait){
+				$ta = [];
+				self::collect_property_attributes($trait, $ta);
+				foreach($ta as $n => $d){
+					$level_trait_attr[$n] = $d;
+				}
+				$merge($ta);
+			}
+			// クラス自身: doc → attr（trait を上書き）
+			$merge(self::decode_class_doc($c, $doc_name));
+			$flat = [];
+			self::collect_property_attributes($c, $flat);
+			$own = [];
+			foreach($c->getProperties() as $prop){
+				if($prop->getDeclaringClass()->getName() !== $c->getName()){
+					continue; // 親から継承した宣言は親の段で処理済み
+				}
+				$n = $prop->getName();
+				if(!isset($flat[$n])){
+					continue;
+				}
+				// trait flatten 分（再宣言でなく trait 由来）は除外。再宣言 override は data 差異で残る。
+				if(isset($level_trait_attr[$n]) && $level_trait_attr[$n] === $flat[$n]){
+					continue;
+				}
+				$own[$n] = $flat[$n];
+			}
+			$merge($own);
+		}
+		$result = empty($acc) ? null : $acc;
+		self::$attr_cache[$key] = $result;
+		return $result;
+	}
+
+	/**
+	 * 当該クラス/トレイト「自身の」DocComment から var アノテーションを取得する（継承は含めない）。
+	 */
+	private static function decode_class_doc(\ReflectionClass $c, ?string $doc_name): ?array{
+		$d = $c->getDocComment();
+		if($d === false){
+			return null;
+		}
+		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m", '', str_replace(['/'.'**', '*'.'/'], '', $d));
+		return self::decode($d, 'var', $doc_name);
+	}
+
+	/**
+	 * 使用トレイトを再帰収集する（ネストした trait は非特化として先に並べる）。
+	 */
+	private static function all_traits(\ReflectionClass $c): array{
+		$out = [];
+		foreach($c->getTraits() as $trait){
+			foreach(self::all_traits($trait) as $nested){
+				$out[$nested->getName()] = $nested;
+			}
+			$out[$trait->getName()] = $trait;
+		}
+		return array_values($out);
+	}
+
+	/**
+	 * Dao の命名規約(id→serial / create_date→datetime+auto_now_add /
+	 * update_date→datetime+auto_now / code→string+auto_code_add)を var メタへ補完する。
+	 * Dao サブクラス限定・型が未解決のプロパティにのみ適用（明示 type: / @var 優先）。
+	 */
+	private static function apply_dao_var_conventions(string $class, ?array &$var): void{
+		try{
+			$r = new \ReflectionClass($class);
+		}catch(\Throwable $e){
+			return;
+		}
+		if(!$r->isSubclassOf(\ebi\Dao::class)){
+			return;
+		}
+		if($var === null){
+			$var = [];
+		}
+		foreach($r->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $prop){
+			if($prop->isStatic()){
+				continue;
+			}
+			$name = $prop->getName();
+			if($name === '' || $name[0] === '_' || !empty($var[$name]['type'])){
+				continue;
+			}
+			if($name === 'id'){
+				$var[$name]['type'] = 'serial';
+			}else if($name === 'created_at' || $name === 'create_date' || $name === 'created'){
+				$var[$name]['type'] = 'datetime';
+				$var[$name]['auto_now_add'] = true;
+			}else if($name === 'updated_at' || $name === 'update_date' || $name === 'modified'){
+				$var[$name]['type'] = 'datetime';
+				$var[$name]['auto_now'] = true;
+			}else if($name === 'code'){
+				$var[$name]['type'] = 'string';
+				$var[$name]['auto_code_add'] = true;
+			}
+		}
+	}
+
+	/**
+	 * PHP の宣言型(scalar)から var メタの type を補完する。Obj/Dao 共通。
+	 * type が未解決(VarAttr/@var/命名規約のいずれでも未指定)で、かつプロパティに
+	 * ReflectionNamedType(int/float/string/bool)が付いている時のみ補完する。
+	 *
+	 * 型宣言が無い(mixed/typeless)プロパティは触らない＝従来どおり \ebi\Validator は
+	 * mixed 素通し(Dao 列パスは \ebi\Dao の局所 string 既定に委ねる)。array/クラス型/union は
+	 * 曖昧(要素型・単一行/複数行・serial/datetime 等)なため補完しない＝必要なら VarAttr で明示する。
+	 * これにより Obj/Dao runtime も SourceAnalyzer も同一の解決済みメタを読む（型解決の単一ソース）。
+	 */
+	private static function apply_native_type_completion(string $class, ?array &$var): void{
+		static $map = ['int'=>'int','float'=>'float','string'=>'string','bool'=>'bool'];
+		try{
+			$r = new \ReflectionClass($class);
+		}catch(\Throwable $e){
+			return;
+		}
+		foreach($r->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $prop){
+			if($prop->isStatic()){
+				continue;
+			}
+			$name = $prop->getName();
+			if($name === '' || $name[0] === '_' || !empty($var[$name]['type'])){
+				continue;
+			}
+			$ref_type = $prop->getType();
+			if($ref_type instanceof \ReflectionNamedType && isset($map[$ref_type->getName()])){
+				if($var === null){
+					$var = [];
+				}
+				$var[$name]['type'] = $map[$ref_type->getName()];
+			}
+		}
 	}
 
 	/**
@@ -318,8 +502,11 @@ class AttributeReader{
 				$type = $inst->type;
 				$attr_type = null;
 				$ref_type = $prop->getType();
+				// type: を明示したか（items: だけの指定も型指定扱い）。未指定なら type を metadata に
+				// 載せず、SourceAnalyzer / Dao 側の PHP 宣言型からの解決に委ねる。
+				$type_specified = ($type !== '' || $inst->items !== null);
 
-				// type 未指定時は PHP の型宣言から推論
+				// type 未指定時も配列/ハッシュ判定のために PHP の型宣言から解決値を持つ
 				if($type === ''){
 					$type = ($ref_type instanceof \ReflectionNamedType) ? $ref_type->getName() : 'string';
 				}
@@ -339,12 +526,14 @@ class AttributeReader{
 					$type = substr($type, 0, -2);
 				}
 
-				$data = [
-					'type' => $type,
-				];
+				$data = [];
 
-				if($attr_type !== null){
-					$data['attr'] = $attr_type;
+				// type: を明示した時だけ metadata に載せる（未指定は PHP 宣言へ委譲）
+				if($type_specified){
+					$data['type'] = $type;
+					if($attr_type !== null){
+						$data['attr'] = $attr_type;
+					}
 				}
 				if($inst->summary !== null){
 					$data['summary'] = $inst->summary;

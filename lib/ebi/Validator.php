@@ -35,8 +35,7 @@ class Validator{
 				if(is_array($v)){
 					$fail();
 				}
-				$v = is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
-				return ($t == 'text') ? $v : str_replace(["\r\n","\r","\n"],'',$v);
+				return is_bool($v) ? (($v) ? 'true' : 'false') : ((string)$v);
 			default:
 				if($v === ''){
 					return null;
