@@ -739,11 +739,142 @@ HTML;
 		return $urls;
 	}
 
+	/**
+	 * 並列テスト(testman -p)の worker スロット番号。testman が各 worker subprocess に渡す
+	 * TESTMAN_WORKER_ID を読む。並列でない/未設定なら 0。
+	 * これを唯一のソースに、DB名やストレージ、URLホストを worker 毎に分離する。
+	 */
+	public static function worker_id(): int{
+		$id = getenv('TESTMAN_WORKER_ID');
+		return ($id !== false && (int)$id > 0) ? (int)$id : 0;
+	}
+
+	/**
+	 * worker 毎リソースの分離サフィックス（例 _w3）。worker でなければ空文字列。
+	 * SqliteConnector が DB ファイル名へ、アプリが work_dir 等へ付与する。
+	 */
+	public static function worker_suffix(): string{
+		$id = self::worker_id();
+		return $id > 0 ? '_w'.$id : '';
+	}
+
+	/**
+	 * PHP built-in server (php -S) 用のルーター本体。
+	 * URI の先頭セグメントをエントリ名として <docroot>/<entry>.php を include する。
+	 * テスト/ローカルで ebi アプリを php -S で動かすための共通ルーター。
+	 *
+	 * アプリ側の test_router.php は次のスタブでよい:
+	 *   <?php require __DIR__.'/vendor/autoload.php'; \ebi\Dt::serve_router(__DIR__);
+	 *
+	 * @param string|null $docroot エントリ .php を探すディレクトリ（既定: getcwd()）
+	 */
+	public static function serve_router(?string $docroot = null): void{
+		$docroot = $docroot ?? getcwd();
+
+		$request_url = $_SERVER['REQUEST_URI'] ?? '';
+		$remote_addr = ($_SERVER['REMOTE_ADDR'] ?? '').':'.($_SERVER['REMOTE_PORT'] ?? '');
+		$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+		$current_time = date('D M d H:i:s Y');
+		$worker_count = getenv('PHP_CLI_SERVER_WORKERS');
+		$worker = ($worker_count !== false && (int)$worker_count > 1) ? sprintf('[%s] ', getmypid()) : '';
+
+		$exp = explode('/', substr($request_url, 1), 2);
+		$entry = $exp[0];
+		$pathinfo = $exp[1] ?? '';
+		$entry_file = $docroot.'/'.$entry.'.php';
+
+		$out = fopen('php://stdout', 'w');
+		if(is_file($entry_file)){
+			$_SERVER['PATH_INFO'] = '/'.$pathinfo;
+			try{
+				include($entry_file);
+			}catch(\Throwable $e){
+				error_log((string)$e);
+				http_response_code(500);
+				if(ini_get('display_errors')){
+					print('<pre>'.htmlspecialchars((string)$e).'</pre>');
+				}
+			}
+			$status = http_response_code();
+			$color = ($status == 200) ? 32 : (($status == 404) ? 31 : 33);
+			$log = $worker.sprintf('[%s] %s [%s]: %s %s', $current_time, $remote_addr, $status, $method, $request_url);
+			fwrite($out, sprintf("\033[0;0:%sm%s\033[0m", $color, $log).PHP_EOL);
+		}else{
+			$log = $worker.sprintf('[%s] %s [%s]: %s %s', $current_time, $remote_addr, 404, $method, $request_url);
+			fwrite($out, sprintf("\033[0;0:31m%s\033[0m", $log).PHP_EOL);
+			http_response_code(404);
+			print('404 Not Found');
+		}
+		fclose($out);
+	}
+
+	/**
+	 * ebi アプリを testman で機能テストするための scaffold を出力する。
+	 * php -S ルーター(スタブ) / dev サーバ / 並列ランナー の3ファイルを resources から書き出す。
+	 * 既存ファイルは上書きしない（$force=true で上書き）。
+	 *
+	 *   php cmdman.phar ebi.Dt::init_test          # getcwd() へ
+	 *   php cmdman.phar ebi.Dt::init_test tests    # tests/ へ
+	 *
+	 * @param string|null $dir 出力先（既定 getcwd()）
+	 * @param bool $force 既存を上書きするか
+	 */
+	public static function init_test(?string $dir = null, bool $force = false): void{
+		$dir = $dir ?? getcwd();
+		if(!is_dir($dir)){
+			\ebi\Util::mkdir($dir);
+		}
+		$src = dirname(__DIR__, 2).'/resources';
+		foreach(['test_router.php', 'test_server.sh', 'test_parallel.sh'] as $name){
+			$from = $src.'/'.$name;
+			$to = $dir.'/'.$name;
+			if(!is_file($from)){
+				continue;
+			}
+			if(!$force && is_file($to)){
+				fwrite(STDOUT, '  skip (exists): '.$name.PHP_EOL);
+				continue;
+			}
+			copy($from, $to);
+			if(substr($name, -3) === '.sh'){
+				@chmod($to, 0755);
+			}
+			fwrite(STDOUT, '  wrote: '.$name.PHP_EOL);
+		}
+		fwrite(STDOUT, 'scaffold written to '.$dir.PHP_EOL);
+	}
+
 	public static function testman_config(bool $autocommit=true): array{
 		\ebi\Conf::set(\ebi\Db::class, 'autocommit', $autocommit);
+
+		$urls = self::get_urls();
+		$url_rewrite = self::get_url_rewrite();
+
+		// 並列テスト: worker は専用サーバ(ポート = base + worker_id)へ振り分ける。
+		// urls / url_rewrite に埋め込まれた base ポートの host を worker 専用ポートへ置換する。
+		$wid = self::worker_id();
+		if($wid > 0){
+			$base = (int)(getenv('TESTMAN_BASE_PORT') ?: 8888);
+			$from = 'localhost:'.$base;
+			$to = 'localhost:'.($base + $wid);
+			$rewrite_host = function($v) use (&$rewrite_host, $from, $to){
+				if(is_string($v)){
+					return str_replace($from, $to, $v);
+				}
+				if(is_array($v)){
+					$out = [];
+					foreach($v as $k => $e){ $out[$k] = $rewrite_host($e); }
+					return $out;
+				}
+				return $v;
+			};
+			$urls = $rewrite_host($urls);
+			$url_rewrite = $rewrite_host($url_rewrite);
+		}
+
 		return [
-			'urls' => self::get_urls(),
-			'url_rewrite' => self::get_url_rewrite(),
+			'urls' => $urls,
+			'url_rewrite' => $url_rewrite,
 			'ssl-verify' => false,
 			'log_debug_callback' => '\\ebi\\Log::debug',
 		];

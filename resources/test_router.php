@@ -1,24 +1,9 @@
 <?php
 /**
- * built-in web serverで利用するテスト用のルーター
- * 
- * if (!-f $request_filename) {
- * 	rewrite ^(.+?)(/.*)$ $1.php$2?$query_string last;	
- * break;
- * }
+ * PHP built-in server (php -S) 用ルーターのスタブ。
+ * 実体は ebi が管理する \ebi\Dt::serve_router()（先頭セグメント -> <entry>.php へ振り分け）。
  */
-$uri = $_SERVER['REQUEST_URI'];
-$exp = explode('/', substr($uri,1), 2);
-$entry = $exp[0];
-$pathinfo = $exp[1] ?? '';
-
-$entry_file = __DIR__.'/'.$entry.'.php';
-if(is_file($entry_file)){
-	$_SERVER['PATH_INFO'] = '/'.$pathinfo;
-	include($entry_file);
-}else{
-	header("HTTP/1.1 404 Not Found");
-	print("404 Not Found");
+foreach ([__DIR__ . '/bootstrap.php', __DIR__ . '/vendor/autoload.php'] as $__f) {
+	if (is_file($__f)) { require $__f; break; }
 }
-
-
+\ebi\Dt::serve_router(__DIR__);

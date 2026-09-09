@@ -20,6 +20,13 @@ class SqliteConnector extends \ebi\DbConnector{
 			if(strpos($name,'.') === false){
 				$name = $name.'.sqlite3';
 			}
+			// 並列テスト(testman -p)では worker 毎に DB ファイルを分離する。
+			// TESTMAN_WORKER_ID がある時だけ拡張子直前へ _w<id> を挿入（例 data.main.sqlite3 → data.main_w3.sqlite3）。
+			// 通常実行/本番は未設定なので無影響。core を汚さないよう env を直読みする（\ebi\Dt には依存しない）。
+			$__wid = getenv('TESTMAN_WORKER_ID');
+			if($__wid !== false && (int)$__wid > 0){
+				$name = preg_replace('/(\.[^.\/]+)$/', '_w'.(int)$__wid.'$1', $name, 1);
+			}
 			$host = str_replace('\\','/',$host ?? '');
 			if(substr($host,-1) != '/'){
 				$host = $host.'/';
@@ -30,6 +37,14 @@ class SqliteConnector extends \ebi\DbConnector{
 		try{
 			$con = new \PDO(sprintf('sqlite:%s',($host == ':memory:') ? ':memory:' : $path));
 			$con->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
+			// 書き込み中心ワークロード(テスト等)の高速化。WAL+synchronous=NORMAL はクラッシュ耐性を
+			// 保ちつつ commit 毎の fsync を大幅削減。busy_timeout でロック時に即エラーせず待つ。
+			if($host != ':memory:'){
+				$con->exec('PRAGMA journal_mode=WAL');
+			}
+			$con->exec('PRAGMA synchronous=NORMAL');
+			$con->exec('PRAGMA temp_store=MEMORY');
+			$con->exec('PRAGMA busy_timeout=5000');
 		}catch(\PDOException $e){
 			throw new \ebi\exception\ConnectionException($e->getMessage());
 		}

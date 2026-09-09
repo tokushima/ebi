@@ -1249,6 +1249,37 @@ class OpenApi extends \ebi\app\Request{
 			];
 		}
 
+		// #[RequiredAny] — パラメータ横断の必須制約（列挙のうち1つ以上が必須）。
+		// OpenAPI の parameters には横断制約の表現手段が無いため operation に x-required-any＋説明で示し、
+		// requestBody がある場合は JSON Schema(anyOf(required)) でも表現する。
+		if(isset($m['class'], $m['method'])){
+			$req_groups = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'required_groups') ?? [];
+			if(!empty($req_groups)){
+				$x_any = $notes = $body_fragments = [];
+				foreach($req_groups as $g){
+					if(($g['kind'] ?? null) === 'any'){
+						$x_any[] = $g['props'];
+						$notes[] = '「'.implode(' / ', $g['props']).'」のいずれか1つ以上が必須';
+						$body_fragments[] = ['anyOf' => array_map(fn($p) => ['required' => [$p]], $g['props'])];
+					}
+				}
+				if(!empty($x_any)){ $operation['x-required-any'] = $x_any; }
+				if(!empty($notes)){
+					$note_text = "必須条件:\n- ".implode("\n- ", $notes);
+					$operation['description'] = empty($operation['description'])
+						? $note_text
+						: $operation['description']."\n\n".$note_text;
+				}
+				if(!empty($body_fragments) && isset($operation['requestBody']['content'])){
+					foreach($operation['requestBody']['content'] as $mt => $content){
+						if(!isset($content['schema'])){ continue; }
+						$content['schema']['allOf'] = array_merge($content['schema']['allOf'] ?? [], $body_fragments);
+						$operation['requestBody']['content'][$mt] = $content;
+					}
+				}
+			}
+		}
+
 		// レスポンス
 		$x_throws = [];
 		$operation['responses'] = $this->build_responses($m, $info, $schemas, $x_throws);

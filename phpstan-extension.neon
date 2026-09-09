@@ -1,0 +1,9 @@
+# ebi の PHPStan 拡張。消費側 phpstan.neon の includes に本ファイルを足すと
+# #[\ebi\Attribute\VarBind] の prop / via 実在チェックが有効になる。
+#   includes:
+#     - vendor/tokushima/ebi/phpstan-extension.neon
+services:
+    -
+        class: ebi\phpstan\VarBindRule
+        tags:
+            - phpstan.rules.rule

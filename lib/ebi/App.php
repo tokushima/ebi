@@ -401,6 +401,27 @@ class App{
 					}
 					if(isset($funcs)){
 						try{
+							// #[RequiredAny] の実行時強制：列挙のうち1つも指定が無ければ RequiredException(422)。
+							// try 内で throw することで既存の例外処理（after()→再throw→エラー応答）に整合する。
+							if(isset($class, $method) && isset($ins) && ($ins instanceof \ebi\app\Request)){
+								foreach((\ebi\AttributeReader::get_method($class, $method, 'required_groups') ?? []) as $__rg){
+									if(($__rg['kind'] ?? null) !== 'any'){
+										continue;
+									}
+									$__props = $__rg['props'] ?? [];
+									$__ok = false;
+									foreach($__props as $__p){
+										$__v = $ins->in_vars($__p, null);
+										if($__v !== null && $__v !== '' && $__v !== []){
+											$__ok = true;
+											break;
+										}
+									}
+									if(!$__ok){
+										throw new \ebi\exception\RequiredException(implode(' / ', $__props).' のいずれか1つ以上が必須です');
+									}
+								}
+							}
 							$action_result_vars = call_user_func_array($funcs,$param_arr);
 
 							if(is_array($action_result_vars)){

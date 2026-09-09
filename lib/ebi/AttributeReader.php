@@ -114,10 +114,40 @@ class AttributeReader{
 				$own[$n] = $flat[$n];
 			}
 			$merge($own);
+			// クラス自身の #[VarBind]（trait/親由来プロパティへ cond/column をオーバーレイ）
+			$merge(self::collect_class_var_bind($c));
 		}
 		$result = empty($acc) ? null : $acc;
 		self::$attr_cache[$key] = $result;
 		return $result;
+	}
+
+	/**
+	 * クラス自身に付いた #[\ebi\Attribute\VarBind] を [プロパティ名 => ['cond'=>.., 'column'=>..]] へ集約する。
+	 * trait / 親由来プロパティへ「関係マッピング（cond / column）」だけを再宣言なしでオーバーレイする。
+	 * via（別プロパティの結合を流用する短縮記法）は VarBind::resolved_cond() で `@{via}` に解決される。
+	 */
+	private static function collect_class_var_bind(\ReflectionClass $c): array{
+		$out = [];
+		foreach($c->getAttributes(\ebi\Attribute\VarBind::class) as $a){
+			try{
+				$inst = $a->newInstance();
+			}catch(\Throwable $e){
+				continue;
+			}
+			$data = [];
+			$cond = $inst->resolved_cond();
+			if($cond !== null){
+				$data['cond'] = $cond;
+			}
+			if($inst->column !== null){
+				$data['column'] = $inst->column;
+			}
+			if(!empty($data)){
+				$out[$inst->prop] = isset($out[$inst->prop]) ? array_replace($out[$inst->prop], $data) : $data;
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -410,6 +440,15 @@ class AttributeReader{
 						$result[$name] = array_filter([
 							'name' => $inst->name,
 						], fn($v) => $v !== null);
+					}
+					break;
+				case 'required_groups':
+					$groups = [];
+					foreach($r->getAttributes(\ebi\Attribute\RequiredAny::class) as $attr){
+						$groups[] = ['kind' => 'any', 'props' => array_values($attr->newInstance()->props)];
+					}
+					if(!empty($groups)){
+						$result[$name] = $groups;
 					}
 					break;
 			}
