@@ -224,6 +224,20 @@ abstract class Dao extends \ebi\Obj{
 							}
 						}
 					}
+					// @ 省略記法: 先頭トークンが既出の結合プロパティ名なら @ 参照へ正規化する。
+					// 自テーブル列は $_self_columns_ 側にしか入らず $last_cond_column には載らないため、
+					// $last_cond_column 一致は結合プロパティ参照で確定（列名との曖昧さは無い）。以降は @ と同一経路。
+					// self_var にドットがあるのは参照時だけ（自テーブル列は単純識別子）。ドット有りで未解決なら
+					// 参照意図のタイポ/宣言順ミスと判断し、自テーブル列に化けさせず即例外にする。
+					if($self_var[0] !== '@'){
+						$has_dot = (false !== strpos($self_var,'.'));
+						$__head = $has_dot ? explode('.',$self_var,2)[0] : $self_var;
+						if(isset($last_cond_column[$__head])){
+							$self_var = '@'.$self_var;
+						}else if($has_dot){
+							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$__head.'`');
+						}
+					}
 					if($self_var[0] == '@'){
 						$cond_var = null;
 						$cond_name = substr($self_var,1);

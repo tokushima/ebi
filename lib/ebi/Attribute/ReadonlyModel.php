@@ -5,10 +5,10 @@ namespace ebi\Attribute;
  * Daoクラスを読み取り専用にするAttribute
  *
  * @example
- * #[ReadonlyAttr]
+ * #[ReadonlyModel]
  * class ReadOnlyModel extends \ebi\Dao {}
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-class ReadonlyAttr{
+class ReadonlyModel{
 	public function __construct(){}
 }

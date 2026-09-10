@@ -1583,7 +1583,7 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema['format'] = $prop->opt('format');
 					}
 
-					// enum（#[VarAttr(enum:[...])] または @var @['enum'=>[...]] 由来）
+					// enum（#[Prop(enum:[...])] または @var @['enum'=>[...]] 由来）
 					$this->apply_enum_meta($prop_schema, $prop);
 
 					// primary key
@@ -1614,12 +1614,16 @@ class OpenApi extends \ebi\app\Request{
 					// 標準2軸(OpenAPI 3.1):
 					//   required = expose列は getIterator で必ずキー出力されるため全て required（キー存在）
 					//   nullable = 値が必ず非nullとは限らない列は型に "null" を許容（nullable:false / auto系 は非null確定なので付けない）
+					//   nonnull_default = 非nullの既定値を持つ列は出力で必ず埋まる＝response 非null（自動導出）。
+					//   例外は #[Prop(nullable: false)] で明示非null、あるいは既定を null にして表現。
 					$is_non_null = ($prop->opt('nullable') === false)
 						|| $prop->opt('primary')
 						|| $prop->opt('auto')
 						|| $prop->opt('auto_now_add')
 						|| $prop->opt('auto_now')
-						|| $prop->opt('auto_code_add');
+						|| $prop->opt('auto_code_add')
+						|| $prop->opt('nonnull_default')
+						|| $prop->opt('require'); // 入力必須＝保存で必ず埋まる＝出力非null
 					if(!$is_non_null){
 						$prop_schema = $this->apply_nullable($prop_schema);
 					}

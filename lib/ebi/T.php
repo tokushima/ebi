@@ -2,7 +2,7 @@
 namespace ebi;
 
 /**
- * #[Parameter] / #[Response] / #[VarAttr] の type に指定できる値型（Type）。
+ * #[Parameter] / #[Response] / #[Prop] の type に指定できる値型（Type）。
  */
 enum T: string{
 	case String   = 'string';
@@ -26,7 +26,7 @@ enum T: string{
 	 * この type トークンの値が \ebi\Validator 通過後に持つ PHP の型名を返す。
 	 *
 	 * File だけは Validator のスカラ経路を通らないため mixed。
-	 * @see \ebi\Attribute\VarAttr  モデルプロパティ宣言の規約
+	 * @see \ebi\Attribute\Prop  モデルプロパティ宣言の規約
 	 */
 	public function phpType(): string{
 		return match($this){

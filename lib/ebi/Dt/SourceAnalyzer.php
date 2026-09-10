@@ -209,6 +209,15 @@ class SourceAnalyzer{
 					if(!empty($anon[$name]['extra'])){
 						$properties[$name]->set_opt('extra', true);
 					}
+					// 非nullの既定値を持つ列は「出力では必ず埋まる（response 非null）」の自動導出に使う。
+					// （request は #[Parameter] 側で任意/nullable を別途表現）
+					if($prop->hasDefaultValue() && $prop->getDefaultValue() !== null){
+						$properties[$name]->set_opt('nonnull_default', true);
+					}
+					// require:true は入力必須＝保存時に必ず埋まる＝出力でも非null（response 非null の自動導出）
+					if(!empty($anon[$name]['require'])){
+						$properties[$name]->set_opt('require', true);
+					}
 					if(array_key_exists('nullable', $anon[$name] ?? [])){
 						$properties[$name]->set_opt('nullable', (bool)$anon[$name]['nullable']);
 					}else if(($nullable_ref_type = $prop->getType()) instanceof \ReflectionNamedType && !$nullable_ref_type->allowsNull()){
@@ -226,7 +235,7 @@ class SourceAnalyzer{
 		}
 
 		// Dao の serial 列は auto-increment 主キー（型セマンティクス）。命名規約ではなく型から補完する。
-		// 他の装飾(auto_now/auto_now_add/auto_code_add と format)は明示メタ(#[VarAttr]/@var)＋型マッピングで解決済み。
+		// 他の装飾(auto_now/auto_now_add/auto_code_add と format)は明示メタ(#[Prop]/@var)＋型マッピングで解決済み。
 		if($is_obj && is_subclass_of($class, \ebi\Dao::class)){
 			foreach($properties as $prop){
 				if($prop->type() === 'serial'){

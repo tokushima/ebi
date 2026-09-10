@@ -39,6 +39,7 @@ class AttributeReader{
 		if(in_array('var', $names, true)){
 			$return['var'] = self::resolve_var_hierarchical($class, $parent_class, $doc_name);
 			self::apply_native_type_completion($class, $return['var']);
+			self::normalize_class_type_fqcn($return['var']);
 		}
 		return is_array($anon_names) ? $return : $return[$anon_names];
 	}
@@ -114,40 +115,12 @@ class AttributeReader{
 				$own[$n] = $flat[$n];
 			}
 			$merge($own);
-			// クラス自身の #[VarBind]（trait/親由来プロパティへ cond/column をオーバーレイ）
-			$merge(self::collect_class_var_bind($c));
+			// クラスレベル #[Prop(name: 'x', ...)]（trait/親由来プロパティへ、書いたキーだけを再宣言なしで上書き）
+			$merge(self::collect_class_level_var_attr($c));
 		}
 		$result = empty($acc) ? null : $acc;
 		self::$attr_cache[$key] = $result;
 		return $result;
-	}
-
-	/**
-	 * クラス自身に付いた #[\ebi\Attribute\VarBind] を [プロパティ名 => ['cond'=>.., 'column'=>..]] へ集約する。
-	 * trait / 親由来プロパティへ「関係マッピング（cond / column）」だけを再宣言なしでオーバーレイする。
-	 * via（別プロパティの結合を流用する短縮記法）は VarBind::resolved_cond() で `@{via}` に解決される。
-	 */
-	private static function collect_class_var_bind(\ReflectionClass $c): array{
-		$out = [];
-		foreach($c->getAttributes(\ebi\Attribute\VarBind::class) as $a){
-			try{
-				$inst = $a->newInstance();
-			}catch(\Throwable $e){
-				continue;
-			}
-			$data = [];
-			$cond = $inst->resolved_cond();
-			if($cond !== null){
-				$data['cond'] = $cond;
-			}
-			if($inst->column !== null){
-				$data['column'] = $inst->column;
-			}
-			if(!empty($data)){
-				$out[$inst->prop] = isset($out[$inst->prop]) ? array_replace($out[$inst->prop], $data) : $data;
-			}
-		}
-		return $out;
 	}
 
 	/**
@@ -178,12 +151,12 @@ class AttributeReader{
 
 	/**
 	 * PHP の宣言型(scalar)から var メタの type を補完する。Obj/Dao 共通。
-	 * type が未解決(VarAttr/@var/命名規約のいずれでも未指定)で、かつプロパティに
+	 * type が未解決(Prop/@var/命名規約のいずれでも未指定)で、かつプロパティに
 	 * ReflectionNamedType(int/float/string/bool)が付いている時のみ補完する。
 	 *
 	 * 型宣言が無い(mixed/typeless)プロパティは触らない＝従来どおり \ebi\Validator は
 	 * mixed 素通し(Dao 列パスは \ebi\Dao の局所 string 既定に委ねる)。array/クラス型/union は
-	 * 曖昧(要素型・単一行/複数行・serial/datetime 等)なため補完しない＝必要なら VarAttr で明示する。
+	 * 曖昧(要素型・単一行/複数行・serial/datetime 等)なため補完しない＝必要なら Prop で明示する。
 	 * これにより Obj/Dao runtime も SourceAnalyzer も同一の解決済みメタを読む（型解決の単一ソース）。
 	 */
 	private static function apply_native_type_completion(string $class, ?array &$var): void{
@@ -209,6 +182,24 @@ class AttributeReader{
 				$var[$name]['type'] = $map[$ref_type->getName()];
 			}
 		}
+	}
+
+	/**
+	 * 型メタのクラスFQCNを正規化する。
+	 * ::class は先頭 \ 無し、docblock/文字列指定は先頭 \ 有りで表記が割れるため、
+	 * クラス型（\ を含む）は先頭 \ を除去して同一表記に揃える。スカラー型（int等）は \ を含まないため不変。
+	 * {} / [] などの要素サフィックスは保持する。
+	 */
+	private static function normalize_class_type_fqcn(?array &$var): void{
+		if(!is_array($var)){
+			return;
+		}
+		foreach($var as &$data){
+			if(is_array($data) && isset($data['type']) && is_string($data['type']) && strpos($data['type'], '\\') !== false){
+				$data['type'] = ltrim($data['type'], '\\');
+			}
+		}
+		unset($data);
 	}
 
 	/**
@@ -280,7 +271,7 @@ class AttributeReader{
 					}
 					break;
 				case 'readonly':
-					$attrs = $r->getAttributes(\ebi\Attribute\ReadonlyAttr::class);
+					$attrs = $r->getAttributes(\ebi\Attribute\ReadonlyModel::class, \ReflectionAttribute::IS_INSTANCEOF);
 					if(!empty($attrs)){
 						$result[$name] = [];
 					}
@@ -491,115 +482,149 @@ class AttributeReader{
 	 */
 	private static function collect_property_attributes(\ReflectionClass $class, array &$result): void{
 		foreach($class->getProperties() as $prop){
-			$attrs = $prop->getAttributes(\ebi\Attribute\VarAttr::class);
-
+			$attrs = $prop->getAttributes(\ebi\Attribute\Prop::class, \ReflectionAttribute::IS_INSTANCEOF);
 			if(!empty($attrs)){
-				$inst = $attrs[0]->newInstance();
-				$name = $prop->getName();
-
-				$type = $inst->type;
-				$attr_type = null;
-				$ref_type = $prop->getType();
-				// type: を明示したか（items: だけの指定も型指定扱い）。未指定なら type を metadata に
-				// 載せず、SourceAnalyzer / Dao 側の PHP 宣言型からの解決に委ねる。
-				$type_specified = ($type !== '' || $inst->items !== null);
-
-				// type 未指定時も配列/ハッシュ判定のために PHP の型宣言から解決値を持つ
-				if($type === ''){
-					$type = ($ref_type instanceof \ReflectionNamedType) ? $ref_type->getName() : 'string';
-				}
-
-				// nullable 未指定時は PHP の型宣言から推論（型宣言なしはnullable扱い）
-				$nullable = $inst->nullable ?? (($ref_type === null) ? true : $ref_type->allowsNull());
-
-				// 配列/ハッシュ型の処理
-				if($type === 'array' && $inst->items !== null){
-					$attr_type = 'a';
-					$type = $inst->items;
-				}else if(str_ends_with($type, '[]')){
-					$attr_type = 'a';
-					$type = substr($type, 0, -2);
-				}else if(str_ends_with($type, '{}')){
-					$attr_type = 'h';
-					$type = substr($type, 0, -2);
-				}
-
-				$data = [];
-
-				// type: を明示した時だけ metadata に載せる（未指定は PHP 宣言へ委譲）
-				if($type_specified){
-					$data['type'] = $type;
-					if($attr_type !== null){
-						$data['attr'] = $attr_type;
-					}
-				}
-				if($inst->summary !== null){
-					$data['summary'] = $inst->summary;
-				}
-				if($inst->primary){
-					$data['primary'] = true;
-				}
-				if($inst->auto_now){
-					$data['auto_now'] = true;
-				}
-				if($inst->auto_now_add){
-					$data['auto_now_add'] = true;
-				}
-				if($inst->auto_code_add){
-					$data['auto_code_add'] = true;
-				}
-				if(!$inst->expose){
-					$data['hash'] = false;
-				}
-				if(!$inst->get){
-					$data['get'] = false;
-				}
-				if(!$inst->set){
-					$data['set'] = false;
-				}
-				if($inst->unique){
-					$data['unique'] = true;
-				}
-				if($inst->unique_together !== null){
-					$data['unique_together'] = $inst->unique_together;
-				}
-				if($inst->require){
-					$data['require'] = true;
-				}
-				if(!$nullable){
-					$data['nullable'] = false;
-				}
-				if($inst->min !== null){
-					$data['min'] = $inst->min;
-				}
-				if($inst->max !== null){
-					$data['max'] = $inst->max;
-				}
-				if($inst->cond !== null){
-					$data['cond'] = $inst->cond;
-				}
-				if($inst->column !== null){
-					$data['column'] = $inst->column;
-				}
-				if($inst->extra){
-					$data['extra'] = true;
-				}
-				if($inst->ctype !== null){
-					$data['ctype'] = $inst->ctype;
-				}
-				if($inst->base !== null){
-					$data['base'] = $inst->base;
-				}
-				if($inst->length !== null){
-					$data['length'] = $inst->length;
-				}
-				if($inst->enum !== null){
-					$data['enum'] = $inst->enum;
-				}
-
-				$result[$name] = $data;
+				$result[$prop->getName()] = self::decode_var_attr($attrs[0]->newInstance(), $prop->getType());
 			}
 		}
+	}
+
+	/**
+	 * クラス自身に付いた「クラスレベル #[Prop(name: 'x', ...)]」を [プロパティ名 => data] へ集約する。
+	 * trait / 親由来プロパティへ、書いたキーだけを再宣言なしで上書きする（旧 @var docblock と同じキー単位マージ）。
+	 */
+	private static function collect_class_level_var_attr(\ReflectionClass $c): array{
+		$out = [];
+		foreach($c->getAttributes(\ebi\Attribute\Prop::class, \ReflectionAttribute::IS_INSTANCEOF) as $a){
+			try{
+				$inst = $a->newInstance();
+			}catch(\Throwable $e){
+				continue;
+			}
+			if($inst->name === null){
+				continue; // name 未指定＝プロパティレベル用（クラスに付いていても無視）
+			}
+			$data = self::decode_var_attr($inst, null);
+			if(!empty($data)){
+				$out[$inst->name] = isset($out[$inst->name]) ? array_replace($out[$inst->name], $data) : $data;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Prop インスタンスを var メタの data 配列へデコードする。
+	 * $ref_type: プロパティレベルは対象プロパティの型宣言（type/nullable 補完に使う）。
+	 *            クラスレベル上書きは null（明示したオプションだけを出す＝キー単位マージ）。
+	 */
+	private static function decode_var_attr(\ebi\Attribute\Prop $inst, ?\ReflectionType $ref_type): array{
+		$type = $inst->type;
+		$attr_type = null;
+		// type: を明示したか（items: だけの指定も型指定扱い）。未指定は PHP 宣言型へ委譲。
+		$type_specified = ($type !== '' || $inst->items !== null);
+		if($type === ''){
+			$type = ($ref_type instanceof \ReflectionNamedType) ? $ref_type->getName() : 'string';
+		}
+		// nullable 未指定時は PHP の型宣言から推論（型宣言なし/クラスレベルはnullable扱い＝不出力）
+		$nullable = $inst->nullable ?? (($ref_type === null) ? true : $ref_type->allowsNull());
+
+		if($type === 'array' && $inst->items !== null){
+			$attr_type = 'a';
+			$type = $inst->items;
+		}else if(str_ends_with($type, '[]')){
+			$attr_type = 'a';
+			$type = substr($type, 0, -2);
+		}else if(str_ends_with($type, '{}')){
+			$attr_type = 'h';
+			$type = substr($type, 0, -2);
+		}
+
+		$data = [];
+		if($type_specified){
+			$data['type'] = $type;
+			if($attr_type !== null){
+				$data['attr'] = $attr_type;
+			}
+		}
+		if($inst->summary !== null){ $data['summary'] = $inst->summary; }
+		// bool オプションは全て「明示時(!==null)のみ出力」＝trait/親の値を consumer が上書き可能。
+		if($inst->primary !== null){ $data['primary'] = $inst->primary; }
+		if($inst->auto_now !== null){ $data['auto_now'] = $inst->auto_now; }
+		if($inst->auto_now_add !== null){ $data['auto_now_add'] = $inst->auto_now_add; }
+		if($inst->auto_code_add !== null){ $data['auto_code_add'] = $inst->auto_code_add; }
+		// expose は hash と同値（expose:false ⟺ hash:false）
+		if($inst->expose !== null){ $data['hash'] = $inst->expose; }
+		if($inst->get !== null){ $data['get'] = $inst->get; }
+		if($inst->set !== null){ $data['set'] = $inst->set; }
+		if($inst->unique !== null){ $data['unique'] = $inst->unique; }
+		if($inst->unique_together !== null){ $data['unique_together'] = $inst->unique_together; }
+		// require は2値（明示 false で trait/親の require:true を打ち消せる。既定 null は不出力）
+		if($inst->require !== null){ $data['require'] = $inst->require; }
+		if(!$nullable){ $data['nullable'] = false; }
+		if($inst->min !== null){ $data['min'] = $inst->min; }
+		if($inst->max !== null){ $data['max'] = $inst->max; }
+		// from（構造化した結合の道筋）優先。無ければ cond/via。
+		$__cond = ($inst->from !== null) ? self::desugar_from($inst->from) : $inst->resolved_cond();
+		if($__cond !== null){ $data['cond'] = $__cond; }
+		if($inst->column !== null){ $data['column'] = $inst->column; }
+		if($inst->extra !== null){ $data['extra'] = $inst->extra; }
+		if($inst->ctype !== null){ $data['ctype'] = $inst->ctype; }
+		if($inst->base !== null){ $data['base'] = $inst->base; }
+		if($inst->length !== null){ $data['length'] = $inst->length; }
+		if($inst->enum !== null){ $data['enum'] = $inst->enum; }
+		return $data;
+	}
+
+	/**
+	 * #[Prop(from: [...])] のホップ配列を、既存の cond DSL 文字列へ desugar する（Dao クエリ側は無改修）。
+	 * 各ホップ [local, Model::class|'table', target] または [local, 'table.target']。
+	 * anchor(=hops[0][0]) を外に、中間テーブルは in(=target)+out(=次hopのlocal) を `table.in.out` に詰める。
+	 */
+	private static function desugar_from(array $hops): string{
+		$anchor = $hops[0][0];
+		$tokens = [];
+		$n = count($hops);
+		for($i = 0; $i < $n; $i++){
+			$hop = array_values($hops[$i]);
+			if(count($hop) === 2){
+				[$table, $target] = explode('.', $hop[1], 2);
+			}else{
+				$table = $hop[1];
+				$target = $hop[2];
+			}
+			$tbl = (is_string($table) && class_exists($table)) ? self::resolve_table_name($table) : $table;
+			$tok = $tbl . '.' . $target;
+			if($i < $n - 1){
+				$tok .= '.' . $hops[$i + 1][0]; // 出口キー＝次ホップの local（＝この table 上の列）
+			}
+			$tokens[] = $tok;
+		}
+		return $anchor . '(' . implode(',', $tokens) . ')';
+	}
+
+	/**
+	 * Dao クラス名 → テーブル名（#[Table] 優先、無ければ祖先の table クラスを camel2snake）。
+	 * Dao の派生元(readonly ビュー等)は親のテーブルを共有するため親を辿る。
+	 */
+	private static function resolve_table_name(string $class): string{
+		$t = self::get_class($class, 'table');
+		if(!empty($t['name'])){
+			return $t['name'];
+		}
+		$table_class = $class;
+		$parent = get_parent_class($class);
+		while($parent !== false && $parent !== 'ebi\\Dao'){
+			try{
+				if((new \ReflectionClass($parent))->isAbstract()){
+					break;
+				}
+			}catch(\Throwable $e){
+				break;
+			}
+			$table_class = $parent;
+			$parent = get_parent_class($parent);
+		}
+		return \ebi\Util::camel2snake($table_class);
 	}
 
 	/**
