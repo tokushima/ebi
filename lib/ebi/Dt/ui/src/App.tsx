@@ -320,20 +320,37 @@ function ResponsesView({ responses, schemas, operationId, envelope = false }) {
 			) : (
 				<div className="param-grid mt-2" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
 					{Object.entries(filteredResponses).flatMap(([code, resp], idx) => {
-						const hasSchema = !!resp.content?.['application/json']?.schema;
-						const props = hasSchema ? resp.content['application/json'].schema : null;
-						const properties = props?.properties ? Object.entries(props.properties).map(([k, v]) => ({ name: k, ...v, required: (props.required || []).includes(k) })) : null;
+						// content は application/json 優先、無ければ最初の media type（#[ResponseBody(format:'binary')] の image/* 等）。
+						const contentEntries = resp.content ? Object.entries(resp.content) : [];
+						const [mediaType, media] = resp.content?.['application/json']
+							? ['application/json', resp.content['application/json']]
+							: (contentEntries[0] || [null, null]);
+						const rawSchema = media?.schema || null;
+						const schema = rawSchema ? normSchema(rawSchema) : null;
+						const properties = schema?.properties ? Object.entries(schema.properties).map(([k, v]) => ({ name: k, ...v, required: (schema.required || []).includes(k) })) : null;
+						// 名前付きフィールドが無いボディ全体（#[ResponseBody]: 配列 / 単一オブジェクト / binary / scalar）は
+						// 単一の合成行 (body) として型・format・summary を表示する。参照型なら中身も展開できる。
+						const bodyRows = (!properties && schema)
+							? [{ name: '(body)', ...schema, description: schema.description || resp.description }]
+							: null;
+						const rowSource = properties || bodyRows;
+						const isBody = !properties && !!bodyRows;
 						const items = [];
 						items.push(
 							<div key={`h-${code}`} className="resp-header" style={{ gridColumn: '1 / -1', borderTop: idx > 0 ? '1px solid #e2e8f0' : 'none' }}>
 								<span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(code), flexShrink: 0 }} />
 								<span className="param-name" style={{ minWidth: 'auto' }}>{code}</span>
 								<span className="param-desc" style={{ flex: 1 }}>{resp.description}</span>
+								{mediaType && mediaType !== 'application/json' && (
+									<code style={{ fontSize: '0.6875rem', color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: 4, padding: '1px 7px', flexShrink: 0 }}>{mediaType}</code>
+								)}
 							</div>
 						);
-						if (properties) {
+						if (rowSource) {
 							const toggle = (key) => setExpanded(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
-							const allRows = renderNestedProps(properties, `p-${code}`, schemas, expanded);
+							const allRows = renderNestedProps(rowSource, `p-${code}`, schemas, expanded);
+							// binary 等の format をボディ行の型に付記（resolveTypeName は format を出さないため）。
+							if (isBody && schema.format && allRows[0]) allRows[0].type = `${allRows[0].type} <${schema.format}>`;
 							allRows.forEach(r => {
 								const indent = r.depth * 1.25;
 								const isNested = r.depth > 1;

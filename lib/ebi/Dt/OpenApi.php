@@ -904,21 +904,16 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
-	 * メソッドの #[Response(format:'binary', mediaType:...)] からバイナリ応答のメディアタイプを返す。
+	 * メソッドの #[ResponseBody(format:'binary', mediaType:...)] からバイナリ応答のメディアタイプを返す。
 	 * 該当が無ければ null。パスにサフィックスが無いバイナリ配信エンドポイント用（binary_media_type_for_path の補完）。
 	 */
 	private function binary_media_type_from_attr(array $m): ?string{
 		if(!isset($m['class'], $m['method'])){
 			return null;
 		}
-		$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
-		if(empty($attr_contexts)){
-			return null;
-		}
-		foreach($attr_contexts as $data){
-			if(($data['format'] ?? null) === 'binary'){
-				return $data['mediaType'] ?? 'application/octet-stream';
-			}
+		$body = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'response_body');
+		if(is_array($body) && ($body['format'] ?? null) === 'binary'){
+			return $body['mediaType'] ?? 'application/octet-stream';
 		}
 		return null;
 	}
@@ -1935,19 +1930,22 @@ class OpenApi extends \ebi\app\Request{
 		$properties = [];
 		$added_props = [];
 		$required_names = [];
-		$root_schema = null; // root:true 指定時、200 ボディ全体のスキーマ（object-properties ラップをバイパス）
+
+		// #[ResponseBody]（200 ボディ全体のスキーマ。object-properties ラップをバイパス）を読む。
+		// #[Response]（result 内の名前付きフィールド）とは排他で、両者の併記は下でエラーにする。
+		$response_body = null;
+		if(isset($m['class'], $m['method'])){
+			$rb = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'response_body');
+			if(is_array($rb)){
+				$response_body = $rb;
+			}
+		}
 
 		// #[Response]属性からレスポンススキーマを構築（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
 			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
-					// format:binary は画像/PDF 等のバイナリ応答。JSON プロパティにはせず、
-					// パス構築後の post-override(binary_media_type_from_attr)で content を上書きする。
-					if(($data['format'] ?? null) === 'binary'){
-						continue;
-					}
-
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
 
 					if($data['type'] === 'array' && !empty($data['items'])){
@@ -1983,12 +1981,6 @@ class OpenApi extends \ebi\app\Request{
 					// nullable/required 2軸（モデル層ミラー：nullable既定ON・required既定true）
 					if(($data['nullable'] ?? true) !== false){
 						$prop_schema = $this->apply_nullable($prop_schema);
-					}
-
-					// root:true は 200 ボディ全体のスキーマ。プロパティ集約せず退避し、required も対象外。
-					if(!empty($data['root'])){
-						$root_schema = $prop_schema;
-						continue;
 					}
 
 					if(($data['required'] ?? true) !== false){
@@ -2116,8 +2108,49 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
-		// root:true が指定されていれば 200 ボディ全体をそのスキーマにする（object-properties ラップをバイパス）。
-		// bare 配列 / 単一オブジェクト応答の型化用。root がある場合は名前付き properties より優先。
+		// #[ResponseBody]（ボディ全体）と #[Response]/@context（result 内の名前付きフィールド）は排他。
+		// 併記された場合はスペックとして矛盾するので例外を投げる。呼び出し側（build_operation → 収集ループ）
+		// の try/catch が拾い、該当エンドポイントを x-skipped に載せて Dt 画面で理由付き警告表示する。
+		if($response_body !== null && !empty($properties)){
+			throw new \LogicException(
+				'#[ResponseBody]（200 ボディ全体）と #[Response]/@context（result 内の名前付きフィールド）は併記できません: '
+				.($m['class'] ?? '?').'::'.($m['method'] ?? '?')
+			);
+		}
+
+		// #[ResponseBody] が指定されていれば 200 ボディ全体をそのスキーマにする（object-properties ラップをバイパス）。
+		// bare 配列 / 単一オブジェクト応答の型化用。format:binary はここでは JSON スキーマ化せず、
+		// パス構築後の post-override(binary_media_type_from_attr)で content を上書きする。
+		$root_schema = null;
+		if($response_body !== null && ($response_body['format'] ?? null) !== 'binary'){
+			$root_schema = $this->get_schema_type($response_body['type'] ?? 'string', $schemas);
+
+			if(($response_body['type'] ?? null) === 'array' && !empty($response_body['items'])){
+				$root_schema = ['type' => 'array', 'items' => $this->get_schema_type($response_body['items'], $schemas)];
+			}
+
+			$summary = $response_body['summary'] ?? '';
+			$is_deprecated = !empty($response_body['deprecated']);
+			if(preg_match('/@deprecated/', $summary)){
+				$is_deprecated = true;
+				$summary = trim(preg_replace('/@deprecated.*/', '', $summary));
+			}
+			if(!empty($summary)){
+				if(isset($root_schema['$ref'])){
+					$root_schema = ['allOf' => [$root_schema], 'description' => $summary];
+				}else{
+					$root_schema['description'] = $summary;
+				}
+			}
+			if($is_deprecated){
+				$root_schema['deprecated'] = true;
+			}
+			// nullable 2軸（モデル層ミラー：nullable既定ON）
+			if(($response_body['nullable'] ?? true) !== false){
+				$root_schema = $this->apply_nullable($root_schema);
+			}
+		}
+
 		$schema = null;
 		if($root_schema !== null){
 			$schema = $root_schema;
@@ -2149,6 +2182,13 @@ class OpenApi extends \ebi\app\Request{
 					'schema' => $schema,
 				],
 			];
+		}
+
+		// #[ResponseBody] の summary を 200 の description に反映する。
+		// 特に format:binary は content が generate_spec の post-override で {type:string,format:binary} に
+		// 差し替えられ schema に summary を載せられないため、ここで拾わないと Dt 画面から消える。
+		if($response_body !== null && !empty($response_body['summary'])){
+			$success_response['description'] = $response_body['summary'];
 		}
 
 		$responses['200'] = $success_response;

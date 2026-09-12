@@ -3,6 +3,36 @@ set_error_handler(function($n,$s,$f,$l){
 	throw new \ErrorException($s,0,$n,$f,$l);
 });
 
+set_exception_handler(function (\Throwable $e) {
+    $message = sprintf(
+        "%s: %s in %s:%d\nStack trace:\n%s",
+        get_class($e),
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        $e->getTraceAsString()
+    );
+
+	\ebi\Log::trace($message);
+
+    throw $e; 
+});
+
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        $message = sprintf(
+            "Fatal Error (%d): %s in %s:%d",
+            $error['type'],
+            $error['message'],
+            $error['file'],
+            $error['line']
+        );
+
+		\ebi\Log::trace($message);
+    }
+});
+
 ini_set('html_errors',0);
 ini_set('error_reporting',E_ALL);
 ini_set('xdebug.overload_var_dump',0);

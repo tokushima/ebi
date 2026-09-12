@@ -55,13 +55,12 @@ class Prop{
 
 		// 列のマッピング
 		public ?string $column=null,         // プロパティ名と異なる列名
-		public ?string $cond=null,           // 常に適用される絞り込み条件（生の cond DSL）
-		public ?string $via=null,            // 別プロパティの結合を流用する短縮記法（内部で `@{via}`＝cond のシュガー。cond と排他）
-		// 結合の道筋を構造化して書く（cond の読みやすい代替）。ホップの配列。各ホップ:
+		public ?string $via=null,            // 別プロパティの結合をそのまま流用し、その結合先テーブルの別列を読む短縮記法（追加ホップ無し）
+		// 結合の道筋を構造化して書く。ホップの配列で、先頭のローカル列から順に結合を辿る。各ホップ:
 		//   [local, Model::class|'table', target]  … local(現在テーブルの列) = table.target で結合。次ホップの local は table 上とみなす
 		//   [local, 'table.target']                … テーブルを文字列で（モデル無しのフォールバック）
-		// 先頭ホップの local に `otherprop.col` を置くと、既存の別プロパティ `otherprop` の結合を再利用し
-		// その結合先テーブルの col から続けて結合する（cond の `@otherprop.col(...)` と等価。cond を書かず from だけで完結）。
+		// 先頭ホップの local に `otherprop.col` を置くと、既存の別プロパティ `otherprop` の結合を再利用し、
+		// その結合先テーブルの col から続けて結合する（via の再利用を多段へ拡張した形。from だけで完結）。
 		// 例: from: [['client_order_id', PrintTicket::class, 'code'], ['delivery_package_id', DeliveryPackage::class, 'id'], ['destination_id', Destination::class, 'id']]
 		// 再利用例: from: [['code.book_id', Book::class, 'id']]  … `code` の結合を辿り book_id = book.id
 		public ?array $from=null,
@@ -75,12 +74,4 @@ class Prop{
 		public ?string $ctype=null,          // base 未指定時の文字種 0:数字 a:小文字 A:大文字 t:token68
 		public ?int $length=null,            // 桁数（未指定は max→32）
 	){}
-
-	/** via（短縮記法）を解決した実効 cond を返す。cond 優先、無ければ via→`@{via}`。 */
-	public function resolved_cond(): ?string{
-		if($this->cond !== null){
-			return $this->cond;
-		}
-		return $this->via !== null ? '@' . $this->via : null;
-	}
 }

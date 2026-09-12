@@ -168,6 +168,19 @@ abstract class Dao extends \ebi\Obj{
 				$props[] = $prop->getName();
 			}
 		}
+		// --- 参照解決を宣言順に依存させない（順序非依存）ための下準備 ---
+		// 結合を生むプロパティ名（cond に '(' を含む＝last_cond_column を生む）を先に洗い出す。相手が未処理でも
+		// 「参照」と判定でき、dotless 前方参照も取りこぼさない。未解決なら @ 経路で requeue して後で解決する。
+		// $requeue_guard は循環参照検出用の回数カウンタ（正しい依存鎖は全件数以内で解決＝上限超えは循環）。
+		$join_props = [];
+		foreach($props as $__pn){
+			$__c = $this->prop_anon($__pn,'cond');
+			if($__c !== null && false !== strpos($__c,'(')){
+				$join_props[$__pn] = true;
+			}
+		}
+		$requeue_guard = [];
+		$max_requeue = sizeof($props) + 1;
 		while(!empty($props)){
 			$name = array_shift($props);
 			$anon_cond = $this->prop_anon($name,'cond');
@@ -224,15 +237,14 @@ abstract class Dao extends \ebi\Obj{
 							}
 						}
 					}
-					// @ 省略記法: 先頭トークンが既出の結合プロパティ名なら @ 参照へ正規化する。
-					// 自テーブル列は $_self_columns_ 側にしか入らず $last_cond_column には載らないため、
-					// $last_cond_column 一致は結合プロパティ参照で確定（列名との曖昧さは無い）。以降は @ と同一経路。
-					// self_var にドットがあるのは参照時だけ（自テーブル列は単純識別子）。ドット有りで未解決なら
-					// 参照意図のタイポ/宣言順ミスと判断し、自テーブル列に化けさせず即例外にする。
+					// @ 省略記法: 先頭トークンが結合プロパティ名（$join_props）なら @ 参照へ正規化する。宣言順に依存せず
+					// 判定できるため dotless 前方参照も取りこぼさない（未解決かどうかは下の @ 経路で見て requeue する）。
+					// 自テーブル列は結合を生まず $join_props に載らないので曖昧さは無い。self_var のドットは参照時だけ
+					// 現れる（自テーブル列は単純識別子）ので、ドット有りで結合プロパティでないなら参照意図のタイポとして即例外。
 					if($self_var[0] !== '@'){
 						$has_dot = (false !== strpos($self_var,'.'));
 						$__head = $has_dot ? explode('.',$self_var,2)[0] : $self_var;
-						if(isset($last_cond_column[$__head])){
+						if(isset($join_props[$__head])){
 							$self_var = '@'.$self_var;
 						}else if($has_dot){
 							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$__head.'`');
@@ -245,11 +257,16 @@ abstract class Dao extends \ebi\Obj{
 							[$cond_name, $cond_var] = explode('.',$cond_name);
 						}
 						if(!isset($last_cond_column[$cond_name])){
+							// 参照先が結合プロパティでまだ後ろに控えているなら自分を後回し（順序非依存）。
+							// どこにも居ない＝本物のタイポ。循環参照は requeue 回数上限で打ち切る。
+							if(isset($join_props[$cond_name]) && in_array($cond_name,$props)){
+								if(($requeue_guard[$name] = ($requeue_guard[$name] ?? 0) + 1) > $max_requeue){
+									throw new \ebi\exception\InvalidAnnotationException('circular reference : `'.$name.'`');
+								}
+								$props[] = $name;
+								continue;
+							}
 							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');
-						}
-						if(in_array($cond_name,$props)){
-							$props[] = $name;
-							continue;
 						}
 						$cond_column = clone($last_cond_column[$cond_name]);
 						if(isset($cond_var)){
@@ -285,6 +302,9 @@ abstract class Dao extends \ebi\Obj{
 			}else if($anon_cond[0] === '@'){
 				$cond_name = substr($anon_cond,1);
 				if(in_array($cond_name,$props)){
+					if(($requeue_guard[$name] = ($requeue_guard[$name] ?? 0) + 1) > $max_requeue){
+						throw new \ebi\exception\InvalidAnnotationException('circular reference : `'.$name.'`');
+					}
 					$props[] = $name;
 					continue;
 				}

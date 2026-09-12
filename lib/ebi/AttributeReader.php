@@ -364,6 +364,17 @@ class AttributeReader{
 						}
 					}
 					break;
+				case 'response_body':
+					// 200 ボディ全体を表す #[ResponseBody]（非 repeatable なので最大1個）。
+					// #[Response]（context）と異なり name を持たず、単一のデータ配列を返す。
+					$attrs = $r->getAttributes(\ebi\Attribute\ResponseBody::class);
+					if(!empty($attrs)){
+						$inst = $attrs[0]->newInstance();
+						$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
+						$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
+						$result[$name] = $data;
+					}
+					break;
 				case 'error_response':
 					$attrs = $r->getAttributes(\ebi\Attribute\ErrorResponse::class);
 					if(!empty($attrs)){
@@ -564,7 +575,7 @@ class AttributeReader{
 		if($inst->min !== null){ $data['min'] = $inst->min; }
 		if($inst->max !== null){ $data['max'] = $inst->max; }
 		// from（構造化した結合の道筋）優先。無ければ cond/via。
-		$__cond = ($inst->from !== null) ? self::desugar_from($inst->from) : $inst->resolved_cond();
+		$__cond = ($inst->from !== null) ? self::desugar_from($inst->from) : ($inst->via !== null ? '@'.$inst->via : null);
 		if($__cond !== null){ $data['cond'] = $__cond; }
 		if($inst->column !== null){ $data['column'] = $inst->column; }
 		if($inst->extra !== null){ $data['extra'] = $inst->extra; }

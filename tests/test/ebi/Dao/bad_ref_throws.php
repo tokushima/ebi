@@ -12,7 +12,7 @@ class BadRefInlineDao extends \ebi\Dao{
 	protected ?int $b_ref = null;
 
 	// codex は存在しない結合プロパティ。ドット有り＝参照意図なので例外になるべき。
-	#[\ebi\Attribute\Prop(cond:'codex.c_ref(chain_c.id)', column:'cval')]
+	#[\ebi\Attribute\Prop(from: [['codex.c_ref', 'chain_c.id']], column:'cval')]
 	protected ?string $bad = null;
 }
 
