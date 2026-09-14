@@ -401,24 +401,27 @@ class App{
 					}
 					if(isset($funcs)){
 						try{
-							// #[RequiredAny] の実行時強制：列挙のうち1つも指定が無ければ RequiredException(422)。
+							// #[OneOf] の実行時強制：列挙のうち指定が「ちょうど1つ」でなければエラー＝排他必須。
+							// 0個（未選択）は RequiredException(不足)、2個以上（複数選択）は InvalidArgumentException(過多)。
 							// try 内で throw することで既存の例外処理（after()→再throw→エラー応答）に整合する。
 							if(isset($class, $method) && isset($ins) && ($ins instanceof \ebi\app\Request)){
 								foreach((\ebi\AttributeReader::get_method($class, $method, 'required_groups') ?? []) as $__rg){
-									if(($__rg['kind'] ?? null) !== 'any'){
+									if(($__rg['kind'] ?? null) !== 'one'){
 										continue;
 									}
 									$__props = $__rg['props'] ?? [];
-									$__ok = false;
+									$__cnt = 0;
 									foreach($__props as $__p){
 										$__v = $ins->in_vars($__p, null);
 										if($__v !== null && $__v !== '' && $__v !== []){
-											$__ok = true;
-											break;
+											$__cnt++;
 										}
 									}
-									if(!$__ok){
-										throw new \ebi\exception\RequiredException(implode(' / ', $__props).' のいずれか1つ以上が必須です');
+									if($__cnt === 0){
+										throw new \ebi\exception\RequiredException(implode(' / ', $__props).' のいずれか1つが必須です');
+									}
+									if($__cnt > 1){
+										throw new \ebi\exception\InvalidArgumentException(implode(' / ', $__props).' はいずれか1つだけ指定してください（複数指定不可）');
 									}
 								}
 							}

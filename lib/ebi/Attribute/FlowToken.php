@@ -2,9 +2,9 @@
 namespace ebi\Attribute;
 
 /**
- * 生産者（#[Produces]）を持たない flow token の語彙を宣言するAttribute。
+ * 生産者（#[FlowProduces]）を持たない flow token の語彙を宣言するAttribute。
  * ユーザ入力/QR/共有リンク/メール等、API の外で成立する ambient トークンの定義に使う。
- * #[Produces] が生産箇所で自らを定義するのと対をなし、Dt はこの2つを集約して
+ * #[FlowProduces] が生産箇所で自らを定義するのと対をなし、Dt はこの2つを集約して
  * x-flow-registry（トークン辞書）を構築する。所有ドメインのクラスに1回ずつ宣言する。
  *
  * @example

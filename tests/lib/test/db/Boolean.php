@@ -1,10 +1,8 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var bool $value
- */
+use \ebi\Attribute\Prop;
 class Boolean extends \ebi\Dao{
-	protected $id;
-	protected $value;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?bool $value = null;
 }

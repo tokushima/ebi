@@ -1,16 +1,12 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id @['hash'=>false]
- * @var int $order
- * @var datetime $updated
- * @var string $value1
- * @var string $value2
- */
+use \ebi\Attribute\Prop;
 class Find extends \ebi\Dao{
-	protected $id;
-	protected $order;
-	protected $value1;
-	protected $value2;
-	protected $updated;
+	#[Prop(type:'serial', expose:false)]
+	protected ?int $id = null;
+	protected ?int $order = null;
+	protected ?string $value1 = null;
+	protected ?string $value2 = null;
+	#[Prop(type:'datetime')]
+	protected ?int $updated = null;
 }

@@ -1,11 +1,10 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id @['hash'=>false]
- * @var string $value
- * @table @['name'=>'abc','create'=>false]
- */
+use \ebi\Attribute\Prop;
+use \ebi\Attribute\Table;
+#[Table(name:'abc', create:false)]
 class AbcNoCreate extends \ebi\Dao{
-	protected $id;
-	protected $value;
+	#[Prop(type:'serial', expose:false)]
+	protected ?int $id = null;
+	protected ?string $value = null;
 }

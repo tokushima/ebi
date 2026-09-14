@@ -1,16 +1,11 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $value
- * @var string $abc
- * @var string $def
- * @var string $ghi
- */
+use \ebi\Attribute\Prop;
 class UpdateModel extends \ebi\Dao{
-	protected $id;
-	protected $value;
-	protected $abc;
-	protected $def;
-	protected $ghi;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $value = null;
+	protected ?string $abc = null;
+	protected ?string $def = null;
+	protected ?string $ghi = null;
 }

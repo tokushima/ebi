@@ -1,17 +1,17 @@
 <?php
 namespace test\db;
+use \ebi\Attribute\Prop;
 /**
  * Findが先に必要
- * @var serial $id
- * @var int $parent_id
- * @var string $value @['cond'=>'parent_id(find.id)','column'=>'value1']
- * @var string $value2 @['cond'=>'@value']
  */
 class RefFind extends \ebi\Dao{
-	protected $id;
-	protected $parent_id;
-	protected $value;
-	protected $value2;
-	
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?int $parent_id = null;
+	#[Prop(from: [['parent_id', Find::class, 'id']], column:'value1')]
+	protected ?string $value = null;
+	#[Prop(via:'value')]
+	protected ?string $value2 = null;
+
 	private $private_value;
 }

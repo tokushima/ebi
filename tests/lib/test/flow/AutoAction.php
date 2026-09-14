@@ -1,10 +1,11 @@
 <?php
 namespace test\flow;
+use \ebi\Attribute\Route;
+use \ebi\Attribute\Parameter;
+use \ebi\Attribute\Response;
 
 class AutoAction{
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function index(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
@@ -32,9 +33,7 @@ class AutoAction{
 		
 		return ['aaaa'=>'abc'];
 	}
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function def(){
 		$address = "test@email.address";
 		$mail = new \ebi\Mail();
@@ -50,16 +49,16 @@ class AutoAction{
 	}
 	/**
 	 * アイウエオカキクケコ
-	 * @automap
 	 * @param string $ghi AAAA
-	 * @request string $abc 入力１ @['require'=>true]
-	 * @request int $def 入力２
-	 * @context \test\db\AutoCodeNumberPrefix $prefix DBモデル
-	 * @context string $aaaa アイウエオ
-	 * @context int $bbbb 1234
-	 * @context string $dep もう利用しないで欲しい @deprecated 2016/12/15
 	 * @throws \ebi\exception\GenerateUniqueCodeRetryLimitOverException ユニークコードエクセプション
 	 */
+	#[Route]
+	#[Parameter(name:'abc', type:'string', summary:'入力１', require:true)]
+	#[Parameter(name:'def', type:'int', summary:'入力２')]
+	#[Response(name:'prefix', type:\test\db\AutoCodeNumberPrefix::class, summary:'DBモデル')]
+	#[Response(name:'aaaa', type:'string', summary:'アイウエオ')]
+	#[Response(name:'bbbb', type:'int', summary:'1234')]
+	#[Response(name:'dep', type:'string', summary:'もう利用しないで欲しい', deprecated:true)]
 	public function ghi($a){
 		if(false){
 			throw new \ebi\exception\GenerateUniqueCodeRetryLimitOverException();
@@ -97,21 +96,21 @@ class AutoAction{
 		];
 	}
 	/**
-	 * @automap
 	 * @param string $a
 	 * @param string $b
 	 * @param string $c
 	 */
+	#[Route]
 	public function jkl($a,$b,$c=null){
 		unset($a,$b,$c);
 		return ['aaaa'=>'jkl'];
 	}
 	
 	/**
-	 * @automap
 	 * @param string $a
 	 * @param string $b
 	 */
+	#[Route]
 	public function mno($a,$b){
 		return [
 			'A'=>$a,
@@ -119,27 +118,19 @@ class AutoAction{
 		];
 	}
 	
-	/**
-	 * @automap @['secure'=>false]
-	 */
+	#[Route(secure:false)]
 	public function nosecure(){
 		
 	}
 
-	/**
-	 * @automap @['after'=>'after_a', 'post_after'=>'after_b']
-	 */
+	#[Route(after:'after_a', post_after:'after_b')]
 	public function after(){
 	}
 
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function after_a(){
 	}
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function after_b(){
 	}
 }

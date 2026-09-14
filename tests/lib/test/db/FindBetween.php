@@ -1,17 +1,13 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var int $int
- * @var string $char
- * @var date $date
- * @var datetime $timestamp
- */
+use \ebi\Attribute\Prop;
 class FindBetween extends \ebi\Dao{
-	protected $id;
-	protected $int;
-	protected $char;
-	protected $date;
-	protected $timestamp;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?int $int = null;
+	protected ?string $char = null;
+	#[Prop(type:'date')]
+	protected ?int $date = null;
+	#[Prop(type:'datetime')]
+	protected ?int $timestamp = null;
 }
-

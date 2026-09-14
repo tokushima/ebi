@@ -1,10 +1,11 @@
 <?php
 namespace test\dt;
+use \ebi\Attribute\Response;
 class CatchEndpoint extends \ebi\app\Request{
 	/**
 	 * 呼び先をtry/catchで包む（catch-awareで404が消えるはず）
-	 * @context string $v 値
 	 */
+	#[Response(name:'v', type:'string', summary:'値')]
 	public function guarded(): array{
 		try{
 			$s = new \test\dt\CatchService();
@@ -16,8 +17,8 @@ class CatchEndpoint extends \ebi\app\Request{
 
 	/**
 	 * 包まない（404が残るはず）
-	 * @context string $v 値
 	 */
+	#[Response(name:'v', type:'string', summary:'値')]
 	public function unguarded(): array{
 		$s = new \test\dt\CatchService();
 		$s->work();

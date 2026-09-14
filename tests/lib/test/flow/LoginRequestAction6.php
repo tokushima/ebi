@@ -1,12 +1,12 @@
 <?php
 namespace test\flow;
-/**
- * @login @['type'=>'test\model\Member1', 'user_role'=>100]
- */
+
+use \ebi\Attribute\Route;
+use \ebi\Attribute\Login;
+
+#[Login(type:'test\model\Member1', user_role:100)]
 class LoginRequestAction6 extends \ebi\flow\AutomapLoginRequest{
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function aaa(){
 		return ['abc'=>123];
 	}

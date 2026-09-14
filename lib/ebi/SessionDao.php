@@ -1,13 +1,12 @@
 <?php
 namespace ebi;
-/**
- * @var string $id @['primary'=>true,'max'=>256]
- * @var text $data
- * @var int $expires
- */
+use ebi\Attribute\Prop;
 class SessionDao extends \ebi\Dao implements \ebi\SessionHandler{
+	#[Prop(primary:true, max:256)]
 	protected ?string $id = null;
+	#[Prop(type:'text')]
 	protected ?string $data = null;
+	#[Prop]
 	protected ?int $expires = null;
 
 	protected function __before_save__(bool $is_update): void{

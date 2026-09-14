@@ -1,9 +1,11 @@
 <?php
 namespace test\db;
-/**
- * @var datetime $ts @['auto_now'=>true]
- * @var date $date @['auto_now'=>true]
- * @var intdate $idate @['auto_now'=>true]
- */
+use \ebi\Attribute\Prop;
 class AddDateTime extends DateTime{
+	#[Prop(type:'datetime', auto_now:true)]
+	protected ?int $ts = null;
+	#[Prop(type:'date', auto_now:true)]
+	protected ?int $date = null;
+	#[Prop(type:'intdate', auto_now:true)]
+	protected ?int $idate = null;
 }

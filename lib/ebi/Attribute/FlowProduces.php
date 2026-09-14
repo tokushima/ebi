@@ -7,12 +7,12 @@ namespace ebi\Attribute;
  * Dt はこれと #[FlowToken]（生産者を持たない外部由来トークン）を集約して x-flow-registry を構築する。
  *
  * @example
- * #[Produces('order.code', via:'response:code', summary:'大口注文コードを発番')]     // 値トークン（後続paramの値になる）
- * #[Produces('order.canceled', via:'effect', when:'success')]                     // 状態トークン（値なし副作用）
+ * #[FlowProduces('order.code', via:'response:code', summary:'大口注文コードを発番')]     // 値トークン（後続paramの値になる）
+ * #[FlowProduces('order.canceled', via:'effect', when:'success')]                     // 状態トークン（値なし副作用）
  * public function create() {}
  */
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
-class Produces{
+class FlowProduces{
 	public function __construct(
 		/** 確立する状態トークン domain.entity[.qualifier] */
 		public string $token,

@@ -9,49 +9,39 @@ class AttributeReader{
 	 * @param mixed $class (string|object)
 	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_class($class, $anon_names, ?string $doc_name=null, ?string $parent_class=null): ?array{
+	public static function get_class($class, $anon_names, ?string $parent_class=null): ?array{
 		$names = is_array($anon_names) ? $anon_names : [$anon_names];
-		$return = [];
-
-		// Attribute読み取り
-		$attr_result = self::get_class_attributes($class, $names, $parent_class);
-
-		// DocBlock読み取り（フォールバック）
-		$doc_result = self::get_class_docblock($class, $names, $doc_name, $parent_class);
-
-		// マージ（Attribute優先）
-		foreach($names as $name){
-			$attr_val = $attr_result[$name] ?? null;
-			$doc_val = $doc_result[$name] ?? null;
-
-			if($attr_val !== null){
-				if($doc_val !== null && is_array($attr_val) && is_array($doc_val)){
-					// 配列の場合、DocBlockの値にAttributeの値を上書きマージ
-					$return[$name] = array_replace_recursive($doc_val, $attr_val);
-				}else{
-					$return[$name] = $attr_val;
-				}
-			}else{
-				$return[$name] = $doc_val;
+		// クラスメタは静的（Attribute はコンパイル時）。解決済み結果をプロセス内キャッシュして
+		// 反射・newInstance・型補完の再実行を避ける（testman は各テスト別プロセスなので初回のみ支払う）。
+		$cache_key = 'gc::'.(is_object($class) ? get_class($class) : $class).'::'.implode(',', $names).'::'.($parent_class ?? '');
+		if(!array_key_exists($cache_key, self::$attr_cache)){
+			$return = [];
+			// var は resolve_var_hierarchical で解決するので get_class_attributes には渡さない
+			// （渡すと get_property_attributes を計算した上で下で上書き＝二重読みになる）。
+			$other = array_values(array_filter($names, fn($n) => $n !== 'var'));
+			$attr_result = empty($other) ? [] : self::get_class_attributes($class, $other, $parent_class);
+			foreach($names as $name){
+				$return[$name] = ($name === 'var') ? null : ($attr_result[$name] ?? null);
 			}
+			// var は継承順で階層マージする（trait→親→子、後段＝より特化が上書き）。
+			if(in_array('var', $names, true)){
+				$return['var'] = self::resolve_var_hierarchical($class, $parent_class);
+				self::apply_native_type_completion($class, $return['var']);
+				self::normalize_class_type_fqcn($return['var']);
+			}
+			self::$attr_cache[$cache_key] = $return;
 		}
-		// var は継承順で階層マージする（trait→親→子、各段 doc→attr の順で後段が上書き）。
-		if(in_array('var', $names, true)){
-			$return['var'] = self::resolve_var_hierarchical($class, $parent_class, $doc_name);
-			self::apply_native_type_completion($class, $return['var']);
-			self::normalize_class_type_fqcn($return['var']);
-		}
+		$return = self::$attr_cache[$cache_key];
 		return is_array($anon_names) ? $return : $return[$anon_names];
 	}
 
 	/**
 	 * var メタを継承順（最も非特化→特化）で階層マージして解決する。
-	 * 各クラス段の並びは trait(doc→attr) → クラス自身(doc→attr)。クラス連鎖は親→子。
-	 * 後段（より特化）が前段を array_replace_recursive で上書きする。
-	 * これにより doc/Attribute を問わず「継承側（消費クラス）が上位を上書き」できる。
+	 * 各クラス段は trait → クラス自身の #[Prop] を集約。クラス連鎖は親→子で、
+	 * 後段（より特化）が前段を array_replace_recursive で上書きする（継承側が上位を上書き）。
 	 */
-	private static function resolve_var_hierarchical($class, ?string $parent_class, ?string $doc_name): ?array{
-		$key = (is_object($class) ? get_class($class) : $class).'::__varh__::'.($parent_class ?? '').'::'.($doc_name ?? '');
+	private static function resolve_var_hierarchical($class, ?string $parent_class): ?array{
+		$key = (is_object($class) ? get_class($class) : $class).'::__varh__::'.($parent_class ?? '');
 		if(array_key_exists($key, self::$attr_cache)){
 			return self::$attr_cache[$key];
 		}
@@ -82,10 +72,7 @@ class AttributeReader{
 		};
 		foreach($chain as $c){
 			$traits = self::all_traits($c);
-			// trait 群（当該クラスより非特化）: doc → attr
-			foreach($traits as $trait){
-				$merge(self::decode_class_doc($trait, $doc_name));
-			}
+			// trait 群（当該クラスより非特化）の #[Prop]
 			$level_trait_attr = [];
 			foreach($traits as $trait){
 				$ta = [];
@@ -95,8 +82,7 @@ class AttributeReader{
 				}
 				$merge($ta);
 			}
-			// クラス自身: doc → attr（trait を上書き）
-			$merge(self::decode_class_doc($c, $doc_name));
+			// クラス自身の #[Prop]（trait を上書き）
 			$flat = [];
 			self::collect_property_attributes($c, $flat);
 			$own = [];
@@ -123,17 +109,6 @@ class AttributeReader{
 		return $result;
 	}
 
-	/**
-	 * 当該クラス/トレイト「自身の」DocComment から var アノテーションを取得する（継承は含めない）。
-	 */
-	private static function decode_class_doc(\ReflectionClass $c, ?string $doc_name): ?array{
-		$d = $c->getDocComment();
-		if($d === false){
-			return null;
-		}
-		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m", '', str_replace(['/'.'**', '*'.'/'], '', $d));
-		return self::decode($d, 'var', $doc_name);
-	}
 
 	/**
 	 * 使用トレイトを再帰収集する（ネストした trait は非特化として先に並べる）。
@@ -207,31 +182,20 @@ class AttributeReader{
 	 * @param mixed $class (string|object)
 	 * @param mixed $anon_names (string|array)
 	 */
-	public static function get_method($class, string $method, $anon_names, ?string $doc_name=null): ?array{
+	public static function get_method($class, string $method, $anon_names): ?array{
 		$names = is_array($anon_names) ? $anon_names : [$anon_names];
-		$return = [];
-
-		// Attribute読み取り
-		$attr_result = self::get_method_attributes($class, $method, $names);
-
-		// DocBlock読み取り（フォールバック）
-		$doc_result = self::get_method_docblock($class, $method, $names, $doc_name);
-
-		// マージ（Attribute優先）
-		foreach($names as $name){
-			$attr_val = $attr_result[$name] ?? null;
-			$doc_val = $doc_result[$name] ?? null;
-
-			if($attr_val !== null){
-				if($doc_val !== null && is_array($attr_val) && is_array($doc_val)){
-					$return[$name] = array_replace_recursive($doc_val, $attr_val);
-				}else{
-					$return[$name] = $attr_val;
-				}
-			}else{
-				$return[$name] = $doc_val;
+		// メソッドメタも静的。(class,method,names) 単位で結果をキャッシュし、ルーティング/検証/OpenAPI
+		// 生成で繰り返される ReflectionMethod・getAttributes・newInstance を初回のみに抑える。
+		$cache_key = 'gm::'.(is_object($class) ? get_class($class) : $class).'::'.$method.'::'.implode(',', $names);
+		if(!array_key_exists($cache_key, self::$attr_cache)){
+			$return = [];
+			$attr_result = self::get_method_attributes($class, $method, $names);
+			foreach($names as $name){
+				$return[$name] = $attr_result[$name] ?? null;
 			}
+			self::$attr_cache[$cache_key] = $return;
 		}
+		$return = self::$attr_cache[$cache_key];
 		return is_array($anon_names) ? $return : $return[$anon_names];
 	}
 
@@ -253,9 +217,6 @@ class AttributeReader{
 			$result[$name] = null;
 
 			switch($name){
-				case 'var':
-					$result[$name] = self::get_property_attributes($r, $parent_class);
-					break;
 				case 'table':
 					$attrs = $r->getAttributes(\ebi\Attribute\Table::class);
 					if(!empty($attrs)){
@@ -389,7 +350,7 @@ class AttributeReader{
 					}
 					break;
 				case 'produces':
-					$attrs = $r->getAttributes(\ebi\Attribute\Produces::class);
+					$attrs = $r->getAttributes(\ebi\Attribute\FlowProduces::class);
 					if(!empty($attrs)){
 						$result[$name] = [];
 						foreach($attrs as $attr){
@@ -405,7 +366,7 @@ class AttributeReader{
 					}
 					break;
 				case 'requires':
-					$attrs = $r->getAttributes(\ebi\Attribute\Requires::class);
+					$attrs = $r->getAttributes(\ebi\Attribute\FlowRequires::class);
 					if(!empty($attrs)){
 						$result[$name] = [];
 						foreach($attrs as $attr){
@@ -422,7 +383,7 @@ class AttributeReader{
 					}
 					break;
 				case 'follows':
-					$attrs = $r->getAttributes(\ebi\Attribute\Follows::class);
+					$attrs = $r->getAttributes(\ebi\Attribute\FlowFollows::class);
 					if(!empty($attrs)){
 						$result[$name] = [];
 						foreach($attrs as $attr){
@@ -446,8 +407,8 @@ class AttributeReader{
 					break;
 				case 'required_groups':
 					$groups = [];
-					foreach($r->getAttributes(\ebi\Attribute\RequiredAny::class) as $attr){
-						$groups[] = ['kind' => 'any', 'props' => array_values($attr->newInstance()->props)];
+					foreach($r->getAttributes(\ebi\Attribute\OneOf::class) as $attr){
+						$groups[] = ['kind' => 'one', 'props' => array_values($attr->newInstance()->props)];
 					}
 					if(!empty($groups)){
 						$result[$name] = $groups;
@@ -456,36 +417,6 @@ class AttributeReader{
 			}
 		}
 		return $result;
-	}
-
-	/**
-	 * プロパティのAttributeを読み取る
-	 */
-	private static function get_property_attributes(\ReflectionClass $r, ?string $parent_class): ?array{
-		$result = [];
-		$classes = [$r];
-
-		if(empty($parent_class)){
-			$parent_class = 'stdClass';
-		}
-
-		// 親クラスを収集
-		$t = $r;
-		while(($parent = $t->getParentClass()) !== false && $parent->getName() !== $parent_class){
-			$classes[] = $parent;
-			$t = $parent;
-		}
-
-		// 逆順で処理（親から子へ）
-		foreach(array_reverse($classes) as $class){
-			// traitを先に処理
-			foreach($class->getTraits() as $trait){
-				self::collect_property_attributes($trait, $result);
-			}
-			self::collect_property_attributes($class, $result);
-		}
-
-		return empty($result) ? null : $result;
 	}
 
 	/**
@@ -559,6 +490,7 @@ class AttributeReader{
 		}
 		if($inst->summary !== null){ $data['summary'] = $inst->summary; }
 		// bool オプションは全て「明示時(!==null)のみ出力」＝trait/親の値を consumer が上書き可能。
+		if($inst->deprecated !== null){ $data['deprecated'] = $inst->deprecated; }
 		if($inst->primary !== null){ $data['primary'] = $inst->primary; }
 		if($inst->auto_now !== null){ $data['auto_now'] = $inst->auto_now; }
 		if($inst->auto_now_add !== null){ $data['auto_now_add'] = $inst->auto_now_add; }
@@ -574,9 +506,14 @@ class AttributeReader{
 		if(!$nullable){ $data['nullable'] = false; }
 		if($inst->min !== null){ $data['min'] = $inst->min; }
 		if($inst->max !== null){ $data['max'] = $inst->max; }
-		// from（構造化した結合の道筋）優先。無ければ cond/via。
-		$__cond = ($inst->from !== null) ? self::desugar_from($inst->from) : ($inst->via !== null ? '@'.$inst->via : null);
-		if($__cond !== null){ $data['cond'] = $__cond; }
+		if($inst->additional_chars !== null){ $data['additional_chars'] = $inst->additional_chars; }
+		if($inst->decimal_places !== null){ $data['decimal_places'] = $inst->decimal_places; }
+		// 結合定義は構造化IRで出す（Dao が文字列を再パースせず直接消費）。from→join / via→ref（排他）。
+		if($inst->from !== null){
+			$data['join'] = self::compile_from($inst->from);
+		}else if($inst->via !== null){
+			$data['ref'] = $inst->via;
+		}
 		if($inst->column !== null){ $data['column'] = $inst->column; }
 		if($inst->extra !== null){ $data['extra'] = $inst->extra; }
 		if($inst->ctype !== null){ $data['ctype'] = $inst->ctype; }
@@ -587,30 +524,42 @@ class AttributeReader{
 	}
 
 	/**
-	 * #[Prop(from: [...])] のホップ配列を、既存の cond DSL 文字列へ desugar する（Dao クエリ側は無改修）。
-	 * 各ホップ [local, Model::class|'table', target] または [local, 'table.target']。
-	 * anchor(=hops[0][0]) を外に、中間テーブルは in(=target)+out(=次hopのlocal) を `table.in.out` に詰める。
+	 * #[Prop(from: [...])] のホップ配列を Dao が直接消費する構造化IRへコンパイルする。
+	 * 返り値: ['anchor'=>['head'=>string,'col'=>?string], 'hops'=>[hop,...]]
+	 *   hop: ['t'=>'ref','table'=>snake名,'cols'=>[c]]       … case2: 終端・単一列
+	 *      / ['t'=>'ref','table'=>snake名,'cols'=>[in,out]]  … case3: 中間・in/out(=次ホップの local)
+	 *      / ['t'=>'self','cols'=>[selfCol]]                 … case1: 自テーブル列終端（Prop::SELF）
+	 * anchor は hops[0][0]（自テーブル列 or 参照プロパティ名。ドットは1回だけ split）。
+	 * Model::class は resolve_table_name で snake 解決して格納（[local,'table.target'] は生文字列）。
 	 */
-	private static function desugar_from(array $hops): string{
-		$anchor = $hops[0][0];
-		$tokens = [];
+	private static function compile_from(array $hops): array{
+		$head = $hops[0][0];
+		$col = null;
+		if(false !== strpos($head, '.')){
+			[$head, $col] = explode('.', $head, 2);
+		}
+		$out = [];
 		$n = count($hops);
 		for($i = 0; $i < $n; $i++){
 			$hop = array_values($hops[$i]);
 			if(count($hop) === 2){
-				[$table, $target] = explode('.', $hop[1], 2);
+				[$table_raw, $target] = explode('.', $hop[1], 2);
 			}else{
-				$table = $hop[1];
+				$table_raw = $hop[1];
 				$target = $hop[2];
 			}
-			$tbl = (is_string($table) && class_exists($table)) ? self::resolve_table_name($table) : $table;
-			$tok = $tbl . '.' . $target;
-			if($i < $n - 1){
-				$tok .= '.' . $hops[$i + 1][0]; // 出口キー＝次ホップの local（＝この table 上の列）
+			if($table_raw === \ebi\Attribute\Prop::SELF){
+				$out[] = ['t'=>'self', 'cols'=>[$target]];
+				continue;
 			}
-			$tokens[] = $tok;
+			$table = (is_string($table_raw) && class_exists($table_raw)) ? self::resolve_table_name($table_raw) : $table_raw;
+			if($i < $n - 1){
+				$out[] = ['t'=>'ref', 'table'=>$table, 'cols'=>[$target, $hops[$i + 1][0]]]; // 出口キー＝次ホップの local
+			}else{
+				$out[] = ['t'=>'ref', 'table'=>$table, 'cols'=>[$target]];
+			}
 		}
-		return $anchor . '(' . implode(',', $tokens) . ')';
+		return ['anchor'=>['head'=>$head, 'col'=>$col], 'hops'=>$out];
 	}
 
 	/**
@@ -639,105 +588,7 @@ class AttributeReader{
 	}
 
 	/**
-	 * DocBlockからクラスアノテーションを読み取る（従来の処理）
-	 */
-	private static function get_class_docblock($class, array $names, ?string $doc_name, ?string $parent_class): array{
-		$return = [];
-		$t = new \ReflectionClass($class);
-		$d = '';
-
-		if(empty($parent_class)){
-			$parent_class = 'stdClass';
-		}
-		while($t->getName() != $parent_class){
-			$d = $t->getDocComment().$d;
-
-			foreach($t->getTraits() as $trait){
-				$d = $trait->getDocComment().$d;
-			}
-			$t = $t->getParentClass();
-			if($t === false){
-				break;
-			}
-		}
-
-		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
-
-		foreach($names as $name){
-			$return[$name] = self::decode($d, $name, $doc_name);
-		}
-		return $return;
-	}
-
-	/**
-	 * DocBlockからメソッドアノテーションを読み取る（従来の処理）
-	 */
-	private static function get_method_docblock($class, string $method, array $names, ?string $doc_name): array{
-		$return = [];
-		$t = new \ReflectionMethod($class, $method);
-		$d = $t->getDocComment();
-		$d = preg_replace("/^[\s]*\*[\s]{0,1}/m",'',str_replace(['/'.'**','*'.'/'],'',$d));
-
-		foreach($names as $name){
-			$return[$name] = self::decode($d, $name, $doc_name);
-		}
-		return $return;
-	}
-
-	private static function decode(string $d, string $name,$doc_name=null): ?array{
-		$result = null;
-		$mtc = $m = [];
-
-		if(preg_match_all('/@'.$name.'(.*)/',$d,$mtc)){
-			$result = [];
-
-			foreach($mtc[1] as $mc){
-				if(!empty($mc) && ($mc[0] == ' ' || $mc[0] == "\t")){
-					$at = strpos($mc,'@[');
-
-					if($at === false && strpos($mc,'$') === false){
-						$result['value'] = trim($mc);
-					}else{
-						$as = (false !== $at) ? substr($mc,$at+1,strrpos($mc,']')-$at) : '';
-
-						try{
-							$decode = self::activation($as);
-						}catch(\ParseError $e){
-							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$mc.'`');
-						}
-						if(preg_match("/([\\\.\w_]+[\[\]\{\}]*)\s\\\$([\w_]+)(.*)/",$mc,$m)){
-							$n = $m[2];
-							$result[$n] = (isset($result[$n])) ? array_merge($result[$n],$decode) : $decode;
-							[$result[$n]['type'], $result[$n]['attr']] = (
-								false != ($h = strpos($m[1],'{}')) ||
-								false !== strpos($m[1],'[]')
-							) ? [substr($m[1],0,-2),(isset($h) && $h !== false) ? 'h' : 'a'] : [$m[1], null];
-
-							if(!empty($doc_name)){
-								$doc = trim(($at === false) ? $m[3] : substr($m[3],0,strpos($m[3],'@[')));
-
-								if(!empty($doc)){
-									$result[$n][$doc_name] = $doc;
-								}
-							}
-							if(!ctype_lower($t=$result[$n]['type'])){
-								if(!class_exists($t)){
-									throw new \ebi\exception\InvalidArgumentException($t.' '.$result[$n]['type'].' not found');
-								}
-								$result[$n]['type'] = $t;
-							}
-						}else{
-							$result = array_merge($result,$decode);
-						}
-					}
-				}
-			}
-		}
-		return $result;
-	}
-
-	/**
-	 * アノテーション文字列の有効化
+	 * アノテーション文字列の有効化（#[...] 由来の連想配列文字列を配列化する。外部: \ebi\Dt\ParamInfo）
 	 */
 	public static function activation(string $s): array{
 		if(empty($s)){

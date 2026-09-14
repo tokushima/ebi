@@ -1,12 +1,9 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $value
- * @var int $order;
- */
+use \ebi\Attribute\Prop;
 class SubFind extends \ebi\Dao{
-	protected $id;
-	protected $value;
-	protected $order;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $value = null;
+	protected ?int $order = null;
 }

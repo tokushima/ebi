@@ -1,5 +1,6 @@
 <?php
 namespace test\flow;
+use \ebi\Attribute\Response;
 
 class Sample{
 	public function after_redirect(){
@@ -14,10 +15,8 @@ class Sample{
 	public function after_to($a=null,$b=null){
 		return ['after_to_a'=>$a,'after_to_b'=>$b];
 	}
-	/**
-	 * @context int $id
-	 * @context \test\db\Find[] $model_list
-	 */
+	#[Response(name:'id', type:'int')]
+	#[Response(name:'model_list', type:'array', items:\test\db\Find::class)]
 	public function model_list(){
 		return [
 			'model_list'=>\test\db\Find::find_all(),

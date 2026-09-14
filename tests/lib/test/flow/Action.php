@@ -1,14 +1,16 @@
 <?php
 namespace test\flow;
+use \ebi\Attribute\Parameter;
+use \ebi\Attribute\Response;
 /**
  * Sample Action
  */
 class Action{
 	/**
 	 * 入力された文字を返す
-	 * @request string $abc 返す文字列
-	 * @context string $abc 入力された文字列
 	 */
+	#[Parameter(name:'abc', type:'string', summary:'返す文字列')]
+	#[Response(name:'abc', type:'string', summary:'入力された文字列')]
 	public function abc(){
 		$var = isset($_GET['abc']) ? $_GET['abc'] : null;
 		
@@ -16,9 +18,7 @@ class Action{
 			'abc'=>$var,
 		];
 	}
-	/**
-	 * @request string $rrrrr らららら
-	 */
+	#[Parameter(name:'rrrrr', type:'string', summary:'らららら')]
 	public function get_after_vars(): array{
 		return [];
 	}
@@ -26,11 +26,11 @@ class Action{
 	 * 常にLogicException
 	 * @param string $aaa あああ
 	 * @param \ebi\Dao $bbb いいい
-	 * @request string $ccc メメメめ
-	 * @context \ebi\Dao $ssss カカカカか
 	 * @throws \LogicException 常に例外
 	 * @version 20160102
 	 */
+	#[Parameter(name:'ccc', type:'string', summary:'メメメめ')]
+	#[Response(name:'ssss', type:\ebi\Dao::class, summary:'カカカカか')]
 	public function raise(){
 		throw new \LogicException('raise test');
 	}
@@ -97,22 +97,20 @@ class Action{
 	/**
 	 * 推奨しない
 	 * @deprecated 2017-03-05 aaaa
-	 * @context \test\model\DeprecatedModel $model 
 	 */
+	#[Response(name:'model', type:\test\model\DeprecatedModel::class)]
 	public function deprecated(){
 		
 	}
 	
 	/**
 	 * リクエストだけdeprecated
-	 * @request string $hoge 使わない @deprecated 2017-03-04 早めに
 	 */
+	#[Parameter(name:'hoge', type:'string', summary:'使わない', deprecated:true)]
 	public function request_deprecated(){
 		$this->in_vars('hoge');
 	}
-	/**
-	 * @context string $hoge 使わない　@deprecated 2017-03-04 早めに
-	 */
+	#[Response(name:'hoge', type:'string', summary:'使わない', deprecated:true)]
 	public function context_deprecated(){
 		return ['hoge'=>1];
 	}

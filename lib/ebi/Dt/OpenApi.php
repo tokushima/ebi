@@ -222,7 +222,7 @@ class OpenApi extends \ebi\app\Request{
 							$m['deprecated'] = true;
 						}
 
-						// #[HttpMethod]属性を優先、なければDocBlock/@http_method
+						// #[HttpMethod]属性を優先、なければ本文の is_post() 推定
 						$http_method_attr = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'http_method');
 						if(!empty($http_method_attr['value'])){
 							$http_method = strtolower($http_method_attr['value']);
@@ -233,7 +233,7 @@ class OpenApi extends \ebi\app\Request{
 							$http_method = 'get';
 						}
 
-						// do_loginの場合、authクラスのlogin_conditionの@http_methodを参照
+						// do_loginの場合、authクラスのlogin_conditionのHTTPメソッド推定を参照
 						if($m['method'] === 'do_login' && $http_method === 'get'){
 							$login_auth_class = $m['auth'] ?? null;
 							if(empty($login_auth_class) && isset($m['class'])){
@@ -550,7 +550,7 @@ class OpenApi extends \ebi\app\Request{
 	}
 
 	/**
-	 * 各operationの x-flow から token 辞書を構築（#[Produces] が定義、#[FlowToken] が生産者なし語彙）し、
+	 * 各operationの x-flow から token 辞書を構築（#[FlowProduces] が定義、#[FlowToken] が生産者なし語彙）し、
 	 * バッチ(x-flow-batches)も生産者/辞書に含めて G1..G6 を検証、
 	 * `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
 	 */
@@ -558,7 +558,7 @@ class OpenApi extends \ebi\app\Request{
 		$schemas = $spec['components']['schemas'] ?? [];
 
 		// operationId => operation（x-flowを持つもの）／生産者索引 token=>[operationId]／全operationId集合／
-		// トークン辞書($tokens)を構築する。辞書は「生産箇所(#[Produces])が自らを定義」する原則で、
+		// トークン辞書($tokens)を構築する。辞書は「生産箇所(#[FlowProduces])が自らを定義」する原則で、
 		// produces から kind/summary を集約する（kind は明示 > via推論: response:*→value / それ以外→state。先勝ち）。
 		$ops = [];
 		$producers = [];
@@ -654,13 +654,13 @@ class OpenApi extends \ebi\app\Request{
 				$req_tokens[$t] = true;
 
 				if(!isset($tokens[$t])){                                    // G1
-					$add('G1', $oid, "requires token '{$t}' が未定義（生産する #[Produces] も #[FlowToken] 宣言も無い。typoの可能性）");
+					$add('G1', $oid, "requires token '{$t}' が未定義（生産する #[FlowProduces] も #[FlowToken] 宣言も無い。typoの可能性）");
 					continue;
 				}
 				$is_ambient = !empty($tokens[$t]['ambient']) || (($tokens[$t]['kind'] ?? '') === 'ambient');
 				$optional = !empty($r['optional']);
 				if(!$optional && !$is_ambient && empty($producers[$t])){     // G2
-					$add('G2', $oid, "hard requires '{$t}' の生産者(#[Produces])が存在しない");
+					$add('G2', $oid, "hard requires '{$t}' の生産者(#[FlowProduces])が存在しない");
 				}
 				if(isset($r['bind']) && !$this->flow_has_request_field($op, (string)$r['bind'], $schemas)){ // G4
 					$add('G4', $oid, "bind '{$r['bind']}' に対応する #[Parameter] が無い");
@@ -1009,7 +1009,7 @@ class OpenApi extends \ebi\app\Request{
 
 		// #[Parameter]属性からパラメータを取得（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
-			$attr_params = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'request', 'summary');
+			$attr_params = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'request');
 			if(!empty($attr_params)){
 				foreach($attr_params as $name => $data){
 					if(!isset($added_params[$name])){
@@ -1153,7 +1153,7 @@ class OpenApi extends \ebi\app\Request{
 				}
 
 				// #[Parameter]属性（AttributeReader経由）
-				$attr_login_params = \ebi\AttributeReader::get_method($auth_class, 'login_condition', 'request', 'summary');
+				$attr_login_params = \ebi\AttributeReader::get_method($auth_class, 'login_condition', 'request');
 				if(!empty($attr_login_params)){
 					foreach($attr_login_params as $name => $data){
 						if(!isset($added_params[$name])){
@@ -1244,21 +1244,21 @@ class OpenApi extends \ebi\app\Request{
 			];
 		}
 
-		// #[RequiredAny] — パラメータ横断の必須制約（列挙のうち1つ以上が必須）。
-		// OpenAPI の parameters には横断制約の表現手段が無いため operation に x-required-any＋説明で示し、
-		// requestBody がある場合は JSON Schema(anyOf(required)) でも表現する。
+		// #[OneOf] — パラメータ横断の必須制約（列挙のうち「ちょうど1つ」が必須＝排他）。
+		// OpenAPI の parameters には横断制約の表現手段が無いため operation に x-required-one＋説明で示し、
+		// requestBody がある場合は JSON Schema(oneOf(required)) でも表現する（oneOf＝ちょうど1つ一致）。
 		if(isset($m['class'], $m['method'])){
 			$req_groups = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'required_groups') ?? [];
 			if(!empty($req_groups)){
 				$x_any = $notes = $body_fragments = [];
 				foreach($req_groups as $g){
-					if(($g['kind'] ?? null) === 'any'){
+					if(($g['kind'] ?? null) === 'one'){
 						$x_any[] = $g['props'];
-						$notes[] = '「'.implode(' / ', $g['props']).'」のいずれか1つ以上が必須';
-						$body_fragments[] = ['anyOf' => array_map(fn($p) => ['required' => [$p]], $g['props'])];
+						$notes[] = '「'.implode(' / ', $g['props']).'」のいずれか1つだけ（排他必須）';
+						$body_fragments[] = ['oneOf' => array_map(fn($p) => ['required' => [$p]], $g['props'])];
 					}
 				}
-				if(!empty($x_any)){ $operation['x-required-any'] = $x_any; }
+				if(!empty($x_any)){ $operation['x-required-one'] = $x_any; }
 				if(!empty($notes)){
 					$note_text = "必須条件:\n- ".implode("\n- ", $notes);
 					$operation['description'] = empty($operation['description'])
@@ -1283,7 +1283,7 @@ class OpenApi extends \ebi\app\Request{
 			$operation['x-throws'] = $x_throws;
 		}
 
-		// ログイン要件のチェック（クラスのAttribute または メソッドの@login_required）
+		// ログイン要件のチェック（クラスの #[Login]）
 		// do_loginはログイン処理自体なのでsecurity対象外
 		$is_login = false;
 		if(($m['method'] ?? '') !== 'do_login'){
@@ -1298,7 +1298,7 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 		// Bearer 認証の検出：auth プラグインの login_condition が Authorization ヘッダ由来の
-		// トークンを要求している（#[Requires(bind:'header:Authorization')]）場合。
+		// トークンを要求している（#[FlowRequires(bind:'header:Authorization')]）場合。
 		// do_login ルート(auth/token 等)でも成立するため $is_login とは独立に判定する。
 		$is_bearer = false;
 		if(!empty($m['auth'])){
@@ -1355,7 +1355,7 @@ class OpenApi extends \ebi\app\Request{
 			$operation['x-mode'] = $m['mode'];
 		}
 
-		// flow token（前提/効果/順序）: #[Requires]/#[Produces]/#[Follows]。#[Login]があればsession.userを前提に自動付与。
+		// flow token（前提/効果/順序）: #[FlowRequires]/#[FlowProduces]/#[FlowFollows]。#[Login]があればsession.userを前提に自動付与。
 		if(isset($m['class'], $m['method'])){
 			// クラス階層に宣言された #[FlowToken]（生産者なしの ambient トークン語彙）を集約
 			foreach((\ebi\AttributeReader::get_class($m['class'], 'flow_token') ?? []) as $ft){
@@ -1578,6 +1578,11 @@ class OpenApi extends \ebi\app\Request{
 						$prop_schema['format'] = $prop->opt('format');
 					}
 
+					// deprecated（#[Prop(deprecated: true)] 由来。#[Response] の deprecated と同じ schema 表現に移譲）
+					if($prop->opt('deprecated')){
+						$prop_schema['deprecated'] = true;
+					}
+
 					// enum（#[Prop(enum:[...])] または @var @['enum'=>[...]] 由来）
 					$this->apply_enum_meta($prop_schema, $prop);
 
@@ -1631,35 +1636,36 @@ class OpenApi extends \ebi\app\Request{
 					}
 				}
 
-				// cond（外部結合テーブル）- @参照を解決するため2パスで処理
-				$cond_map = [];
+				// join/ref（外部結合テーブル）- join IR の ref ホップの table を x-join に列挙。
+				// ref(via) は結合を持たず、参照先プロパティの join tables を継承する（2パス）。
+				$join_map = [];   // prop_name => [table,...]
+				$ref_map = [];    // prop_name => 参照先プロパティ名
 				foreach($class_info->opt('properties') as $prop){
-					$cond = $prop->opt('cond');
-					if(!empty($cond)){
-						$cond_map[$prop->name()] = $cond;
+					$join = $prop->opt('join');
+					if(!empty($join)){
+						$cond_tables = [];
+						foreach(($join['hops'] ?? []) as $hop){
+							if(($hop['t'] ?? '') === 'ref' && !empty($hop['table'])){
+								$cond_tables[] = $hop['table'];
+							}
+						}
+						if(!empty($cond_tables)){
+							$join_map[$prop->name()] = $cond_tables;
+						}
+					}else if(!empty($prop->opt('ref'))){
+						$ref_map[$prop->name()] = $prop->opt('ref');
+					}
+				}
+				foreach($ref_map as $prop_name => $ref_name){
+					if(isset($join_map[$ref_name])){
+						$join_map[$prop_name] = $join_map[$ref_name];
 					}
 				}
 
-				foreach($cond_map as $prop_name => $cond){
-					// @参照を解決
-					$resolved = $cond;
-					if(str_starts_with($cond, '@')){
-						$ref_name = substr($cond, 1);
-						$resolved = $cond_map[$ref_name] ?? $cond;
-					}
-
-					if(preg_match('/\((.+)\)/', $resolved, $cond_match)){
-						$cond_tables = [];
-						foreach(explode(',', $cond_match[1]) as $cond_part){
-							$parts = explode('.', $cond_part, 3);
-							if(count($parts) >= 2){
-								$cond_tables[] = $parts[0];
-							}
-						}
-						if(!empty($cond_tables) && isset($properties[$prop_name])){
-							$properties[$prop_name]['x-join'] = implode(', ', $cond_tables);
-							$join_tables = array_merge($join_tables, $cond_tables);
-						}
+				foreach($join_map as $prop_name => $cond_tables){
+					if(isset($properties[$prop_name])){
+						$properties[$prop_name]['x-join'] = implode(', ', $cond_tables);
+						$join_tables = array_merge($join_tables, $cond_tables);
 					}
 				}
 			}
@@ -1943,13 +1949,18 @@ class OpenApi extends \ebi\app\Request{
 
 		// #[Response]属性からレスポンススキーマを構築（AttributeReader経由）
 		if(isset($m['class'], $m['method'])){
-			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context', 'summary');
+			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context');
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
 					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
 
 					if($data['type'] === 'array' && !empty($data['items'])){
 						$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+					}else if(($data['type'] ?? null) === 'map' && !empty($data['items'])){
+						// #[Response(type:'map', items: T)] = map<string,T>（OpenAPI: type:object + additionalProperties）。
+						// 値型 mixed は空スキーマ([])になるため、妥当な additionalProperties:true に丸める。
+						$val_schema = $this->get_schema_type($data['items'], $schemas);
+						$prop_schema = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 					}else if(($data['attr'] ?? null) === 'a'){
 						$prop_schema = ['type' => 'array', 'items' => $prop_schema];
 					}else if(($data['attr'] ?? null) === 'h'){
@@ -2024,7 +2035,7 @@ class OpenApi extends \ebi\app\Request{
 					}
 
 					// #[Response]属性（AttributeReader経由）
-					$attr_auth_contexts = \ebi\AttributeReader::get_method($auth_class, $auth_method, 'context', 'summary');
+					$attr_auth_contexts = \ebi\AttributeReader::get_method($auth_class, $auth_method, 'context');
 					if(!empty($attr_auth_contexts)){
 						foreach($attr_auth_contexts as $name => $data){
 							if(!isset($added_props[$name])){
@@ -2032,6 +2043,10 @@ class OpenApi extends \ebi\app\Request{
 
 								if(($data['type'] ?? null) === 'array' && !empty($data['items'])){
 									$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+								}else if(($data['type'] ?? null) === 'map' && !empty($data['items'])){
+									// #[Response(type:'map', items: T)] = map<string,T>（本体ループと同じ）
+									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$prop_schema = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 								}else if(($data['attr'] ?? null) === 'a'){
 									$prop_schema = ['type' => 'array', 'items' => $prop_schema];
 								}else if(($data['attr'] ?? null) === 'h'){

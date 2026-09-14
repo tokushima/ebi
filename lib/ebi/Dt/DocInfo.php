@@ -1,18 +1,17 @@
 <?php
 
 namespace ebi\Dt;
-/**
- * @var string $name
- * @var text $document
- * @var \ebi\Dt\ParamInfo[] $params
- * @var \ebi\Dt\ParamInfo $return
- * @var string $version
- */
+use ebi\Attribute\Prop;
 class DocInfo extends \ebi\Obj{
+	#[Prop]
 	protected string $name = '';
+	#[Prop(type:'text')]
 	protected string $document = '';
+	#[Prop(items: \ebi\Dt\ParamInfo::class)]
 	protected array $params = [];
+	#[Prop]
 	protected ?\ebi\Dt\ParamInfo $return = null;
+	#[Prop]
 	protected string $version = '';
 	private array $opt = [];
 	

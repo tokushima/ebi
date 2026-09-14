@@ -169,13 +169,12 @@ abstract class Dao extends \ebi\Obj{
 			}
 		}
 		// --- 参照解決を宣言順に依存させない（順序非依存）ための下準備 ---
-		// 結合を生むプロパティ名（cond に '(' を含む＝last_cond_column を生む）を先に洗い出す。相手が未処理でも
-		// 「参照」と判定でき、dotless 前方参照も取りこぼさない。未解決なら @ 経路で requeue して後で解決する。
+		// 結合を生むプロパティ名（join メタを持つ＝last_cond_column を生む）を先に洗い出す。相手が未処理でも
+		// 「参照」と判定でき、前方参照も取りこぼさない。未解決なら参照経路で requeue して後で解決する。
 		// $requeue_guard は循環参照検出用の回数カウンタ（正しい依存鎖は全件数以内で解決＝上限超えは循環）。
 		$join_props = [];
 		foreach($props as $__pn){
-			$__c = $this->prop_anon($__pn,'cond');
-			if($__c !== null && false !== strpos($__c,'(')){
+			if($this->prop_anon($__pn,'join') !== null){
 				$join_props[$__pn] = true;
 			}
 		}
@@ -183,7 +182,8 @@ abstract class Dao extends \ebi\Obj{
 		$max_requeue = sizeof($props) + 1;
 		while(!empty($props)){
 			$name = array_shift($props);
-			$anon_cond = $this->prop_anon($name,'cond');
+			$join = $this->prop_anon($name,'join');   // shape B（from 結合）or null
+			$ref  = $this->prop_anon($name,'ref');    // shape C（via 純参照）or null
 			// 命名規約(id→serial / create_date→datetime / code→string+auto_code_add 等)は
 			// \ebi\AttributeReader が var メタ構築時に解決済み。ここは未解決(汎用列)の既定 string を
 			// ローカル $column_type にのみ与える（メタには載せない＝汎用列の type は未設定のまま）。
@@ -193,114 +193,85 @@ abstract class Dao extends \ebi\Obj{
 			$column->column($this->prop_anon($name,'column',$name));
 			$column->column_alias('c'.self::$_cnt_++);
 
-			if($anon_cond === null){
+			if($join === null && $ref === null){
+				// shape A: 自テーブル素列
 				if(ctype_upper($column_type[0]) && class_exists($column_type) && is_subclass_of($column_type,__CLASS__)){
-					throw new \ebi\exception\InvalidQueryException('undef '.$name.' annotation `cond`');
+					throw new \ebi\exception\InvalidQueryException('undef '.$name.' annotation `from`');
 				}
 				$column->table($this->dao_table());
 				$column->table_alias($root_table_alias);
 				$column->primary($this->prop_anon($name,'primary',false) || $column_type === 'serial');
 				$column->auto($column_type === 'serial');
 				$_alias_[$column->column_alias()] = $name;
-				
-				$_self_columns_[$name] = $column;
-			}else if(false !== strpos($anon_cond,'(')){
-				$matches = [];
-				
-				if(preg_match("/^(.+)\((.*)\)(.*)$/",$anon_cond,$matches)){
-					[, $self_var, $conds_string, $has_var] = $matches;
-					$conds = [];
-					$ref_table = $ref_table_alias = null;
-					
-					if(!empty($conds_string)){
-						foreach(explode(',',$conds_string) as $cond){
-							$tcc = explode('.',$cond,3);
-							switch(sizeof($tcc)){
-								case 1:
-									$conds[] = \ebi\Column::cond_instance($tcc[0],'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias);
-									break;
-								case 2:
-									[$t, $c1] = $tcc;
-									$ref_table = $t;
-									$ref_table_alias = 't'.self::$_cnt_++;
-									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-									break;
-								case 3:
-									[$t, $c1, $c2] = $tcc;
-									$ref_table = $t;
-									$ref_table_alias = 't'.self::$_cnt_++;
-									$conds[] = \ebi\Column::cond_instance($c1,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-									$conds[] = \ebi\Column::cond_instance($c2,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
-									break;
-								default:
-									throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$name.'`');
-							}
-						}
-					}
-					// @ 省略記法: 先頭トークンが結合プロパティ名（$join_props）なら @ 参照へ正規化する。宣言順に依存せず
-					// 判定できるため dotless 前方参照も取りこぼさない（未解決かどうかは下の @ 経路で見て requeue する）。
-					// 自テーブル列は結合を生まず $join_props に載らないので曖昧さは無い。self_var のドットは参照時だけ
-					// 現れる（自テーブル列は単純識別子）ので、ドット有りで結合プロパティでないなら参照意図のタイポとして即例外。
-					if($self_var[0] !== '@'){
-						$has_dot = (false !== strpos($self_var,'.'));
-						$__head = $has_dot ? explode('.',$self_var,2)[0] : $self_var;
-						if(isset($join_props[$__head])){
-							$self_var = '@'.$self_var;
-						}else if($has_dot){
-							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$__head.'`');
-						}
-					}
-					if($self_var[0] == '@'){
-						$cond_var = null;
-						$cond_name = substr($self_var,1);
-						if(strpos($cond_name,'.') !== false){
-							[$cond_name, $cond_var] = explode('.',$cond_name);
-						}
-						if(!isset($last_cond_column[$cond_name])){
-							// 参照先が結合プロパティでまだ後ろに控えているなら自分を後回し（順序非依存）。
-							// どこにも居ない＝本物のタイポ。循環参照は requeue 回数上限で打ち切る。
-							if(isset($join_props[$cond_name]) && in_array($cond_name,$props)){
-								if(($requeue_guard[$name] = ($requeue_guard[$name] ?? 0) + 1) > $max_requeue){
-									throw new \ebi\exception\InvalidAnnotationException('circular reference : `'.$name.'`');
-								}
-								$props[] = $name;
-								continue;
-							}
-							throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$cond_name.'`');
-						}
-						$cond_column = clone($last_cond_column[$cond_name]);
-						if(isset($cond_var)){
-							$cond_column->column($cond_var);
-							$cond_column->column_alias('c'.self::$_cnt_++);
-						}
-						array_unshift($conds,$cond_column);
-					}else{
-						array_unshift($conds,
-							\ebi\Column::cond_instance($self_var,'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias)
-						);
-					}
-					$column->table($ref_table);
-					$column->table_alias($ref_table_alias);
-					$_alias_[$column->column_alias()] = $name;
-					
-					if(sizeof($conds) % 2 != 0){
-						throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
-					}
-					for($i=0;$i<sizeof($conds);$i+=2){
-						$_conds_[] = [$conds[$i],$conds[$i+1]];
-					}
-					$_where_columns_[$name] = $column;
 
-					if(!empty($conds)){
-						$cond_column = clone($conds[sizeof($conds)-1]);
-						$cond_column->column($column->column());
-						$cond_column->column_alias('c'.self::$_cnt_++);
-					
-						$last_cond_column[$name] = $cond_column;
+				$_self_columns_[$name] = $column;
+			}else if($join !== null){
+				// shape B: from（構造化した結合の道筋）を直接消費する
+				$conds = [];
+				$ref_table = $ref_table_alias = null;
+				// (1) hops を宣言順に cond_instance 化。self ホップは自テーブル列終端で ref_table を更新しない。
+				foreach($join['hops'] as $hop){
+					if($hop['t'] === 'self'){
+						$conds[] = \ebi\Column::cond_instance($hop['cols'][0],'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias);
+					}else{
+						$ref_table = $hop['table'];
+						$ref_table_alias = 't'.self::$_cnt_++;
+						foreach($hop['cols'] as $__hc){
+							$conds[] = \ebi\Column::cond_instance($__hc,'c'.self::$_cnt_++,$ref_table,$ref_table_alias);
+						}
 					}
 				}
-			}else if($anon_cond[0] === '@'){
-				$cond_name = substr($anon_cond,1);
+				// (2) anchor 解決: 結合プロパティ名なら参照（相手の last_cond_column を土台に）、そうでなければ
+				// 自テーブル列。ドット有りで結合プロパティでない＝参照意図のタイポとして即例外。
+				$a_head = $join['anchor']['head'];
+				$a_col  = $join['anchor']['col'];
+				if(isset($join_props[$a_head])){
+					if(!isset($last_cond_column[$a_head])){
+						// 参照先がまだ後ろに控えているなら後回し（順序非依存）。循環は requeue 上限で打ち切る。
+						if(in_array($a_head,$props)){
+							if(($requeue_guard[$name] = ($requeue_guard[$name] ?? 0) + 1) > $max_requeue){
+								throw new \ebi\exception\InvalidAnnotationException('circular reference : `'.$name.'`');
+							}
+							$props[] = $name;
+							continue;
+						}
+						throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$a_head.'`');
+					}
+					$cond_column = clone($last_cond_column[$a_head]);
+					if($a_col !== null){
+						$cond_column->column($a_col);
+						$cond_column->column_alias('c'.self::$_cnt_++);
+					}
+					array_unshift($conds,$cond_column);
+				}else if($a_col !== null){
+					throw new \ebi\exception\InvalidAnnotationException('annotation error : `'.$a_head.'`');
+				}else{
+					array_unshift($conds,
+						\ebi\Column::cond_instance($a_head,'c'.self::$_cnt_++,$this->dao_table(),$root_table_alias)
+					);
+				}
+				$column->table($ref_table);
+				$column->table_alias($ref_table_alias);
+				$_alias_[$column->column_alias()] = $name;
+
+				if(sizeof($conds) % 2 != 0){
+					throw new \ebi\exception\InvalidQueryException($name.'['.$column_type.'] is illegal condition');
+				}
+				for($i=0;$i<sizeof($conds);$i+=2){
+					$_conds_[] = [$conds[$i],$conds[$i+1]];
+				}
+				$_where_columns_[$name] = $column;
+
+				if(!empty($conds)){
+					$cond_column = clone($conds[sizeof($conds)-1]);
+					$cond_column->column($column->column());
+					$cond_column->column_alias('c'.self::$_cnt_++);
+
+					$last_cond_column[$name] = $cond_column;
+				}
+			}else{
+				// shape C: via 純参照（dotless 再利用）。結合を生まず相手の結合テーブルへ相乗り。
+				$cond_name = $ref;
 				if(in_array($cond_name,$props)){
 					if(($requeue_guard[$name] = ($requeue_guard[$name] ?? 0) + 1) > $max_requeue){
 						throw new \ebi\exception\InvalidAnnotationException('circular reference : `'.$name.'`');

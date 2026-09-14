@@ -1,13 +1,12 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $code @['auto_code_add'=>true,'max'=>16]
- */
+use \ebi\Attribute\Prop;
 class AutoCodePrefix extends \ebi\Dao{
-	protected $id;
-	protected $code;
-	
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(auto_code_add:true, max:16)]
+	protected ?string $code = null;
+
 	public function __prefix_code__($codebase){
 		$time = time();
 

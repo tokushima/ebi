@@ -97,6 +97,11 @@ function normSchema(v) {
 	return s;
 }
 
+// OpenAPI の {type, format} をセマンティック型名へ逆マップ（ebi get_schema_type の逆。datetime 等を復元）
+const FORMAT_LABEL = { 'date-time': 'datetime', 'date': 'date', 'time': 'time', 'email': 'email', 'alnum': 'alnum', 'serial': 'serial', 'intdate': 'intdate', 'unix-timestamp': 'timestamp', 'binary': 'binary' };
+// スカラスキーマの表示名: format があればセマンティック型（datetime 等）、無ければ type
+function scalarLabel(s) { return (s && s.format && FORMAT_LABEL[s.format]) || (s && s.type) || 'any'; }
+
 function resolveTypeName(v) {
 	if (!v) return '-';
 	v = normSchema(v);
@@ -108,13 +113,16 @@ function resolveTypeName(v) {
 		const it = normSchema(v.items);
 		if (it.$ref) return refToName(it.$ref) + '[]' + suffix;
 		if (it.allOf?.[0]?.$ref) return refToName(it.allOf[0].$ref) + '[]' + suffix;
-		return (it.type || 'any') + '[]' + suffix;
+		return scalarLabel(it) + '[]' + suffix;
 	}
-	if (v.type === 'object' && v.additionalProperties) {
+	if (v.type === 'object' && v.additionalProperties && v.additionalProperties !== true) {
 		const ap = normSchema(v.additionalProperties);
-		const valType = ap.$ref ? refToName(ap.$ref) : (ap.type || 'any');
-		return `array<string, ${valType}>` + suffix;
+		const valType = ap.$ref ? refToName(ap.$ref) : scalarLabel(ap);
+		return `map<string, ${valType}>` + suffix;
 	}
+	if (v.type === 'object' && v.additionalProperties === true) return 'map<string, any>' + suffix;
+	// format があれば datetime 等のセマンティック型で表示（例: {type:string, format:date-time} → datetime）
+	if (v.format && FORMAT_LABEL[v.format]) return FORMAT_LABEL[v.format] + suffix;
 	return v.type ? v.type + suffix : '-';
 }
 
@@ -184,7 +192,7 @@ function PropsTable({ items, title }) {
 					{items.map((p, i) => (
 						<tr key={i}>
 							<td><code className="text-primary">{p.name}</code>{p.required && <span className="text-danger ms-1">*</span>}</td>
-							<td className="text-muted">{p.schema?.type || p.type || '-'}</td>
+							<td className="text-muted">{resolveTypeName(p.schema || p)}</td>
 							<td className="text-muted small">{p.description || '-'}<EnumValues node={p} /></td>
 						</tr>
 					))}
@@ -523,6 +531,23 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 	// 詳細を開く/隣接エンドポイントへ移動したら先頭へスクロール（全画面詳細のため）
 	useEffect(() => { window.scrollTo({ top: 0 }); }, [endpoint]);
 	const op = endpoint.op;
+	// #[OneOf]（グループ内いずれか1つだけ＝排他必須）。個別必須の赤 * とは別に、オレンジの * で示す。
+	// 複数グループがある場合は上付き番号でグループを識別する。
+	const reqOneGroups = op['x-required-one'] || [];
+	const oneOfMark = (name) => {
+		const idx = reqOneGroups.findIndex(g => g.includes(name));
+		if (idx === -1) return null;
+		const sup = reqOneGroups.length > 1 ? (['¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'][idx] || `(${idx + 1})`) : '';
+		return <span style={{ color: '#f59e0b', fontWeight: 700, marginLeft: 2 }} title={`いずれか1つだけ指定（排他必須）: ${reqOneGroups[idx].join(' / ')}`}>*{sup}</span>;
+	};
+	const OneOfLegend = ({ names }) => {
+		if (reqOneGroups.length === 0 || !names.some(n => reqOneGroups.some(g => g.includes(n)))) return null;
+		return (
+			<span style={{ fontSize: '0.6875rem', color: '#b45309', fontWeight: 400, marginLeft: 8 }}>
+				<span style={{ color: '#f59e0b', fontWeight: 700 }}>*</span> グループ内いずれか1つだけ（排他必須）{reqOneGroups.length > 1 ? '（上付き番号=グループ）' : ''}
+			</span>
+		);
+	};
 	// x-flow の生産者/消費者索引（直前=前提を作る / 直後=効果を使う endpoint 導出用）
 	const flowNeighbors = useMemo(() => {
 		const producers = {}, consumers = {}, byId = {};
@@ -566,12 +591,12 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 				<div className="modal-panel-body">
 
 					{op.parameters && op.parameters.length > 0 && <section>
-						<div className="section-label">Parameters</div>
+						<div className="section-label">Parameters<OneOfLegend names={op.parameters.map(p => p.name)} /></div>
 						<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
 							{op.parameters.map((p, i) => (
 								<div key={i} className="param-row">
-									<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
-									<span className="param-type">{p.schema?.type || p.type || '-'}</span>
+									<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}{oneOfMark(p.name)}</span>
+									<span className="param-type">{resolveTypeName(p.schema || p)}</span>
 									<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>{p.description || '-'}<EnumValues node={p} /></span>
 								</div>
 							))}
@@ -584,12 +609,12 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 							return Object.entries(s.properties).map(([k, v]) => ({ name: k, ...v, required: (s.required || []).includes(k) }));
 						});
 						return bodyProps.length > 0 ? <section>
-							<div className="section-label">Request Body</div>
+							<div className="section-label">Request Body<OneOfLegend names={bodyProps.map(p => p.name)} /></div>
 							<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
 								{bodyProps.map((p, i) => (
 									<div key={i} className="param-row">
-										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}</span>
-										<span className="param-type">{p.type || '-'}</span>
+										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}{oneOfMark(p.name)}</span>
+										<span className="param-type">{resolveTypeName(p)}</span>
 										<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>{p.description || '-'}<EnumValues node={p} /></span>
 									</div>
 								))}
@@ -1279,7 +1304,7 @@ const MCP_TOOLS = [
 	{ name: 'list_tags', desc: 'API のタグ（グループ）一覧を取得' },
 	{ name: 'get_schema', desc: 'components schema（モデル定義）を名前で取得' },
 	{ name: 'list_flows', desc: '達成できるゴール（状態/値トークン）の一覧＝ユースケース発見。goal を選び get_flow へ' },
-	{ name: 'get_flow', desc: 'goal（operationId か 状態トークン）への呼び出し順(plan)を Requires/Produces から導出' },
+	{ name: 'get_flow', desc: 'goal（operationId か 状態トークン）への呼び出し順(plan)を FlowRequires/FlowProduces から導出' },
 ];
 
 function McpPage() {
@@ -2092,7 +2117,7 @@ function FlowPage() {
 			) : null}
 
 			{issuesAll.length > 0 && <div className="alert alert-danger mt-4">
-              <div className="fw-semibold mb-2" style={{ fontSize: '0.875rem' }}>宣言の整合性チェック — {issuesAll.length} 件の不整合（#[Requires]/#[Produces] が語彙と不一致。G1..G6）</div>
+              <div className="fw-semibold mb-2" style={{ fontSize: '0.875rem' }}>宣言の整合性チェック — {issuesAll.length} 件の不整合（#[FlowRequires]/#[FlowProduces] が語彙と不一致。G1..G6）</div>
               {issuesAll.map((iss, i) => (
                 <div key={i} className="d-flex align-items-center gap-2 py-1" style={{ fontSize: '0.8125rem' }}>
                   {iss.gate && <span className="badge bg-danger">{iss.gate}</span>}

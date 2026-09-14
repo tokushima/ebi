@@ -1,12 +1,14 @@
 <?php
 namespace test\db;
+use \ebi\Attribute\Prop;
+use \ebi\Attribute\Table;
 /**
  * JoinA, JoinB, JoinCテーブルが先に必要
- * @table @['name'=>'join_a']
- * @var serial $id
- * @var string $name @['column'=>'name','cond'=>'id(join_c.a_id.b_id,join_b.id)']
  */
+#[Table(name:'join_a')]
 class JoinABC extends \ebi\Dao{
-	protected $id;
-	protected $name;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(from: [['id', JoinC::class, 'a_id'], ['b_id', JoinB::class, 'id']], column:'name')]
+	protected ?string $name = null;
 }

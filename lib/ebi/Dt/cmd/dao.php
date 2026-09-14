@@ -142,7 +142,7 @@ switch($cmd){
 				try{
 					foreach($inst->props() as $k => $v){
 						if(array_key_exists($k,$arr['data'])){
-							if($inst->prop_anon($k,'cond') == null && $inst->prop_anon($k,'extra',false) === false){
+							if($inst->prop_anon($k,'join') == null && $inst->prop_anon($k,'ref') == null && $inst->prop_anon($k,'extra',false) === false){
 								$inst->prop_anon($k,'auto_now',false,true);
 								call_user_func_array([$inst,$k],[$arr['data'][$k]]);
 							}

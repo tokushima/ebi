@@ -1,10 +1,8 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $cval
- */
+use \ebi\Attribute\Prop;
 class ChainC extends \ebi\Dao{
-	protected $id;
-	protected $cval;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $cval = null;
 }

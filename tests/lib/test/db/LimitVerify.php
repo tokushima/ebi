@@ -1,12 +1,11 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $value1 @['max'=>3,'min'=>2]
- * @var int $value2 @['max'=>3,'min'=>2]
- */
+use \ebi\Attribute\Prop;
 class LimitVerify extends \ebi\Dao{
-	protected $id;
-	protected $value1;
-	protected $value2;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(max:3, min:2)]
+	protected ?string $value1 = null;
+	#[Prop(max:3, min:2)]
+	protected ?int $value2 = null;
 }

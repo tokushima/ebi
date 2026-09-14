@@ -1,15 +1,11 @@
 <?php
 namespace test;
-/**
- * @var int $abc @['hash'=>false]
- * @var string $def
- * @var int $ghi
- *
- */
+use \ebi\Attribute\Prop;
 class Json extends \ebi\Obj{
-	protected $abc = 123;
-	protected $def = 'aaa';
-	protected $ghi = 100;
-	
+	#[Prop(expose:false)]
+	protected ?int $abc = 123;
+	protected ?string $def = 'aaa';
+	protected ?int $ghi = 100;
+
 	protected $jkl;
 }

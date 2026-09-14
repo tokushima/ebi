@@ -1,14 +1,10 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $data1
- * @var string $data2
- * @var string $data3
- */
+use \ebi\Attribute\Prop;
 class MatchData extends \ebi\Dao{
-	protected $id;
-	protected $data1;
-	protected $data2;
-	protected $data3;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $data1 = null;
+	protected ?string $data2 = null;
+	protected ?string $data3 = null;
 }

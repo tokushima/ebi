@@ -1,8 +1,7 @@
 <?php
 namespace test\db;
-/**
- * @var mixed $extra_value @['extra'=>true]
- */
+use \ebi\Attribute\Prop;
 class ExtraInitHasParent extends InitHasParent{
-	protected $extra_value;
+	#[Prop(type:'mixed', extra:true)]
+	protected mixed $extra_value = null;
 }

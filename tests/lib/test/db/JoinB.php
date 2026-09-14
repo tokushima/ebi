@@ -1,10 +1,8 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $name
- */
+use \ebi\Attribute\Prop;
 class JoinB extends \ebi\Dao{
-	protected $id;
-	protected $name;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $name = null;
 }

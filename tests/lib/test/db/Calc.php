@@ -1,18 +1,14 @@
 <?php
 namespace test\db;
+use \ebi\Attribute\Prop;
 /**
  * 計算
- * @var serial $id
- * @var int $price
- * @var string $type
- * @var string $name
- * @var float $float
- * 
  */
 class Calc extends \ebi\Dao{
-	protected $id;
-	protected $price;
-	protected $type;
-	protected $name;
-	protected $float;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?int $price = null;
+	protected ?string $type = null;
+	protected ?string $name = null;
+	protected ?float $float = null;
 }

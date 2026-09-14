@@ -1,18 +1,19 @@
 <?php
 namespace ebi;
+use ebi\Attribute\Prop;
 /**
  * Remember me
- * @var serial $id
- * @var string $user_id @['max'=>128]
- * @var string $token @['auto_code_add'=>true,'max'=>80]
- * @var string $key @['auto_code_add'=>true,'max'=>45]
- * @var datetime $expire_date
  */
 class UserRememberMeDao extends \ebi\Dao{
+	#[Prop(type:'serial')]
 	protected ?int $id = null;
+	#[Prop(max:128)]
 	protected ?string $user_id = null;
+	#[Prop(auto_code_add:true, max:80)]
 	protected ?string $token = null;
+	#[Prop(auto_code_add:true, max:45)]
 	protected ?string $key = null;
+	#[Prop(type:'datetime')]
 	protected ?int $expire_date = null;
 	
 	private static function crypt(string $user_id): string{

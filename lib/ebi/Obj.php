@@ -10,7 +10,7 @@ class Obj implements \IteratorAggregate{
 	private function init_obj_meta(): void{
 		$c = static::class;
 		if(!isset(self::$_m[$c])){
-			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',null,__CLASS__) ?? [];
+			self::$_m[$c] = \ebi\AttributeReader::get_class($c,'var',__CLASS__) ?? [];
 		}
 		if(!isset(self::$_props[$c])){
 			self::$_props[$c] = [];

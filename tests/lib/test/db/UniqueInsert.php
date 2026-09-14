@@ -1,10 +1,8 @@
 <?php
 namespace test\db;
-/**
- * @var string $id @['primary'=>true]
- * @var string $value
- */
+use \ebi\Attribute\Prop;
 class UniqueInsert extends \ebi\Dao{
-	protected $id;
-	protected $value;
+	#[Prop(primary:true)]
+	protected ?string $id = null;
+	protected ?string $value = null;
 }

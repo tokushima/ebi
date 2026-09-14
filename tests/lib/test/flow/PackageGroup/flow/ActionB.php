@@ -1,11 +1,11 @@
 <?php
 namespace test\flow\PackageGroup\flow;
 
+use \ebi\Attribute\Route;
+
 class ActionB extends \ebi\flow\Request{
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function def(){
-		
+
 	}
 }

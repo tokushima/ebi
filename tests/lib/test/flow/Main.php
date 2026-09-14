@@ -1,6 +1,7 @@
 <?php
 namespace test\flow;
 use \ebi\Q;
+use \ebi\Attribute\Route;
 
 class Main extends \ebi\flow\Request{
 	public function get_after_vars(): array{
@@ -9,9 +10,7 @@ class Main extends \ebi\flow\Request{
 		];
 	}
 	
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function index(){
 		$paginator = \ebi\Paginator::request($this,10);
 		$paginator->total(1000);
@@ -24,9 +23,7 @@ class Main extends \ebi\flow\Request{
 		]);
 	}
 	
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function vote(){
 		$note = \test\flow\model\Note::find_get(Q::eq('id',$this->in_vars('note_id')));
 		$note->vote($note->vote() + (int)$this->in_vars('point'));

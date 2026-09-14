@@ -1,14 +1,13 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $code1 @['auto_code_add'=>true]
- * @var string $code2 @['auto_code_add'=>true,'max'=>10]
- * @var string $code3 @['auto_code_add'=>true,'max'=>40]
- */
+use \ebi\Attribute\Prop;
 class UniqueCode extends \ebi\Dao{
-	protected $id;
-	protected $code1;
-	protected $code2;
-	protected $code3;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(auto_code_add:true)]
+	protected ?string $code1 = null;
+	#[Prop(auto_code_add:true, max:10)]
+	protected ?string $code2 = null;
+	#[Prop(auto_code_add:true, max:40)]
+	protected ?string $code3 = null;
 }

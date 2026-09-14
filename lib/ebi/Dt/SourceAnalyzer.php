@@ -76,14 +76,9 @@ class SourceAnalyzer{
 		$info->set_opt('abstract',$r->isAbstract());
 		$info->set_opt('see_list',self::find_see($document));
 
-		// サーバー間通信エンドポイント（クラスレベル: DocBlockまたはAttribute）
-		if(preg_match('/@s2s/',$document)){
+		// サーバー間通信エンドポイント（クラスレベル #[S2s]）
+		if(\ebi\AttributeReader::get_class($r->getName(), 's2s') !== null){
 			$info->set_opt('s2s',true);
-		}else{
-			$s2s_attr = \ebi\AttributeReader::get_class($r->getName(), 's2s');
-			if($s2s_attr !== null){
-				$info->set_opt('s2s',true);
-			}
 		}
 
 		self::find_merge_deprecate($info,$document);
@@ -125,11 +120,11 @@ class SourceAnalyzer{
 		$info->set_opt('methods',$methods);
 
 		$properties = [];
-		$anon = \ebi\AttributeReader::get_class($info->name(),'var','summary');
+		$anon = \ebi\AttributeReader::get_class($info->name(),'var');
 
 		// traitのDocBlockからも@varアノテーションを取得
 		foreach($r->getTraits() as $trait){
-			$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var','summary');
+			$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var');
 			foreach(($trait_anon ?? []) as $name => $val){
 				if(!isset($anon[$name])){
 					$anon[$name] = $val;
@@ -140,7 +135,7 @@ class SourceAnalyzer{
 		// 親クラスのDocBlockからも@varアノテーションを取得
 		$parent = $r->getParentClass();
 		while($parent && $parent->getName() !== 'ebi\\Dao' && $parent->getName() !== 'ebi\\Obj'){
-			$parent_anon = \ebi\AttributeReader::get_class($parent->getName(),'var','summary');
+			$parent_anon = \ebi\AttributeReader::get_class($parent->getName(),'var');
 			foreach(($parent_anon ?? []) as $name => $val){
 				if(!isset($anon[$name])){
 					$anon[$name] = $val;
@@ -148,7 +143,7 @@ class SourceAnalyzer{
 			}
 			// 親クラスのtraitも取得
 			foreach($parent->getTraits() as $trait){
-				$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var','summary');
+				$trait_anon = \ebi\AttributeReader::get_class($trait->getName(),'var');
 				foreach(($trait_anon ?? []) as $name => $val){
 					if(!isset($anon[$name])){
 						$anon[$name] = $val;
@@ -200,8 +195,11 @@ class SourceAnalyzer{
 						($prop->isPublic() || !(($anon[$name]['hash'] ?? true) && ($anon[$name]['expose'] ?? true)) === false)
 					);
 
-					if(!empty($anon[$name]['cond'])){
-						$properties[$name]->set_opt('cond', $anon[$name]['cond']);
+					if(!empty($anon[$name]['join'])){
+						$properties[$name]->set_opt('join', $anon[$name]['join']);
+					}
+					if(!empty($anon[$name]['ref'])){
+						$properties[$name]->set_opt('ref', $anon[$name]['ref']);
 					}
 					if(!empty($anon[$name]['enum'])){
 						$properties[$name]->set_opt('enum', $anon[$name]['enum']);
@@ -224,8 +222,9 @@ class SourceAnalyzer{
 						// nullable 未指定時は PHP 型宣言(? の有無)から補完する（型の reflection 補完と揃える）
 						$properties[$name]->set_opt('nullable', false);
 					}
-					// DocBlock/属性で明示された auto系 opt を反映（命名規則ベースの補完と揃える）
-					foreach(['primary','auto','auto_now_add','auto_now','auto_code_add'] as $ak){
+					// #[Prop] で明示された auto系・deprecated opt を反映（命名規則ベースの補完と揃える）。
+					// deprecated は #[Prop(deprecated: true)] 由来。build_model_schema が schema の deprecated:true に出す。
+					foreach(['primary','auto','auto_now_add','auto_now','auto_code_add','deprecated'] as $ak){
 						if(!empty($anon[$name][$ak])){
 							$properties[$name]->set_opt($ak, true);
 						}
@@ -345,23 +344,6 @@ class SourceAnalyzer{
 			}
 		}
 		return trim(preg_replace('/@.+/','',$summary));
-	}
-
-	private static function find_merge_request_context(DocInfo $info, string $document): void{
-		$requests = ParamInfo::parse('request',$document);
-		$contexts = ParamInfo::parse('context',$document);
-
-		foreach([$requests,$contexts] as $v){
-			foreach($v as $r){
-				$r->summary(self::find_merge_deprecate($r,$r->summary(),$info,true));
-			}
-		}
-		$info->set_opt('requests',$requests);
-		$info->set_opt('contexts',$contexts);
-
-		if(!$info->is_return() && $info->has_opt('contexts')){
-			$info->return(new ParamInfo('return','mixed{}'));
-		}
 	}
 
 	private static function find_throws(array $throws, string $doc, string $src): array{
@@ -607,7 +589,6 @@ class SourceAnalyzer{
 
 		self::find_merge_deprecate($info,$document);
 		self::find_merge_params($info,$ref->getParameters());
-		self::find_merge_request_context($info, $document);
 
 		$info->set_opt('class',self::get_class_name($class));
 		$info->set_opt('method',$ref->getName());
@@ -617,24 +598,10 @@ class SourceAnalyzer{
 			$info->version(date('Ymd',filemtime($ref->getDeclaringClass()->getFileName())));
 		}
 
-		// サーバー間通信エンドポイント
-		if(preg_match('/@s2s/',$document)){
-			$info->set_opt('s2s',true);
-		}
-
-		// ログイン要件（表示用）
-		if(preg_match('/@login_required/',$document)){
-			$info->set_opt('login',true);
-		}
-
-		// HTTPメソッドの検出
-		if(preg_match("/@http_method\s+([^\s]+)/",$document,$m)){
-			$info->set_opt('http_method',strtoupper(trim($m[1])));
-		}else{
-			$info->set_opt('http_method',
-				(strpos($src,'$this->is_post()') !== false && strpos($src,'!$this->is_post()') === false) ? 'POST' : null
-			);
-		}
+		// HTTPメソッドの検出（本文の $this->is_post() から推定。明示は #[HttpMethod]）
+		$info->set_opt('http_method',
+			(strpos($src,'$this->is_post()') !== false && strpos($src,'!$this->is_post()') === false) ? 'POST' : null
+		);
 
 		$throws = $mail_list = [];
 		// catch-aware: 呼び出しグラフ横断でcatchされる例外を除外する（opt-in・deep時のみ）

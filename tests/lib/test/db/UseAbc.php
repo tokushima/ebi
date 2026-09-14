@@ -1,12 +1,11 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var datetime $create_date @['auto_now_add'=>true]
- */
+use \ebi\Attribute\Prop;
 class UseAbc extends \ebi\Dao{
 	use \test\db\TraitAbc;
-	
-	protected $id;
-	protected $create_date;
+
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(type:'datetime', auto_now_add:true)]
+	protected ?int $create_date = null;
 }

@@ -3,18 +3,18 @@ namespace ebi\Attribute;
 
 /**
  * このエンドポイントを呼ぶ前に成立していなければならない状態トークンを宣言するAttribute（flow token / 前提）
- * token は #[Produces]（生産） か #[FlowToken]（ambient）で定義済みである必要がある（未定義は Dt が G1 で検知）。
+ * token は #[FlowProduces]（生産） か #[FlowToken]（ambient）で定義済みである必要がある（未定義は Dt が G1 で検知）。
  *
  * @example
- * #[Requires('order.code', bind:'code')]                    // 値トークン: この前提が #[Parameter(name:'code')] の値を供給
- * #[Requires('product.serial', bind:'serial_no')]           // ambient（ユーザ入力/QR等、API外で成立）
- * #[Requires('payment.authorized', optional:true)]          // soft: 必須ではないが順序ヒント
+ * #[FlowRequires('order.code', bind:'code')]                    // 値トークン: この前提が #[Parameter(name:'code')] の値を供給
+ * #[FlowRequires('product.serial', bind:'serial_no')]           // ambient（ユーザ入力/QR等、API外で成立）
+ * #[FlowRequires('payment.authorized', optional:true)]          // soft: 必須ではないが順序ヒント
  * public function detail() {}
  */
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
-class Requires{
+class FlowRequires{
 	public function __construct(
-		/** 前提トークン（#[Produces]/#[FlowToken] で定義済み） domain.entity[.qualifier] */
+		/** 前提トークン（#[FlowProduces]/#[FlowToken] で定義済み） domain.entity[.qualifier] */
 		public string $token,
 		/**
 		 * この前提が値を供給する #[Parameter] 名（値トークン時）。

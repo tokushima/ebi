@@ -1,34 +1,32 @@
 <?php
 namespace test\flow\PackageGroup\flow;
 
+use \ebi\Attribute\Route;
+
 class ActionA extends \ebi\flow\Request{
 	/**
 	 * とてもとても長いサマリーがあった場合は折り返されて表示されることを確認するためのテストケース
-	 * @automap
 	 */
+	#[Route]
 	public function abc(){
-		
+
 	}
-	
-	/**
-	 * @automap
-	 */
+
+	#[Route]
 	public function def(){
-		
+
 	}
-	
+
 	/**
 	 * エラーになる
-	 * @automap
 	 */
+	#[Route]
 	public function ghi(){
 		throw new \Exception('エラー');
 	}
-	
-	/**
-	 * @automap
-	 */
+
+	#[Route]
 	public function jkl(){
-		
+
 	}
 }

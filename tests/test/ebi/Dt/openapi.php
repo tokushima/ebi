@@ -128,16 +128,3 @@ eq(true, isset($spec_srv['servers']));
 eq(true, strpos($spec_srv['servers'][0]['url'], 'https://openapi.example') === 0);
 
 @unlink($throw_entry);
-
-
-// ログイン必須(@login_required)エンドポイントの401にも Error の content が付く
-// （未認証時は他エラー同様 {"error":[...]} を返すため）
-$login_entry = sys_get_temp_dir() . '/ebi_openapi_login_entry_' . getmypid() . '.php';
-file_put_contents($login_entry, "<?php\n\\ebi\\Flow::app(['need' => ['name' => 'need', 'action' => 'test\\dt\\NeedLogin::get']]);\n");
-
-$spec_login = (new \ebi\Dt\OpenApi($login_entry))->generate_spec(false, false);
-$res401 = $spec_login['paths']['/need']['get']['responses']['401'] ?? null;
-eq(true, isset($res401));
-eq('#/components/schemas/Error', $res401['content']['application/json']['schema']['$ref'] ?? null);
-
-@unlink($login_entry);

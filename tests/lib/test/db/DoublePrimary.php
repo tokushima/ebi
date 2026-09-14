@@ -1,12 +1,10 @@
 <?php
 namespace test\db;
-/**
- * @var int $id1 @['primary'=>true]
- * @var int $id2 @['primary'=>true]
- * @var string $value
- */
+use \ebi\Attribute\Prop;
 class DoublePrimary extends \ebi\Dao{
-	protected $id1;
-	protected $id2;
-	protected $value;
+	#[Prop(primary:true)]
+	protected ?int $id1 = null;
+	#[Prop(primary:true)]
+	protected ?int $id2 = null;
+	protected ?string $value = null;
 }

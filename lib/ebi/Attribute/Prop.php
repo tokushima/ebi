@@ -24,6 +24,10 @@ namespace ebi\Attribute;
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 class Prop{
+	// from: のホップのテーブル位置に置くと「自テーブル列で終端する結合条件」を表すセンチネル。
+	// 例: from:[['type_id',Model::class,'id2'],['id1', Prop::SELF, 'ref_id']] ＝ 末尾 id1 = 自テーブルの ref_id。
+	const SELF = '@self';
+
 	public function __construct(
 		// クラスレベルで付ける時だけ指定：上書き対象のプロパティ名。書いたオプションのキーだけが
 		// trait/親のメタに重なる（旧 @var docblock と同じキー単位マージ＝再宣言不要）。プロパティレベルでは null。
@@ -40,9 +44,12 @@ class Prop{
 		public ?bool $require=null,
 		public int|float|null $min=null,     // 数値は値／文字列は文字数
 		public int|float|null $max=null,
+		public ?string $additional_chars=null, // type:'alnum' で英数字に加えて許可する文字（\ebi\Validator）
+		public ?int $decimal_places=null,    // type:'float'/'number' の小数桁数（\ebi\Validator の丸め / DDL の NUMERIC 桁）
 
 		// 公開（\ebi\Obj のアクセサ／\ebi\Dt\SourceAnalyzer のドキュメント）
 		public ?string $summary=null,
+		public ?bool $deprecated=null,        // true でこのプロパティを OpenAPI schema に deprecated:true として出す（#[Response] へ移譲。@deprecated docblock と等価）
 		public ?bool $expose=null,            // false でハッシュ化・ドキュメント出力から除外
 		public ?bool $get=null,
 		public ?bool $set=null,
@@ -59,6 +66,7 @@ class Prop{
 		// 結合の道筋を構造化して書く。ホップの配列で、先頭のローカル列から順に結合を辿る。各ホップ:
 		//   [local, Model::class|'table', target]  … local(現在テーブルの列) = table.target で結合。次ホップの local は table 上とみなす
 		//   [local, 'table.target']                … テーブルを文字列で（モデル無しのフォールバック）
+		//   [local, Prop::SELF, selfCol]           … 最終ホップを自テーブル列 selfCol で閉じる（local = 自テーブルの selfCol）
 		// 先頭ホップの local に `otherprop.col` を置くと、既存の別プロパティ `otherprop` の結合を再利用し、
 		// その結合先テーブルの col から続けて結合する（via の再利用を多段へ拡張した形。from だけで完結）。
 		// 例: from: [['client_order_id', PrintTicket::class, 'code'], ['delivery_package_id', DeliveryPackage::class, 'id'], ['destination_id', Destination::class, 'id']]

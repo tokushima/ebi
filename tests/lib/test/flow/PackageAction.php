@@ -1,17 +1,17 @@
 <?php
 namespace test\flow;
 
+use \ebi\Attribute\Route;
+
 class PackageAction{
-	/**
-	 * @automap
-	 */
+	#[Route]
 	public function index(){
-		
+
 	}
 	/**
-	 * @automap
 	 * @throws \LogicException
 	 */
+	#[Route]
 	public function throw_over(){
 		throw new \LogicException('throw_over');
 	}

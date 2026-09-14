@@ -161,7 +161,7 @@ class Mcp{
 			],
 			[
 				'name' => 'get_flow',
-				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[Requires])と効果(#[Produces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[Follows]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
+				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[FlowRequires])と効果(#[FlowProduces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[FlowFollows]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -720,7 +720,7 @@ class Mcp{
 	/**
 	 * hard plan（spine）に対して「差し込み可能な任意の中間段」を導出する。
 	 * soft requires（optional:true）の token が plan の産物で満たされる、
-	 * または #[Follows] が plan op を指す op を、推奨挿入位置(afterStep)付きで列挙する。
+	 * または #[FlowFollows] が plan op を指す op を、推奨挿入位置(afterStep)付きで列挙する。
 	 * hard requires は plan産物 / inputs / ambient で満たせるものだけを対象とする（満たせない=別フロー）。
 	 */
 	private function flow_optional_steps(array $needed, array $ops, array $plan_out, array $inputs, array $registry): array{
@@ -786,7 +786,7 @@ class Mcp{
 				if(!$hard_ok){
 					continue;
 				}
-				// #[Follows] が plan/任意段 op を指すなら接続根拠 & 位置ヒント
+				// #[FlowFollows] が plan/任意段 op を指すなら接続根拠 & 位置ヒント
 				$follows_hits = [];
 				foreach($o['follows'] as $a){
 					$ep = $a['endpoint'] ?? null;

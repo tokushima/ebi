@@ -1,19 +1,15 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var datetime $create_date
- * @var int $num
- * @var string $val1
- * @var string $val2
- */
+use \ebi\Attribute\Prop;
 class Data extends \ebi\Dao{
-	protected $id;
-	protected $create_date;
-	protected $num;
-	protected $val1;
-	protected $val2;
-	
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(type:'datetime')]
+	protected ?int $create_date = null;
+	protected ?int $num = null;
+	protected ?string $val1 = null;
+	protected ?string $val2 = null;
+
 	public static function sample(){
 		$static = new static();
 		$static->create_date(time() - rand(0,86400*365*3));

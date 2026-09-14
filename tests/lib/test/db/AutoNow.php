@@ -1,16 +1,15 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var datetime $ts @['auto_now'=>true]
- * @var date $date @['auto_now'=>true]
- * @var intdate $idate @['auto_now'=>true]
- */
+use \ebi\Attribute\Prop;
 class AutoNow extends \ebi\Dao{
-	protected $id;
-	protected $ts;
-	protected $date;
-	protected $idate;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(type:'datetime', auto_now:true)]
+	protected ?int $ts = null;
+	#[Prop(type:'date', auto_now:true)]
+	protected ?int $date = null;
+	#[Prop(type:'intdate', auto_now:true)]
+	protected ?int $idate = null;
 	protected $value1;
 	protected $value2;
 }

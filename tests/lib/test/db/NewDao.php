@@ -1,10 +1,8 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var string $value;
- */
+use \ebi\Attribute\Prop;
 class NewDao extends \ebi\Dao{
-	protected $id;
-	protected $value;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $value = null;
 }

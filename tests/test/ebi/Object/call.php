@@ -87,7 +87,7 @@ try{
 }catch(\ebi\exception\InvalidArgumentException $e){
 	eq(true,false);
 }
-eq(array("BTbl","Acol"),$hoge->cn_fff());
+eq("Acol",$hoge->cn_fff());
 
 eq("hoge",$hoge->ggg());
 try{

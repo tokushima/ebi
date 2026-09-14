@@ -1,16 +1,15 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var datetime $ts
- * @var date $date
- * @var intdate $idate
- * @var intdate $birthday @['max'=>8]
- */
+use \ebi\Attribute\Prop;
 class DateTime extends \ebi\Dao{
-	protected $id;
-	protected $ts;
-	protected $date;
-	protected $idate;
-	protected $birthday;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(type:'datetime')]
+	protected ?int $ts = null;
+	#[Prop(type:'date')]
+	protected ?int $date = null;
+	#[Prop(type:'intdate')]
+	protected ?int $idate = null;
+	#[Prop(type:'intdate', max:8)]
+	protected ?int $birthday = null;
 }

@@ -1,12 +1,10 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id
- * @var datetime $ts
- * @var int $num
- */
+use \ebi\Attribute\Prop;
 class DateFormat extends \ebi\Dao{
-	protected $id;
-	protected $ts;
-	protected $num;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	#[Prop(type:'datetime')]
+	protected ?int $ts = null;
+	protected ?int $num = null;
 }

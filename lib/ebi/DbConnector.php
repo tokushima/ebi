@@ -590,7 +590,7 @@ s	 */
 	}
 
 	protected function create_table_prop_cond(\ebi\Dao $dao, string $prop_name): string{
-		return ($dao->prop_anon($prop_name,'extra') !== true && $dao->prop_anon($prop_name,'cond') === null);
+		return ($dao->prop_anon($prop_name,'extra') !== true && $dao->prop_anon($prop_name,'join') === null && $dao->prop_anon($prop_name,'ref') === null);
 	}
 
 	public function drop_table_sql(\ebi\Dao $dao): string{

@@ -1,13 +1,11 @@
 <?php
 namespace test\db;
-/**
- * @var serial $id @['hash'=>false]
- * @var string $value
- */
+use \ebi\Attribute\Prop;
 class SaveLoop extends \ebi\Dao{
-	protected $id;
-	protected $value;
-	
+	#[Prop(type:'serial', expose:false)]
+	protected ?int $id = null;
+	protected ?string $value = null;
+
 	protected function __before_save__(bool $is_update): void{
 		$this->value('B'.$this->value());
 	}

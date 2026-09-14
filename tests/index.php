@@ -95,8 +95,8 @@ include_once('bootstrap.php');
 	'flow/request/require/vars'=>['name'=>'require_vars','action'=>'test\flow\RequestFlow::require_vars'],
 	'flow/request/require/post'=>['name'=>'require_post','action'=>'test\flow\RequestFlow::require_post'],
 	'flow/request/require/get'=>['name'=>'require_get','action'=>'test\flow\RequestFlow::require_get'],
-	'flow/request/require/invalid/annon'=>['name'=>'require_vars_invalid_anon','action'=>'test\flow\RequestFlow::require_vars_annotation_error'],
 	'flow/request/type/email'=>['name'=>'require_type_email','action'=>'test\flow\RequestFlow::require_var_type'],
+	'flow/request/require/one'=>['name'=>'require_one','action'=>'test\flow\RequestFlow::require_one'],
 	'flow/request/vars'=>[
 		'name'=>'requestflow_vars',
 		'action'=>'test\flow\RequestFlow::get_vars',
@@ -186,9 +186,6 @@ include_once('bootstrap.php');
 		 * クロージャアクション
 		 * @param string $b BBB
 		 * @see https://google.com
-		 * @request string $hoge ホゲホゲ
-		 * @context string $A AABBCC
-		 * @context string $B XXYYZZ
 		 */
 		'action'=>function($a,$b){
 			return [

@@ -1,28 +1,29 @@
 <?php
 namespace ebi;
+use ebi\Attribute\Prop;
 /**
  * 送信するメールをDBに保存して実際にメールを送信しない
- * 
- * @var serial $id
- * @var text $from
- * @var text $to
- * @var text $cc
- * @var string $subject
- * @var text $message
- * @var text $manuscript
- * @var string $tcode
- * @var datetime $create_date @['auto_now_add'=>true]
  */
 class SmtpBlackholeDao extends \ebi\Dao implements \ebi\MailHandler{
+	#[Prop(type:'serial')]
 	protected ?int $id = null;
+	#[Prop(type:'text')]
 	protected ?string $from = null;
+	#[Prop(type:'text')]
 	protected ?string $to = null;
+	#[Prop(type:'text')]
 	protected ?string $cc = null;
+	#[Prop]
 	protected ?string $bcc = null;
+	#[Prop]
 	protected ?string $subject = null;
+	#[Prop(type:'text')]
 	protected ?string $message = null;
+	#[Prop]
 	protected ?string $tcode = null;
+	#[Prop(type:'text')]
 	protected ?string $manuscript = null;
+	#[Prop(type:'datetime', auto_now_add:true)]
 	protected ?int $create_date = null;
 	
 	/**

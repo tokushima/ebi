@@ -1,11 +1,11 @@
 <?php
 namespace test\db;
+use \ebi\Attribute\Prop;
 /**
  * create table はされるはず
- * @var serial $id
- * @var string $value
  */
 class Unbuffered extends \ebi\Dao{
-	protected $id;
-	protected $value;
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $value = null;
 }

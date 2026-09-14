@@ -1,13 +1,13 @@
 <?php
 namespace test\db;
+use \ebi\Attribute\Prop;
 /**
  * Traitを含むモデル
- * @var serial $id
- * @var string $value;
  */
 class InTraitDate extends \ebi\Dao{
 	use \test\db\TraitDate;
-	
-	protected $id;
-	protected $value;
+
+	#[Prop(type:'serial')]
+	protected ?int $id = null;
+	protected ?string $value = null;
 }

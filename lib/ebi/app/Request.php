@@ -216,7 +216,7 @@ class Request extends \ebi\Request{
 		$this->_sess = new \ebi\Session($sess_name);
 		$this->_login_id = $sess_name.'_LOGIN_';
 
-		$this->_login_anon = \ebi\AttributeReader::get_class($this, 'login' ,null, __CLASS__);
+		$this->_login_anon = \ebi\AttributeReader::get_class($this, 'login', __CLASS__);
 
 		if(isset($this->_selected_pattern['auth'])){
 			$auth_ref = new \ReflectionClass($this->_selected_pattern['auth']);
