@@ -171,10 +171,11 @@ function renderNestedProps(items, parentKey, schemas, expanded, depth = 1) {
 		const hasChildren = !!(nested?.properties) && depth < 3;
 		const isOpen = expanded.has(key);
 		rows.push(
-			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', deprecated: !!p.deprecated, depth, hasChildren, isOpen, enum: p.enum, enumDescriptions: p['x-enum-descriptions'] }
+			{ key, name: p.name, type: resolveTypeName(p), desc: p.description || '-', deprecated: !!p.deprecated, required: !!p.required, nullable: !!normSchema(p).__nullable, depth, hasChildren, isOpen, enum: p.enum, enumDescriptions: p['x-enum-descriptions'] }
 		);
 		if (hasChildren && isOpen) {
-			const children = Object.entries(nested.properties).map(([k, v]) => ({ name: k, ...v }));
+			const req = nested.required || [];
+			const children = Object.entries(nested.properties).map(([k, v]) => ({ name: k, ...v, required: req.includes(k) }));
 			rows.push(...renderNestedProps(children, key, schemas, expanded, depth + 1));
 		}
 	});
@@ -528,6 +529,8 @@ function SeeLinks({ seeList, onNavigate, label = 'See:' }) {
 
 function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = null }) {
 	const [showTry, setShowTry] = useState(false);
+	// Request Body の参照型（$ref / 配列 items）を Responses と同様にクリックで再帰展開する。
+	const [bodyExpanded, setBodyExpanded] = useState(new Set());
 	// 詳細を開く/隣接エンドポイントへ移動したら先頭へスクロール（全画面詳細のため）
 	useEffect(() => { window.scrollTo({ top: 0 }); }, [endpoint]);
 	const op = endpoint.op;
@@ -608,18 +611,28 @@ function EndpointContent({ endpoint, schemas, envelope, onClose, onNavigate = nu
 							if (!s || !s.properties) return [];
 							return Object.entries(s.properties).map(([k, v]) => ({ name: k, ...v, required: (s.required || []).includes(k) }));
 						});
-						return bodyProps.length > 0 ? <section>
+						if (bodyProps.length === 0) return null;
+						const toggle = (key) => setBodyExpanded(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
+						const allRows = renderNestedProps(bodyProps, 'body', schemas, bodyExpanded);
+						return <section>
 							<div className="section-label">Request Body<OneOfLegend names={bodyProps.map(p => p.name)} /></div>
 							<div className="param-grid" style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-								{bodyProps.map((p, i) => (
-									<div key={i} className="param-row">
-										<span className="param-name">{p.name}{p.required && <span className="text-danger ms-1">*</span>}{oneOfMark(p.name)}</span>
-										<span className="param-type">{resolveTypeName(p)}</span>
-										<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>{p.description || '-'}<EnumValues node={p} /></span>
-									</div>
-								))}
+								{allRows.map(r => {
+									const indent = r.depth * 1.25;
+									const isNested = r.depth > 1;
+									return (
+										<div key={r.key} className="param-row" style={{ ...(r.hasChildren ? { cursor: 'pointer' } : {}), ...(r.deprecated ? { opacity: 0.5 } : {}) }} onClick={r.hasChildren ? () => toggle(r.key) : undefined}>
+											<span className="param-name" style={{ paddingLeft: `${indent}rem`, ...(isNested ? { color: '#64748b', fontWeight: 400 } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>
+												{r.hasChildren && <span style={{ display: 'inline-block', width: 12, fontSize: '0.625rem', color: '#94a3b8' }}>{r.isOpen ? '▼' : '▶'}</span>}
+												{r.name}{r.required && !r.nullable && <span className="text-danger ms-1">*</span>}{!isNested && oneOfMark(r.name)}
+											</span>
+											<span className="param-type" style={r.deprecated ? { textDecoration: 'line-through' } : {}}>{r.type}</span>
+											<span className="param-desc" style={{ flexDirection: 'column', alignItems: 'flex-start', ...(isNested ? { color: '#94a3b8' } : {}), ...(r.deprecated ? { textDecoration: 'line-through' } : {}) }}>{r.desc}<EnumValues node={{ enum: r.enum, 'x-enum-descriptions': r.enumDescriptions }} /></span>
+										</div>
+									);
+								})}
 							</div>
-						</section> : null;
+						</section>;
 					})()}
 					<ResponsesView responses={op.responses} schemas={schemas} operationId={op.operationId} envelope={envelope} />
 					{envelope && op['x-throws'] && op['x-throws'].length > 0 && <section>

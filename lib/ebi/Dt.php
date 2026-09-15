@@ -872,11 +872,18 @@ HTML;
 			$url_rewrite = $rewrite_host($url_rewrite);
 		}
 
+		// testman --serve 用の既定: ebi 同梱ルーターで php built-in server を起動する。
+		// testman は CLI 未指定時にこの Conf 値を使う（{port} は testman が置換、
+		// TESTMAN_WORKER_ID / TESTMAN_DOCROOT / TESTMAN_BASE_PORT は testman が注入）。
+		// 起動待ちは testman が既定で TCP 接続を確認するため、待機先パスの設定は不要。
+		$router = dirname(__DIR__, 2).'/resources/test_router.php';
+
 		return [
 			'urls' => $urls,
 			'url_rewrite' => $url_rewrite,
 			'ssl-verify' => false,
 			'log_debug_callback' => '\\ebi\\Log::debug',
+			'serve' => 'PHP_CLI_SERVER_WORKERS=2 php -S 127.0.0.1:{port} '.escapeshellarg($router),
 		];
 	}
 
