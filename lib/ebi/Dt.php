@@ -892,7 +892,7 @@ HTML;
 			'url_rewrite' => $url_rewrite,
 			'ssl-verify' => false,
 			'log_debug_callback' => '\\ebi\\Log::debug',
-			'serve' => 'PHP_CLI_SERVER_WORKERS=2 php -S 127.0.0.1:{port} '.escapeshellarg($router),
+			'serve' => 'PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:{port} '.escapeshellarg($router),
 		];
 	}
 
