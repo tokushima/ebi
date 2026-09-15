@@ -759,6 +759,51 @@ HTML;
 	}
 
 	/**
+	 * アプリ自身のホスト(host:port)を worker 対応で解決する。app_url/flow_url 等の自己参照URLに使う。
+	 *  - HTTP リクエスト内(server プロセス)は HTTP_HOST(=自ポート)。
+	 *  - HTTP_HOST が無い CLI(testman worker subprocess 等)は worker_id から自 worker のポート
+	 *    (TESTMAN_BASE_PORT + slot)を導出。これで in-process の自己参照が自 worker のサーバへ着弾する。
+	 *  - どちらも無い直列実行は localhost:<default_port>。
+	 * 本番は常に HTTP_HOST があるため即 return＝挙動不変。worker 分岐は TESTMAN_WORKER_ID 前提。
+	 */
+	public static function self_host(int $default_port = 8888): string{
+		if(isset($_SERVER['HTTP_HOST'])){
+			return $_SERVER['HTTP_HOST'];
+		}
+		$wid = self::worker_id();
+		$base = (int)(getenv('TESTMAN_BASE_PORT') ?: $default_port);
+		return 'localhost:'.($wid > 0 ? $base + $wid : $base);
+	}
+
+	/**
+	 * アプリ自身のベースURL＋パスを組み立てる（scheme は http 固定＝テスト/ローカル用、ホストは self_host()）。
+	 * app_url/flow_url 等、自 worker のサーバへ戻す必要があるURLに使う。
+	 * 例: base_url('/api/payments/') → 'http://localhost:8888/api/payments/'（worker は base+slot）。
+	 */
+	public static function base_url(string $path = '/', int $default_port = 8888): string{
+		return 'http://'.self::self_host($default_port).$path;
+	}
+
+	/**
+	 * worker 対応のテスト/ローカル設定を ebi\Conf へ適用し、work_dir(書込先ディレクトリ)を返す。
+	 * 設定内容:
+	 *   - work_dir : $storage_base.'work'[_w<id>].'/'（並列は worker 毎に分離、直列は 'work/'）
+	 *   - app_url  : self_host($default_port) を用いた自己参照URLのホスト
+	 * 返り値の work_dir は material 等の派生パスを組む用途に使える（base を再指定しなくてよい）。
+	 * $default_port は直列/HTTP_HOST無し時のベースポート(worker は +slot。並列は TESTMAN_BASE_PORT 優先)。
+	 * 使い方: $work_dir = \ebi\Dt::worker_setup($storage_base); を他の Conf::set より前に呼ぶ
+	 * （ebi\Conf::set は先勝ちマージのため）。app_url を独自にしたい場合はこれより前に set する。
+	 */
+	public static function worker_setup(string $storage_base, int $default_port = 8888): string{
+		$work_dir = rtrim($storage_base, '/').'/work'.self::worker_suffix().'/';
+		\ebi\Conf::set([
+			'ebi\Conf' => ['work_dir' => $work_dir],
+			'ebi\App'  => ['app_url'  => 'http://'.self::self_host($default_port).'/*'],
+		]);
+		return $work_dir;
+	}
+
+	/**
 	 * PHP built-in server (php -S) 用のルーター本体。
 	 * URI の先頭セグメントをエントリ名として <docroot>/<entry>.php を include する。
 	 * テスト/ローカルで ebi アプリを php -S で動かすための共通ルーター。
@@ -806,42 +851,6 @@ HTML;
 			print('404 Not Found');
 		}
 		fclose($out);
-	}
-
-	/**
-	 * ebi アプリを testman で機能テストするための scaffold を出力する。
-	 * php -S ルーター(スタブ) / dev サーバ / 並列ランナー の3ファイルを resources から書き出す。
-	 * 既存ファイルは上書きしない（$force=true で上書き）。
-	 *
-	 *   php cmdman.phar ebi.Dt::init_test          # getcwd() へ
-	 *   php cmdman.phar ebi.Dt::init_test tests    # tests/ へ
-	 *
-	 * @param string|null $dir 出力先（既定 getcwd()）
-	 * @param bool $force 既存を上書きするか
-	 */
-	public static function init_test(?string $dir = null, bool $force = false): void{
-		$dir = $dir ?? getcwd();
-		if(!is_dir($dir)){
-			\ebi\Util::mkdir($dir);
-		}
-		$src = dirname(__DIR__, 2).'/resources';
-		foreach(['test_router.php', 'test_server.sh', 'test_parallel.sh'] as $name){
-			$from = $src.'/'.$name;
-			$to = $dir.'/'.$name;
-			if(!is_file($from)){
-				continue;
-			}
-			if(!$force && is_file($to)){
-				fwrite(STDOUT, '  skip (exists): '.$name.PHP_EOL);
-				continue;
-			}
-			copy($from, $to);
-			if(substr($name, -3) === '.sh'){
-				@chmod($to, 0755);
-			}
-			fwrite(STDOUT, '  wrote: '.$name.PHP_EOL);
-		}
-		fwrite(STDOUT, 'scaffold written to '.$dir.PHP_EOL);
 	}
 
 	public static function testman_config(bool $autocommit=true): array{
