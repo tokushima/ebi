@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP built-in server (subcommand: start / stop / restart / status)
- * @param int $port Port number @['short'=>'p','init'=>8000]
+ * @param int $port Port number (default: \ebi\Dt::base_port() = このプロジェクト固有) @['short'=>'p','init'=>0]
  * @param string $host Bind host @['init'=>'localhost']
  * @param int $workers Worker processes (PHP_CLI_SERVER_WORKERS) @['short'=>'w','init'=>4]
  * @param string $docroot Directory to look up entry .php (default: current dir) @['short'=>'d']
@@ -18,7 +18,7 @@ if(!in_array($sub,['','start','stop','restart','status'],true)){
 	\cmdman\Util::exit_error();
 }
 // testman --serve と同じ ebi 同梱ルーターを使う（先頭セグメント -> <entry>.php へ振り分け）
-$router = dirname(__DIR__,4).'/resources/test_router.php';
+$router = \ebi\Dt::serve_router_path();
 
 if(!is_file($router)){
 	\cmdman\Std::println_danger('Router not found: '.$router);
@@ -38,52 +38,19 @@ $specified = (
 	\cmdman\Args::opt('host') !== false ||
 	\cmdman\Args::opt('pid') !== false || \cmdman\Args::opt('i') !== false
 );
-$pid_path = function(string $listen) use($pid): string{
-	return empty($pid)
-		? sys_get_temp_dir().'/ebi-serve-'.preg_replace('/[^a-zA-Z0-9_.\-]/','_',$listen).'.pid'
-		: $pid;
-};
+if(empty($port)){
+	// ポート未指定なら、このプロジェクトのテスト用ベースポートを起点にする。
+	// testman が立てるサーバと同じ起点にすることで、手動サーバとテストのポート体系が揃い、
+	// 別プロジェクトの手動サーバと 8000 を取り合うこともなくなる。
+	$port = \ebi\Dt::base_port();
+}
+// PIDファイルの読み書きは \ebi\Dt に集約している。テスト側(base_port の相乗り判定)が
+// 同じ実装で状態を読むため、書式や生存判定がここと二重定義にならないようにする。
+$pid_path = fn(string $listen): string => empty($pid) ? \ebi\Dt::serve_pid_file($listen) : $pid;
 $log_path = fn(string $file): string => (substr($file,-4) === '.pid') ? substr($file,0,-4).'.log' : $file.'.log';
 
-/**
- * PIDファイルを読み、起動中であれば状態を返す。
- * PID再利用で無関係なプロセスを落とさないよう、コマンドラインの一致も確認する。
- * 停止済みのPIDファイルはここで削除する。
- */
-$read = function(string $file): ?array{
-	if(!is_file($file)){
-		return null;
-	}
-	$state = json_decode((string)file_get_contents($file),true);
-	$alive = false;
-
-	if(is_array($state) && !empty($state['pid']) && !empty($state['listen'])){
-		$cmdline = (string)shell_exec('ps -o command= -p '.escapeshellarg((string)(int)$state['pid']).' 2>/dev/null');
-		$alive = (posix_kill((int)$state['pid'],0) && strpos($cmdline,'-S '.$state['listen']) !== false);
-	}
-	if(!$alive){
-		unlink($file);
-		return null;
-	}
-	$state['file'] = $file;
-	return $state;
-};
-
-/**
- * 起動中のサーバを列挙する。$only_docroot 指定時はそのdocrootのものだけを返す
- */
-$scan = function(?string $only_docroot) use($read,$pid_path): array{
-	$list = [];
-
-	foreach((array)glob(dirname($pid_path('_')).'/ebi-serve-*.pid') as $file){
-		$state = $read($file);
-
-		if($state !== null && ($only_docroot === null || ($state['docroot'] ?? null) === $only_docroot)){
-			$list[] = $state;
-		}
-	}
-	return $list;
-};
+$read = fn(string $file): ?array => \ebi\Dt::read_serve($file);
+$scan = fn(?string $only_docroot): array => \ebi\Dt::running_serves($only_docroot);
 
 /**
  * 操作対象の起動中サーバを列挙する
@@ -201,7 +168,8 @@ $start = function(string $listen, int $workers) use($read,$scan,$specified,$pid_
 		pcntl_exec(PHP_BINARY,['-S',$listen,$router]);
 		exit(1);
 	}
-	file_put_contents($file,json_encode(['pid'=>$child,'listen'=>$listen,'docroot'=>$docroot,'workers'=>$workers]));
+	// router は「同じ checkout のサーバか」の判定に使う（docroot は起動時の cwd 次第で揺れる）
+	file_put_contents($file,json_encode(['pid'=>$child,'listen'=>$listen,'docroot'=>$docroot,'workers'=>$workers,'router'=>$router]));
 	usleep(500000);
 
 	if(null === $read($file)){

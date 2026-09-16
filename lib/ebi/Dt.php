@@ -758,29 +758,207 @@ HTML;
 		return $id > 0 ? '_w'.$id : '';
 	}
 
+	/** derive_base_port() の結果キャッシュ。0 = 未評価 */
+	private static int $_derived_port_cache = 0;
+
+	/** ride_along_serve() の結果キャッシュ。false = 未評価 */
+	private static $_ride_along_cache = false;
+
+	/** ベースポートの割り当て: BASE_PORT_MIN + (0..SLOTS-1) * STRIDE（= 8000..9780 を 20 刻み） */
+	private const BASE_PORT_MIN = 8000;
+	private const BASE_PORT_SLOTS = 90;
+	private const BASE_PORT_STRIDE = 20;
+
+	/**
+	 * ebi 同梱ルーターの絶対パス。testman の serve 雛形・孤児サーバ掃除のシグネチャ・
+	 * ベースポート導出が、全てこの1つの文字列を見る。
+	 */
+	public static function serve_router_path(): string{
+		return dirname(__DIR__, 2).'/resources/test_router.php';
+	}
+
+	/**
+	 * テスト/ローカル用サーバのベースポート。解決順は次のとおり:
+	 *  1. env TESTMAN_BASE_PORT（testman がポート確定後に注入する。手動で固定したい時にも使える）
+	 *  2. 明示の $default_port
+	 *  3. 手動起動サーバ(cmdman ebi.Dt::serve start)が動いていれば、そのポート ＝ 相乗り
+	 *  4. router の絶対パスから決定的に導出した値
+	 * 3 は直列実行のときだけ効く。並列実行は base..base+workers の連続ポートが要るため、
+	 * 手動サーバのポート(任意の1つ)には乗れない ＝ 常に 4 を使う。
+	 * 4 の導出値はプロジェクト(=checkout)毎に一意で、かつ env の有無に依らず同じ値になる。
+	 * settings ロード時点(自己参照URLが焼き付く)と testman のサーバ起動時点とでポートがズレないため、
+	 * ベースポートを 8000 固定にせずとも複数プロジェクトの testman を同時実行できる。
+	 */
+	public static function base_port(?int $default_port = null): int{
+		$env = getenv('TESTMAN_BASE_PORT');
+
+		if($env !== false && $env !== ''){
+			return (int)$env;
+		}
+		if($default_port !== null){
+			return $default_port;
+		}
+		$manual = self::ride_along_serve();
+
+		return ($manual === null) ? self::derive_base_port() : (int)$manual['port'];
+	}
+
+	/**
+	 * 相乗りできる手動起動サーバ(cmdman ebi.Dt::serve start)。無ければ null。
+	 * 相乗りするのは「直列実行」かつ「--serve / --serve-port / --no-serve の明示が無い」場合だけ。
+	 * 並列実行は連続ポートが要るので相乗りしない（testman が自前でサーバ群を立てる）。
+	 * 結果はプロセス内でキャッシュする。base_port() は何度も呼ばれるため ps を都度叩かない。
+	 */
+	public static function ride_along_serve(): ?array{
+		if(self::$_ride_along_cache !== false){
+			return self::$_ride_along_cache;
+		}
+		self::$_ride_along_cache = null;
+
+		if(!self::is_parallel_run() && !self::has_serve_cli_opt()){
+			$list = self::running_serves(null, self::serve_router_path());
+			self::$_ride_along_cache = empty($list) ? null : $list[0];
+		}
+		return self::$_ride_along_cache;
+	}
+
+	/**
+	 * testman が並列実行(-p / --parallel)で起動されたか。
+	 * settings ロード時点では Runner がまだ実効値を決めていないため、CLI 引数を直接見る。
+	 */
+	private static function is_parallel_run(): bool{
+		if(!class_exists('\testman\Args')){
+			return false;
+		}
+		return (\testman\Args::opt('parallel', false) !== false) || (\testman\Args::opt('p', false) !== false);
+	}
+
+	/**
+	 * serve 関連の CLI 指定があるか。明示されているならユーザの意図を優先し、相乗り判定はしない。
+	 */
+	private static function has_serve_cli_opt(): bool{
+		if(!class_exists('\testman\Args')){
+			return false;
+		}
+		return (\testman\Args::opt('serve', false) !== false)
+			|| (\testman\Args::opt('serve-port', false) !== false)
+			|| \testman\Args::has_opt('no-serve');
+	}
+
+	/**
+	 * serve が状態を書き出す PIDファイルのパス（$listen は 'localhost:8888' 形式）
+	 */
+	public static function serve_pid_file(string $listen): string{
+		return sys_get_temp_dir().'/ebi-serve-'.preg_replace('/[^a-zA-Z0-9_.\-]/','_',$listen).'.pid';
+	}
+
+	/**
+	 * serve の PIDファイルを読み、起動中であれば状態を返す。
+	 * PID再利用で無関係なプロセスを掴まないよう、コマンドラインの一致も確認する。
+	 * 停止済みのPIDファイルはここで削除する（読み手が掃除する ＝ 停止側が落ちても溜まらない）。
+	 */
+	public static function read_serve(string $file): ?array{
+		if(!is_file($file) || !function_exists('posix_kill')){
+			return null;
+		}
+		$state = json_decode((string)file_get_contents($file), true);
+		$alive = false;
+
+		if(is_array($state) && !empty($state['pid']) && !empty($state['listen'])){
+			$cmdline = (string)@shell_exec('ps -o command= -p '.escapeshellarg((string)(int)$state['pid']).' 2>/dev/null');
+			$alive = (@posix_kill((int)$state['pid'], 0) && strpos($cmdline, '-S '.$state['listen']) !== false);
+		}
+		if(!$alive){
+			@unlink($file);
+			return null;
+		}
+		$state['file'] = $file;
+		$state['port'] = (int)substr((string)$state['listen'], strrpos((string)$state['listen'], ':') + 1);
+		return $state;
+	}
+
+	/**
+	 * 起動中の serve を列挙する。$docroot / $router を指定するとそれに一致するものだけを返す。
+	 * $router 一致は「同じ checkout のサーバか」の判定に使う（docroot は起動時の cwd 次第で揺れるため）。
+	 */
+	public static function running_serves(?string $docroot = null, ?string $router = null): array{
+		$list = [];
+
+		foreach((array)glob(sys_get_temp_dir().'/ebi-serve-*.pid') as $file){
+			$state = self::read_serve($file);
+
+			if($state === null){
+				continue;
+			}
+			if($docroot !== null && ($state['docroot'] ?? null) !== $docroot){
+				continue;
+			}
+			if($router !== null && ($state['router'] ?? null) !== $router){
+				continue;
+			}
+			$list[] = $state;
+		}
+		return $list;
+	}
+
+	/**
+	 * router の絶対パスからベースポートを導出する。
+	 * アンカーに router パスを使うのは、testman の孤児サーバ掃除が同じ文字列をシグネチャにしており
+	 * 「router パスはプロジェクト毎に一意」という前提が既に存在するため（別プロジェクトを巻き込まない）。
+	 * base..base+workers を確保できるよう STRIDE 間隔で割り当てる。
+	 * ハッシュが衝突しても testman がポート占有を検出して明示エラーにするため、黙って混線はしない。
+	 */
+	private static function derive_base_port(): int{
+		if(self::$_derived_port_cache !== 0){
+			return self::$_derived_port_cache;
+		}
+		$slot = (int)(crc32(self::serve_router_path()) % self::BASE_PORT_SLOTS);
+		$used = array_column(self::running_serves(null, self::serve_router_path()), 'port');
+		$base = self::BASE_PORT_MIN + ($slot * self::BASE_PORT_STRIDE);
+
+		// 手動サーバが自分のブロックに居るならブロックごとずらす。
+		// 並列実行は base..base+workers を占有するため、ずらさないと手動サーバを追い出してしまう。
+		for($i = 0; $i < self::BASE_PORT_SLOTS; $i++){
+			$candidate = self::BASE_PORT_MIN + ((($slot + $i) % self::BASE_PORT_SLOTS) * self::BASE_PORT_STRIDE);
+			$occupied = false;
+
+			foreach($used as $port){
+				if($port >= $candidate && $port < ($candidate + self::BASE_PORT_STRIDE)){
+					$occupied = true;
+					break;
+				}
+			}
+			if(!$occupied){
+				$base = $candidate;
+				break;
+			}
+		}
+		return self::$_derived_port_cache = $base;
+	}
+
 	/**
 	 * アプリ自身のホスト(host:port)を worker 対応で解決する。app_url/flow_url 等の自己参照URLに使う。
 	 *  - HTTP リクエスト内(server プロセス)は HTTP_HOST(=自ポート)。
 	 *  - HTTP_HOST が無い CLI(testman worker subprocess 等)は worker_id から自 worker のポート
-	 *    (TESTMAN_BASE_PORT + slot)を導出。これで in-process の自己参照が自 worker のサーバへ着弾する。
-	 *  - どちらも無い直列実行は localhost:<default_port>。
+	 *    (base_port() + slot)を導出。これで in-process の自己参照が自 worker のサーバへ着弾する。
+	 *  - どちらも無い直列実行は localhost:<base_port()>。
 	 * 本番は常に HTTP_HOST があるため即 return＝挙動不変。worker 分岐は TESTMAN_WORKER_ID 前提。
 	 */
-	public static function self_host(int $default_port = 8000): string{
+	public static function self_host(?int $default_port = null): string{
 		if(isset($_SERVER['HTTP_HOST'])){
 			return $_SERVER['HTTP_HOST'];
 		}
 		$wid = self::worker_id();
-		$base = (int)(getenv('TESTMAN_BASE_PORT') ?: $default_port);
+		$base = self::base_port($default_port);
 		return 'localhost:'.($wid > 0 ? $base + $wid : $base);
 	}
 
 	/**
 	 * アプリ自身のベースURL＋パスを組み立てる（scheme は http 固定＝テスト/ローカル用、ホストは self_host()）。
 	 * app_url/flow_url 等、自 worker のサーバへ戻す必要があるURLに使う。
-	 * 例: base_url('/api/payments/') → 'http://localhost:8000/api/payments/'（worker は base+slot）。
+	 * 例: base_url('/api/payments/') → 'http://localhost:<base_port()>/api/payments/'（worker は base+slot）。
 	 */
-	public static function base_url(string $path = '/', int $default_port = 8000): string{
+	public static function base_url(string $path = '/', ?int $default_port = null): string{
 		return 'http://'.self::self_host($default_port).$path;
 	}
 
@@ -790,11 +968,12 @@ HTML;
 	 *   - work_dir : $storage_base.'work'[_w<id>].'/'（並列は worker 毎に分離、直列は 'work/'）
 	 *   - app_url  : self_host($default_port) を用いた自己参照URLのホスト
 	 * 返り値の work_dir は material 等の派生パスを組む用途に使える（base を再指定しなくてよい）。
-	 * $default_port は直列/HTTP_HOST無し時のベースポート(worker は +slot。並列は TESTMAN_BASE_PORT 優先)。
+	 * $default_port は直列/HTTP_HOST無し時のベースポート(worker は +slot)。省略時は base_port() の導出値
+	 * （env TESTMAN_BASE_PORT があればそちらが優先）。固定したい事情が無ければ省略すること。
 	 * 使い方: $work_dir = \ebi\Dt::worker_setup($storage_base); を他の Conf::set より前に呼ぶ
 	 * （ebi\Conf::set は先勝ちマージのため）。app_url を独自にしたい場合はこれより前に set する。
 	 */
-	public static function worker_setup(string $storage_base, int $default_port = 8000): string{
+	public static function worker_setup(string $storage_base, ?int $default_port = null): string{
 		$work_dir = rtrim($storage_base, '/').'/work'.self::worker_suffix().'/';
 		\ebi\Conf::set([
 			'ebi\Conf' => ['work_dir' => $work_dir],
@@ -863,7 +1042,8 @@ HTML;
 		// urls / url_rewrite に埋め込まれた base ポートの host を worker 専用ポートへ置換する。
 		// testman の base ポート。settings ロード時点では TESTMAN_BASE_PORT が未設定のため、
 		// self_host() の既定と同じ値になる必要がある（ずれると worker が別ポートへ飛ぶ）。
-		$base = (int)(getenv('TESTMAN_BASE_PORT') ?: 8000);
+		// base_port() は env の有無に依らず同じ値を返すので、この一致が構造的に保たれる。
+		$base = self::base_port();
 		$wid = self::worker_id();
 		if($wid > 0){
 			$from = 'localhost:'.$base;
@@ -887,15 +1067,25 @@ HTML;
 		// testman は CLI 未指定時にこの Conf 値を使う（{port} は testman が置換、
 		// TESTMAN_WORKER_ID / TESTMAN_DOCROOT / TESTMAN_BASE_PORT は testman が注入）。
 		// 起動待ちは testman が既定で TCP 接続を確認するため、待機先パスの設定は不要。
-		$router = dirname(__DIR__, 2).'/resources/test_router.php';
+		$router = self::serve_router_path();
+
+		// 手動起動サーバへ相乗りする場合は serve を渡さない。渡すと testman が
+		// 自前のサーバを立てるだけでなく、起動時の孤児掃除(router パス一致)で
+		// 手動サーバまで落としてしまう。null なら testman はサーバに一切触らない。
+		$manual = self::ride_along_serve();
+
+		if($manual !== null && class_exists('\testman\Std')){
+			\testman\Std::println_info(sprintf('  using manual server: http://%s/ (pid %s)', $manual['listen'], $manual['pid']));
+		}
 
 		return [
 			'urls' => $urls,
 			'url_rewrite' => $url_rewrite,
 			'ssl-verify' => false,
 			'log_debug_callback' => '\\ebi\\Log::debug',
-			'serve' => 'PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:{port} '.escapeshellarg($router),
-			// base ポートを自動選択に任せるとアプリの自己参照URL(self_host)とずれるため固定する
+			'serve' => ($manual !== null) ? null : 'PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:{port} '.escapeshellarg($router),
+			// base ポートを testman の自動選択に任せるとアプリの自己参照URL(self_host)とずれる。
+			// base_port() はプロジェクト毎に決定的なので、固定して渡しつつ同時実行も成立する。
 			'serve_port' => $base,
 			'teardown' => '\\ebi\\Dt::clean_worker_env',
 		];
