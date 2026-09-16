@@ -63,7 +63,7 @@ class Db implements \Iterator{
 	/**
 	 * 接続DB名
 	 */
-	public function name(): string{
+	public function name(): ?string{
 		return $this->dbname;
 	}
 
@@ -75,11 +75,9 @@ class Db implements \Iterator{
 	}
 
 	public function __destruct(){
-		if($this->connection !== null){
-			try{
-				$this->connection->commit();
-			}catch(\Exception $e){}
-		}
+		try{
+			$this->connection->commit();
+		}catch(\Exception $e){}
 	}
 
 	/**

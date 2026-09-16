@@ -4,7 +4,7 @@ namespace ebi;
  * Appで発生したExceptionを保持し、テンプレートでグループや型によるフィルタリングを提供するイテレータ
  */
 class AppInvalid implements \Iterator{
-	private static self $self;
+	private static ?self $self = null;
 	private array $messages = [];
 	private int $pos = 0;
 	private ?string $group = null;
@@ -56,7 +56,9 @@ class AppInvalid implements \Iterator{
 	 * セットされたExceptionからException配列を取得
 	 */
 	public static function get(?string $group=null, ?string $type=null): self{
-		if(self::$self === null) return [];
+		if(self::$self === null){
+			self::$self = new self();
+		}
 		self::$self->group = $group;
 		self::$self->type = $type;
 		return self::$self;

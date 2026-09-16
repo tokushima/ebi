@@ -16,10 +16,10 @@ class Daq{
 		}		
 	}
 
-	public function id(): string{
+	public function id(): ?string{
 		return $this->id;
 	}
-	public function sql(): string{
+	public function sql(): ?string{
 		return $this->sql;
 	}
 	public function ar_vars(): array{

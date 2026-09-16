@@ -119,10 +119,24 @@ eq(false, isset($spec_off['paths']['/pick']['get']['responses']['404']));
 
 
 // servers: Conf未設定時は、dtを実行中のサーバー（現在のリクエスト）を1件自動補完する
+// 逐次実行では後続テストが同一プロセスで走るため、$_SERVER を汚したままにしない
+$server_backup = [
+	'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? null,
+	'HTTPS' => $_SERVER['HTTPS'] ?? null,
+	'SERVER_PORT' => $_SERVER['SERVER_PORT'] ?? null,
+];
 $_SERVER['HTTP_HOST'] = 'openapi.example';
 $_SERVER['HTTPS'] = 'on';
 $_SERVER['SERVER_PORT'] = 443;
 $spec_srv = (new \ebi\Dt\OpenApi($throw_entry))->generate_spec(false, false);
+
+foreach($server_backup as $key => $value){
+	if($value === null){
+		unset($_SERVER[$key]);
+	}else{
+		$_SERVER[$key] = $value;
+	}
+}
 eq(true, isset($spec_srv['servers']));
 // ベースパスは環境（app_url）依存なので、現在のスキーム+ホストで始まることを検証する
 eq(true, strpos($spec_srv['servers'][0]['url'], 'https://openapi.example') === 0);

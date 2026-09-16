@@ -5,7 +5,7 @@ class Command{
 	private ?array $pipes = null;
 	private string $stdout = ''; # 実行結果
 	private string $stderr = ''; # 実行時のエラー
-	private int $end_code; # 実行していたプロセスの終了状態
+	private int $end_code = 0; # 実行していたプロセスの終了状態
 	/**
 	 * @var resource|bool $proc
 	 */
@@ -33,7 +33,7 @@ class Command{
 	/**
 	 * 実行していたプロセスの終了状態を取得
 	 */
-	public function end_code(): string{
+	public function end_code(): int{
 		return $this->end_code;
 	}
 	/**

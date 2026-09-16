@@ -8,7 +8,7 @@ class Request extends \ebi\Request{
 	private ?object $_auth = null;
 
 	private \ebi\Session $_sess;
-	private string $_login_id;
+	private string $_login_id = '';
 	private ?array $_login_anon = null;
 
 	/**
@@ -177,7 +177,7 @@ class Request extends \ebi\Request{
 	 * @return mixed
 	 */
 	public function in_sessions(string $n, $d=null){
-		return $this->_sess->in_vars($n,$d);
+		return isset($this->_sess) ? $this->_sess->in_vars($n,$d) : $d;
 	}
 	/**
 	 * セッションから削除する
@@ -189,7 +189,7 @@ class Request extends \ebi\Request{
 	 * 指定のキーが存在するか
 	 */
 	public function is_sessions(string $n): bool{
-		return $this->_sess->is_vars($n);
+		return isset($this->_sess) ? $this->_sess->is_vars($n) : false;
 	}
 
 	protected function set_auth_object(object $object): void{

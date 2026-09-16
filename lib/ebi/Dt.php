@@ -766,7 +766,7 @@ HTML;
 	 *  - どちらも無い直列実行は localhost:<default_port>。
 	 * 本番は常に HTTP_HOST があるため即 return＝挙動不変。worker 分岐は TESTMAN_WORKER_ID 前提。
 	 */
-	public static function self_host(int $default_port = 8888): string{
+	public static function self_host(int $default_port = 8000): string{
 		if(isset($_SERVER['HTTP_HOST'])){
 			return $_SERVER['HTTP_HOST'];
 		}
@@ -778,9 +778,9 @@ HTML;
 	/**
 	 * アプリ自身のベースURL＋パスを組み立てる（scheme は http 固定＝テスト/ローカル用、ホストは self_host()）。
 	 * app_url/flow_url 等、自 worker のサーバへ戻す必要があるURLに使う。
-	 * 例: base_url('/api/payments/') → 'http://localhost:8888/api/payments/'（worker は base+slot）。
+	 * 例: base_url('/api/payments/') → 'http://localhost:8000/api/payments/'（worker は base+slot）。
 	 */
-	public static function base_url(string $path = '/', int $default_port = 8888): string{
+	public static function base_url(string $path = '/', int $default_port = 8000): string{
 		return 'http://'.self::self_host($default_port).$path;
 	}
 
@@ -794,7 +794,7 @@ HTML;
 	 * 使い方: $work_dir = \ebi\Dt::worker_setup($storage_base); を他の Conf::set より前に呼ぶ
 	 * （ebi\Conf::set は先勝ちマージのため）。app_url を独自にしたい場合はこれより前に set する。
 	 */
-	public static function worker_setup(string $storage_base, int $default_port = 8888): string{
+	public static function worker_setup(string $storage_base, int $default_port = 8000): string{
 		$work_dir = rtrim($storage_base, '/').'/work'.self::worker_suffix().'/';
 		\ebi\Conf::set([
 			'ebi\Conf' => ['work_dir' => $work_dir],
@@ -861,9 +861,11 @@ HTML;
 
 		// 並列テスト: worker は専用サーバ(ポート = base + worker_id)へ振り分ける。
 		// urls / url_rewrite に埋め込まれた base ポートの host を worker 専用ポートへ置換する。
+		// testman の base ポート。settings ロード時点では TESTMAN_BASE_PORT が未設定のため、
+		// self_host() の既定と同じ値になる必要がある（ずれると worker が別ポートへ飛ぶ）。
+		$base = (int)(getenv('TESTMAN_BASE_PORT') ?: 8000);
 		$wid = self::worker_id();
 		if($wid > 0){
-			$base = (int)(getenv('TESTMAN_BASE_PORT') ?: 8888);
 			$from = 'localhost:'.$base;
 			$to = 'localhost:'.($base + $wid);
 			$rewrite_host = function($v) use (&$rewrite_host, $from, $to){
@@ -893,7 +895,33 @@ HTML;
 			'ssl-verify' => false,
 			'log_debug_callback' => '\\ebi\\Log::debug',
 			'serve' => 'PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:{port} '.escapeshellarg($router),
+			// base ポートを自動選択に任せるとアプリの自己参照URL(self_host)とずれるため固定する
+			'serve_port' => $base,
+			'teardown' => '\\ebi\\Dt::clean_worker_env',
 		];
+	}
+
+	/**
+	 * 並列テストで worker 毎に作られた資源を削除する（testman の Conf 'teardown' から呼ばれる）。
+	 * testman は実行の最後に親プロセスで一度だけ呼び、使用した slot 数を渡してくる。
+	 *
+	 * worker の DB ファイルは \ebi\SqliteConnector が TESTMAN_WORKER_ID を見て
+	 * 拡張子の直前へ _w<id> を挿入した名前（例 data.sqlite3 → data_w3.sqlite3）で作る。
+	 * その命名に一致するものだけを対象にする。
+	 *
+	 * @param array $info ['workers'=>int, 'interrupted'=>bool, 'cwd'=>string]
+	 */
+	public static function clean_worker_env(array $info): void{
+		$workers = (int)($info['workers'] ?? 0);
+		$cwd = (string)($info['cwd'] ?? getcwd());
+
+		for($id=1;$id<=$workers;$id++){
+			foreach((array)glob($cwd.'/*_w'.$id.'.sqlite3') as $file){
+				if(is_file($file)){
+					unlink($file);
+				}
+			}
+		}
 	}
 
 	public static function find_mail(string $to, string $tcode='', string $keyword=''): \ebi\SmtpBlackholeDao{

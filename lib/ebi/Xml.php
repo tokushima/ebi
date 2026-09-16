@@ -49,7 +49,7 @@ class Xml implements \IteratorAggregate{
 	 * setできた文字列
 	 */
 	public function plain(): string{
-		return $this->plain;
+		return $this->plain ?? '';
 	}
 
 	/**

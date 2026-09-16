@@ -13,10 +13,10 @@ class RequestAction{
 	}
 	
 	/**
-	 * http://localhost:8000/index/request へリダイレクトする
+	 * 自ホストの /index/request へリダイレクトする（worker 毎にポートが変わるため動的に解決する）
 	 */
 	public function redirect(){
-		header('Location: http://localhost:8000/index/request');
+		header('Location: '.\ebi\Dt::base_url('/index/request'));
 		exit;
 	}
 	

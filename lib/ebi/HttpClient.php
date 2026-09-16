@@ -9,11 +9,11 @@ class HttpClient{
 	private array $request_header = [];
 	private array $request_vars = [];
 	private array $request_file_vars = [];
-	private string $head;
-	private string $body;
+	private string $head = '';
+	private string $body = '';
 	private array $cookie = [];
-	private string $url;
-	private int $status;
+	private string $url = '';
+	private int $status = 0;
 	
 	private ?string $user;
 	private ?string $password;
@@ -22,7 +22,7 @@ class HttpClient{
 	private ?array $proxy;
 	private bool $ssl_verify = true;
 	
-	private string $raw;
+	private string $raw = '';
 	
 	private static bool $recording_request = false;
 	private static array $record_request = [];
@@ -154,7 +154,7 @@ class HttpClient{
 	 * 結果の本文を取得
 	 */
 	public function body(): string{
-		return ($this->body === null || is_bool($this->body)) ? '' : $this->body;
+		return $this->body;
 	}
 
 	/**

@@ -20,7 +20,7 @@
 	],
 	'ebi\Flow'=>[
 //		'exception_trace'=>true,
-		'app_url'=>'http://localhost:8000/**',
+		'app_url'=>'http://'.\ebi\Dt::self_host().'/*',
 // 		'secure'=>false,
 		'accept_debug'=>true,
 		'handler'=>\test\flow\plugin\ErrorLog::class,
