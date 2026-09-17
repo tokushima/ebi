@@ -764,6 +764,9 @@ HTML;
 	/** ride_along_serve() の結果キャッシュ。false = 未評価 */
 	private static $_ride_along_cache = false;
 
+	/** worker_setup() で宣言された希望ベースポート（直列/手動で使う既定）。null = 未宣言 */
+	private static ?int $_preferred_port = null;
+
 	/** ベースポートの割り当て: BASE_PORT_MIN + (0..SLOTS-1) * STRIDE（= 8000..9780 を 20 刻み） */
 	private const BASE_PORT_MIN = 8000;
 	private const BASE_PORT_SLOTS = 90;
@@ -779,28 +782,38 @@ HTML;
 
 	/**
 	 * テスト/ローカル用サーバのベースポート。解決順は次のとおり:
-	 *  1. env TESTMAN_BASE_PORT（testman がポート確定後に注入する。手動で固定したい時にも使える）
-	 *  2. 明示の $default_port
-	 *  3. 手動起動サーバ(cmdman ebi.Dt::serve start)が動いていれば、そのポート ＝ 相乗り
-	 *  4. router の絶対パスから決定的に導出した値
-	 * 3 は直列実行のときだけ効く。並列実行は base..base+workers の連続ポートが要るため、
-	 * 手動サーバのポート(任意の1つ)には乗れない ＝ 常に 4 を使う。
-	 * 4 の導出値はプロジェクト(=checkout)毎に一意で、かつ env の有無に依らず同じ値になる。
-	 * settings ロード時点(自己参照URLが焼き付く)と testman のサーバ起動時点とでポートがズレないため、
-	 * ベースポートを 8000 固定にせずとも複数プロジェクトの testman を同時実行できる。
+	 *  1. env TESTMAN_BASE_PORT（testman がポート確定後に注入する。worker/並列retry はここ）
+	 *  2. 並列実行(testman -p)なら router から決定的に導出（下記の理由で希望ポートは使わない）
+	 *  3. 手動起動サーバ(cmdman ebi.Dt::serve start 等)が動いていれば、そのポート ＝ 相乗り（直列のみ）
+	 *  4. 希望ポート（$default_port か worker_setup で宣言された $_preferred_port）
+	 *  5. router の絶対パスから決定的に導出した値
+	 *
+	 * 並列(2)を希望ポートより先に導出へ倒すのは、並列が base..base+workers の連続ポートを要し、
+	 * かつ retry が「親プロセスで直列 include」される testman の仕様上、親の settings ロード時点で
+	 * 希望ポート(8881等)を焼き付けると worker/serve の導出値とズレ、直列retryが誰も居ない
+	 * 希望ポートを叩いて connection refused になるため。導出値は env の有無に依らず決定的なので、
+	 * 親ロード・worker・retry すべてが同じ値に揃う。
+	 *
+	 * 一方 直列/手動(3〜5)は連続ポート不要かつ「テスト後の値を manage 等で目視確認したい」ため、
+	 * 希望ポート(既定 8881)をそのまま使う。稼働中の手動サーバがあればそれに相乗りする。
 	 */
 	public static function base_port(?int $default_port = null): int{
 		$env = getenv('TESTMAN_BASE_PORT');
-
 		if($env !== false && $env !== ''){
 			return (int)$env;
 		}
-		if($default_port !== null){
-			return $default_port;
+		// 並列は連続ポートが要る＆retryが親直列のため、常に導出（希望ポートは使わない）。
+		if(self::is_parallel_run()){
+			return self::derive_base_port();
 		}
+		// 直列/手動: 相乗り → 希望ポート → 導出 の順。
 		$manual = self::ride_along_serve();
+		if($manual !== null){
+			return (int)$manual['port'];
+		}
+		$preferred = $default_port ?? self::$_preferred_port;
 
-		return ($manual === null) ? self::derive_base_port() : (int)$manual['port'];
+		return ($preferred !== null) ? $preferred : self::derive_base_port();
 	}
 
 	/**
@@ -974,6 +987,10 @@ HTML;
 	 * （ebi\Conf::set は先勝ちマージのため）。app_url を独自にしたい場合はこれより前に set する。
 	 */
 	public static function worker_setup(string $storage_base, ?int $default_port = null): string{
+		// 希望ポートを覚えておき、引数を渡せない base_port()（testman_config 等）でも同じ値を使えるようにする。
+		if($default_port !== null){
+			self::$_preferred_port = $default_port;
+		}
 		$work_dir = rtrim($storage_base, '/').'/work'.self::worker_suffix().'/';
 		\ebi\Conf::set([
 			'ebi\Conf' => ['work_dir' => $work_dir],
