@@ -161,7 +161,7 @@ class Mcp{
 			],
 			[
 				'name' => 'get_flow',
-				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[FlowRequires])と効果(#[FlowProduces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[FlowFollows]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。',
+				'description' => 'goal（operationId か 状態トークン）に到達するための呼び出し順（plan）を、各エンドポイントの前提(#[FlowRequires])と効果(#[FlowProduces])から導出する。plan=必須の本筋(hard requiresの連鎖)、optionalSteps=本筋に差し込める任意の中間段(soft requires/#[FlowFollows]で本筋に接続、afterStep=推奨挿入位置)、inputs=事前に必要な入力(ambient等。reason=session の入力は establishedBy=アプリ内でその前提を張るAPI候補、例: session.user はログイン系)、branches=分岐(when≠success)、alternatives=代替経路、issues=関係するgate違反。goal に ambient トークン(session.user 等)を渡すと plan ではなく establishedBy(張り方候補)を返す。',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -386,6 +386,9 @@ class Mcp{
 				];
 				foreach($flow['produces'] as $p){
 					if(isset($p['token'])){
+						if(!empty($p['ambient'])){
+							continue; // ambient 確立者は goal 一覧に出さない（get_flow の establishedBy/ambient-token 経由で発見）
+						}
 						$producers[$p['token']][$oid] = $info;
 					}
 				}
@@ -400,6 +403,9 @@ class Mcp{
 			$info = ['operationId' => $oid, 'method' => 'BATCH', 'path' => null, 'tag' => null, 'actor' => 'batch', 'deprecated' => false];
 			foreach($b['x-flow']['produces'] as $p){
 				if(isset($p['token'])){
+					if(!empty($p['ambient'])){
+						continue;
+					}
 					$producers[$p['token']][$oid] = $info;
 				}
 			}
@@ -461,6 +467,9 @@ class Mcp{
 				$pro = [];
 				foreach(($flow['produces'] ?? []) as $p){
 					if(isset($p['token'])){
+						if(!empty($p['ambient'])){
+							continue; // ambient 確立者は plan/生産者索引に出さない（establishedBy は registry 経由で inputs に出す）
+						}
 						$pro[] = ['token' => $p['token'], 'when' => $p['when'] ?? 'success'];
 						$producers[$p['token']][$oid] = true;
 					}
@@ -526,6 +535,17 @@ class Mcp{
 		}else if(isset($producers[$goal])){
 			$goal_ops = $active_producers($goal);
 			$resolved_as = 'token';
+		}else if(isset($registry[$goal]) && (!empty($registry[$goal]['ambient']) || (($registry[$goal]['kind'] ?? '') === 'ambient'))){
+			// ambient トークン（session.user 等）は plan を張らず、確立の仕方(establishedBy)を返す。
+			// reason:'session'=アプリ内 op で張れる / 'external'=系外(out-of-band、確立者なし)。
+			return $this->tool_json(array_filter([
+				'goal' => $goal,
+				'resolvedAs' => 'ambient-token',
+				'reason' => $registry[$goal]['reason'] ?? 'external',
+				'kind' => $registry[$goal]['kind'] ?? 'ambient',
+				'summary' => $registry[$goal]['summary'] ?? null,
+				'establishedBy' => $registry[$goal]['establishedBy'] ?? null,
+			], fn($v) => $v !== null && $v !== []));
 		}else{
 			return $this->tool_error("goal '{$goal}' が operationId としても produces token としても解決できません");
 		}
@@ -596,7 +616,12 @@ class Mcp{
 
 		$input_list = [];
 		foreach($inputs as $t => $reason){
-			$input_list[] = ['token' => $t, 'kind' => ($registry[$t]['kind'] ?? 'unknown'), 'reason' => $reason];
+			// reason は registry の宣言（session/external）を優先し、無ければ解決時の marker（ambient/no-producer）を使う。
+			$entry = ['token' => $t, 'kind' => ($registry[$t]['kind'] ?? 'unknown'), 'reason' => ($registry[$t]['reason'] ?? $reason)];
+			if(!empty($registry[$t]['establishedBy'])){
+				$entry['establishedBy'] = $registry[$t]['establishedBy']; // この前提の張り方候補（アプリ内 op）
+			}
+			$input_list[] = $entry;
 		}
 
 		// hard plan（spine）は維持しつつ、この flow に差し込める任意の中間段を optionalSteps として提示する。

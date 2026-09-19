@@ -9,6 +9,7 @@ namespace ebi\Attribute;
  *
  * @example
  * #[FlowToken('product.serial', kind:'ambient', summary:'製造番号（ユーザ入力/QR、API外で成立）')]
+ * #[FlowToken('session.user', kind:'ambient', reason:'session', summary:'ログインセッション（アプリ内ログイン系で確立）')]
  * class ProductCatalog { ... }
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
@@ -21,5 +22,12 @@ class FlowToken{
 		public ?string $summary=null,
 		/** ambient（生産者op不要）扱いにするか。既定 true */
 		public bool $ambient=true,
+		/**
+		 * ambient トークンの成立元。Dt が inputs[].reason に反映する。
+		 *   'external' … 系外/out-of-band（メール/PIN/QR/共有リンク等、ユーザー操作待ち。establisher 無しが正常）
+		 *   'session'  … アプリ内 op で張れる。#[FlowProduces(..., ambient:true)] の producer 集合が establishedBy になる
+		 *   null       … Dt が establisher の有無から導出（1件以上→session / 0件→external 扱い、ただし Lint 警告対象）
+		 */
+		public ?string $reason=null,
 	){}
 }

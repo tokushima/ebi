@@ -248,10 +248,17 @@ class OpenApi extends \ebi\app\Request{
 							}
 							if(!empty($login_auth_class)){
 								try{
-									$auth_method_info = \ebi\Dt\SourceAnalyzer::method_info($login_auth_class, 'login_condition', true, false);
-									$auth_http_method = $auth_method_info->opt('http_method');
-									if(!empty($auth_http_method)){
-										$http_method = strtolower($auth_http_method);
+									// #[HttpMethod] 属性を優先（通常ルート L226-228 と同じ流儀）。
+									// 無ければ従来どおり login_condition 本文からの推定にフォールバック。
+									$auth_http_method_attr = \ebi\AttributeReader::get_method($login_auth_class, 'login_condition', 'http_method');
+									if(!empty($auth_http_method_attr['value'])){
+										$http_method = strtolower($auth_http_method_attr['value']);
+									}else{
+										$auth_method_info = \ebi\Dt\SourceAnalyzer::method_info($login_auth_class, 'login_condition', true, false);
+										$auth_http_method = $auth_method_info->opt('http_method');
+										if(!empty($auth_http_method)){
+											$http_method = strtolower($auth_http_method);
+										}
 									}
 								}catch(\Exception $e){
 								}
@@ -562,6 +569,7 @@ class OpenApi extends \ebi\app\Request{
 		// produces から kind/summary を集約する（kind は明示 > via推論: response:*→value / それ以外→state。先勝ち）。
 		$ops = [];
 		$producers = [];
+		$establishers = []; // ambient 確立者 token=>[{operationId,method,path,summary}]（#[FlowProduces(ambient:true)]）。plan には出さず establishedBy に使う
 		$op_ids = [];
 		$tokens = [];
 		foreach(($spec['paths'] ?? []) as $path => $methods){
@@ -577,6 +585,23 @@ class OpenApi extends \ebi\app\Request{
 						continue;
 					}
 					$t = $p['token'];
+					if(!empty($p['ambient'])){
+						// ambient 確立者: 通常の生産者索引には入れず（plan/G2 に出さない）、establishedBy 用に退避。
+						$establishers[$t][] = array_filter([
+							'operationId' => $oid,
+							'method' => strtoupper((string)$method),
+							'path' => $path,
+							'summary' => $op['summary'] ?? null,
+						], fn($v) => $v !== null);
+						if(!isset($tokens[$t])){
+							$tokens[$t] = array_filter([
+								'kind' => $p['kind'] ?? 'state',
+								'summary' => $p['summary'] ?? null,
+								'ambient' => true,
+							], fn($v) => $v !== null);
+						}
+						continue;
+					}
 					$producers[$t][$oid] = true;
 					if(!isset($tokens[$t])){
 						$via = (string)($p['via'] ?? '');
@@ -605,6 +630,21 @@ class OpenApi extends \ebi\app\Request{
 					continue;
 				}
 				$t = $p['token'];
+				if(!empty($p['ambient'])){
+					$establishers[$t][] = array_filter([
+						'operationId' => $oid,
+						'method' => 'BATCH',
+						'summary' => $p['summary'] ?? null,
+					], fn($v) => $v !== null);
+					if(!isset($tokens[$t])){
+						$tokens[$t] = array_filter([
+							'kind' => $p['kind'] ?? 'state',
+							'summary' => $p['summary'] ?? null,
+							'ambient' => true,
+						], fn($v) => $v !== null);
+					}
+					continue;
+				}
 				$producers[$t][$oid] = true;
 				if(!isset($tokens[$t])){
 					$via = (string)($p['via'] ?? '');
@@ -629,15 +669,29 @@ class OpenApi extends \ebi\app\Request{
 		}
 
 		// session.user は #[Login] から自動前提化される組込トークン。注釈は不要で、参照時に辞書へ補完する。
+		// reason:'session'=アプリ内 op で張れる ambient（establishedBy は #[FlowProduces(ambient:true)] 由来）。
 		foreach($ops as $op){
 			foreach(($op['x-flow']['requires'] ?? []) as $r){
 				if(($r['token'] ?? null) === 'session.user' && !isset($tokens['session.user'])){
-					$tokens['session.user'] = ['kind' => 'state', 'ambient' => true, 'summary' => 'ログイン済みセッション'];
+					$tokens['session.user'] = ['kind' => 'state', 'ambient' => true, 'reason' => 'session', 'summary' => 'ログイン済みセッション'];
 				}
 			}
 		}
 
+		// ambient 確立者(#[FlowProduces(ambient:true)])を registry の establishedBy に結合する。
+		// reason 未指定の ambient トークンは establisher があれば 'session' と補完する（無ければ external 相当は宣言側 reason に委ねる）。
+		foreach($establishers as $t => $list){
+			if(!isset($tokens[$t])){
+				continue;
+			}
+			$tokens[$t]['establishedBy'] = $list;
+			if(!isset($tokens[$t]['reason'])){
+				$tokens[$t]['reason'] = 'session';
+			}
+		}
+
 		$issues = [];
+		$all_required = []; // requires に現れる全トークン（G7 用）
 		$add = function(string $gate, string $oid, string $msg) use (&$issues){
 			$issues[] = ['gate' => $gate, 'operationId' => $oid, 'message' => $msg];
 		};
@@ -652,6 +706,7 @@ class OpenApi extends \ebi\app\Request{
 					continue;
 				}
 				$req_tokens[$t] = true;
+				$all_required[$t] = true;
 
 				if(!isset($tokens[$t])){                                    // G1
 					$add('G1', $oid, "requires token '{$t}' が未定義（生産する #[FlowProduces] も #[FlowToken] 宣言も無い。typoの可能性）");
@@ -690,6 +745,15 @@ class OpenApi extends \ebi\app\Request{
 				if($ep !== null && !isset($op_ids[$ep])){                    // G5
 					$add('G5', $oid, "follows endpoint '{$ep}' が operationId として解決できない");
 				}
+			}
+		}
+
+		// G7: reason:'session' 宣言（アプリ内で張れる ambient）だが establisher が無いトークン。
+		// establisher=#[FlowProduces(ambient:true)]。login/auth 系への付与漏れを検知する。
+		// external（系外/out-of-band）は reason:'session' にならないため対象外＝誤検知しない。
+		foreach($tokens as $t => $def){
+			if(($def['reason'] ?? null) === 'session' && empty($def['establishedBy']) && isset($all_required[$t])){
+				$add('G7', $t, "session トークン '{$t}' に establisher が無い（#[FlowProduces('{$t}', ambient:true)] を login/auth 系へ付与してください）");
 			}
 		}
 

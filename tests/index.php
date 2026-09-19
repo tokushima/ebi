@@ -196,6 +196,8 @@ include_once('bootstrap.php');
 	],
 	'rewrite/abc'=>['action'=>function(){ return ['value'=>'ABC']; }],
 	'rewrite/def'=>['action'=>function(){ return ['value'=>'DEF']; }],
+	'flowamb/grant'=>['action'=>'test\flow\FlowAmbientAction::grant'],
+	'flowamb/consume'=>['action'=>'test\flow\FlowAmbientAction::consume'],
 	'dt'=>['action'=>'ebi\Dt','mode'=>'@dev'],
 ]);
 

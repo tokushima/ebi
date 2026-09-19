@@ -261,6 +261,7 @@ class AttributeReader{
 								'kind' => $inst->kind,
 								'summary' => $inst->summary,
 								'ambient' => $inst->ambient,
+								'reason' => $inst->reason,
 							], fn($v) => $v !== null && $v !== false);
 						}
 					}
@@ -361,7 +362,8 @@ class AttributeReader{
 								'when' => $inst->when,
 								'summary' => $inst->summary,
 								'kind' => $inst->kind,
-							], fn($v) => $v !== null);
+								'ambient' => $inst->ambient,
+							], fn($v) => $v !== null && $v !== false);
 						}
 					}
 					break;
