@@ -4,9 +4,9 @@ use \ebi\Attribute\Prop;
 class Call extends \ebi\Obj{
 	#[Prop(type:'int')]
 	public $aaa;
-	#[Prop(type:'int[]')]
+	#[Prop(type:'array', items:'int')]
 	public $bbb;
-	#[Prop(type:'string{}')]
+	#[Prop(type:'map', items:'string')]
 	public $ccc;
 	public $ddd;
 	#[Prop(type:'datetime')]

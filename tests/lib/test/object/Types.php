@@ -23,9 +23,9 @@ class Types extends \ebi\Obj{
 	protected $ff;
 	#[Prop(type:'time')]
 	protected $gg;
-	#[Prop(type:'string{}')]
+	#[Prop(type:'map', items:'string')]
 	protected $ii;
-	#[Prop(type:'string[]')]
+	#[Prop(type:'array', items:'string')]
 	protected $jj;
 	#[Prop(type:'email')]
 	protected $kk;

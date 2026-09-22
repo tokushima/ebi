@@ -3,6 +3,35 @@ namespace ebi;
 
 class Validator{
 	/**
+	 * コンテナ種別列を 'X[]' / 'X{}' の型サフィックスへ復元する。
+	 * attr は外側→内側に 'a'(配列) / 'h'(連想) を並べた文字列で長さ=段数。段数ぶん復元する。
+	 * OpenApi / SourceAnalyzer が型を文字列表現するための内部用（'X[]' はコンテナの入力構文ではない）。
+	 */
+	public static function attr_suffix(string $attr): string{
+		$suffix = '';
+
+		for($i=0;$i<strlen($attr);$i++){
+			$suffix = (($attr[$i] === 'a') ? '[]' : '{}').$suffix;
+		}
+		return $suffix;
+	}
+
+	/**
+	 * 型指定を正準形 [基底型, コンテナ種別列] へ畳む。
+	 * コンテナは type:'array'/'map' + items で表す（items で1段ぶん畳む）。
+	 */
+	public static function fold_type(array $p): array{
+		$type = array_key_exists('type',$p) ? $p['type'] : 'mixed';
+		$attr = (string)($p['attr'] ?? '');
+
+		if(($type === 'array' || $type === 'map') && isset($p['items'])){
+			$attr .= ($type === 'array') ? 'a' : 'h';
+			$type = $p['items'];
+		}
+		return [$type, $attr];
+	}
+
+	/**
 	 * @param mixed $v value
 	 * @return mixed
 	 */
@@ -11,16 +40,33 @@ class Validator{
 			return null;
 		}
 		$t = array_key_exists('type',$p) ? $p['type'] : 'mixed';
+		$attr = $p['attr'] ?? '';
 
-		// array 型は再帰呼び出しの詳細メッセージをそのまま伝播させるため try-catch の外で処理
-		if($t === 'array'){
+		// 正準形（type=基底型 + attr=種別列）は素通しする。
+		// 旧形式 type:'array'/'map' + items（attr 未展開）だけここで正準形へ畳む。
+		if(($t === 'array' || $t === 'map') && $attr === '' && isset($p['items'])){
+			[$t, $attr] = self::fold_type($p);
+		}
+
+		// コンテナは再帰呼び出しの詳細メッセージをそのまま伝播させるため try-catch の外で処理
+		if($attr !== ''){
+			$kind = ($attr[0] === 'a') ? 'array' : 'map';
+
 			if(!is_array($v)){
-				throw new \ebi\exception\InvalidArgumentException($name.' must be an array');
+				throw new \ebi\exception\InvalidArgumentException($name.' must be an '.$kind);
 			}
-			if(isset($p['items'])){
-				foreach($v as $k => $item){
-					$v[$k] = self::type($name.'['.$k.']', $item, ['type' => $p['items']]);
-				}
+			// 1段剥がした要素用のメタはループ外で1度だけ作る
+			$ip = ['type' => $t, 'attr' => substr($attr,1)];
+
+			foreach($v as $k => $item){
+				$v[$k] = self::type($name.'['.$k.']', $item, $ip);
+			}
+			return $v;
+		}
+		// 要素型を指定しないコンテナ（items 無しの 'array' / 'map'）
+		if($t === 'array' || $t === 'map'){
+			if(!is_array($v)){
+				throw new \ebi\exception\InvalidArgumentException($name.' must be an '.$t);
 			}
 			return $v;
 		}

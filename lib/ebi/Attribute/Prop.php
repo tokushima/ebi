@@ -35,7 +35,8 @@ class Prop{
 		// ---- Obj / Dao 共通 ----------------------------------------------------
 		// 型（\ebi\Dt\SourceAnalyzer の OpenAPI 型 / \ebi\Validator の検証型）
 		public string $type='',
-		public ?string $items=null,          // type:'array' の要素型
+		// type:'array'/'map' の要素型。配列で包むと1段深いコンテナ（[X::class] = X[]、[[X::class]] = X[][]）。'X[]' 文字列表記も可。
+		public \ebi\T|string|array|null $items=null,
 		public ?bool $nullable=null,         // 未指定は PHP 型宣言の ? から推論
 		// 値/ラベルの単一ソースとして backed enum の FQCN(EnumClass::class) 推奨。[値 => ラベル] 連想も可(後方互換)
 		public array|string|null $enum=null,

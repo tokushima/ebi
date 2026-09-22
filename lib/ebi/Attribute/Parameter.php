@@ -10,6 +10,8 @@ namespace ebi\Attribute;
  * #[Parameter(name: 'tags', type: 'array', items: 'string')]
  * #[Parameter(name: 'pages', type: 'map', items: 'mixed')]        // map<string, mixed>（OpenAPI: additionalProperties）
  * #[Parameter(name: 'sections', type: 'map', items: Section::class)] // map<string, Section>
+ * #[Parameter(name: 'pages', type: 'map', items: [Block::class])]    // map<string, Block[]>（配列で包むと1段深くなる）
+ * #[Parameter(name: 'grid', type: 'array', items: ['int'])]          // int[][]
  * #[Parameter(name: 'file', type: 'string', format: 'binary', require: true)] // ファイルアップロード（multipart/form-data）
  * public function create() {}
  */
@@ -19,7 +21,8 @@ class Parameter{
 		public string $name,
 		// スカラ型は 'int' 等の正準文字列（\ebi\T::Int でも可）、クラス型は \Foo\Bar::class。
 		public \ebi\T|string $type=\ebi\T::String,
-		public ?string $items=null,
+		// type:'array'/'map' の要素型。配列で包むと1段深いコンテナ（[X::class] = X[]、[[X::class]] = X[][]）。'X[]' 文字列表記も可。
+		public \ebi\T|string|array|null $items=null,
 		public ?string $summary=null,
 		public bool $require=false,
 		public int|float|null $min=null,

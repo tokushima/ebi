@@ -110,23 +110,31 @@ class Obj implements \IteratorAggregate{
 			throw new \ebi\exception\InvalidArgumentException('not permitted');
 		}
 		$anon = $this->prop_anon($this->_);
-		switch($this->prop_anon($this->_,'attr')){
+		// attr は外側から内側へのコンテナ種別列（'a'=配列 / 'h'=連想）。長さが段数。
+		// 最も外側の1段だけここで反復し、残りの段は \ebi\Validator::type が剥がす。
+		$attr = (string)($anon['attr'] ?? '');
+		$inner = $anon;
+
+		if($attr !== ''){
+			$inner['attr'] = substr($attr,1);
+		}
+		switch(($attr === '') ? null : $attr[0]){
 			case 'a':
 				$v = (func_num_args() > 1) ? func_get_args() : (is_array($v) ? $v : [$v]);
 				$this->ensure_array_property($this->_);
 				foreach($v as $a){
-					$this->{$this->_}[] = \ebi\Validator::type($this->_,$a,$anon);
+					$this->{$this->_}[] = \ebi\Validator::type($this->_,$a,$inner);
 				}
 				break;
 			case 'h':
 				$v = (func_num_args() === 2) ? [func_get_arg(0)=>func_get_arg(1)] : (is_array($v) ? $v : [(string)$v=>$v]);
 				$this->ensure_array_property($this->_);
 				foreach($v as $k => $a){
-					$this->{$this->_}[$k] = \ebi\Validator::type($this->_,$a,$anon);
+					$this->{$this->_}[$k] = \ebi\Validator::type($this->_,$a,$inner);
 				}
 				break;
 			default:
-				$this->{$this->_} = \ebi\Validator::type($this->_,$v,$anon);
+				$this->{$this->_} = \ebi\Validator::type($this->_,$v,$inner);
 		}
 		return $this;
 	}

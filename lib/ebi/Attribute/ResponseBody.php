@@ -35,7 +35,8 @@ namespace ebi\Attribute;
 class ResponseBody{
 	public function __construct(
 		public \ebi\T|string $type=\ebi\T::Mixed,
-		public ?string $items=null,
+		// type:'array'/'map' の要素型。配列で包むと1段深いコンテナ（[X::class] = X[]、[[X::class]] = X[][]）。'X[]' 文字列表記も可。
+		public \ebi\T|string|array|null $items=null,
 		public ?string $summary=null,
 		public bool $deprecated=false,
 		public ?bool $nullable=null,

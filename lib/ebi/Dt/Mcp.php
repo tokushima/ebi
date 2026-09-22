@@ -482,6 +482,7 @@ class Mcp{
 					'produces' => $pro,
 					'requiresRaw' => $flow['requires'] ?? [],
 					'follows' => $flow['follows'] ?? [],
+					'gate' => $flow['gate'] ?? [],
 					'deprecated' => !empty($op['deprecated']),
 				];
 			}
@@ -515,6 +516,7 @@ class Mcp{
 				'produces' => $pro,
 				'requiresRaw' => $flow['requires'] ?? [],
 				'follows' => $flow['follows'] ?? [],
+				'gate' => $flow['gate'] ?? [],
 				'deprecated' => false,
 				'actor' => 'batch',
 				'name' => $b['name'] ?? $oid,
@@ -601,6 +603,10 @@ class Mcp{
 				'requires' => $ops[$oid]['requires'],
 				'produces' => array_map(fn($p) => $p['token'], $ops[$oid]['produces']),
 			];
+			if(!empty($ops[$oid]['gate'])){
+				// gate: この段の述語前提（product.category=photobook 等）。宣言不整合は x-flow-issues(G1/G8)に出る
+				$entry['gate'] = $ops[$oid]['gate'];
+			}
 			if(($ops[$oid]['actor'] ?? 'http') === 'batch'){
 				// バッチ段: 呼び出し不可（システムが cron で自動実行）
 				$entry['actor'] = 'batch';

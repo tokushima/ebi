@@ -73,23 +73,14 @@ class Request extends \ebi\Request{
 						}
 					}else{
 						$v = $this->in_vars($k);
-						// クラス型 @request（大文字を含む型名＝スカラ型名でない）は、入力が常に連想配列で
-						// instanceof を満たせないため構造検証へ切替。attr は Obj::___set___ 同様に反復。
-						if(is_string($an['type']) && !ctype_lower($an['type']) && class_exists($an['type'])){
-							$this->request_validate_object($k, $v, $an['type'], $an['attr'] ?? null, $an['require'] ?? false);
-						}else if($an['type'] === 'array' && isset($an['items']) && is_string($an['items']) && !ctype_lower($an['items']) && class_exists($an['items'])){
-							// #[Parameter(type:'array', items: ClassType)] は 旧 @request ClassType[] と等価に、
-							// 各要素を（instanceof でなく）連想配列の構造として検証する。
-							$this->request_validate_object($k, $v, $an['items'], 'a', $an['require'] ?? false);
-						}else if(($an['type'] ?? null) === 'map'){
-							// #[Parameter(type:'map', items: T)] = map<string,T>（旧 @request T{} 相当）。
-							// items がクラス型なら各値を連想配列の構造として検証（attr='h' で値を反復）、
-							// それ以外（scalar/mixed）は値型任意とし require のみ確認する。
-							if(isset($an['items']) && is_string($an['items']) && !ctype_lower($an['items']) && class_exists($an['items'])){
-								$this->request_validate_object($k, $v, $an['items'], 'h', $an['require'] ?? false);
-							}else if(($an['require'] ?? false) === true && ($v === '' || $v === null)){
-								\ebi\Exceptions::add(new \ebi\exception\RequiredException($k.' required'), $k);
-							}
+						// メタは \ebi\AttributeReader が正準形（type=基底型 + attr=コンテナ種別列）で返すため直接読む
+						$base = $an['type'] ?? 'mixed';
+						$attr = (string)($an['attr'] ?? '');
+
+						// クラス型（大文字を含む型名＝スカラ型名でない）は、入力が常に連想配列で
+						// instanceof を満たせないため構造検証へ切替。コンテナは種別列の段数ぶん潜る。
+						if(is_string($base) && $base !== '' && !ctype_lower($base) && class_exists($base)){
+							$this->request_validate_object($k, $v, $base, strlen($attr), $an['require'] ?? false);
 						}else{
 							try{
 								\ebi\Validator::type($k,$v,$an);
@@ -110,26 +101,33 @@ class Request extends \ebi\Request{
 	/**
 	 * クラス型 @request の構造検証（ハイドレートしない）。
 	 * リクエスト入力は常に連想配列でインスタンスにならないため instanceof でなく構造で検証する。
-	 * attr='a'/'h' は \ebi\Obj::___set___ と同様に呼び出し側で反復する。
+	 * $depth は $class へ到達するまでのコンテナ段数（0=単体 / 1=X[] / 2=X[][]…）。
 	 */
-	private function request_validate_object(string $name, $v, string $class, ?string $attr, bool $require): void{
+	private function request_validate_object(string $name, $v, string $class, int $depth, bool $require): void{
 		if($v === null || $v === ''){
 			if($require === true){
 				\ebi\Exceptions::add(new \ebi\exception\RequiredException($name.' required'), $name);
 			}
 			return;
 		}
-		if($attr === 'a' || $attr === 'h'){
-			if(!is_array($v)){
-				\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($name.' must be an array'), $name);
-				return;
-			}
-			foreach($v as $i => $e){
-				$this->request_validate_object_fields($name.'['.$i.']', $e, $class);
-			}
+		$this->request_validate_container($name, $v, $class, $depth);
+	}
+
+	/**
+	 * コンテナを1段ずつ剥がして（\ebi\Obj::___set___ と同様に反復）、最内要素を構造検証する。
+	 */
+	private function request_validate_container(string $name, $v, string $class, int $depth): void{
+		if($depth <= 0){
+			$this->request_validate_object_fields($name, $v, $class);
 			return;
 		}
-		$this->request_validate_object_fields($name, $v, $class);
+		if(!is_array($v)){
+			\ebi\Exceptions::add(new \ebi\exception\InvalidArgumentException($name.' must be an array'), $name);
+			return;
+		}
+		foreach($v as $i => $e){
+			$this->request_validate_container($name.'['.$i.']', $e, $class, $depth - 1);
+		}
 	}
 
 	/**
@@ -147,9 +145,11 @@ class Request extends \ebi\Request{
 		$props = \ebi\AttributeReader::get_class($class, 'var') ?? [];
 		foreach($props as $pk => $pan){
 			if(array_key_exists($pk, $v)){
-				$pt = $pan['type'] ?? 'mixed';
-				if(is_string($pt) && !ctype_lower($pt) && class_exists($pt)){
-					$this->request_validate_object($name.'.'.$pk, $v[$pk], $pt, $pan['attr'] ?? null, $pan['require'] ?? false);
+				// 要素数×プロパティ数ぶん回るため、正準メタを畳み込み無しで直接読む
+				$pt_base = $pan['type'] ?? 'mixed';
+
+				if(is_string($pt_base) && $pt_base !== '' && !ctype_lower($pt_base) && class_exists($pt_base)){
+					$this->request_validate_object($name.'.'.$pk, $v[$pk], $pt_base, strlen((string)($pan['attr'] ?? '')), $pan['require'] ?? false);
 				}else{
 					try{
 						\ebi\Validator::type($name.'.'.$pk, $v[$pk], $pan);

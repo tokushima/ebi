@@ -412,7 +412,7 @@ class OpenApi extends \ebi\app\Request{
 		if($this->normalize_operation_id){
 			$this->normalize_operation_ids($spec);
 		}
-		// flow token: 属性から辞書を構築し G1..G6 を検証、registry/issue をトップレベル露出（flow宣言が無ければ無効）。
+		// flow token: 属性から辞書を構築し G1..G8 を検証、registry/issue をトップレベル露出（flow宣言が無ければ無効）。
 		$this->flow_finalize($spec);
 
 		return $spec;
@@ -443,7 +443,8 @@ class OpenApi extends \ebi\app\Request{
 				$produces = \ebi\AttributeReader::get_method($class, $method, 'produces') ?? [];
 				$requires = \ebi\AttributeReader::get_method($class, $method, 'requires') ?? [];
 				$follows  = \ebi\AttributeReader::get_method($class, $method, 'follows') ?? [];
-				$flow = array_filter(['requires' => $requires, 'produces' => $produces, 'follows' => $follows], fn($v) => !empty($v));
+				$gate     = \ebi\AttributeReader::get_method($class, $method, 'gate') ?? [];
+				$flow = array_filter(['requires' => $requires, 'produces' => $produces, 'follows' => $follows, 'gate' => $gate], fn($v) => !empty($v));
 				if(empty($flow)){
 					continue; // 前提/効果が無ければ flow 的意味なし
 				}
@@ -558,7 +559,7 @@ class OpenApi extends \ebi\app\Request{
 
 	/**
 	 * 各operationの x-flow から token 辞書を構築（#[FlowProduces] が定義、#[FlowToken] が生産者なし語彙）し、
-	 * バッチ(x-flow-batches)も生産者/辞書に含めて G1..G6 を検証、
+	 * バッチ(x-flow-batches)も生産者/辞書に含めて G1..G8 を検証、
 	 * `x-flow-registry`（トークン定義）と `x-flow-issues`（違反一覧）を spec に付与する。
 	 */
 	private function flow_finalize(array &$spec): void{
@@ -746,6 +747,28 @@ class OpenApi extends \ebi\app\Request{
 					$add('G5', $oid, "follows endpoint '{$ep}' が operationId として解決できない");
 				}
 			}
+
+			foreach(($flow['gate'] ?? []) as $g){
+				$t = $g['token'] ?? null;
+				if($t !== null && !isset($tokens[$t])){                      // G1
+					$add('G1', $oid, "gate token '{$t}' が未定義（生産する #[FlowProduces] も #[FlowToken] 宣言も無い。typoの可能性）");
+				}
+				// onFail は #[FlowGate(onFail: SomeException::class)] の FQCN。x-throws は短縮名で持つため短縮名で突合する。
+				$on_fail = $g['onFail'] ?? null;
+				if($on_fail !== null){                                       // G8
+					$short = self::short_class_name($on_fail);
+					$declared = false;
+					foreach(($op['x-throws'] ?? []) as $x){
+						if(($x['exception'] ?? null) === $short){
+							$declared = true;
+							break;
+						}
+					}
+					if(!$declared){
+						$add('G8', $oid, "gate onFail '{$short}' が x-throws（@throws / throw new 検出）に宣言されていない");
+					}
+				}
+			}
 		}
 
 		// G7: reason:'session' 宣言（アプリ内で張れる ambient）だが establisher が無いトークン。
@@ -797,14 +820,116 @@ class OpenApi extends \ebi\app\Request{
 
 	/**
 	 * operation のレスポンス側（responses schema properties）に指定名のフィールドがあるか。
+	 * "a.b" / "a[].b" のようなパス式（ネスト配列サブフィールド）は精密解決し、
+	 * 単純名は従来どおり緩い存在チェック（後方互換）に委譲する。
 	 */
 	private function flow_has_response_field(array $op, string $name, array $schemas): bool{
+		if(strpos($name, '.') !== false || strpos($name, '[]') !== false){
+			$segments = $this->flow_parse_path($name);
+			foreach(($op['responses'] ?? []) as $res){
+				foreach(($res['content'] ?? []) as $media){
+					if($this->flow_path_resolve($media['schema'] ?? null, $segments, $schemas, 0)){
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 		foreach(($op['responses'] ?? []) as $res){
 			if($this->flow_schema_has_property($res['content'] ?? [], $name, $schemas)){
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * #[FlowProduces(via:'response:<式>')] のフィールド式をセグメント列に分解する。
+	 * 例: "kit_list[].id" => [ {name:'kit_list', array:true}, {name:'id', array:false} ]
+	 * @return array<int,array{name:string,array:bool}>
+	 */
+	private function flow_parse_path(string $path): array{
+		$out = [];
+		foreach(explode('.', $path) as $seg){
+			if($seg === ''){
+				continue;
+			}
+			$is_array = false;
+			if(substr($seg, -2) === '[]'){
+				$is_array = true;
+				$seg = substr($seg, 0, -2);
+			}
+			$out[] = ['name' => $seg, 'array' => $is_array];
+		}
+		return $out;
+	}
+
+	/**
+	 * スキーマ木を辿ってパス式（セグメント列）が解決できるか精密判定する。
+	 * envelope（result ラッパ）や oneOf/allOf/anyOf/items のラッパはセグメントを消費せず潜る。
+	 * @param array<int,array{name:string,array:bool}> $segments
+	 */
+	private function flow_path_resolve($schema, array $segments, array $schemas, int $depth): bool{
+		if(!is_array($schema) || $depth > 8){
+			return false;
+		}
+		if(empty($segments)){
+			return true;
+		}
+		if(isset($schema['$ref']) && is_string($schema['$ref'])){
+			$ref = str_replace('#/components/schemas/', '', $schema['$ref']);
+			return $this->flow_path_resolve($schemas[$ref] ?? null, $segments, $schemas, $depth + 1);
+		}
+		$seg = $segments[0];
+		$rest = array_slice($segments, 1);
+		if(is_array($schema['properties'] ?? null)){
+			if(isset($schema['properties'][$seg['name']])){
+				$child = $schema['properties'][$seg['name']];
+				if($seg['array']){
+					if($this->flow_path_resolve_items($child, $rest, $schemas, $depth + 1)){
+						return true;
+					}
+				}else if($this->flow_path_resolve($child, $rest, $schemas, $depth + 1)){
+					return true;
+				}
+			}
+			// envelope（result ラッパ等）: セグメントを消費せず潜る
+			foreach($schema['properties'] as $sub){
+				if($this->flow_path_resolve($sub, $segments, $schemas, $depth + 1)){
+					return true;
+				}
+			}
+		}
+		foreach(['allOf','oneOf','anyOf','items'] as $k){
+			if(isset($schema[$k])){
+				$list = isset($schema[$k][0]) ? $schema[$k] : [$schema[$k]];
+				foreach($list as $sub){
+					if($this->flow_path_resolve($sub, $segments, $schemas, $depth + 1)){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 配列プロパティの items（$ref解決含む）へ降りて残りセグメントを解決する。
+	 * items が無い配列（items:mixed 等）は、残りセグメントが無いときのみ真。
+	 * @param array<int,array{name:string,array:bool}> $segments
+	 */
+	private function flow_path_resolve_items($schema, array $segments, array $schemas, int $depth): bool{
+		if(!is_array($schema) || $depth > 8){
+			return false;
+		}
+		if(isset($schema['$ref']) && is_string($schema['$ref'])){
+			$ref = str_replace('#/components/schemas/', '', $schema['$ref']);
+			return $this->flow_path_resolve_items($schemas[$ref] ?? null, $segments, $schemas, $depth + 1);
+		}
+		if(isset($schema['items'])){
+			return $this->flow_path_resolve($schema['items'], $segments, $schemas, $depth + 1);
+		}
+		return empty($segments);
 	}
 
 	/**
@@ -1077,10 +1202,12 @@ class OpenApi extends \ebi\app\Request{
 			if(!empty($attr_params)){
 				foreach($attr_params as $name => $data){
 					if(!isset($added_params[$name])){
+						// attr は外側→内側のコンテナ種別列。型サフィックスへ復元し get_schema_type の配列/マップ処理に載せる
+						$attr = (string)($data['attr'] ?? '');
+						$base_type = $data['type'] ?? 'string';
 						$param = new \ebi\Dt\ParamInfo(
 							$name,
-							// attr='a'/'h'（@request X[] / X{} 由来）は型サフィックスに復元し get_schema_type の配列/マップ処理に載せる
-							($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
+							$base_type.\ebi\Validator::attr_suffix($attr),
 							$data['summary'] ?? '',
 							// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
 							array_filter([
@@ -1089,9 +1216,9 @@ class OpenApi extends \ebi\app\Request{
 							], fn($v) => $v !== null)
 						);
 						$in = ($data['in'] ?? 'query');
-						$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
+						$has_items = ($attr !== '' && $attr[0] === 'a');
 						// #[Parameter(type:'map', items: T)] = map<string,T>（OpenAPI: type:object + additionalProperties）
-						$has_map = ($data['type'] ?? null) === 'map' && !empty($data['items']);
+						$has_map = ($attr !== '' && $attr[0] === 'h');
 						// ファイルアップロード（OpenAPI3: multipart/form-data + type:string format:binary）
 						$is_binary = (($data['format'] ?? null) === 'binary') || (($data['type'] ?? null) === 'file');
 						// 非推奨: #[Parameter(deprecated: true)] または summary内 @deprecated
@@ -1107,9 +1234,9 @@ class OpenApi extends \ebi\app\Request{
 							}else{
 								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
-									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+									$body_properties[$name]['items'] = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 								}else if($has_map){
-									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$val_schema = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 									// 値型 mixed は空スキーマ([])になるため、OpenAPIとして妥当な additionalProperties:true に丸める
 									$body_properties[$name]['additionalProperties'] = empty($val_schema) ? true : $val_schema;
 								}
@@ -1123,12 +1250,12 @@ class OpenApi extends \ebi\app\Request{
 						}else{
 							$p = $this->build_parameter($param, $in);
 							if($has_items){
-								$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+								$p['schema'] = ['type' => 'array', 'items' => $this->build_container_schema($base_type, substr($attr,1), $schemas)];
 								if(!empty($param->summary())){
 									$p['schema']['description'] = $param->summary();
 								}
 							}else if($has_map){
-								$val_schema = $this->get_schema_type($data['items'], $schemas);
+								$val_schema = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 								$p['schema'] = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 								if(!empty($param->summary())){
 									$p['schema']['description'] = $param->summary();
@@ -1223,8 +1350,8 @@ class OpenApi extends \ebi\app\Request{
 						if(!isset($added_params[$name])){
 							$param = new \ebi\Dt\ParamInfo(
 								$name,
-								// attr='a'/'h'（X[] / X{} 由来）は型サフィックスに復元
-								($data['type'] ?? 'string').((($data['attr'] ?? null) === 'a') ? '[]' : ((($data['attr'] ?? null) === 'h') ? '{}' : '')),
+								// attr（外側→内側のコンテナ種別列）を型サフィックスへ復元
+								($data['type'] ?? 'string').\ebi\Validator::attr_suffix((string)($data['attr'] ?? '')),
 								$data['summary'] ?? '',
 								// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
 								array_filter([
@@ -1233,15 +1360,17 @@ class OpenApi extends \ebi\app\Request{
 							], fn($v) => $v !== null)
 							);
 							$in = ($data['in'] ?? 'query');
-							$has_items = ($data['type'] ?? null) === 'array' && !empty($data['items']);
-							$has_map = ($data['type'] ?? null) === 'map' && !empty($data['items']);
+							$attr = (string)($data['attr'] ?? '');
+							$base_type = $data['type'] ?? 'string';
+							$has_items = ($attr !== '' && $attr[0] === 'a');
+							$has_map = ($attr !== '' && $attr[0] === 'h');
 
 							if($has_body && $in !== 'path'){
 								$body_properties[$name] = $this->build_body_property($param, $schemas);
 								if($has_items){
-									$body_properties[$name]['items'] = $this->get_schema_type($data['items'], $schemas);
+									$body_properties[$name]['items'] = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 								}else if($has_map){
-									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$val_schema = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 									$body_properties[$name]['additionalProperties'] = empty($val_schema) ? true : $val_schema;
 								}
 								if(!empty($data['require'])){
@@ -1250,12 +1379,12 @@ class OpenApi extends \ebi\app\Request{
 							}else{
 								$p = $this->build_parameter($param, $in);
 								if($has_items){
-									$p['schema'] = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
+									$p['schema'] = ['type' => 'array', 'items' => $this->build_container_schema($base_type, substr($attr,1), $schemas)];
 									if(!empty($param->summary())){
 										$p['schema']['description'] = $param->summary();
 									}
 								}else if($has_map){
-									$val_schema = $this->get_schema_type($data['items'], $schemas);
+									$val_schema = $this->build_container_schema($base_type, substr($attr,1), $schemas);
 									$p['schema'] = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
 									if(!empty($param->summary())){
 										$p['schema']['description'] = $param->summary();
@@ -1435,6 +1564,7 @@ class OpenApi extends \ebi\app\Request{
 			$produces = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'produces') ?? [];
 			$requires = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'requires') ?? [];
 			$follows  = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'follows') ?? [];
+			$gate     = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'gate') ?? [];
 
 			// do_login 等の共有ハンドラは per-route の差別化子である auth プラグインの login_condition にも
 			// flow を宣言できる（http_method / request params を login_condition から読むのと同じ流儀）。
@@ -1442,6 +1572,7 @@ class OpenApi extends \ebi\app\Request{
 				$produces = array_merge($produces, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'produces') ?? []);
 				$requires = array_merge($requires, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'requires') ?? []);
 				$follows  = array_merge($follows,  \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'follows') ?? []);
+				$gate     = array_merge($gate,     \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'gate') ?? []);
 			}
 
 			// #[Login] はメソッド階層(info)にもクラス階層にも付き得るため両方を見る
@@ -1459,6 +1590,7 @@ class OpenApi extends \ebi\app\Request{
 				'requires' => $requires,
 				'produces' => $produces,
 				'follows' => $follows,
+				'gate' => $gate,
 			], fn($v) => !empty($v));
 
 			if(!empty($flow)){
@@ -1541,6 +1673,30 @@ class OpenApi extends \ebi\app\Request{
 			$schema['x-enum-descriptions'] = $descs;
 			$schema['x-enumDescriptions'] = (object)array_combine($schema['enum'], $descs);
 		}
+	}
+
+	/**
+	 * 基底型とコンテナ種別列（外側→内側の 'a'=配列 / 'h'=連想）から OpenAPI スキーマを組む。
+	 * 段数ぶん外側から包むので、多次元も map<string, X[]> のような混在も表現できる。
+	 */
+	private function build_container_schema(string $base, string $attr, array &$schemas): array{
+		if($attr === ''){
+			return $this->get_schema_type($base, $schemas);
+		}
+		$inner = $this->build_container_schema($base, substr($attr,1), $schemas);
+
+		if($attr[0] === 'a'){
+			return ['type' => 'array', 'items' => $inner];
+		}
+		// 値型 mixed は空スキーマ([])になるため、OpenAPIとして妥当な additionalProperties:true に丸める
+		return ['type' => 'object', 'additionalProperties' => empty($inner) ? true : $inner];
+	}
+
+	/**
+	 * FQCN から名前空間を落として短縮クラス名を返す（'A\\B\\Foo' => 'Foo'）。
+	 */
+	private static function short_class_name(string $name): string{
+		return (($pos = strrpos($name, '\\')) !== false) ? substr($name, $pos + 1) : $name;
 	}
 
 	/**
@@ -2016,20 +2172,8 @@ class OpenApi extends \ebi\app\Request{
 			$attr_contexts = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'context');
 			if(!empty($attr_contexts)){
 				foreach($attr_contexts as $name => $data){
-					$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
-
-					if($data['type'] === 'array' && !empty($data['items'])){
-						$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
-					}else if(($data['type'] ?? null) === 'map' && !empty($data['items'])){
-						// #[Response(type:'map', items: T)] = map<string,T>（OpenAPI: type:object + additionalProperties）。
-						// 値型 mixed は空スキーマ([])になるため、妥当な additionalProperties:true に丸める。
-						$val_schema = $this->get_schema_type($data['items'], $schemas);
-						$prop_schema = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
-					}else if(($data['attr'] ?? null) === 'a'){
-						$prop_schema = ['type' => 'array', 'items' => $prop_schema];
-					}else if(($data['attr'] ?? null) === 'h'){
-						$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];
-					}
+					// 基底型 + コンテナ種別列（'a'=array / 'h'=map<string,T>）から組む
+					$prop_schema = $this->build_container_schema($data['type'] ?? 'string', (string)($data['attr'] ?? ''), $schemas);
 
 					$summary = $data['summary'] ?? '';
 					$is_deprecated = !empty($data['deprecated']);
@@ -2103,19 +2247,8 @@ class OpenApi extends \ebi\app\Request{
 					if(!empty($attr_auth_contexts)){
 						foreach($attr_auth_contexts as $name => $data){
 							if(!isset($added_props[$name])){
-								$prop_schema = $this->get_schema_type($data['type'] ?? 'string', $schemas);
-
-								if(($data['type'] ?? null) === 'array' && !empty($data['items'])){
-									$prop_schema = ['type' => 'array', 'items' => $this->get_schema_type($data['items'], $schemas)];
-								}else if(($data['type'] ?? null) === 'map' && !empty($data['items'])){
-									// #[Response(type:'map', items: T)] = map<string,T>（本体ループと同じ）
-									$val_schema = $this->get_schema_type($data['items'], $schemas);
-									$prop_schema = ['type' => 'object', 'additionalProperties' => empty($val_schema) ? true : $val_schema];
-								}else if(($data['attr'] ?? null) === 'a'){
-									$prop_schema = ['type' => 'array', 'items' => $prop_schema];
-								}else if(($data['attr'] ?? null) === 'h'){
-									$prop_schema = ['type' => 'object', 'additionalProperties' => $prop_schema];
-								}
+								// 本体ループと同じ規則で組む
+								$prop_schema = $this->build_container_schema($data['type'] ?? 'string', (string)($data['attr'] ?? ''), $schemas);
 
 								$summary = $data['summary'] ?? '';
 								$is_deprecated = false;
@@ -2202,11 +2335,8 @@ class OpenApi extends \ebi\app\Request{
 		// パス構築後の post-override(binary_media_type_from_attr)で content を上書きする。
 		$root_schema = null;
 		if($response_body !== null && ($response_body['format'] ?? null) !== 'binary'){
-			$root_schema = $this->get_schema_type($response_body['type'] ?? 'string', $schemas);
-
-			if(($response_body['type'] ?? null) === 'array' && !empty($response_body['items'])){
-				$root_schema = ['type' => 'array', 'items' => $this->get_schema_type($response_body['items'], $schemas)];
-			}
+			// 基底型 + コンテナ種別列（外側→内側の 'a'/'h'）から組む
+			$root_schema = $this->build_container_schema($response_body['type'] ?? 'string', (string)($response_body['attr'] ?? ''), $schemas);
 
 			$summary = $response_body['summary'] ?? '';
 			$is_deprecated = !empty($response_body['deprecated']);
@@ -2307,7 +2437,7 @@ class OpenApi extends \ebi\app\Request{
 					continue;
 				}
 				$exception_name = $throw->name();
-				$short_name = (($pos = strrpos($exception_name, '\\')) !== false) ? substr($exception_name, $pos + 1) : $exception_name;
+				$short_name = self::short_class_name($exception_name);
 				$meta = $this->exception_status_meta($exception_name);
 				$status = $meta['status'];
 

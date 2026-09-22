@@ -307,7 +307,7 @@ class AttributeReader{
 							$n = $inst->name;
 							$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
 							unset($data['name']);
-							$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
+							self::set_container($data, $inst->type, $inst->items);
 							$result[$name][$n] = $data;
 						}
 					}
@@ -321,7 +321,7 @@ class AttributeReader{
 							$n = $inst->name;
 							$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
 							unset($data['name']);
-							$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
+							self::set_container($data, $inst->type, $inst->items);
 							$result[$name][$n] = $data;
 						}
 					}
@@ -333,7 +333,7 @@ class AttributeReader{
 					if(!empty($attrs)){
 						$inst = $attrs[0]->newInstance();
 						$data = array_filter(get_object_vars($inst), fn($v) => $v !== null);
-						$data['type'] = $inst->type instanceof \ebi\T ? $inst->type->value : $inst->type;
+						self::set_container($data, $inst->type, $inst->items);
 						$result[$name] = $data;
 					}
 					break;
@@ -398,6 +398,16 @@ class AttributeReader{
 						}
 					}
 					break;
+				case 'gate':
+					$attrs = $r->getAttributes(\ebi\Attribute\FlowGate::class);
+					if(!empty($attrs)){
+						$result[$name] = [];
+						foreach($attrs as $attr){
+							// token は必須で常に残る。null のみ除外なので equals の false/0/'' は有効値として保持される。
+							$result[$name][] = array_filter(get_object_vars($attr->newInstance()), fn($v) => $v !== null);
+						}
+					}
+					break;
 				case 'batch':
 					$attrs = $r->getAttributes(\ebi\Attribute\Batch::class);
 					if(!empty($attrs)){
@@ -457,13 +467,61 @@ class AttributeReader{
 	}
 
 	/**
+	 * items: を [基底型, 種別列] へ畳む。
+	 * items は単一要素（プレーン型文字列 / クラス ::class / \ebi\T）か、1段深くする配列 [X]。
+	 * 配列で包むと1段深いコンテナを表す（[X::class] = X[]、[[X::class]] = X[][]）。
+	 */
+	private static function fold_items(\ebi\T|string|array|null $items): array{
+		if($items === null){
+			return ['', ''];
+		}
+		if($items instanceof \ebi\T){
+			return [$items->value, ''];
+		}
+		if(is_array($items)){
+			[$base, $inner] = self::fold_items(array_values($items)[0] ?? null);
+			return [$base, 'a'.$inner];
+		}
+		return [$items, ''];
+	}
+
+	/**
+	 * type: と items: を正準形 [基底型, コンテナ種別列] へ畳む。
+	 * Prop / Parameter / Response / ResponseBody 共通の唯一の規則。
+	 * コンテナは type:'array'/'map' + items で表す（種別列は外側→内側の 'a'/'h'、長さ=段数）。
+	 */
+	private static function fold_container(\ebi\T|string $type, \ebi\T|string|array|null $items): array{
+		$base = ($type instanceof \ebi\T) ? $type->value : (string)$type;
+
+		if(($base === 'array' || $base === 'map') && $items !== null){
+			[$item_base, $item_attr] = self::fold_items($items);
+			return [$item_base, (($base === 'array') ? 'a' : 'h').$item_attr];
+		}
+		return [$base, ''];
+	}
+
+	/**
+	 * 畳んだ結果を data へ載せる。items はメタに残さない（type + attr に吸収される）。
+	 */
+	private static function set_container(array &$data, \ebi\T|string $type, \ebi\T|string|array|null $items): void{
+		[$base, $attr] = self::fold_container($type, $items);
+		$data['type'] = $base;
+		unset($data['items']);
+
+		if($attr === ''){
+			unset($data['attr']);
+		}else{
+			$data['attr'] = $attr;
+		}
+	}
+
+	/**
 	 * Prop インスタンスを var メタの data 配列へデコードする。
 	 * $ref_type: プロパティレベルは対象プロパティの型宣言（type/nullable 補完に使う）。
 	 *            クラスレベル上書きは null（明示したオプションだけを出す＝キー単位マージ）。
 	 */
 	private static function decode_var_attr(\ebi\Attribute\Prop $inst, ?\ReflectionType $ref_type): array{
 		$type = $inst->type;
-		$attr_type = null;
 		// type: を明示したか（items: だけの指定も型指定扱い）。未指定は PHP 宣言型へ委譲。
 		$type_specified = ($type !== '' || $inst->items !== null);
 		if($type === ''){
@@ -471,22 +529,13 @@ class AttributeReader{
 		}
 		// nullable 未指定時は PHP の型宣言から推論（型宣言なし/クラスレベルはnullable扱い＝不出力）
 		$nullable = $inst->nullable ?? (($ref_type === null) ? true : $ref_type->allowsNull());
-
-		if($type === 'array' && $inst->items !== null){
-			$attr_type = 'a';
-			$type = $inst->items;
-		}else if(str_ends_with($type, '[]')){
-			$attr_type = 'a';
-			$type = substr($type, 0, -2);
-		}else if(str_ends_with($type, '{}')){
-			$attr_type = 'h';
-			$type = substr($type, 0, -2);
-		}
+		// type: と items: を正準形（基底型 + コンテナ種別列）へ畳む
+		[$type, $attr_type] = self::fold_container($type, $inst->items);
 
 		$data = [];
 		if($type_specified){
 			$data['type'] = $type;
-			if($attr_type !== null){
+			if($attr_type !== ''){
 				$data['attr'] = $attr_type;
 			}
 		}

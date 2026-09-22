@@ -24,6 +24,8 @@ include_once('bootstrap.php');
 	'request'=>['action'=>'test\flow\RequestAction::index'],
 	'request/plain'=>['action'=>'test\flow\RequestAction::plain'],
 	'request/redirect'=>['action'=>'test\flow\RequestAction::redirect'],
+	'request/rows'=>['action'=>'test\dt\RowRequest::submit'],
+	'request/grid'=>['action'=>'test\dt\RowRequest::grid_submit'],
 	'group'=>[
 		'patterns'=>[
 			'aaa'=>['name'=>'group_aaa','action'=>'test\flow\Action::abc'],

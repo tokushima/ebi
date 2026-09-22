@@ -158,7 +158,8 @@ class SourceAnalyzer{
 		$get_type_format = function($arr){
 			if(isset($arr['type'])){
 				if(isset($arr['attr'])){
-					return $arr['type'].($arr['attr'] == 'a' ? '[]' : '{}');
+					// attr(コンテナ種別列) を 'X[]'/'X{}' サフィックスへ復元
+					return $arr['type'].\ebi\Validator::attr_suffix($arr['attr']);
 				}
 				return $arr['type'];
 			}
