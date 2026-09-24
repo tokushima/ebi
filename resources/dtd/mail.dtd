@@ -1,0 +1,63 @@
+<?xml encoding="UTF-8"?>
+
+<!--
+  ebi メールテンプレート（\ebi\Mail::set_template が読み込む）。
+
+  mail は2つの文書形を持つ:
+    メール本体 … subject と body が必須。他は任意
+    署名       … signature ひとつだけ。body の signature 属性が指す別ファイル
+
+  要素の順序は問わない（\ebi\Xml は出現順を見ずに要素を拾う）。DTD では「順不同」と
+  「必須」を同時に表現できないため内容モデルは順不同側に寄せ、実際の出現数はここに示す:
+
+    summary?  from?  to*  return_path?  reply_to?  subject  body  html?  attach*
+-->
+<!ELEMENT mail ((summary|from|to|return_path|reply_to|subject|body|html|attach)+ | signature)>
+
+<!-- 未指定なら Dt がファイルの更新日時(Ymd)を使う -->
+<!ATTLIST mail version CDATA #IMPLIED>
+
+<!-- Dt のメールテンプレート一覧に出す説明 -->
+<!ELEMENT summary (#PCDATA)>
+
+<!ELEMENT from EMPTY>
+<!ATTLIST from
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
+
+<!ELEMENT to EMPTY>
+<!ATTLIST to
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
+
+<!ELEMENT return_path EMPTY>
+<!ATTLIST return_path address CDATA #REQUIRED>
+
+<!ELEMENT reply_to EMPTY>
+<!ATTLIST reply_to
+  address CDATA #REQUIRED
+  name CDATA #IMPLIED>
+
+<!-- 改行は除去される。テンプレート変数を含められる -->
+<!ELEMENT subject (#PCDATA)>
+
+<!-- signature: 署名ファイルへの相対パス（resource_path 起点） -->
+<!ELEMENT body (#PCDATA)>
+<!ATTLIST body signature CDATA #IMPLIED>
+
+<!-- 署名ファイルの本文。mail 直下にこれだけを置く -->
+<!ELEMENT signature (#PCDATA)>
+
+<!-- src 未指定なら、このテンプレートと同名の .html を読む -->
+<!ELEMENT html (media*)>
+<!ATTLIST html src CDATA #IMPLIED>
+
+<!-- HTML から参照する埋め込みリソース（画像/CSS 等） -->
+<!ELEMENT media EMPTY>
+<!ATTLIST media src CDATA #REQUIRED>
+
+<!-- name 未指定なら src がそのまま添付ファイル名になる -->
+<!ELEMENT attach EMPTY>
+<!ATTLIST attach
+  src CDATA #REQUIRED
+  name CDATA #IMPLIED>

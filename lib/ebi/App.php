@@ -102,9 +102,17 @@ class App{
 		self::terminate();
 		exit;
 	}
+	
 	/**
 	 * resources/spa の index.html を SPA エントリとして配信する
-	 * Vite ビルド出力の絶対パス(="/...) または相対パス(="./...) を media_url 配下に書き換える
+	 *
+	 * index.html の src/href の先頭 '/' または './' を media_url 配下へ書き換える。
+	 * ただし書き換えるのは HTML の属性のみ。JS/CSS の中で参照するアセット
+	 * (import.meta.glob で読む画像、CSS の url(fonts/…) 等) は書き換えない。
+	 * そのため SPA は必ず【相対パス】でビルドすること (Vite: base:'./')。
+	 * base:'/' (絶対) だと JS/CSS 内の /assets/*, /fonts/* がサーバルートを指し、
+	 * media/<id>/ 配下に無いため 404 になる。
+	 *
 	 * SPA配下のパスをサーバー側で解決しないため、必ずHashRouterで実装してください
 	 */
 	private static function serve_spa(string $path, string $media_url): void{

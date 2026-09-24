@@ -1,0 +1,135 @@
+<?xml encoding="UTF-8"?>
+
+<!--
+  ebi テンプレートの語彙（\ebi\Template が解釈する）。
+
+  テンプレートは HTML ファイルなので、この DTD 単体で文書全体を検証することはできない
+  （HTML の要素は宣言していない）。宣言しているのは ebi が追加する語彙だけ:
+    - rt: 名前空間の要素
+    - HTML 要素へ付ける rt: 属性（下の ATTLIST 群）
+
+  エディタの補完・属性チェック用の参照として使う。
+-->
+
+<!-- ================= テンプレートの合成 ================= -->
+
+<!-- 親テンプレートを読み込み、自身の rt:block で差し替える -->
+<!ELEMENT rt:extends EMPTY>
+<!ATTLIST rt:extends href CDATA #REQUIRED>
+
+<!-- 別ファイルをその場に展開する -->
+<!ELEMENT rt:include EMPTY>
+<!ATTLIST rt:include href CDATA #REQUIRED>
+
+<!-- 差し替え単位。rt:extends 側に同名 block があればそちらで上書きされる -->
+<!ELEMENT rt:block ANY>
+<!ATTLIST rt:block name CDATA #REQUIRED>
+
+<!-- 出力から丸ごと取り除く。中身は任意のマークアップでよい -->
+<!ELEMENT rt:comment ANY>
+
+<!-- ================= 制御構造 ================= -->
+
+<!-- param が真なら中身を出力する。rt:elseif / rt:else はこの中に置く -->
+<!ELEMENT rt:if ANY>
+<!ATTLIST rt:if param CDATA #REQUIRED>
+
+<!ELEMENT rt:elseif EMPTY>
+<!ATTLIST rt:elseif param CDATA #REQUIRED>
+
+<!ELEMENT rt:else EMPTY>
+
+<!--
+  param を反復する。var/key/counter は未指定なら自動生成名になる。
+  limit は出力件数の上限（既定 0 = 無制限）。
+-->
+<!ELEMENT rt:loop ANY>
+<!ATTLIST rt:loop
+  param CDATA #REQUIRED
+  var CDATA #IMPLIED
+  key CDATA #IMPLIED
+  counter CDATA #IMPLIED
+  limit CDATA #IMPLIED>
+
+<!-- ================= 出力部品 ================= -->
+
+<!--
+  \ebi\Paginator のページャを出力する。
+  param 既定 'paginator' / counter 既定 10（前後に並べるページ数）/ href 既定 '?'
+-->
+<!ELEMENT rt:paginator EMPTY>
+<!ATTLIST rt:paginator
+  param CDATA #IMPLIED
+  counter CDATA #IMPLIED
+  href CDATA #IMPLIED>
+
+<!--
+  検証エラーを出力する。中身が空なら既定のリストを生成し、その class を class 属性で指定する
+  （既定 'alert alert-danger'）。group / type で絞り込む。
+-->
+<!ELEMENT rt:invalid ANY>
+<!ATTLIST rt:invalid
+  group CDATA #IMPLIED
+  type CDATA #IMPLIED
+  var CDATA #IMPLIED
+  class CDATA #IMPLIED>
+
+<!-- ================= HTML 要素に付ける rt: 属性 ================= -->
+
+<!--
+  rt:param … action の値をこのパラメータから組み立てる
+  rt:aref  … 相対 action を解決する（内部で rt:ref='true' として扱われる）
+  rt:ref   … 入力要素の自動バインドを抑止する
+-->
+<!ATTLIST form
+  rt:param CDATA #IMPLIED
+  rt:aref (true) #IMPLIED
+  rt:ref (true) #IMPLIED>
+
+<!--
+  rt:multiple … type='checkbox' のとき name を配列（name[]）にする
+  rt:ref      … 自動バインドを抑止する
+-->
+<!ATTLIST input
+  rt:multiple (true) #IMPLIED
+  rt:ref (true) #IMPLIED>
+
+<!ATTLIST textarea
+  rt:ref (true) #IMPLIED>
+
+<!--
+  rt:param … option を param の反復で生成する（var/key は反復変数名）
+  rt:null  … 先頭に value='' の option を追加し、その表示文言を指定する
+  value    … 選択状態の判定に使う値（出力時に取り除かれる）
+  ※ 複数選択は rt: ではなく HTML の multiple 属性で指定する
+-->
+<!ATTLIST select
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:null CDATA #IMPLIED
+  rt:ref (true) #IMPLIED
+  value CDATA #IMPLIED>
+
+<!-- select の選択状態判定に使う -->
+<!ATTLIST option
+  value CDATA #IMPLIED>
+
+<!-- 行（tr / li）を param で反復する -->
+<!ATTLIST table
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED>
+
+<!ATTLIST ul
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED>
+
+<!ATTLIST ol
+  rt:param CDATA #IMPLIED
+  rt:var CDATA #IMPLIED
+  rt:key CDATA #IMPLIED
+  rt:counter CDATA #IMPLIED>

@@ -238,6 +238,14 @@ class Browser
     public function do_head($url): self {}
 
     /**
+     * OPTIONS リクエストを送信する（CORSプリフライト等）
+     *
+     * @param string|array $url URL または ['短縮名', ...パラメータ]
+     * @return static
+     */
+    public function do_options($url): self {}
+
+    /**
      * GET リクエストを送信する
      *
      * @param string|array $url URL または ['短縮名', ...パラメータ]
