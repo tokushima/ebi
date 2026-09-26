@@ -230,6 +230,13 @@ class SourceAnalyzer{
 							$properties[$name]->set_opt($ak, true);
 						}
 					}
+					// min/max（#[Prop(min/max)] 由来。build_model_schema が型に応じ minLength/maxLength or minimum/maximum を emit。0 も有効値ゆえ isset 判定）
+					if(isset($anon[$name]['min'])){
+						$properties[$name]->set_opt('min', $anon[$name]['min']);
+					}
+					if(isset($anon[$name]['max'])){
+						$properties[$name]->set_opt('max', $anon[$name]['max']);
+					}
 				}
 			}
 		}

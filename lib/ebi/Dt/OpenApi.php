@@ -1209,10 +1209,14 @@ class OpenApi extends \ebi\app\Request{
 							$name,
 							$base_type.\ebi\Validator::attr_suffix($attr),
 							$data['summary'] ?? '',
-							// enum を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
+							// enum / min・max / pattern / example を opt として ParamInfo に載せる（build_body_property/build_parameter が emit）
 							array_filter([
 								'enum' => $data['enum'] ?? null,
 								'enum_subset' => $data['enum_subset'] ?? null,
+								'min' => $data['min'] ?? null,
+								'max' => $data['max'] ?? null,
+								'pattern' => $data['pattern'] ?? null,
+								'example' => $data['example'] ?? null,
 							], fn($v) => $v !== null)
 						);
 						$in = ($data['in'] ?? 'query');
@@ -1627,6 +1631,8 @@ class OpenApi extends \ebi\app\Request{
 
 		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
 		$this->apply_enum_meta($parameter['schema'], $param);
+		// 制約・例値（#[Parameter(min/max/pattern/example)] 由来）
+		$this->apply_value_constraints($parameter['schema'], $param);
 
 		return $parameter;
 	}
@@ -1645,8 +1651,52 @@ class OpenApi extends \ebi\app\Request{
 
 		// enum（#[Parameter(enum:[...])] または @request @['enum'=>[...]] 由来）
 		$this->apply_enum_meta($prop_schema, $param);
+		// 制約・例値（#[Parameter(min/max/pattern/example)] 由来）
+		$this->apply_value_constraints($prop_schema, $param);
 
 		return $prop_schema;
+	}
+
+	/**
+	 * #[Parameter(min/max/pattern/example)] 由来の制約・例値をスキーマへ付与する。
+	 * min/max は単一ソース: スキーマ型で出し分ける＝string系→minLength/maxLength、integer/number系→minimum/maximum
+	 * （実行時は Validator::value が同じ min/max を長さ/値域として検証する）。
+	 * pattern/example は spec 専用（ebi に実行時の正規表現検証は無い）。OpenAPI 3.1 / JSON Schema 準拠で example 単数は examples 配列へ正規化する。
+	 * $holder は opt() を持つ ParamInfo 相当。
+	 */
+	private function apply_value_constraints(array &$schema, $holder): void{
+		$type = $schema['type'] ?? null;
+		// 3.1 の nullable 表現（type が配列）にも対応して string / 数値 を判定する。
+		$is_string = ($type === 'string') || (is_array($type) && in_array('string', $type, true));
+		$is_number = in_array($type, ['integer', 'number'], true)
+			|| (is_array($type) && (in_array('integer', $type, true) || in_array('number', $type, true)));
+
+		$min = $holder->opt('min');
+		$max = $holder->opt('max');
+		if($is_string){
+			if($min !== null){
+				$schema['minLength'] = (int)$min;
+			}
+			if($max !== null){
+				$schema['maxLength'] = (int)$max;
+			}
+		}else if($is_number){
+			if($min !== null){
+				$schema['minimum'] = $min + 0;
+			}
+			if($max !== null){
+				$schema['maximum'] = $max + 0;
+			}
+		}
+
+		$pattern = $holder->opt('pattern');
+		if(is_string($pattern) && $pattern !== ''){
+			$schema['pattern'] = $pattern;
+		}
+		$example = $holder->opt('example');
+		if($example !== null){
+			$schema['examples'] = [$example];
+		}
 	}
 
 	/**
@@ -1805,6 +1855,10 @@ class OpenApi extends \ebi\app\Request{
 
 					// enum（#[Prop(enum:[...])] または @var @['enum'=>[...]] 由来）
 					$this->apply_enum_meta($prop_schema, $prop);
+
+					// min/max（#[Prop(min/max)] 由来）→ 型に応じ minLength/maxLength or minimum/maximum。
+					// #[Parameter] と同一ヘルパー・同一意味論（string系=文字数, 数値系=値域）。apply_nullable より前に呼び兄弟キーを維持。
+					$this->apply_value_constraints($prop_schema, $prop);
 
 					// primary key
 					if($prop->opt('primary')){
