@@ -1347,7 +1347,7 @@ function McpPage() {
 	return (
 		<div>
 			<div className="mb-4">
-				<h1 className="h3 mb-1">MCP <span className="badge bg-success" style={{ fontSize: '0.6rem', verticalAlign: 'middle' }}>enabled</span></h1>
+				<h1 className="h3 mb-1">Docs MCP <span className="badge bg-success" style={{ fontSize: '0.6rem', verticalAlign: 'middle' }}>enabled</span></h1>
 				<p className="text-muted mb-0" style={{ fontSize: '0.875rem' }}>
 					このアプリの API ドキュメントを MCP (Model Context Protocol) 経由で検索・参照できます。読み取り専用で、API を実行するものではありません。<br />
 					トランスポートは Streamable HTTP (JSON-RPC 2.0)。ebi 自身が MCP を喋るため、npx 等のブリッジは不要です。
@@ -2193,6 +2193,78 @@ function LoginPage() {
 	);
 }
 
+// アプリが公開するデータ用 MCP エンドポイント（OpenAPI の x-mcp-endpoints）を表示する。
+// dt/mcp（ドキュメントMCP）の McpPage とは別。#[McpEndpoint] クラスの #[McpTool] を一覧する。
+function DataMcpPage() {
+	const endpoints = spec['x-mcp-endpoints'] || [];
+	const base = (spec.servers?.[0]?.url || window.location.origin || '').replace(/\/$/, '');
+	const fullUrl = (path) => {
+		try { return new URL(base + path, window.location.href).href; }
+		catch { return base + path; }
+	};
+	return (
+		<div>
+			<div className="mb-4">
+				<h1 className="h3 mb-1">MCP <span className="badge bg-success" style={{ fontSize: '0.6rem', verticalAlign: 'middle' }}>enabled</span></h1>
+				<p className="text-muted mb-0" style={{ fontSize: '0.875rem' }}>
+					このアプリが公開するデータ用 MCP エンドポイントです。<code>#[McpEndpoint]</code> クラスの <code>#[McpTool]</code> メソッドが tools として利用できます。<br />
+					トランスポートは Streamable HTTP (JSON-RPC 2.0)。ebi 自身が MCP を喋るため npx 等のブリッジは不要です。
+				</p>
+			</div>
+			{endpoints.length === 0 && <div className="alert alert-info">MCP エンドポイントは定義されていません（#[McpEndpoint] クラスをルートに追加してください）。</div>}
+			{endpoints.map((ep, i) => {
+				const url = fullUrl(ep.path);
+				const nm = (ep.path || '/mcp').replace(/^\//, '').replace(/\//g, '-') || 'mcp';
+				const claudeCmd = `claude mcp add --transport http ${nm} ${url}`;
+				const jsonConfig = JSON.stringify({ mcpServers: { [nm]: { type: 'http', url } } }, null, 2);
+				const tools = ep.tools || [];
+				return (
+					<div className="card mb-4" key={i}>
+						<div className="card-header d-flex align-items-center gap-2">
+							<span className="fw-semibold">{ep.path}</span>
+							<span className="badge bg-secondary">{tools.length} tools</span>
+						</div>
+						<div className="card-body">
+							<div className="d-flex align-items-center gap-2 mb-3">
+								<code style={{ fontSize: '0.875rem', flex: 1, wordBreak: 'break-all' }}>{url}</code>
+								<CopyButton text={url} />
+							</div>
+							<div className="section-label">Claude Code (CLI)</div>
+							<CodeBlock code={claudeCmd} />
+							<div className="section-label mt-3">設定ファイル (JSON)</div>
+							<CodeBlock code={jsonConfig} />
+							<div className="section-label mt-3">Tools ({tools.length})</div>
+							<table className="table table-sm table-bordered">
+								<thead className="table-light"><tr><th>Tool</th><th>Description</th><th>Parameters</th></tr></thead>
+								<tbody>
+									{tools.map((t, j) => {
+										const props = (t.inputSchema && t.inputSchema.properties) || {};
+										const required = (t.inputSchema && t.inputSchema.required) || [];
+										const params = Object.keys(props);
+										return (
+											<tr key={j}>
+												<td className="fw-semibold text-primary" style={{ whiteSpace: 'nowrap' }}>{t.name}</td>
+												<td className="text-muted small">{t.description || '-'}</td>
+												<td className="small">
+													{params.length === 0 ? <span className="text-muted">-</span> : params.map(p => (
+														<span key={p} className="badge me-1 mb-1" style={{ background: required.includes(p) ? '#fee2e2' : '#e2e8f0', color: '#334155', fontWeight: 500 }} title={props[p]?.description || ''}>
+															{p}: {resolveTypeName(props[p])}{required.includes(p) ? ' *' : ''}
+														</span>
+													))}
+												</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
 function App() {
 	if (requiresPassword && !initialAuthenticated) {
 		return <LoginPage />;
@@ -2283,6 +2355,7 @@ function MainApp() {
 						<button className={`nav-link btn btn-link ${page === 'endpoints' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('endpoints')}>Endpoints</button>
 						{webhooks.length > 0 && <button className={`nav-link btn btn-link ${page === 'webhooks' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('webhooks')}>Webhooks</button>}
 						{hasFlow && <button className={`nav-link btn btn-link ${page === 'flow' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('flow')}>Flow</button>}
+						{(spec['x-mcp-endpoints'] || []).length > 0 && <button className={`nav-link btn btn-link ${page === 'data-mcp' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('data-mcp')}>MCP</button>}
 						<button className={`nav-link btn btn-link ${page === 'schemas' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('schemas')}>Schemas</button>
 						<button className={`nav-link btn btn-link ${page === 'config' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('config')}>Config</button>
 						{mailTemplates.length > 0 && <button className={`nav-link btn btn-link ${page === 'mail' ? 'active fw-semibold' : ''}`} onClick={() => handlePageChange('mail')}>Mail</button>}
@@ -2299,7 +2372,7 @@ function MainApp() {
 							<span style={{ color: '#94a3b8', fontSize: '0.625rem' }}>Accept: application/json; envelope=false と同等</span>
 						</span>
 					</span>
-					{mcpEnabled && <button className={`btn btn-outline-secondary btn-sm me-2 ${page === 'mcp' ? 'active' : ''}`} onClick={() => handlePageChange('mcp')}>MCP</button>}<a href={apiUrls.redoc + '?envelope=' + (envelope ? 'true' : 'false')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + '?envelope=' + (envelope ? 'true' : 'false')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
+					{mcpEnabled && <button className={`btn btn-outline-secondary btn-sm me-2 ${page === 'mcp' ? 'active' : ''}`} onClick={() => handlePageChange('mcp')}>Docs MCP</button>}<a href={apiUrls.redoc + '?envelope=' + (envelope ? 'true' : 'false')} className="btn btn-outline-secondary btn-sm me-2">Redoc</a><a href={apiUrls.openapi + '?envelope=' + (envelope ? 'true' : 'false')} download="openapi.json" className="btn btn-outline-primary btn-sm">OpenAPI JSON</a>
 				</div>
 			</nav>
 			<main className="container py-4">
@@ -2317,6 +2390,7 @@ function MainApp() {
 					{page === 'config' && <ConfigPage key={configClass} initialClass={configClass} />}
 					{page === 'mail' && <MailPage />}
 					{page === 'mcp' && <McpPage />}
+						{page === 'data-mcp' && <DataMcpPage />}
 				</>)}
 			</main>
 		</div>

@@ -298,6 +298,13 @@ class AttributeReader{
 						$result[$name] = ['value' => $inst->method];
 					}
 					break;
+				case 'mcp_tool':
+					$attrs = $r->getAttributes(\ebi\Attribute\McpTool::class);
+					if(!empty($attrs)){
+						$inst = $attrs[0]->newInstance();
+						$result[$name] = get_object_vars($inst);
+					}
+					break;
 				case 'request':
 					$attrs = $r->getAttributes(\ebi\Attribute\Parameter::class);
 					if(!empty($attrs)){

@@ -186,7 +186,18 @@ class OpenApi extends \ebi\app\Request{
 			}
 		}
 
+		// MCP エンドポイント（#[McpEndpoint]）は REST ではないので paths からは除外し、
+		// x-mcp-endpoints（拡張。codegen 無害）へ path＋公開ツール一覧として集約する。DevTools UI が表示に使う。
+		$mcp_endpoints = [];
+
 		foreach($patterns as $url_pattern => $m){
+			if(isset($m['x-mcp'])){
+				$mcp_endpoints[] = [
+					'path' => $this->convert_to_openapi_path($url_pattern),
+					'tools' => \ebi\McpServer::tools_of($m['x-mcp'], $this->entry),
+				];
+				continue;
+			}
 			foreach([
 				'deprecated' => false,
 				'mode' => null,
@@ -372,6 +383,10 @@ class OpenApi extends \ebi\app\Request{
 
 		if(!empty($schemas)){
 			$spec['components']['schemas'] = $schemas;
+		}
+
+		if(!empty($mcp_endpoints)){
+			$spec['x-mcp-endpoints'] = $mcp_endpoints;
 		}
 
 		if($has_security || $has_bearer){
@@ -1655,6 +1670,129 @@ class OpenApi extends \ebi\app\Request{
 		$this->apply_value_constraints($prop_schema, $param);
 
 		return $prop_schema;
+	}
+
+	/**
+	 * #[McpTool] メソッドの MCP inputSchema（JSON Schema, type:object）を生成する。
+	 *
+	 * 入力パラメータは #[Parameter]（および後方互換の @request DocBlock）から、HTTPの
+	 * requestBody プロパティと同一機構（build_body_property / build_container_schema）で解決する。
+	 * MCP のツール定義には OpenAPI の components/$ref を持てないため、モデル型の $ref は
+	 * inline_schema_refs でインライン展開する（循環参照は object で打ち切り）。
+	 *
+	 * @return array{type:string,properties:array|\stdClass,required?:array<string>}
+	 */
+	public function build_input_schema(string $class, string $method): array{
+		$schemas = [];
+		$properties = [];
+		$required = [];
+
+		// #[Parameter] 属性（build_operation の requestBody 経路と同じ組み立て）
+		$attr_params = \ebi\AttributeReader::get_method($class, $method, 'request');
+		if(!empty($attr_params)){
+			foreach($attr_params as $name => $data){
+				if(isset($properties[$name])){
+					continue;
+				}
+				$attr = (string)($data['attr'] ?? '');
+				$base_type = $data['type'] ?? 'string';
+				$param = new \ebi\Dt\ParamInfo(
+					$name,
+					$base_type.\ebi\Validator::attr_suffix($attr),
+					$data['summary'] ?? '',
+					array_filter([
+						'enum' => $data['enum'] ?? null,
+						'enum_subset' => $data['enum_subset'] ?? null,
+						'min' => $data['min'] ?? null,
+						'max' => $data['max'] ?? null,
+						'pattern' => $data['pattern'] ?? null,
+						'example' => $data['example'] ?? null,
+					], fn($v) => $v !== null)
+				);
+				$has_items = ($attr !== '' && $attr[0] === 'a');
+				$has_map = ($attr !== '' && $attr[0] === 'h');
+				$is_binary = (($data['format'] ?? null) === 'binary') || (($data['type'] ?? null) === 'file');
+
+				if($is_binary){
+					$prop = ['type' => 'string', 'format' => 'binary'];
+					if(!empty($data['summary'])){
+						$prop['description'] = $data['summary'];
+					}
+				}else{
+					$prop = $this->build_body_property($param, $schemas);
+					if($has_items){
+						$prop['items'] = $this->build_container_schema($base_type, substr($attr, 1), $schemas);
+					}else if($has_map){
+						$val_schema = $this->build_container_schema($base_type, substr($attr, 1), $schemas);
+						$prop['additionalProperties'] = empty($val_schema) ? true : $val_schema;
+					}
+				}
+				if(!empty($data['deprecated']) || str_contains($data['summary'] ?? '', '@deprecated')){
+					$prop['deprecated'] = true;
+				}
+				$properties[$name] = $prop;
+				if(!empty($data['require'])){
+					$required[] = $name;
+				}
+			}
+		}
+
+		// @request DocBlock（後方互換）
+		try{
+			$info = \ebi\Dt\SourceAnalyzer::method_info($class, $method, true);
+			if($info->has_opt('requests')){
+				foreach($info->opt('requests') as $param){
+					$name = $param->name();
+					if(isset($properties[$name])){
+						continue;
+					}
+					$properties[$name] = $this->build_body_property($param, $schemas);
+					if($param->opt('require')){
+						$required[] = $name;
+					}
+				}
+			}
+		}catch(\Throwable $e){
+			// DocBlock 解析に失敗しても属性由来のスキーマは有効にする
+		}
+
+		foreach($properties as $k => $v){
+			$properties[$k] = $this->inline_schema_refs($v, $schemas, []);
+		}
+
+		$schema = [
+			'type' => 'object',
+			'properties' => empty($properties) ? new \stdClass() : $properties,
+		];
+		if(!empty($required)){
+			$schema['required'] = array_values(array_unique($required));
+		}
+		return $schema;
+	}
+
+	/**
+	 * スキーマ片に含まれる components/$ref を再帰的にインライン展開する（MCP inputSchema 用）。
+	 * $stack は展開中のスキーマ名。同名が再登場したら循環とみなし {type:object} で打ち切る。
+	 */
+	private function inline_schema_refs($schema, array $schemas, array $stack){
+		if(!is_array($schema)){
+			return $schema;
+		}
+		if(isset($schema['$ref']) && is_string($schema['$ref'])){
+			$ref_name = str_replace('#/components/schemas/', '', $schema['$ref']);
+			if(in_array($ref_name, $stack, true)){
+				return ['type' => 'object'];
+			}
+			if(isset($schemas[$ref_name])){
+				return $this->inline_schema_refs($schemas[$ref_name], $schemas, array_merge($stack, [$ref_name]));
+			}
+			return ['type' => 'object'];
+		}
+		$out = [];
+		foreach($schema as $k => $v){
+			$out[$k] = is_array($v) ? $this->inline_schema_refs($v, $schemas, $stack) : $v;
+		}
+		return $out;
 	}
 
 	/**

@@ -25,6 +25,8 @@ class OrderApi extends \ebi\app\Request{
 | Attribute | 付ける対象 | 複数可 | 主な解釈者 | 用途 |
 |---|---|---|---|---|
 | [`Route`](#route) | メソッド | – | `\ebi\App` | URL・遷移先 |
+| [`McpEndpoint`](#mcpendpoint) | クラス | – | `\ebi\App` / `\ebi\McpServer` | クラスを MCP エンドポイントに |
+| [`McpTool`](#mcptool) | メソッド | – | `\ebi\McpServer` | メソッドを MCP ツールとして公開 |
 | [`HttpMethod`](#httpmethod) | メソッド | – | `\ebi\App` | HTTP メソッド制限 |
 | [`Login`](#login) | クラス | – | `\ebi\App` | 認証要件 |
 | [`S2s`](#s2s) | クラス | – | `\ebi\Dt\SourceAnalyzer` | サーバ間通信の印 |
@@ -145,6 +147,50 @@ public function index(){}
 
 #[Route(after:'item_info', query:['client_id' => '@client_id'])]
 public function create(){}
+```
+
+### McpEndpoint
+
+クラスを MCP（Model Context Protocol）エンドポイントとして公開する。対象: **クラス**、複数不可。
+`#[Route]` を持つ1クラスが1つのHTTPマウントになるのと対に、`#[McpEndpoint]` を持つ1クラスが
+1つのMCPエンドポイントになる。App の automap がこれを検出し、マウント直下を MCP トランスポートへ
+振り向ける（そのクラスの継承した `#[Route]` は automap されない＝HTTPルートは MCP 配下へ漏れない）。
+
+| 引数 | 型 | 説明 |
+|---|---|---|
+| `tools` | `?string` | `#[McpTool]` を集めるクラス名。未指定なら付けたクラス自身 |
+
+詳細は [`docs/mcp.md`](mcp.md)。
+
+```php
+use ebi\Attribute\{McpEndpoint, McpTool, Parameter};
+
+#[McpEndpoint]
+class MaterialMcp extends \app\Api{}   // Api の #[McpTool] を継承して公開（本体は空でよい）
+// \ebi\App::run(['mcp' => ['action' => 'app\MaterialMcp']]);  → POST /mcp
+```
+
+### McpTool
+
+メソッドを MCP ツールとして公開する。対象: **メソッド**、複数不可。
+`#[McpEndpoint]` クラスの中でこれを持つメソッドだけがツールになる。
+
+| 引数 | 型 | 説明 |
+|---|---|---|
+| `description` | `?string` | ツールの説明（第1引数）。未指定なら docコメントの先頭行を使う |
+| `name` | `?string` | ツール名（既定はメソッド名）。`name:` で明示 |
+
+ツールの入力スキーマ（`inputSchema`）は `#[Parameter]` から OpenAPI と同一機構で自動生成され、
+実行時の入力は tools/call の `arguments` が `in_vars()` に注入される＝既存アクションをそのまま呼べる。
+
+```php
+#[McpEndpoint]
+class MaterialMcp extends \ebi\app\Request{
+    #[McpTool('アイテムを検索して一覧取得する')]
+    #[Parameter(name:'query', type:'string', summary:'検索キーワード')]
+    #[Parameter(name:'page',  type:'int',    summary:'ページ番号')]
+    public function items(): array{ /* in_vars で読める */ }
+}
 ```
 
 ### HttpMethod

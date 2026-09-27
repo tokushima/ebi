@@ -381,7 +381,7 @@ class App{
 					foreach($self_map['patterns'] as $m){
 						self::$url_pattern[$m['name']][$m['num']] = $m['format'];
 
-						if(array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['idx'] == $m['idx']){
+						if(array_key_exists('@',$pattern) && array_key_exists('@',$m) && $pattern['idx'] == $m['idx'] && is_string($m['action'])){
 							[,$mm] = explode('::',$m['action']);
 							self::$selected_class_pattern[$mm][$m['num']] = ['format'=>$m['format'],'name'=>$m['name']];
 						}
@@ -689,6 +689,25 @@ class App{
 			$m = null;
 			$r = new \ReflectionClass($class);
 			$d = substr($r->getFilename(),0,-4);
+
+			// #[McpEndpoint] クラスは MCP エンドポイント。#[Route] は automap せず、マウント直下を
+			// MCP トランスポート（対象クラスの #[McpTool] を公開）へ振り向ける（HTTPルートは漏れない）。
+			// 既に生成済みの $r を再利用して属性判定（ReflectionClass の二重生成を避ける）。
+			$mcp_attrs = $r->getAttributes(\ebi\Attribute\McpEndpoint::class);
+			if(!empty($mcp_attrs)){
+				$tools_class = $mcp_attrs[0]->newInstance()->tools ?? $class;
+				// クロージャ・アクション（callable）。class ルートのグルーピング用 '@' は付けない
+				// （付けると selected_class_pattern の explode('::') 対象になり Closure で落ちるため）。
+				// 'x-mcp' は OpenApi 用の目印（対象クラス名）。OpenApi は paths から除外し x-mcp-endpoints に集約する。
+				$result[$url] = [
+					'name' => $name,
+					'action' => function() use($tools_class){ (new \ebi\McpServer($tools_class))->serve(); },
+					'x-mcp' => $tools_class,
+					'idx' => $idx,
+				];
+				return $result;
+			}
+
 			$group_parents = (preg_match('/\\\\[A-Z](.+)$/',$r->getNamespaceName(),$m)) ? (substr_count($m[1],'\\') + 1) : null;
 			$url_caps = 0;
 
