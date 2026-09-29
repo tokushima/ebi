@@ -1598,12 +1598,25 @@ class OpenApi extends \ebi\app\Request{
 			$has_login = (isset($info) && !empty($info->opt('login')))
 				|| (isset($m['class']) && !empty(\ebi\AttributeReader::get_class($m['class'], 'login')));
 			if($has_login){
-				array_unshift($requires, [
-					'token' => 'session.user',
-					'optional' => false,
-					'auto' => true,
-					'summary' => 'ログイン済みセッション',
-				]);
+				// producer 優先: このopが session.user を produce する確立者(login/auth の入口)なら、
+				// #[Login] 由来の自動 require は付けない。入口 op はゲートを張る側であって被適用対象ではなく、
+				// 自動 require + establisher produce が同一opで衝突すると G6(require かつ produce)を誤発火させる。
+				// 手書き #[FlowRequires('session.user')] と produce の衝突は本物の矛盾なので抑止しない（下の判定に委ねる）。
+				$establishes_session = false;
+				foreach($produces as $p){
+					if(($p['token'] ?? null) === 'session.user'){
+						$establishes_session = true;
+						break;
+					}
+				}
+				if(!$establishes_session){
+					array_unshift($requires, [
+						'token' => 'session.user',
+						'optional' => false,
+						'auto' => true,
+						'summary' => 'ログイン済みセッション',
+					]);
+				}
 			}
 			$flow = array_filter([
 				'requires' => $requires,
