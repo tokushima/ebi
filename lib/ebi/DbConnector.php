@@ -2,6 +2,9 @@
 namespace ebi;
 
 abstract class DbConnector{
+	private const SQL_DATETIME_MIN = -30610224000; // 1000-01-01 00:00:00 UTC
+	private const SQL_DATETIME_MAX = 253402214400; // 9999-12-31 00:00:00 UTC (tzオフセット補正用に約1日の余裕を残す)
+
 	protected ?string $encode = null;
 	protected ?string $timezone = null;
 	protected string $quotation = '`';
@@ -367,11 +370,6 @@ s	 */
 						case 'serial': 
 						case 'integer':
 						case 'int':
-						case 'datetime':							
-						case 'timestamp':
-						case 'date':
-						case 'time':
-						case 'intdate':
 							$and[] = Q::eq($cn,$cond,$op);
 							break;
 						case 'string':
@@ -380,6 +378,11 @@ s	 */
 						case 'alnum':
 							$and[] = Q::contains($cn,$cond,$op);
 							break;
+						case 'datetime':
+						case 'timestamp':
+						case 'date':
+						case 'time':
+						case 'intdate':
 						case 'bool':
 						case 'boolean':
 						case 'mixed':
@@ -482,6 +485,30 @@ s	 */
 	}
 
 	/**
+	 * datetime/date型の値をUNIX秒に変換し、MySQLのDATETIME有効範囲(1000-01-01〜9999-12-31)に収める。
+	 * 整数(負数含む)はUNIX秒、それ以外の文字列はstrtotimeで解釈する。
+	 * 範囲外の値でdate()が不正な年の日時文字列(例: 318857-05-21)を生成し、
+	 * DBで "Incorrect datetime value" エラーになるのを防ぐ。
+	 * @param int|string $value
+	 * @throws \ebi\exception\InvalidArgumentException 日時として解釈できない場合
+	 */
+	protected function to_sql_timestamp($value): int{
+		if(!is_int($value)){
+			$value = (string)$value;
+			if(preg_match('/^-?\d+$/',$value)){
+				$value = (int)$value;
+			}else{
+				$time = strtotime($value);
+				if($time === false){
+					throw new \ebi\exception\InvalidArgumentException('invalid datetime: '.$value);
+				}
+				$value = $time;
+			}
+		}
+		return max(self::SQL_DATETIME_MIN,min(self::SQL_DATETIME_MAX,$value));
+	}
+
+	/**
 	 * @param mixed $value
 	 * @return mixed
 	 */
@@ -489,24 +516,15 @@ s	 */
 		if($value === null){
 			return null;
 		}
-		try{
-			switch($dao->prop_anon($name,'type')){
-				case 'datetime':
-				case 'timestamp':
-					if(!ctype_digit((string)$value)){
-						$value = strtotime($value);
-					}
-					return date('Y-m-d H:i:s',$value);
-				case 'date':
-					if(!ctype_digit((string)$value)){
-						$value = strtotime($value);
-					}
-					return date('Y-m-d',$value);
-				case 'bool':
-				case 'boolean':
-					return (int)$value;
-			}
-		}catch(\Exception $e){
+		switch($dao->prop_anon($name,'type')){
+			case 'datetime':
+			case 'timestamp':
+				return date('Y-m-d H:i:s',$this->to_sql_timestamp($value));
+			case 'date':
+				return date('Y-m-d',$this->to_sql_timestamp($value));
+			case 'bool':
+			case 'boolean':
+				return (int)$value;
 		}
 		return $value;
 	}

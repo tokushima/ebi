@@ -68,25 +68,16 @@ class SqliteConnector extends \ebi\DbConnector{
 		if($value === null){
 			return null;
 		}
-		try{		
-			switch($dao->prop_anon($name,'type')){
-				case 'datetime':
-				case 'timestamp':
-					if(!ctype_digit((string)$value)){
-						$value = strtotime($value);
-					}
-					// UTCとして扱う
-					return date('Y-m-d H:i:s',$value - $this->timezone_offset);
-				case 'date':
-					if(!ctype_digit((string)$value)){
-						$value = strtotime($value);
-					}
-					return date('Y-m-d',$value);
-				case 'bool':
-				case 'boolean':
-					return (int)$value;
-			}
-		}catch(\Exception $e){
+		switch($dao->prop_anon($name,'type')){
+			case 'datetime':
+			case 'timestamp':
+				// UTCとして扱う
+				return date('Y-m-d H:i:s',$this->to_sql_timestamp($value) - $this->timezone_offset);
+			case 'date':
+				return date('Y-m-d',$this->to_sql_timestamp($value));
+			case 'bool':
+			case 'boolean':
+				return (int)$value;
 		}
 		return $value;
 	}
