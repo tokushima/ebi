@@ -1824,6 +1824,10 @@ class OpenApi extends \ebi\app\Request{
 
 		$min = $holder->opt('min');
 		$max = $holder->opt('max');
+		// 日付系は書式で形が決まる。intdate の max(入力桁数)等を長さ制約として出すと出力値と矛盾する
+		if(in_array($schema['format'] ?? null, ['date', 'date-time', 'time'], true)){
+			$min = $max = null;
+		}
 		if($is_string){
 			if($min !== null){
 				$schema['minLength'] = (int)$min;
@@ -1926,7 +1930,7 @@ class OpenApi extends \ebi\app\Request{
 				'datetime' => ['type' => 'string', 'format' => 'date-time'],
 				'date' => ['type' => 'string', 'format' => 'date'],
 				'time' => ['type' => 'string', 'format' => 'time'],
-				'intdate' => ['type' => 'integer', 'format' => 'intdate'],
+				'intdate' => ['type' => 'string', 'format' => 'date'], // 出力は Conf::date_format (既定 Y-m-d) の文字列
 				'alnum' => ['type' => 'string', 'format' => 'alnum'],
 			'timestamp' => ['type' => 'integer', 'format' => 'unix-timestamp'],
 				'array' => ['type' => 'array', 'items' => ['type' => 'string']],
