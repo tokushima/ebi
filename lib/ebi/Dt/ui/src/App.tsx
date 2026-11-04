@@ -399,6 +399,16 @@ function TryItPanel({ endpoint, op, envelope }) {
 	const [response, setResponse] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const allParams = op.parameters || [];
+	// POST/PUT/PATCH の入力は parameters ではなく requestBody に入る。docセクション(L608付近)と同じ要領で
+	// content[*].schema.properties を展開し、入力欄・送信対象に含める（これが無いと body 系で欄が出ない）。
+	const bodyProps = Object.entries(op.requestBody?.content || {}).flatMap(([, c]) => {
+		const s = c?.schema;
+		if (!s || !s.properties) return [];
+		return Object.entries(s.properties).map(([k, v]) => ({ name: k, in: 'body', schema: v, required: (s.required || []).includes(k) }));
+	});
+	// parameters(path/query) と requestBody(body) を結合。同名は parameters を優先して重複排除。
+	const paramNames = new Set(allParams.map(p => p.name));
+	const fields = [...allParams, ...bodyProps.filter(b => !paramNames.has(b.name))];
 
 	const execute = async () => {
 		setLoading(true); setResponse(null);
@@ -407,17 +417,20 @@ function TryItPanel({ endpoint, op, envelope }) {
 			const method = endpoint.method.toUpperCase();
 			const isBodyMethod = ['POST', 'PUT', 'PATCH'].includes(method);
 			allParams.filter(p => p.in === 'path').forEach(p => { url = url.replace(`{${p.name}}`, encodeURIComponent(params[p.name] || '')); });
-			const nonPathParams = allParams.filter(p => p.in !== 'path' && params[p.name]);
-			if (!isBodyMethod) {
-				const qp = nonPathParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
-				if (qp.length) url += '?' + qp.join('&');
+			// path/body 以外（query 等）で値のあるものはクエリ文字列へ
+			const queryParams = allParams.filter(p => p.in !== 'path' && p.in !== 'body' && params[p.name]);
+			if (queryParams.length) {
+				const qp = queryParams.map(p => `${p.name}=${encodeURIComponent(params[p.name])}`);
+				url += (url.includes('?') ? '&' : '?') + qp.join('&');
 			}
 			const baseUrl = window.location.pathname.replace(/\/dt\/?$/, '');
 			const accept = envelope ? 'application/json' : 'application/json; envelope=false';
 			const opts = { method, headers: { 'Accept': accept } };
-			if (isBodyMethod && nonPathParams.length) {
+			// requestBody フィールドを JSON ボディへ（POST/PUT/PATCH のみ）
+			const bodyFields = bodyProps.filter(b => params[b.name] !== undefined && params[b.name] !== '');
+			if (isBodyMethod && bodyFields.length) {
 				const jsonBody = {};
-				nonPathParams.forEach(p => { jsonBody[p.name] = params[p.name]; });
+				bodyFields.forEach(b => { jsonBody[b.name] = params[b.name]; });
 				opts.body = JSON.stringify(jsonBody);
 				opts.headers['Content-Type'] = 'application/json';
 			}
@@ -436,8 +449,8 @@ function TryItPanel({ endpoint, op, envelope }) {
 	return (
 		<div className="try-it-section">
 			<div className="section-label">Try It</div>
-			{allParams.length > 0 && <div className="mb-3">
-				{allParams.map(p => (
+			{fields.length > 0 && <div className="mb-3">
+				{fields.map(p => (
 					<div key={p.name} className="d-flex align-items-center gap-2 mb-2">
 						<label className="param-name" style={{ minWidth: 120 }}>{p.name}{p.required && <span className="text-danger ms-1">*</span>}</label>
 						{p.schema?.type === 'boolean' ? (
