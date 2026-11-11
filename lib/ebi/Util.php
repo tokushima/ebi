@@ -368,12 +368,13 @@ class Util{
 	 */
 	public static function next_business_day(int $base, int $days, array $holidays=[], $regular_holiday=[0,6]): int{
 		$d = $base;
+		$direction = ($days < 0) ? -1 : 1;
 
-		for($i=0;$i<$days;){
-			$d += 86400;
+		for($i=0;$i!=$days;){
+			$d += 86400 * $direction;
 
 			if(!in_array(date('w', $d), $regular_holiday) && !in_array(date('Ymd', $d), $holidays)){
-				$i++;
+				$i += $direction;
 			}
 		}
 		return $d;
