@@ -2612,9 +2612,18 @@ class OpenApi extends \ebi\app\Request{
 		$responses['200'] = $success_response;
 
 		// #[ErrorResponse]属性からエラーレスポンスを取得
+		// do_login ルートは action 側に加え auth プラグインの login_condition からもマージする
+		// （http_method / Parameter / flow を login_condition から読むのと同じ流儀。レート制限 429 等は
+		// is_blocked/send_block_status を呼ぶ login_condition 側に宣言されるため）。
+		$attr_errors = [];
 		if(isset($m['class'], $m['method'])){
-			$attr_errors = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'error_response');
-			if(!empty($attr_errors)){
+			$attr_errors = \ebi\AttributeReader::get_method($m['class'], $m['method'], 'error_response') ?? [];
+		}
+		if(!empty($m['auth'])){
+			$attr_errors = array_merge($attr_errors, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'error_response') ?? []);
+		}
+		if(!empty($attr_errors)){
+			{
 				foreach($attr_errors as $err){
 					$status = (string)$err['status'];
 
