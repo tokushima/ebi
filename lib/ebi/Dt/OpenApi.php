@@ -2622,25 +2622,21 @@ class OpenApi extends \ebi\app\Request{
 		if(!empty($m['auth'])){
 			$attr_errors = array_merge($attr_errors, \ebi\AttributeReader::get_method($m['auth'], 'login_condition', 'error_response') ?? []);
 		}
-		if(!empty($attr_errors)){
-			{
-				foreach($attr_errors as $err){
-					$status = (string)$err['status'];
+		foreach($attr_errors as $err){
+			$status = (string)$err['status'];
 
-					if(isset($responses[$status])){
-						$responses[$status]['description'] .= "\n".$err['description'];
-					}else{
-						$responses[$status] = ['description' => $err['description']];
-					}
+			if(isset($responses[$status])){
+				$responses[$status]['description'] .= "\n".$err['description'];
+			}else{
+				$responses[$status] = ['description' => $err['description']];
+			}
 
-					// x-throwsにも収集（UI側でenvelope時の表示切替に使用）
-					if($status !== '401'){
-						$x_throws[] = [
-							'status' => (int)$status,
-							'description' => $err['description'],
-						];
-					}
-				}
+			// x-throwsにも収集（UI側でenvelope時の表示切替に使用）
+			if($status !== '401'){
+				$x_throws[] = [
+					'status' => (int)$status,
+					'description' => $err['description'],
+				];
 			}
 		}
 
